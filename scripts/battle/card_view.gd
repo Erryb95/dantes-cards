@@ -26,8 +26,18 @@ var home_scale := 0.6
 var dragging := false
 var _last_pos := Vector2.ZERO
 var _vel := Vector2.ZERO
+## Fake-3D tilt: follows the pointer while it is over the card (`auto_tilt`, or `look` forced by the hand),
+## leans into the motion while dragged, or sways gently (`sway`, for the inspect view).
+var auto_tilt := true
+var look := false
+var sway := false
+var hold_tilt := false ## keep `_tilt` as set from outside (previews / tests)
+var _tilt := Vector2.ZERO
+var _sway_t := randf() * 10.0
+var _shadow: Control
 
 var _mat: ShaderMaterial
+var _mats: Array[ShaderMaterial] = [] ## every card_fx material on the card (the tilt / burn uniforms go to all)
 var _art_mat: ShaderMaterial
 var _face: Control
 var _back: Control
@@ -51,10 +61,10 @@ func _build() -> void:
 	_mat.shader = CARD_FX
 	material = _mat
 
-	var shadow := UI.panel(Vector2(W, H), UI.box(Color(0, 0, 0, 0.0), Color.TRANSPARENT, 0, 20,
+	_shadow = UI.panel(Vector2(W, H), UI.box(Color(0, 0, 0, 0.0), Color.TRANSPARENT, 0, 20,
 		Color(0, 0, 0, 0.55), 18), Vector2(-W / 2 + 6, -H / 2 + 12))
-	shadow.use_parent_material = true
-	add_child(shadow)
+	_shadow.use_parent_material = true
+	add_child(_shadow)
 	_glow = UI.panel(Vector2(W + 8, H + 8), UI.box(Color(0, 0, 0, 0), UI.PLAYABLE, 4, 22, UI.PLAYABLE, 26),
 		Vector2(-W / 2 - 4, -H / 2 - 4))
 	_glow.visible = false
@@ -76,6 +86,27 @@ func _build() -> void:
 	add_child(_back)
 	_build_back()
 	set_face_up(face_up)
+	var text_mat := ShaderMaterial.new()
+	text_mat.shader = CARD_FX
+	text_mat.set_shader_parameter("resample", false)
+	_mats = [_mat, text_mat]
+	_collect_mats(self, text_mat)
+	_param("half_h", H / 2)
+
+
+func _collect_mats(n: Node, text_mat: ShaderMaterial) -> void:
+	for c in n.get_children():
+		if (c is Label or c is RichTextLabel) and c.use_parent_material:
+			c.use_parent_material = false
+			c.material = text_mat
+		elif c is CanvasItem and c.material is ShaderMaterial and c.material.shader == CARD_FX and not _mats.has(c.material):
+			_mats.append(c.material)
+		_collect_mats(c, text_mat)
+
+
+func _param(n: String, v: Variant) -> void:
+	for m in _mats:
+		m.set_shader_parameter(n, v)
 
 
 func _build_face() -> void:
@@ -414,11 +445,32 @@ func _process(delta: float) -> void:
 	# Velocity tilt while dragged: lean into the motion like a real card.
 	_vel = _vel.lerp((position - _last_pos) / maxf(delta, 0.001), 0.25)
 	_last_pos = position
+	var target := Vector2.ZERO
+	var lift := 0.0
 	if dragging:
-		rotation = lerp_angle(rotation, clampf(_vel.x * 0.00035, -0.4, 0.4), 0.3)
-		skew = lerpf(skew, clampf(-_vel.x * 0.00018, -0.22, 0.22), 0.3)
-	else:
-		skew = lerpf(skew, 0.0, 0.2)
+		rotation = lerp_angle(rotation, clampf(_vel.x * 0.0002, -0.25, 0.25), 0.3)
+		target = (_vel * 0.0006).limit_length(0.5)
+		lift = 1.0
+	elif face_up and (look or (auto_tilt and is_visible_in_tree() and contains_point(get_global_mouse_position()))):
+		var m := to_local(get_global_mouse_position()) / Vector2(W / 2, H / 2)
+		target = m.clamp(-Vector2.ONE, Vector2.ONE) * 0.32
+		lift = 0.5
+	elif sway:
+		_sway_t += delta
+		target = Vector2(sin(_sway_t * 0.9) * 0.14, cos(_sway_t * 0.7) * 0.09)
+	if not hold_tilt:
+		_tilt = _tilt.lerp(target, minf(1.0, delta * 12.0))
+	if not hold_tilt and _tilt.length() < 0.002 and target == Vector2.ZERO:
+		_tilt = Vector2.ZERO
+	_param("tilt", _tilt)
+	if _tilt != Vector2.ZERO:
+		var xf := get_global_transform()
+		_param("card_center", xf.origin)
+		_param("card_x", xf.x)
+		_param("card_y", xf.y)
+	# The shadow drifts away from the light as the card lifts.
+	var off := Vector2(6, 12).lerp(Vector2(26, 46), lift)
+	_shadow.position = _shadow.position.lerp(Vector2(-W / 2, -H / 2) + off, minf(1.0, delta * 10.0))
 	if card.get("rarity", "") == "legendary" and face_up:
 		_foil += delta * 0.35
 		if _foil > 1.6:
@@ -435,8 +487,7 @@ func burn_away(duration: float = 0.7) -> void:
 
 
 func _set_burn(v: float) -> void:
-	_mat.set_shader_parameter("burn", v)
-	_art_mat.set_shader_parameter("burn", v)
+	_param("burn", v)
 
 
 func contains_point(global_point: Vector2) -> bool:

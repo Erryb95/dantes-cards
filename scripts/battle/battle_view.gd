@@ -11,6 +11,7 @@ const PLAY_LINE := 0.70 ## releasing a dragged card above this fraction of the s
 
 enum Mode { IDLE, DRAG_CARD, AIM_SPELL, AIM_BATTLECRY, AIM_ATTACK, AIM_POWER }
 
+const DECK_SHEETS := 10
 var st: BattleState
 var ai: BattleAI
 var ai_self: BattleAI ## autoplay only
@@ -52,6 +53,8 @@ var deck_views: Array = [null, null]
 var end_btn: Node2D
 var _end_seal: Sprite2D
 var _painted_board := false
+var _parallax := Vector2.ZERO ## the table (board, units, fx) drifts against the pointer; the hand stays put
+var _parallax_t := 0.0
 var _end_label: Label
 var _end_glow: Shapes
 var _end_disc: Shapes
@@ -327,15 +330,21 @@ func _build_mana(side: int) -> Node2D:
 	var l := UI.label("0/0", 34, "title", Color(0.75, 0.88, 1.0), 7, Color(0, 0.02, 0.08))
 	l.name = "Label"
 	l.size = Vector2(110, 50)
-	l.position = Vector2(-128, -25)
+	l.position = Vector2(-230, -25)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	n.add_child(l)
 	for i in BattleState.MAX_MANA:
-		var g := Shapes.make(Shapes.Kind.DIAMOND, Vector2(24, 32), Color(0.1, 0.1, 0.14), Color(0.4, 0.5, 0.7), 2.0)
+		var g: Node2D
+		if UiSkin.has("gem_mana"):
+			# Painted crystals: lit when full, smoky when spent, near black while still locked.
+			g = UiSkin.sprite("gem_mana", Vector2(48, 48))
+		else:
+			g = Shapes.make(Shapes.Kind.DIAMOND, Vector2(24, 32), Color(0.1, 0.1, 0.14), Color(0.4, 0.5, 0.7), 2.0)
 		g.use_parent_material = false
 		g.name = "Gem%d" % i
-		g.position = Vector2(i * 27 + 14, 0)
+		g.position = Vector2(i * 26 - 88, 0)
+		g.set_meta("base", g.scale)
 		n.add_child(g)
 	n.visible = true
 	return n
@@ -345,24 +354,36 @@ func _set_mana(side: int, mana: int, max_mana: int) -> void:
 	var n: Node2D = mana_views[side]
 	(n.get_node("Label") as Label).text = "%d/%d" % [mana, max_mana]
 	for i in BattleState.MAX_MANA:
-		var g: Shapes = n.get_node("Gem%d" % i)
+		var g: Node2D = n.get_node("Gem%d" % i)
+		var base: Vector2 = g.get_meta("base")
 		var full := i < mana
 		var owned := i < max_mana
-		g.set_fill(UI.MANA if full else (Color(0.12, 0.16, 0.28) if owned else Color(0.08, 0.07, 0.08)))
-		g.set_line(Color(0.75, 0.88, 1.0) if full else Color(0.3, 0.35, 0.45))
-		if full and g.scale.x < 1.0:
-			g.create_tween().tween_property(g, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK)
-		g.scale = Vector2.ONE if full else Vector2(0.85, 0.85)
+		if g is Shapes:
+			g.set_fill(UI.MANA if full else (Color(0.12, 0.16, 0.28) if owned else Color(0.08, 0.07, 0.08)))
+			g.set_line(Color(0.75, 0.88, 1.0) if full else Color(0.3, 0.35, 0.45))
+		else:
+			g.modulate = Color(1.15, 1.15, 1.2) if full else (Color(0.32, 0.34, 0.42) if owned else Color(0.12, 0.11, 0.12, 0.8))
+		var was_full: bool = g.get_meta("full", false)
+		g.set_meta("full", full)
+		if full and not was_full:
+			g.scale = base * 0.6
+			g.create_tween().tween_property(g, "scale", base, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			Fx.flash(fx_layer, "k_star_04", n.position + g.position, 70.0, 0.35, Color(0.6, 0.8, 1.0), 0.8)
+		elif not full:
+			g.scale = base * 0.85
 
 
 func _build_deck(side: int) -> Node2D:
 	var n := Node2D.new()
 	board_layer.add_child(n)
-	for i in 4:
+	# A real pile: one sheet per three cards, each a little higher and lighter, so the stack thins as it is drawn.
+	for i in DECK_SHEETS:
 		var c := CardView.new().setup("lost_pilgrim", -1, false)
 		c.scale = Vector2(0.36, 0.36)
-		c.position = Vector2(i * 2.0, -i * 3.0)
+		c.position = Vector2(i * 1.1, -i * 2.2)
 		c.rotation = PI / 2
+		var k := 0.55 + 0.45 * float(i) / (DECK_SHEETS - 1)
+		c.modulate = Color(k, k, k)
 		c.set_process(false)
 		n.add_child(c)
 	var l := UI.label("20", 30, "title", UI.BONE, 7, Color.BLACK)
@@ -376,8 +397,14 @@ func _build_deck(side: int) -> Node2D:
 
 func _set_deck_count(side: int, count: int) -> void:
 	(deck_views[side].get_node("Count") as Label).text = str(count)
-	for i in 4:
-		deck_views[side].get_child(i).visible = count > i * 5
+	var top := -1
+	for i in DECK_SHEETS:
+		var on := count > i * 3
+		deck_views[side].get_child(i).visible = on
+		if on:
+			top = i
+	var l := deck_views[side].get_node("Count") as Label
+	l.position = Vector2(-50, -20) + Vector2(maxi(top, 0) * 1.1, -maxi(top, 0) * 2.2)
 
 
 func _layout_static() -> void:
@@ -480,6 +507,7 @@ func _intro(arena: Dictionary) -> void:
 
 func _process(delta: float) -> void:
 	_tick_fx(delta)
+	_tick_parallax(delta)
 	if _painted_board:
 		var mist := bg_layer.get_node_or_null("Board_mist") as Sprite2D
 		if mist != null:
@@ -1283,6 +1311,8 @@ func _layout_hand(side: int) -> void:
 			y = -38 - absf(k) * absf(k) * 2.5
 			rot = -rot + PI
 		c.z_index = i
+		c.auto_tilt = false
+		c.look = i == hi
 		if hi != -1:
 			if i == hi:
 				c.z_index = 100
@@ -1558,7 +1588,25 @@ func _on_release(p: Vector2) -> void:
 				pass
 
 
+## Fake depth: the table layers slide a few pixels against the pointer (a slow drift on touch screens), so the hand
+## and the UI read as nearer than the board. Frozen while aiming so the arrow keeps its anchor.
+func _tick_parallax(delta: float) -> void:
+	if arrow.visible or drag_card != null:
+		return
+	var aim := Vector2.ZERO
+	if DisplayServer.is_touchscreen_available():
+		_parallax_t += delta
+		aim = Vector2(sin(_parallax_t * 0.21), cos(_parallax_t * 0.17)) * 0.5
+	else:
+		aim = ((get_viewport().get_mouse_position() - V / 2) / (V / 2)).clamp(-Vector2.ONE, Vector2.ONE)
+	_parallax = _parallax.lerp(-aim * 9.0, minf(1.0, delta * 2.5))
+	bg_layer.position = _parallax
+	board_layer.position = _parallax
+	fx_layer.position = _parallax
+
+
 func _start_aim(from: Vector2, targets: Array) -> void:
+	from += board_layer.position
 	arrow.from = from
 	arrow.to = from
 	arrow.valid = false
@@ -1680,6 +1728,7 @@ func _show_inspect(u) -> void:
 		return
 	inspect = CardView.new().setup(id, -1, true)
 	inspect.z_index = 300
+	inspect.sway = true
 	var left: bool = u.position.x > V.x / 2
 	inspect.position = Vector2(u.position.x + (-260.0 if left else 260.0), clampf(u.position.y, 200, V.y - 200))
 	inspect.scale = Vector2(0.6, 0.6)

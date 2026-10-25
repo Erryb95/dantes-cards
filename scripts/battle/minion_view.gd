@@ -34,6 +34,7 @@ var _hp_l: Label
 var _zzz: Label
 var _icons: Node2D
 var _t := 0.0
+var _shadow: Node2D
 
 
 func setup(snap: Dictionary) -> MinionView:
@@ -57,6 +58,7 @@ func _build() -> void:
 	shadow.shade = false
 	shadow.position = Vector2(6, 10)
 	add_child(shadow)
+	_shadow = shadow
 	_guard = Shapes.make(Shapes.Kind.SHIELD, Vector2(W + 34, H + 30), Color(0.32, 0.28, 0.25), Color(0.75, 0.62, 0.4), 4.0)
 	_guard.position = Vector2(0, 6)
 	add_child(_guard)
@@ -197,6 +199,10 @@ func set_sleeping(v: bool) -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
+	# Lifted (lunging, dropping in) minions cast a farther, softer shadow.
+	var lift := clampf((scale.x - 1.0) / 0.5, 0.0, 1.0)
+	_shadow.position = Vector2(6, 10).lerp(Vector2(30, 56), lift)
+	_shadow.modulate.a = 1.0 - 0.45 * lift
 	if _glow.visible:
 		_glow.modulate.a = 0.55 + 0.45 * sin(_t * 4.5)
 	if _ward.visible:

@@ -96,8 +96,8 @@ static func button(text: String, width: float = 420.0, height: float = 84.0) -> 
 	if width >= 200.0 and UiSkin.has("menu_plate"):
 		# The painted bronze plate (ComfyUI UI pass): dark ink on gold.
 		b.add_theme_stylebox_override("normal", plate(Color(0.92, 0.88, 0.82)))
-		b.add_theme_stylebox_override("hover", plate(Color(1.15, 1.05, 0.9)))
-		b.add_theme_stylebox_override("pressed", plate(Color(0.75, 0.62, 0.5)))
+		b.add_theme_stylebox_override("hover", plate(Color(1.15, 1.05, 0.9), -2))
+		b.add_theme_stylebox_override("pressed", plate(Color(0.75, 0.62, 0.5), 4))
 		b.add_theme_stylebox_override("disabled", plate(Color(0.4, 0.38, 0.36)))
 		b.add_theme_color_override("font_color", Color(0.2, 0.08, 0.03))
 		b.add_theme_color_override("font_hover_color", Color(0.3, 0.04, 0.02))
@@ -105,11 +105,23 @@ static func button(text: String, width: float = 420.0, height: float = 84.0) -> 
 		b.add_theme_color_override("font_disabled_color", Color(0.22, 0.2, 0.18))
 	b.mouse_entered.connect(func(): Sfx.play("ui_hover", -10.0))
 	b.pressed.connect(func(): Sfx.play("ui_confirm", -6.0))
+	# Physical depth: the plate rises toward the pointer and sinks when pressed.
+	b.resized.connect(func(): b.pivot_offset = b.size / 2)
+	b.mouse_entered.connect(_press_depth.bind(b, 1.04))
+	b.mouse_exited.connect(_press_depth.bind(b, 1.0))
+	b.button_down.connect(_press_depth.bind(b, 0.96))
+	b.button_up.connect(func(): _press_depth(b, 1.04 if b.is_hovered() else 1.0))
 	return b
 
 
+static func _press_depth(b: Button, s: float) -> void:
+	if b.disabled and s > 1.0:
+		return
+	b.create_tween().tween_property(b, "scale", Vector2.ONE * s, 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
 ## The painted button plate as a nine-patch: the scrollwork ends keep their shape at any width.
-static func plate(tint: Color) -> StyleBoxTexture:
+static func plate(tint: Color, sink: int = 0) -> StyleBoxTexture:
 	var s := StyleBoxTexture.new()
 	s.texture = UiSkin.tex("menu_plate")
 	s.texture_margin_left = 70
@@ -118,6 +130,8 @@ static func plate(tint: Color) -> StyleBoxTexture:
 	s.texture_margin_bottom = 22
 	s.content_margin_left = 40
 	s.content_margin_right = 40
+	s.content_margin_top = 22 + sink
+	s.content_margin_bottom = 22 - sink
 	s.modulate_color = tint
 	return s
 
