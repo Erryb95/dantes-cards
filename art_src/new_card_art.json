@@ -1,0 +1,1076 @@
+[
+ {
+  "id": "cd_lano",
+  "name": "Lano of Siena",
+  "rarity": "common",
+  "art": "A young man in a fine cloak runs barefoot across a field of brambles while black dogs chase him."
+ },
+ {
+  "id": "cd_scrovegni",
+  "name": "Reginaldo degli Scrovegni",
+  "rarity": "common",
+  "art": "A stout merchant in a fur-trimmed coat clutches a heavy leather purse against his chest."
+ },
+ {
+  "id": "cd_pholus",
+  "name": "Pholus, the Centaur",
+  "rarity": "common",
+  "art": "A centaur with a bow across his shoulders stands on the bank of a dark red river."
+ },
+ {
+  "id": "cd_pier_della_vigna",
+  "name": "Pier della Vigna",
+  "rarity": "rare",
+  "art": "A gnarled leafless tree with a pale human face in its trunk, its broken branches dripping dark sap."
+ },
+ {
+  "id": "cd_giacomo",
+  "name": "Giacomo da Sant'Andrea",
+  "rarity": "common",
+  "art": "A thin man sprints through a dark wood with a pack of black dogs leaping behind him."
+ },
+ {
+  "id": "cd_rusticucci",
+  "name": "Iacopo Rusticucci",
+  "rarity": "common",
+  "art": "Two old men in long robes walk together across hot sand, one leaning on a staff."
+ },
+ {
+  "id": "cd_guy_montfort",
+  "name": "Guy de Montfort",
+  "rarity": "common",
+  "art": "A knight in chain mail with a sword stands waist deep in a crimson river."
+ },
+ {
+  "id": "cd_brunetto",
+  "name": "Brunetto Latini",
+  "rarity": "rare",
+  "art": "An elderly scholar in a long gown runs across pale sand under a shower of glowing sparks."
+ },
+ {
+  "id": "cd_guido_guerra",
+  "name": "Guido Guerra",
+  "rarity": "common",
+  "art": "A bearded nobleman in a fine tunic stands on burning sand with a sword at his side."
+ },
+ {
+  "id": "cd_priscian",
+  "name": "Priscian",
+  "rarity": "common",
+  "art": "A white-haired scholar holds an open book while walking across a burning sandy plain."
+ },
+ {
+  "id": "cd_epicurus",
+  "name": "Epicurus",
+  "rarity": "rare",
+  "art": "A bald old philosopher in a plain robe lies inside an open stone tomb with flames rising from its edge."
+ },
+ {
+  "id": "cd_dionysius",
+  "name": "Dionysius of Syracuse",
+  "rarity": "common",
+  "art": "A crowned ruler in a dark cloak stands on a riverbank, holding a dagger."
+ },
+ {
+  "id": "cd_nessus",
+  "name": "Nessus, the Centaur",
+  "rarity": "rare",
+  "art": "A centaur archer with a drawn bow stands at the edge of a crimson river."
+ },
+ {
+  "id": "cd_cavalcante",
+  "name": "Cavalcante de' Cavalcanti",
+  "rarity": "common",
+  "art": "An old man half risen from an open stone tomb, peering up with a worried face."
+ },
+ {
+  "id": "cd_anastasius",
+  "name": "Pope Anastasius",
+  "rarity": "common",
+  "art": "A pope in a tall mitre and heavy gold vestments lies in a stone sarcophagus."
+ },
+ {
+  "id": "cd_ezzelino",
+  "name": "Ezzelino da Romano",
+  "rarity": "common",
+  "art": "A grim armored commander with a scarred face holds a bloodied sword by a river."
+ },
+ {
+  "id": "cd_alexander",
+  "name": "Alexander the Great",
+  "rarity": "epic",
+  "art": "A young king in a golden crown charges on a warhorse across a plain at dusk."
+ },
+ {
+  "id": "cd_medusa_gate",
+  "name": "Medusa, Gate Guardian",
+  "rarity": "epic",
+  "art": "A woman with serpents for hair stares out from behind tall iron gates."
+ },
+ {
+  "id": "cd_vitaliano",
+  "name": "Vitaliano del Dente",
+  "rarity": "rare",
+  "art": "A usurer in a dark robe counts coins at a wooden table beside a leather purse."
+ },
+ {
+  "id": "cd_frederick_ii",
+  "name": "Emperor Frederick II",
+  "rarity": "rare",
+  "art": "A crowned emperor with a long beard sits on a stone tomb with fire glowing under its lid."
+ },
+ {
+  "id": "cd_messenger_heaven",
+  "name": "Messenger from Heaven",
+  "rarity": "legendary",
+  "art": "A radiant winged figure in white robes holds a long staff before a huge iron gate."
+ },
+ {
+  "id": "cd_attila",
+  "name": "Attila, Scourge of God",
+  "rarity": "epic",
+  "art": "A bearded warlord in a horned helmet rides a rearing horse at the head of a dark army."
+ },
+ {
+  "id": "cd_capaneus",
+  "name": "Capaneus, the Defiant",
+  "rarity": "legendary",
+  "art": "A giant warrior stands upright on burning sand while flames fall around him from a black sky."
+ },
+ {
+  "id": "cd_minotaur",
+  "name": "The Minotaur",
+  "rarity": "epic",
+  "art": "A bull-headed giant with a heavy axe roars on a stone ledge above a red river."
+ },
+ {
+  "id": "cd_old_man_crete",
+  "name": "Old Man of Crete",
+  "rarity": "legendary",
+  "art": "A colossal statue of an old man with a cracked head, tears running down into a deep rocky chasm."
+ },
+ {
+  "id": "cd_burning_sand",
+  "name": "Burning Sand",
+  "rarity": "common",
+  "art": "Glowing grains of sand blow off a dune in a hot wind."
+ },
+ {
+  "id": "cd_usurers_purse",
+  "name": "Usurer's Purse",
+  "rarity": "common",
+  "art": "A small leather purse spills gold coins onto a wooden table."
+ },
+ {
+  "id": "cd_bleeding_branch",
+  "name": "Bleeding Branch",
+  "rarity": "common",
+  "art": "A broken twig drips dark red sap onto a gnarled stump."
+ },
+ {
+  "id": "cd_walls_of_dis",
+  "name": "Walls of Dis",
+  "rarity": "common",
+  "art": "A tall iron-banded city wall with stone towers rises from a dark plain."
+ },
+ {
+  "id": "cd_sealed_tomb",
+  "name": "Sealed Tomb",
+  "rarity": "rare",
+  "art": "A stone tomb lid slides shut over an open coffin with a faint glow inside."
+ },
+ {
+  "id": "cd_hounds_of_lano",
+  "name": "Hounds of Lano",
+  "rarity": "common",
+  "art": "Two black hounds with red eyes race across a moonlit field."
+ },
+ {
+  "id": "cd_gate_of_dis",
+  "name": "Gate of Dis",
+  "rarity": "common",
+  "art": "A heavy iron gate swings open onto a dark road."
+ },
+ {
+  "id": "cd_rain_of_fire",
+  "name": "Rain of Fire",
+  "rarity": "rare",
+  "art": "Flaming embers drift down from a dark sky onto a plain of pale sand."
+ },
+ {
+  "id": "cd_furys_lash",
+  "name": "Fury's Lash",
+  "rarity": "rare",
+  "art": "A woman with a whip of writhing snakes is raised above a dark gate."
+ },
+ {
+  "id": "cd_sealed_lids",
+  "name": "Sealed Lids",
+  "rarity": "epic",
+  "art": "A row of stone tomb lids closed over open graves on a dark hillside."
+ },
+ {
+  "id": "cd_black_hound",
+  "name": "Black Hound",
+  "rarity": "token",
+  "art": "A black dog with red eyes running low across the ground."
+ },
+ {
+  "id": "ih_whip_demon",
+  "name": "Whip Demon",
+  "rarity": "common",
+  "art": "A horned demon raising a barbed whip over a line of naked sinners on a stony bridge."
+ },
+ {
+  "id": "ih_thief_serpent",
+  "name": "Thief Serpent",
+  "rarity": "common",
+  "art": "A small green serpent coiled around a naked man whose body is merging with its coils."
+ },
+ {
+  "id": "ih_blood_swimmer",
+  "name": "Blood Swimmer",
+  "rarity": "common",
+  "art": "The heads and shoulders of sinners rising above the surface of a river of boiling red liquid."
+ },
+ {
+  "id": "ih_barbed_imp",
+  "name": "Barbed Imp",
+  "rarity": "common",
+  "art": "A small red demon with hooked claws clutching a pitchfork on a stony ledge."
+ },
+ {
+  "id": "ih_hellhound_pup",
+  "name": "Hellhound Pup",
+  "rarity": "common",
+  "art": "A small black hound with glowing red eyes baring its teeth on muddy ground."
+ },
+ {
+  "id": "ih_calcabrina",
+  "name": "Calcabrina",
+  "rarity": "common",
+  "art": "A grinning winged demon mid-leap above a narrow stone bridge."
+ },
+ {
+  "id": "ih_pitch_sinner",
+  "name": "Pitch Sinner",
+  "rarity": "common",
+  "art": "A naked sinner coated in black pitch, standing waist-deep in a bubbling tar pit."
+ },
+ {
+  "id": "ih_barbariccia",
+  "name": "Barbariccia",
+  "rarity": "common",
+  "art": "A tusked demon blowing a curved horn in a rocky pit, with smaller demons gathered behind it."
+ },
+ {
+  "id": "ih_farfarello",
+  "name": "Farfarello",
+  "rarity": "common",
+  "art": "A grinning demon with clawed hands reaching forward, lunging out of a rocky pit."
+ },
+ {
+  "id": "ih_cagnazzo",
+  "name": "Cagnazzo",
+  "rarity": "common",
+  "art": "A fanged demon with a dog-like snout sinking its jaws into a sinner's shoulder."
+ },
+ {
+  "id": "ih_cacus",
+  "name": "Cacus, the Centaur",
+  "rarity": "rare",
+  "art": "A hairy centaur dragging a herd of cattle backward into a cave mouth."
+ },
+ {
+  "id": "ih_draghignazzo",
+  "name": "Draghignazzo",
+  "rarity": "common",
+  "art": "A demon with spiked wings and a barbed tail raising a long hooked staff over a pit."
+ },
+ {
+  "id": "ih_graffiacane",
+  "name": "Graffiacane",
+  "rarity": "rare",
+  "art": "A demon with a hound-like body and bat wings leaping forward from a rocky ledge."
+ },
+ {
+  "id": "ih_libicocco",
+  "name": "Libicocco",
+  "rarity": "rare",
+  "art": "A grinning demon with a long hooked tail coiled around a stone pillar."
+ },
+ {
+  "id": "ih_ephialtes",
+  "name": "Ephialtes, the Giant",
+  "rarity": "epic",
+  "art": "A towering giant with chains on his arms, standing waist-deep in a stone well."
+ },
+ {
+  "id": "ih_briareus",
+  "name": "Briareus, Hundred-Hand",
+  "rarity": "rare",
+  "art": "A giant with many arms reaching up out of a stone well in a crowded pit."
+ },
+ {
+  "id": "ih_hellhound_guardian",
+  "name": "Hellhound Guardian",
+  "rarity": "rare",
+  "art": "A massive black hound with a spiked collar standing guard in front of a stone gate, teeth bared."
+ },
+ {
+  "id": "ih_scarmiglione",
+  "name": "Scarmiglione",
+  "rarity": "rare",
+  "art": "A demon with tangled hair and sharp fangs gripping a sinner by the head."
+ },
+ {
+  "id": "ih_rubicante",
+  "name": "Rubicante, the Flame",
+  "rarity": "rare",
+  "art": "A demon wreathed in flames, holding a burning whip on a cracked, scorched plain."
+ },
+ {
+  "id": "ih_antaeus",
+  "name": "Antaeus, the Earth-Born",
+  "rarity": "epic",
+  "art": "A giant rising from a rocky plain, one palm pressed flat on the ground beneath him."
+ },
+ {
+  "id": "ih_malacoda",
+  "name": "Malacoda, Chief Demon",
+  "rarity": "legendary",
+  "art": "A large horned demon with a hooked tail standing above a group of smaller demons on a rocky ledge."
+ },
+ {
+  "id": "ih_nimrod",
+  "name": "Nimrod, the Giant",
+  "rarity": "legendary",
+  "art": "A huge bearded giant with a horn slung over his shoulder, standing among stone ruins."
+ },
+ {
+  "id": "ih_lucifer",
+  "name": "Lucifer, the Frozen King",
+  "rarity": "legendary",
+  "art": "A colossal three-faced figure with huge bat wings, frozen waist-deep in a sheet of blue ice."
+ },
+ {
+  "id": "ih_gate_angel",
+  "name": "Fallen Angel of Dis",
+  "rarity": "epic",
+  "art": "A fallen angel with tattered grey wings standing before a massive iron gate set in a fiery wall."
+ },
+ {
+  "id": "ih_burning_rain",
+  "name": "Burning Rain",
+  "rarity": "common",
+  "art": "Slow flakes of fire falling through the air above a plain of gray sand."
+ },
+ {
+  "id": "ih_serpents_kiss",
+  "name": "Serpent's Kiss",
+  "rarity": "common",
+  "art": "A green serpent with fangs bared in front of a small armored demon."
+ },
+ {
+  "id": "ih_cocytus_chill",
+  "name": "Cocytus Chill",
+  "rarity": "rare",
+  "art": "A frozen lake with a pale figure trapped in the ice up to the chest."
+ },
+ {
+  "id": "ih_sulphur_vent",
+  "name": "Sulphur Vent",
+  "rarity": "common",
+  "art": "Yellow sulphur smoke pouring out of a crack in a rocky ground."
+ },
+ {
+  "id": "ih_thieves_bargain",
+  "name": "Thieves' Bargain",
+  "rarity": "common",
+  "art": "Two small green serpents coiled around a pile of stolen gold coins."
+ },
+ {
+  "id": "ih_strength_of_earth",
+  "name": "Strength of the Earth",
+  "rarity": "common",
+  "art": "A bare hand pressed flat against cracked clay, with green shoots rising from it."
+ },
+ {
+  "id": "ih_cacus_stolen_herd",
+  "name": "Cacus's Stolen Herd",
+  "rarity": "common",
+  "art": "Cattle being dragged backward on ropes into a cave mouth."
+ },
+ {
+  "id": "ih_demons_lash",
+  "name": "Demon's Lash",
+  "rarity": "common",
+  "art": "A demon's long barbed whip wrapped around a naked sinner's wrists."
+ },
+ {
+  "id": "ih_rain_of_sand",
+  "name": "Rain of Burning Sand",
+  "rarity": "rare",
+  "art": "Burning sand falling from a red sky onto a flat desert plain where figures lie under it."
+ },
+ {
+  "id": "ih_boiling_tide",
+  "name": "Tide of Boiling Blood",
+  "rarity": "epic",
+  "art": "A red river of boiling liquid with bubbles rising and a pale hand reaching up from the surface."
+ },
+ {
+  "id": "ih_cocytus_winter",
+  "name": "Winter of Cocytus",
+  "rarity": "epic",
+  "art": "A wide sheet of blue ice with several pale shapes trapped beneath its surface."
+ },
+ {
+  "id": "mc_thais",
+  "name": "Thaïs, the Flatterer",
+  "rarity": "common",
+  "art": "A smiling woman in a veil holding out an open hand full of gold coins."
+ },
+ {
+  "id": "mc_ciampolo",
+  "name": "Ciampolo, the Barrator",
+  "rarity": "common",
+  "art": "A naked man climbing out of a black pool of boiling pitch, reaching for the edge."
+ },
+ {
+  "id": "mc_boiling_pitch",
+  "name": "Boiling Pitch",
+  "rarity": "common",
+  "art": "A bubbling cauldron of black pitch with a single hand reaching up from the surface."
+ },
+ {
+  "id": "mc_sinons_lie",
+  "name": "Sinon's Lie",
+  "rarity": "common",
+  "art": "A large wooden horse standing outside a city wall at dusk."
+ },
+ {
+  "id": "mc_jason",
+  "name": "Jason, the Seducer",
+  "rarity": "common",
+  "art": "A bearded man in a Greek cloak stepping off a wooden ship onto a sandy beach."
+ },
+ {
+  "id": "mc_venedico",
+  "name": "Venedico Caccianemico",
+  "rarity": "common",
+  "art": "A man in a long cloak handing a pouch of coins to a veiled woman."
+ },
+ {
+  "id": "mc_alessio",
+  "name": "Alessio Interminei",
+  "rarity": "common",
+  "art": "A grinning man sitting waist-deep in brown muck, holding a cup up to his mouth."
+ },
+ {
+  "id": "mc_master_adam",
+  "name": "Master Adam",
+  "rarity": "rare",
+  "art": "A man with a huge round belly sitting on a stone rim, holding an empty cup."
+ },
+ {
+  "id": "mc_gilded_cloak",
+  "name": "Gilded Lead Cloak",
+  "rarity": "common",
+  "art": "A heavy cloak of gold-coloured metal folded over a stone bench."
+ },
+ {
+  "id": "mc_frozen_tears",
+  "name": "Frozen Tears",
+  "rarity": "common",
+  "art": "A single tear of clear ice hanging from the cheek of a pale face."
+ },
+ {
+  "id": "mc_caiaphas",
+  "name": "Caiaphas, the Hypocrite",
+  "rarity": "common",
+  "art": "A man stretched flat on the ground with a heavy wooden cross lying across his body."
+ },
+ {
+  "id": "mc_pier_medicina",
+  "name": "Pier da Medicina",
+  "rarity": "common",
+  "art": "A pale man with a deep wound across his throat, one hand raised as if to speak."
+ },
+ {
+  "id": "mc_tiresias",
+  "name": "Tiresias, the Seer",
+  "rarity": "rare",
+  "art": "A man walking forward with his head twisted completely around, looking over his shoulder."
+ },
+ {
+  "id": "mc_mosca",
+  "name": "Mosca dei Lamberti",
+  "rarity": "common",
+  "art": "A man raising two stumps where his hands used to be, standing in a crowded street."
+ },
+ {
+  "id": "mc_manto",
+  "name": "Manto, the Prophetess",
+  "rarity": "common",
+  "art": "A woman with long loose hair standing over a smoking bowl in an open field."
+ },
+ {
+  "id": "mc_michael_scot",
+  "name": "Michael Scot, the Sorcerer",
+  "rarity": "rare",
+  "art": "A bearded scholar in a long robe holding an astrolabe over an open book."
+ },
+ {
+  "id": "mc_earth_swallows",
+  "name": "Earth Swallows the Seer",
+  "rarity": "common",
+  "art": "A deep crack opening in the ground beneath a horse-drawn chariot."
+ },
+ {
+  "id": "mc_jovial_friars",
+  "name": "The Jovial Friars",
+  "rarity": "common",
+  "art": "Two hooded monks in long robes walking side by side, their hoods pulled low."
+ },
+ {
+  "id": "mc_vanni_fucci",
+  "name": "Vanni Fucci, the Thief",
+  "rarity": "rare",
+  "art": "A naked man wrapped in serpent coils, one snake sinking its fangs into his neck."
+ },
+ {
+  "id": "mc_agnello",
+  "name": "Agnello Brunelleschi",
+  "rarity": "common",
+  "art": "A man whose lower body is twisting into a serpent, coiled around a stone pillar."
+ },
+ {
+  "id": "mc_bertran",
+  "name": "Bertran de Born",
+  "rarity": "rare",
+  "art": "A man holding his own severed head up by the hair, facing forward."
+ },
+ {
+  "id": "mc_ulysses",
+  "name": "Ulysses, the Schemer",
+  "rarity": "rare",
+  "art": "A helmeted man at a ship's prow beside a lit beacon fire on dark water."
+ },
+ {
+  "id": "mc_guido",
+  "name": "Guido da Montefeltro",
+  "rarity": "epic",
+  "art": "A hooded man wrapped in a tall tongue of fire, hands clasped in prayer."
+ },
+ {
+  "id": "mc_gianni_schicchi",
+  "name": "Gianni Schicchi",
+  "rarity": "rare",
+  "art": "A man in a sickroom leaning over a bed, holding a forged will and a pen."
+ },
+ {
+  "id": "mc_myrrhas_disguise",
+  "name": "Myrrha's Disguise",
+  "rarity": "common",
+  "art": "A veiled woman stepping out of a doorway, a cloth pulled over her face."
+ },
+ {
+  "id": "mc_bocca",
+  "name": "Bocca degli Abati",
+  "rarity": "epic",
+  "art": "A pale man with a set face, frozen in a block of ice up to his shoulders."
+ },
+ {
+  "id": "mc_brutus",
+  "name": "Brutus, the Betrayer",
+  "rarity": "common",
+  "art": "A man raising a dagger, frozen mid-stride inside a sheet of ice."
+ },
+ {
+  "id": "mc_cassius",
+  "name": "Cassius, the Conspirator",
+  "rarity": "rare",
+  "art": "A bearded man with one arm raised, sunk to the chest in a frozen lake."
+ },
+ {
+  "id": "mc_frozen_lake",
+  "name": "Frozen Lake",
+  "rarity": "epic",
+  "art": "A vast flat sheet of white ice with cracks spreading across its surface under a grey sky."
+ },
+ {
+  "id": "mc_judas",
+  "name": "Judas Iscariot",
+  "rarity": "epic",
+  "art": "A man sunk in ice to the neck, head bowed low over a pale frozen lake."
+ },
+ {
+  "id": "mc_discord_silence",
+  "name": "Silence of the Sowers",
+  "rarity": "rare",
+  "art": "A crowd of people standing still with their hands over their mouths in a torchlit square."
+ },
+ {
+  "id": "mc_ruggieri",
+  "name": "Archbishop Ruggieri",
+  "rarity": "legendary",
+  "art": "A bishop in ornate robes standing behind a stone tower wall, a chained figure inside."
+ },
+ {
+  "id": "mc_alberigo",
+  "name": "Fra Alberigo",
+  "rarity": "legendary",
+  "art": "A friar with ice clinging to his eyelashes, tears frozen on his cheeks."
+ },
+ {
+  "id": "mc_winter_of_cocytus",
+  "name": "Winter of Cocytus",
+  "rarity": "epic",
+  "art": "A bitter white snowstorm sweeping across an endless plain of ice."
+ },
+ {
+  "id": "mc_lucifer",
+  "name": "Lucifer, Emperor of Hell",
+  "rarity": "legendary",
+  "art": "A huge winged figure with three faces, sunk to the chest in a frozen lake."
+ },
+ {
+  "id": "mc_serpent",
+  "name": "Serpent",
+  "rarity": "token",
+  "art": "A coiled green serpent raising its head to strike."
+ },
+ {
+  "id": "mc_frozen_shade",
+  "name": "Frozen Shade",
+  "rarity": "token",
+  "art": "A pale ghostly figure locked inside a block of ice."
+ },
+ {
+  "id": "pj_wanderer_dark_wood",
+  "name": "Wanderer of the Dark Wood",
+  "rarity": "common",
+  "art": "A bearded man in a torn cloak stands alone among dense trees at dusk."
+ },
+ {
+  "id": "pj_trembling_pilgrim",
+  "name": "Trembling Pilgrim",
+  "rarity": "common",
+  "art": "A frightened man in a ragged robe cowers on a forest path with his hands raised."
+ },
+ {
+  "id": "pj_leopard_of_lust",
+  "name": "The Spotted Leopard",
+  "rarity": "common",
+  "art": "A spotted leopard with a sleek coat stands on a sunlit hillside."
+ },
+ {
+  "id": "pj_lion_of_violence",
+  "name": "The Raging Lion",
+  "rarity": "epic",
+  "art": "A fierce lion with an open roaring mouth stands on rocky ground."
+ },
+ {
+  "id": "pj_hungry_wolf",
+  "name": "The Hungry Wolf",
+  "rarity": "common",
+  "art": "A gaunt grey she-wolf with bared teeth stands on a barren plain."
+ },
+ {
+  "id": "pj_horace",
+  "name": "Horace, the Satirist",
+  "rarity": "common",
+  "art": "A bearded Roman poet with a scroll sits in a quiet meadow beside a stone wall."
+ },
+ {
+  "id": "pj_ovid",
+  "name": "Ovid, the Transformer",
+  "rarity": "rare",
+  "art": "A poet holds an open book while a figure beside him slowly turns into a tree."
+ },
+ {
+  "id": "pj_lucan",
+  "name": "Lucan, the Civil Poet",
+  "rarity": "epic",
+  "art": "A poet with a laurel crown stands before a field of broken shields and fallen soldiers."
+ },
+ {
+  "id": "pj_homer",
+  "name": "Homer, the Sovereign Poet",
+  "rarity": "legendary",
+  "art": "An old blind bard holds a lyre at the head of a group of robed poets on a grassy hill."
+ },
+ {
+  "id": "pj_statius",
+  "name": "Statius, the Faithful Poet",
+  "rarity": "rare",
+  "art": "Two robed poets walk together along a stone ridge above a dark ravine."
+ },
+ {
+  "id": "pj_heavenly_messenger",
+  "name": "The Heavenly Messenger",
+  "rarity": "rare",
+  "art": "A winged messenger in white robes stands before a tall iron gate in a city wall."
+ },
+ {
+  "id": "pj_cato",
+  "name": "Cato of Utica",
+  "rarity": "legendary",
+  "art": "An old Roman man with a stern face stands on a rocky shore by the sea at dawn."
+ },
+ {
+  "id": "pj_reed_of_humility",
+  "name": "Reed of Humility",
+  "rarity": "common",
+  "art": "A tall green reed bends in a soft breeze beside a grey shoreline."
+ },
+ {
+  "id": "pj_guiding_stars",
+  "name": "Guiding Stars",
+  "rarity": "rare",
+  "art": "A cluster of bright stars shines above a frozen lake in a clear night sky."
+ },
+ {
+  "id": "pj_beatrice",
+  "name": "Beatrice, Sent from Heaven",
+  "rarity": "legendary",
+  "art": "A serene woman in a flowing white gown stands among clouds with a gentle expression."
+ },
+ {
+  "id": "pj_dantes_courage",
+  "name": "Dante's Courage",
+  "rarity": "common",
+  "art": "A determined man in a red cloak plants his feet on a steep rocky path."
+ },
+ {
+  "id": "pj_swoon_of_pity",
+  "name": "Swoon of Pity",
+  "rarity": "common",
+  "art": "A pale man collapses to the ground, one hand pressed to his chest, in a stormy field."
+ },
+ {
+  "id": "pj_harpy_of_the_wood",
+  "name": "Harpy of the Wood",
+  "rarity": "epic",
+  "art": "A winged harpy with a woman's face perches on a split, bleeding tree trunk."
+ },
+ {
+  "id": "pj_brunetto_latini",
+  "name": "Brunetto Latini",
+  "rarity": "rare",
+  "art": "An elderly man in a scholar's cap walks across burning sand under falling flames."
+ },
+ {
+  "id": "pj_centaur_escort",
+  "name": "Centaur Escort",
+  "rarity": "epic",
+  "art": "A centaur with a drawn bow stands on a grassy riverbank beside a boiling red river."
+ },
+ {
+  "id": "pj_serpent_of_the_pit",
+  "name": "Serpent of the Pit",
+  "rarity": "common",
+  "art": "A coiled green serpent with an open jaw rests on a ledge of dark rock above a pit."
+ },
+ {
+  "id": "pj_ciacco",
+  "name": "Ciacco the Glutton",
+  "rarity": "common",
+  "art": "A bloated man lies face down in thick mud under a grey sky with falling rain."
+ },
+ {
+  "id": "pj_pier_della_vigna",
+  "name": "Pier della Vigna",
+  "rarity": "common",
+  "art": "A gnarled dark tree with split bark, and a human face pressed into its trunk."
+ },
+ {
+  "id": "pj_cleopatra",
+  "name": "Cleopatra, Queen of Lust",
+  "rarity": "rare",
+  "art": "A queen with a golden crown is blown by a stormy wind across a dark sky."
+ },
+ {
+  "id": "pj_saint_lucy",
+  "name": "Saint Lucy's Light",
+  "rarity": "common",
+  "art": "A radiant woman with a golden halo holds a lamp in a quiet room."
+ },
+ {
+  "id": "pj_beatrices_grace",
+  "name": "Beatrice's Grace",
+  "rarity": "common",
+  "art": "A woman in a blue robe gazes down from a golden cloud over a green meadow."
+ },
+ {
+  "id": "pj_virgins_mercy",
+  "name": "The Virgin's Mercy",
+  "rarity": "rare",
+  "art": "A veiled woman with open arms hovers above a ring of frozen stone figures."
+ },
+ {
+  "id": "pj_virgils_wisdom",
+  "name": "Virgil's Wisdom",
+  "rarity": "rare",
+  "art": "An older poet with a laurel wreath points at a glowing scroll in a lamp-lit room."
+ },
+ {
+  "id": "pj_rope_belt",
+  "name": "Rope Belt",
+  "rarity": "common",
+  "art": "A coil of rope falls down a dark cliff into a deep chasm."
+ },
+ {
+  "id": "pj_three_beasts",
+  "name": "Three Beasts Overcome",
+  "rarity": "common",
+  "art": "A leopard, a lion and a wolf stand in a row on a forest path."
+ },
+ {
+  "id": "pj_ascent_of_mountain",
+  "name": "Ascent of the Mountain",
+  "rarity": "common",
+  "art": "A narrow stone path climbs a sunlit mountain slope toward a bright sky."
+ },
+ {
+  "id": "pj_veil_of_stillness",
+  "name": "Veil of Stillness",
+  "rarity": "rare",
+  "art": "An open stone tomb with a grey cloth draped over its edge."
+ },
+ {
+  "id": "pj_stars_again",
+  "name": "Stars Again",
+  "rarity": "common",
+  "art": "A dense field of bright stars spreads over a dark horizon."
+ },
+ {
+  "id": "pj_dantes_resolve",
+  "name": "Dante's Resolve",
+  "rarity": "epic",
+  "art": "A hooded pilgrim raises a dagger in front of a broken iron gate."
+ },
+ {
+  "id": "pj_led_back_dark_wood",
+  "name": "Led Back to the Dark Wood",
+  "rarity": "common",
+  "art": "A grey wolf stumbles backward along a forest path, with a bright light behind it."
+ },
+ {
+  "id": "uh_spotted_leopard",
+  "name": "Spotted Leopard",
+  "rarity": "common",
+  "art": "A spotted leopard leaping up a grassy hillside."
+ },
+ {
+  "id": "uh_wood_wanderer",
+  "name": "Wanderer of the Wood",
+  "rarity": "common",
+  "art": "A weary man in a torn cloak pushing through tangled trees."
+ },
+ {
+  "id": "uh_undecided_soul",
+  "name": "Undecided Soul",
+  "rarity": "common",
+  "art": "A pale naked man standing still on a grey plain beside a blank banner."
+ },
+ {
+  "id": "uh_camilla",
+  "name": "Camilla, Volscian Maiden",
+  "rarity": "common",
+  "art": "A young woman with a bow sprinting across a golden wheat field."
+ },
+ {
+  "id": "uh_socrates",
+  "name": "Socrates, the Questioner",
+  "rarity": "rare",
+  "art": "An old bald man in a plain cloak questioning a small circle of students."
+ },
+ {
+  "id": "uh_ciacco",
+  "name": "Ciacco, the Glutton",
+  "rarity": "rare",
+  "art": "A man sprawled face-down in a muddy puddle under falling rain."
+ },
+ {
+  "id": "uh_sullen_one",
+  "name": "The Sullen",
+  "rarity": "common",
+  "art": "Two gaunt figures sunk to the waist in dark swamp water."
+ },
+ {
+  "id": "uh_avaricious_weight",
+  "name": "Avaricious Weight",
+  "rarity": "common",
+  "art": "A huge stone ball rolling along a cracked road between two crowds of shoving figures."
+ },
+ {
+  "id": "uh_lion",
+  "name": "The Lion",
+  "rarity": "common",
+  "art": "A lion with its head raised on a bare rocky ridge at dawn."
+ },
+ {
+  "id": "uh_great_refusal",
+  "name": "The Great Refusal",
+  "rarity": "rare",
+  "art": "An old man in papal robes turning his back on a golden throne."
+ },
+ {
+  "id": "uh_electra",
+  "name": "Electra, Mother of Troy",
+  "rarity": "common",
+  "art": "A veiled woman with bowed head standing among broken stone columns."
+ },
+ {
+  "id": "uh_saladin",
+  "name": "Saladin, Sultan of Egypt",
+  "rarity": "common",
+  "art": "A bearded ruler in a white robe and turban seated on a carved stone throne."
+ },
+ {
+  "id": "uh_dido",
+  "name": "Dido, Queen of Carthage",
+  "rarity": "epic",
+  "art": "A queen in a long gown standing beside a burning funeral pyre on the shore."
+ },
+ {
+  "id": "uh_helen",
+  "name": "Helen of Troy",
+  "rarity": "rare",
+  "art": "A beautiful woman with long golden hair, seen from behind at a walled city gate."
+ },
+ {
+  "id": "uh_wrathful_shade",
+  "name": "Wrathful Shade",
+  "rarity": "common",
+  "art": "A figure with clenched fists rising out of dark water."
+ },
+ {
+  "id": "uh_prodigal_weight",
+  "name": "Prodigal Weight",
+  "rarity": "common",
+  "art": "A large stone weight rolling down a steep path past scattered gold coins."
+ },
+ {
+  "id": "uh_hector",
+  "name": "Hector of Troy",
+  "rarity": "rare",
+  "art": "A bearded warrior in bronze armor holding a round shield before a burning city wall."
+ },
+ {
+  "id": "uh_penthesilea",
+  "name": "Penthesilea, Amazon Queen",
+  "rarity": "epic",
+  "art": "A warrior woman with a crescent shield and spear riding a horse."
+ },
+ {
+  "id": "uh_cleopatra",
+  "name": "Cleopatra, Queen of Egypt",
+  "rarity": "rare",
+  "art": "A dark-haired queen in a golden headdress reclining on a boat with sails."
+ },
+ {
+  "id": "uh_filippo_argenti",
+  "name": "Filippo Argenti",
+  "rarity": "rare",
+  "art": "A furious man in dark water biting his own forearm."
+ },
+ {
+  "id": "uh_homer",
+  "name": "Homer, the Blind Poet",
+  "rarity": "rare",
+  "art": "A blind bearded poet holding a lyre and sitting on a stone bench."
+ },
+ {
+  "id": "uh_achilles",
+  "name": "Achilles, Swift-Footed",
+  "rarity": "legendary",
+  "art": "A muscular warrior sprinting along a windy shore with a spear raised."
+ },
+ {
+  "id": "uh_semiramis",
+  "name": "Semiramis, Queen of Babylon",
+  "rarity": "legendary",
+  "art": "A crowned queen in a long gown standing on a stone throne above a city."
+ },
+ {
+  "id": "uh_caesar",
+  "name": "Julius Caesar",
+  "rarity": "legendary",
+  "art": "A Roman general in a red-trimmed cloak raising one hand."
+ },
+ {
+  "id": "uh_avaricious_hoarder",
+  "name": "Avaricious Hoarder",
+  "rarity": "epic",
+  "art": "A heavy bald man straining to push a huge stone weight uphill."
+ },
+ {
+  "id": "uh_thorn_jab",
+  "name": "Thorn Jab",
+  "rarity": "common",
+  "art": "A broken thorny branch lying on dead leaves."
+ },
+ {
+  "id": "uh_lost_path",
+  "name": "Lost Path",
+  "rarity": "common",
+  "art": "A narrow dirt path disappearing into a dense forest."
+ },
+ {
+  "id": "uh_hidden_shield",
+  "name": "Hidden Shield",
+  "rarity": "common",
+  "art": "A round bronze shield leaning against a stone wall in shadow."
+ },
+ {
+  "id": "uh_turned_away",
+  "name": "Turned Away at the Hill",
+  "rarity": "epic",
+  "art": "A wild cat, a lion and a wolf circling a rocky hillside."
+ },
+ {
+  "id": "uh_silencing_word",
+  "name": "Silencing Word",
+  "rarity": "common",
+  "art": "A finger pressed to closed lips above an open scroll."
+ },
+ {
+  "id": "uh_bitter_chill",
+  "name": "Bitter Chill",
+  "rarity": "common",
+  "art": "Ice crystals spreading over dead reeds at the edge of a grey lake."
+ },
+ {
+  "id": "uh_cup_of_forgetting",
+  "name": "Cup of Forgetting",
+  "rarity": "common",
+  "art": "A plain clay cup on a stone table beside a still dark pool."
+ },
+ {
+  "id": "uh_gale_of_the_lustful",
+  "name": "Gale of the Lustful",
+  "rarity": "rare",
+  "art": "A violent wind over a rough sea with many figures carried along."
+ },
+ {
+  "id": "uh_hoarded_coin",
+  "name": "Hoarded Coin",
+  "rarity": "common",
+  "art": "A single gold coin lying on a dark stone floor."
+ },
+ {
+  "id": "uh_cut_the_thread",
+  "name": "Cut the Thread",
+  "rarity": "epic",
+  "art": "Heavy iron shears cutting a long white thread."
+ },
+ {
+  "id": "uh_limbo_shade",
+  "name": "Shade of Limbo",
+  "rarity": "token",
+  "art": "A pale translucent human silhouette drifting above grey stones."
+ }
+]

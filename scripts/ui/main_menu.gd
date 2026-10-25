@@ -38,6 +38,10 @@ func _ready() -> void:
 	coll.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	coll.pressed.connect(func(): Game.go(Game.COLLECTION))
 	col.add_child(coll)
+	var packs := UI.button("Open Packs (%d)" % Collection.packs if Collection.packs > 0 else "Open Packs", 460)
+	packs.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	packs.pressed.connect(func(): Game.go(Game.PACKS))
+	col.add_child(packs)
 	var opts := UI.button("Options", 460)
 	opts.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	opts.pressed.connect(func(): add_child(OptionsPanel.new()))

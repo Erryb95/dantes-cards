@@ -1,5 +1,5 @@
 {
- "_doc": "Starter decks: 20 cards each. hero is a heroes[].id from cards.json.",
+ "_doc": "Starter decks: 30 cards each (class + neutral, max 2 copies, 1 per legendary). hero is a heroes[].id from cards.json.",
  "decks": [
   {
    "id": "pilgrim",
@@ -20,7 +20,15 @@
     "phlegyas": 1,
     "paolo": 1,
     "francesca": 1,
-    "ugolino": 1
+    "ugolino": 1,
+    "pj_wanderer_dark_wood": 1,
+    "pj_horace": 2,
+    "pj_dantes_courage": 2,
+    "pj_hungry_wolf": 1,
+    "pj_saint_lucy": 1,
+    "pj_serpent_of_the_pit": 1,
+    "pj_ciacco": 1,
+    "pj_trembling_pilgrim": 1
    }
   },
   {
@@ -41,7 +49,15 @@
     "medusa_gaze": 1,
     "souls_of_the_styx": 1,
     "minotaur_rampage": 1,
-    "minos": 1
+    "minos": 1,
+    "ih_barbariccia": 2,
+    "ih_cagnazzo": 2,
+    "ih_draghignazzo": 1,
+    "ih_burning_rain": 1,
+    "ih_cacus_stolen_herd": 1,
+    "ih_rain_of_sand": 1,
+    "ih_boiling_tide": 1,
+    "ih_ephialtes": 1
    }
   }
  ]

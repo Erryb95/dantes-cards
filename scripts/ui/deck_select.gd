@@ -10,7 +10,7 @@ func _ready() -> void:
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.alignment = BoxContainer.ALIGNMENT_CENTER
-	root.add_theme_constant_override("separation", 30)
+	root.add_theme_constant_override("separation", 22)
 	add_child(root)
 	var title := UI.label("Choose your path", 70, "title", UI.GOLD, 10, Color.BLACK)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -25,6 +25,7 @@ func _ready() -> void:
 	root.add_child(row)
 	for d in CardDB.decks():
 		row.add_child(_deck_panel(d))
+	root.add_child(_my_decks())
 	var back := UI.button("Back", 300, 70)
 	back.pressed.connect(func(): Game.go(Game.MENU))
 	var bc := CenterContainer.new()
@@ -35,7 +36,7 @@ func _ready() -> void:
 func _deck_panel(d: Dictionary) -> Control:
 	var hero := CardDB.hero(d.hero)
 	var p := PanelContainer.new()
-	p.custom_minimum_size = Vector2(700, 620)
+	p.custom_minimum_size = Vector2(700, 560)
 	var normal := UI.box(Color(0.08, 0.04, 0.035, 0.9), UI.GOLD_DARK, 3, 18, Color(0, 0, 0, 0.6), 24)
 	var hover := UI.box(Color(0.2, 0.06, 0.04, 0.95), UI.GOLD, 4, 18, Color(1.0, 0.45, 0.1, 0.5), 34)
 	p.add_theme_stylebox_override("panel", normal)
@@ -85,3 +86,40 @@ func _deck_panel(d: Dictionary) -> Control:
 		c.rotation = (i - 1) * 0.12
 		cards.add_child(c)
 	return p
+
+
+## "Your decks": one button per saved deck (play it, or edit it with the pen), plus new-deck buttons.
+func _my_decks() -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 14)
+	for i in Collection.decks.size():
+		var d: Dictionary = Collection.decks[i]
+		var ok := Collection.deck_problem(d) == ""
+		var b := UI.button(d.name if ok else "%s (%s)" % [d.name, Collection.deck_problem(d)], 300, 64)
+		b.add_theme_font_size_override("font_size", 22)
+		b.tooltip_text = "Pilgrim" if d.cls == "pilgrim" else "Ferryman"
+		b.pressed.connect(func():
+			if Collection.deck_problem(d) == "":
+				Sfx.play("ui_confirm", -4.0)
+				Game.start_with(Collection.deck_cards(d.cards), Collection.CLASS_HERO[d.cls],
+					"ferry" if d.cls == "pilgrim" else "pilgrim")
+			else:
+				_edit(i, d.cls))
+		row.add_child(b)
+		var e := UI.button("Edit", 90, 64)
+		e.add_theme_font_size_override("font_size", 22)
+		e.pressed.connect(_edit.bind(i, d.cls))
+		row.add_child(e)
+	for c in [["pilgrim", "+ Pilgrim deck"], ["ferry", "+ Ferryman deck"]]:
+		var n := UI.button(c[1], 260, 64)
+		n.add_theme_font_size_override("font_size", 22)
+		n.pressed.connect(_edit.bind(-1, c[0]))
+		row.add_child(n)
+	return row
+
+
+func _edit(index: int, cls: String) -> void:
+	Game.edit_deck = index
+	Game.new_deck_cls = cls
+	Game.go(Game.DECK_BUILDER)

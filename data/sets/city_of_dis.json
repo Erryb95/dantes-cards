@@ -1,0 +1,594 @@
+{
+ "set_name": "The City of Dis",
+ "cards": [
+  {
+   "id": "cd_lano",
+   "name": "Lano of Siena",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 2,
+   "health": 1,
+   "keywords": ["swift"],
+   "text": "Swift.",
+   "flavor": "He spent his whole fortune, and now the hounds never let him rest.",
+   "circle": "violence",
+   "art": "A young man in a fine cloak runs barefoot across a field of brambles while black dogs chase him."
+  },
+  {
+   "id": "cd_scrovegni",
+   "name": "Reginaldo degli Scrovegni",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 1,
+   "health": 2,
+   "effects": [
+    {"on": "play", "do": "give_card", "card": "cd_usurers_purse", "count": 1}
+   ],
+   "text": "On Play: Add a Usurer's Purse to your hand.",
+   "flavor": "He counted his coins even while burning.",
+   "circle": "violence",
+   "art": "A stout merchant in a fur-trimmed coat clutches a heavy leather purse against his chest."
+  },
+  {
+   "id": "cd_pholus",
+   "name": "Pholus, the Centaur",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 1,
+   "health": 3,
+   "keywords": ["guard"],
+   "text": "Guard.",
+   "flavor": "A patient guard who never lets anyone climb too high.",
+   "circle": "violence",
+   "art": "A centaur with a bow across his shoulders stands on the bank of a dark red river."
+  },
+  {
+   "id": "cd_pier_della_vigna",
+   "name": "Pier della Vigna",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 2,
+   "attack": 2,
+   "health": 4,
+   "keywords": ["guard", "rebirth"],
+   "text": "Guard. Rebirth.",
+   "flavor": "Cut from his own tree, he still grows back each time he is broken.",
+   "circle": "violence",
+   "art": "A gnarled leafless tree with a pale human face in its trunk, its broken branches dripping dark sap."
+  },
+  {
+   "id": "cd_giacomo",
+   "name": "Giacomo da Sant'Andrea",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 3,
+   "health": 2,
+   "keywords": ["swift"],
+   "effects": [
+    {"on": "death", "do": "summon", "card": "cd_black_hound", "count": 1}
+   ],
+   "text": "Swift. Last Breath: Summon a 1/1 Black Hound.",
+   "flavor": "He ran from his debts, and the hounds ran after him.",
+   "circle": "violence",
+   "art": "A thin man sprints through a dark wood with a pack of black dogs leaping behind him."
+  },
+  {
+   "id": "cd_rusticucci",
+   "name": "Iacopo Rusticucci",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 3,
+   "keywords": ["drain"],
+   "text": "Drain.",
+   "flavor": "Even in the sand, he asks to be remembered kindly by the living.",
+   "circle": "violence",
+   "art": "Two old men in long robes walk together across hot sand, one leaning on a staff."
+  },
+  {
+   "id": "cd_guy_montfort",
+   "name": "Guy de Montfort",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 3,
+   "effects": [
+    {"on": "play", "do": "damage", "target": "choose_minion", "amount": 1}
+   ],
+   "text": "On Play: Deal 1 damage to a minion.",
+   "flavor": "He killed his cousin inside a church, and now the blood boils around him.",
+   "circle": "violence",
+   "art": "A knight in chain mail with a sword stands waist deep in a crimson river."
+  },
+  {
+   "id": "cd_brunetto",
+   "name": "Brunetto Latini",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 2,
+   "health": 4,
+   "effects": [
+    {"on": "play", "do": "draw", "amount": 1}
+   ],
+   "text": "On Play: Draw a card.",
+   "flavor": "Once Dante's teacher, now he runs across the burning sand forever.",
+   "circle": "violence",
+   "art": "An elderly scholar in a long gown runs across pale sand under a shower of glowing sparks."
+  },
+  {
+   "id": "cd_guido_guerra",
+   "name": "Guido Guerra",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "keywords": ["venom"],
+   "text": "Venom.",
+   "flavor": "A great lord of Florence, now one more soul on the sand.",
+   "circle": "violence",
+   "art": "A bearded nobleman in a fine tunic stands on burning sand with a sword at his side."
+  },
+  {
+   "id": "cd_priscian",
+   "name": "Priscian",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 2,
+   "health": 4,
+   "effects": [
+    {"on": "play", "do": "ramp", "amount": 1}
+   ],
+   "text": "On Play: Gain an empty mana crystal.",
+   "flavor": "The grammarian who wrote the rules, and still walks by them in the sand.",
+   "circle": "violence",
+   "art": "A white-haired scholar holds an open book while walking across a burning sandy plain."
+  },
+  {
+   "id": "cd_epicurus",
+   "name": "Epicurus",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "keywords": ["ward"],
+   "effects": [
+    {"on": "death", "do": "heal", "target": "all_friendly_minions", "amount": 2}
+   ],
+   "text": "Ward. Last Breath: Restore 2 Health to all friendly minions.",
+   "flavor": "He taught that the soul dies with the body. Now he burns in a tomb to prove it wrong.",
+   "circle": "heresy",
+   "art": "A bald old philosopher in a plain robe lies inside an open stone tomb with flames rising from its edge."
+  },
+  {
+   "id": "cd_dionysius",
+   "name": "Dionysius of Syracuse",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "keywords": ["venom"],
+   "effects": [
+    {"on": "turn_start", "do": "buff", "target": "random_friendly_minion", "attack": 1, "health": 0}
+   ],
+   "text": "Venom. Start of Turn: Give a random friendly minion +1/+0.",
+   "flavor": "A tyrant who ruled by fear, now boiling in the blood of his victims.",
+   "circle": "violence",
+   "art": "A crowned ruler in a dark cloak stands on a riverbank, holding a dagger."
+  },
+  {
+   "id": "cd_nessus",
+   "name": "Nessus, the Centaur",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 3,
+   "health": 4,
+   "keywords": ["guard"],
+   "effects": [
+    {"on": "turn_end", "do": "damage", "target": "random_enemy_minion", "amount": 1}
+   ],
+   "text": "Guard. End of Turn: Deal 1 damage to a random enemy minion.",
+   "flavor": "He shoots anyone who climbs higher than the blood allows.",
+   "circle": "violence",
+   "art": "A centaur archer with a drawn bow stands at the edge of a crimson river."
+  },
+  {
+   "id": "cd_cavalcante",
+   "name": "Cavalcante de' Cavalcanti",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 4,
+   "attack": 3,
+   "health": 4,
+   "effects": [
+    {"on": "play", "do": "damage", "target": "choose_enemy_minion", "amount": 2}
+   ],
+   "text": "On Play: Deal 2 damage to an enemy minion.",
+   "flavor": "He rose from his tomb only to ask whether his son was still alive.",
+   "circle": "heresy",
+   "art": "An old man half risen from an open stone tomb, peering up with a worried face."
+  },
+  {
+   "id": "cd_anastasius",
+   "name": "Pope Anastasius",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 4,
+   "attack": 2,
+   "health": 6,
+   "keywords": ["guard"],
+   "effects": [
+    {"on": "turn_end", "do": "heal", "target": "own_hero", "amount": 1}
+   ],
+   "text": "Guard. End of Turn: Restore 1 Health to your hero.",
+   "flavor": "A pope who strayed into heresy, now sealed in stone.",
+   "circle": "heresy",
+   "art": "A pope in a tall mitre and heavy gold vestments lies in a stone sarcophagus."
+  },
+  {
+   "id": "cd_ezzelino",
+   "name": "Ezzelino da Romano",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 4,
+   "attack": 4,
+   "health": 4,
+   "keywords": ["drain"],
+   "text": "Drain.",
+   "flavor": "A warlord so cruel that his name still makes men pale.",
+   "circle": "violence",
+   "art": "A grim armored commander with a scarred face holds a bloodied sword by a river."
+  },
+  {
+   "id": "cd_alexander",
+   "name": "Alexander the Great",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 4,
+   "attack": 4,
+   "health": 4,
+   "keywords": ["swift"],
+   "text": "Swift.",
+   "flavor": "The conqueror who never stopped, not even here.",
+   "circle": "violence",
+   "art": "A young king in a golden crown charges on a warhorse across a plain at dusk."
+  },
+  {
+   "id": "cd_medusa_gate",
+   "name": "Medusa, Gate Guardian",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 4,
+   "attack": 3,
+   "health": 5,
+   "effects": [
+    {"on": "play", "do": "freeze", "target": "choose_enemy_minion"}
+   ],
+   "text": "On Play: Freeze an enemy minion.",
+   "flavor": "One look, and the attacker is turned to stone.",
+   "circle": "dis",
+   "art": "A woman with serpents for hair stares out from behind tall iron gates."
+  },
+  {
+   "id": "cd_vitaliano",
+   "name": "Vitaliano del Dente",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 2,
+   "health": 5,
+   "effects": [
+    {"on": "turn_end", "do": "draw", "amount": 1}
+   ],
+   "text": "End of Turn: Draw a card.",
+   "flavor": "He collects his interest every day, even here.",
+   "circle": "violence",
+   "art": "A usurer in a dark robe counts coins at a wooden table beside a leather purse."
+  },
+  {
+   "id": "cd_frederick_ii",
+   "name": "Emperor Frederick II",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 5,
+   "attack": 5,
+   "health": 5,
+   "keywords": ["ward"],
+   "effects": [
+    {"on": "play", "do": "freeze", "target": "choose_enemy_minion"}
+   ],
+   "text": "Ward. On Play: Freeze an enemy minion.",
+   "flavor": "An emperor who denied the soul, now sealed in a burning tomb.",
+   "circle": "heresy",
+   "art": "A crowned emperor with a long beard sits on a stone tomb with fire glowing under its lid."
+  },
+  {
+   "id": "cd_messenger_heaven",
+   "name": "Messenger from Heaven",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 5,
+   "attack": 4,
+   "health": 6,
+   "keywords": ["ward"],
+   "effects": [
+    {"on": "play", "do": "silence", "target": "choose_enemy_minion"}
+   ],
+   "text": "Ward. On Play: Silence an enemy minion.",
+   "flavor": "He walks through the gate, and the demons fall silent.",
+   "circle": "dis",
+   "art": "A radiant winged figure in white robes holds a long staff before a huge iron gate."
+  },
+  {
+   "id": "cd_attila",
+   "name": "Attila, Scourge of God",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 5,
+   "attack": 5,
+   "health": 4,
+   "keywords": ["swift"],
+   "effects": [
+    {"on": "death", "do": "damage", "target": "all_enemy_minions", "amount": 2}
+   ],
+   "text": "Swift. Last Breath: Deal 2 damage to all enemy minions.",
+   "flavor": "He spread ruin across the world, and here the ruin spreads back.",
+   "circle": "violence",
+   "art": "A bearded warlord in a horned helmet rides a rearing horse at the head of a dark army."
+  },
+  {
+   "id": "cd_capaneus",
+   "name": "Capaneus, the Defiant",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 6,
+   "attack": 5,
+   "health": 6,
+   "keywords": ["ward"],
+   "effects": [
+    {"on": "turn_end", "do": "damage", "target": "all_enemies", "amount": 1}
+   ],
+   "text": "Ward. End of Turn: Deal 1 damage to all enemies.",
+   "flavor": "He defied the gods, and the rain of fire never stops falling on him.",
+   "circle": "violence",
+   "art": "A giant warrior stands upright on burning sand while flames fall around him from a black sky."
+  },
+  {
+   "id": "cd_minotaur",
+   "name": "The Minotaur",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 6,
+   "attack": 6,
+   "health": 5,
+   "keywords": ["swift"],
+   "effects": [
+    {"on": "death", "do": "damage", "target": "random_enemy_minion", "amount": 3}
+   ],
+   "text": "Swift. Last Breath: Deal 3 damage to a random enemy minion.",
+   "flavor": "Half man, half bull, and all rage. He guards the river of blood.",
+   "circle": "violence",
+   "art": "A bull-headed giant with a heavy axe roars on a stone ledge above a red river."
+  },
+  {
+   "id": "cd_old_man_crete",
+   "name": "Old Man of Crete",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 7,
+   "attack": 6,
+   "health": 9,
+   "keywords": ["guard"],
+   "effects": [
+    {"on": "turn_end", "do": "heal", "target": "own_hero", "amount": 2}
+   ],
+   "text": "Guard. End of Turn: Restore 2 Health to your hero.",
+   "flavor": "His tears feed every river in hell, and he never stops crying.",
+   "circle": "violence",
+   "art": "A colossal statue of an old man with a cracked head, tears running down into a deep rocky chasm."
+  },
+  {
+   "id": "cd_burning_sand",
+   "name": "Burning Sand",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {"on": "play", "do": "damage", "target": "choose_any", "amount": 2}
+   ],
+   "text": "Deal 2 damage.",
+   "flavor": "The sand is hot enough to scorch anyone who stands on it.",
+   "circle": "violence",
+   "art": "Glowing grains of sand blow off a dune in a hot wind."
+  },
+  {
+   "id": "cd_usurers_purse",
+   "name": "Usurer's Purse",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {"on": "play", "do": "draw", "amount": 1},
+    {"on": "play", "do": "ramp", "amount": 1}
+   ],
+   "text": "Draw a card. Gain an empty mana crystal.",
+   "flavor": "Every coin lent is a coin owed, with interest.",
+   "circle": "violence",
+   "art": "A small leather purse spills gold coins onto a wooden table."
+  },
+  {
+   "id": "cd_bleeding_branch",
+   "name": "Bleeding Branch",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {"on": "play", "do": "damage", "target": "choose_minion", "amount": 2},
+    {"on": "play", "do": "heal", "target": "own_hero", "amount": 2}
+   ],
+   "text": "Deal 2 damage to a minion. Restore 2 Health to your hero.",
+   "flavor": "Snap a branch and it bleeds, as if it were a person.",
+   "circle": "violence",
+   "art": "A broken twig drips dark red sap onto a gnarled stump."
+  },
+  {
+   "id": "cd_walls_of_dis",
+   "name": "Walls of Dis",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {"on": "play", "do": "armor", "target": "own_hero", "amount": 3}
+   ],
+   "text": "Gain 3 Armor.",
+   "flavor": "The iron walls will hold, for a while.",
+   "circle": "dis",
+   "art": "A tall iron-banded city wall with stone towers rises from a dark plain."
+  },
+  {
+   "id": "cd_sealed_tomb",
+   "name": "Sealed Tomb",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 2,
+   "effects": [
+    {"on": "play", "do": "silence", "target": "choose_enemy_minion"}
+   ],
+   "text": "Silence an enemy minion.",
+   "flavor": "The lid slides shut, and the sinner can no longer speak.",
+   "circle": "heresy",
+   "art": "A stone tomb lid slides shut over an open coffin with a faint glow inside."
+  },
+  {
+   "id": "cd_hounds_of_lano",
+   "name": "Hounds of Lano",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 3,
+   "effects": [
+    {"on": "play", "do": "summon", "card": "cd_black_hound", "count": 2}
+   ],
+   "text": "Summon two 1/1 Black Hounds.",
+   "flavor": "The black hounds run down the man who spent everything he had.",
+   "circle": "violence",
+   "art": "Two black hounds with red eyes race across a moonlit field."
+  },
+  {
+   "id": "cd_gate_of_dis",
+   "name": "Gate of Dis",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 3,
+   "effects": [
+    {"on": "play", "do": "bounce", "target": "choose_enemy_minion"}
+   ],
+   "text": "Return an enemy minion to its owner's hand.",
+   "flavor": "A push at the gate sends the demon back where it came from.",
+   "circle": "dis",
+   "art": "A heavy iron gate swings open onto a dark road."
+  },
+  {
+   "id": "cd_rain_of_fire",
+   "name": "Rain of Fire",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 4,
+   "effects": [
+    {"on": "play", "do": "damage", "target": "all_enemy_minions", "amount": 2}
+   ],
+   "text": "Deal 2 damage to all enemy minions.",
+   "flavor": "The flames fall slowly, and nobody can run from them.",
+   "circle": "violence",
+   "art": "Flaming embers drift down from a dark sky onto a plain of pale sand."
+  },
+  {
+   "id": "cd_furys_lash",
+   "name": "Fury's Lash",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 4,
+   "effects": [
+    {"on": "play", "do": "destroy", "target": "choose_enemy_minion"}
+   ],
+   "text": "Destroy an enemy minion.",
+   "flavor": "One lash of the whip, and the sinner is gone.",
+   "circle": "dis",
+   "art": "A woman with a whip of writhing snakes is raised above a dark gate."
+  },
+  {
+   "id": "cd_sealed_lids",
+   "name": "Sealed Lids",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 6,
+   "effects": [
+    {"on": "play", "do": "freeze", "target": "all_enemy_minions"}
+   ],
+   "text": "Freeze all enemy minions.",
+   "flavor": "Every lid is shut, and nobody inside can move.",
+   "circle": "heresy",
+   "art": "A row of stone tomb lids closed over open graves on a dark hillside."
+  },
+  {
+   "id": "cd_black_hound",
+   "name": "Black Hound",
+   "set": "token",
+   "type": "minion",
+   "rarity": "token",
+   "cost": 1,
+   "attack": 1,
+   "health": 1,
+   "keywords": ["swift"],
+   "text": "Swift.",
+   "flavor": "It never stops until it catches its prey.",
+   "circle": "violence",
+   "art": "A black dog with red eyes running low across the ground."
+  }
+ ]
+}

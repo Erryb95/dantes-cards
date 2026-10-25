@@ -1,0 +1,592 @@
+{
+  "set_name": "Malebolge and Cocytus",
+  "cards": [
+    {
+      "id": "mc_thais",
+      "name": "Thaïs, the Flatterer",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "common",
+      "cost": 1,
+      "attack": 1,
+      "health": 2,
+      "effects": [
+        {"on": "play", "do": "draw", "amount": 1}
+      ],
+      "text": "On Play: Draw a card.",
+      "flavor": "She praised every man who had something to give her.",
+      "circle": "malebolge",
+      "art": "A smiling woman in a veil holding out an open hand full of gold coins."
+    },
+    {
+      "id": "mc_ciampolo",
+      "name": "Ciampolo, the Barrator",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "common",
+      "cost": 1,
+      "attack": 2,
+      "health": 1,
+      "text": "",
+      "flavor": "Boiling pitch on his skin, and still he tries to climb out.",
+      "circle": "malebolge",
+      "art": "A naked man climbing out of a black pool of boiling pitch, reaching for the edge."
+    },
+    {
+      "id": "mc_boiling_pitch",
+      "name": "Boiling Pitch",
+      "set": "neutral",
+      "type": "spell",
+      "rarity": "common",
+      "cost": 1,
+      "effects": [
+        {"on": "play", "do": "damage", "target": "choose_any", "amount": 2}
+      ],
+      "text": "Deal 2 damage to any target.",
+      "flavor": "The pitch scalds whoever tries to climb out.",
+      "circle": "malebolge",
+      "art": "A bubbling cauldron of black pitch with a single hand reaching up from the surface."
+    },
+    {
+      "id": "mc_sinons_lie",
+      "name": "Sinon's Lie",
+      "set": "neutral",
+      "type": "spell",
+      "rarity": "common",
+      "cost": 1,
+      "effects": [
+        {"on": "play", "do": "ramp", "amount": 1}
+      ],
+      "text": "Gain 1 empty Mana Crystal.",
+      "flavor": "One false story, and the gates open from the inside.",
+      "circle": "malebolge",
+      "art": "A large wooden horse standing outside a city wall at dusk."
+    },
+    {
+      "id": "mc_jason",
+      "name": "Jason, the Seducer",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "common",
+      "cost": 2,
+      "attack": 3,
+      "health": 2,
+      "keywords": ["swift"],
+      "text": "Swift.",
+      "flavor": "He won the hearts of queens, then sailed away without a word.",
+      "circle": "malebolge",
+      "art": "A bearded man in a Greek cloak stepping off a wooden ship onto a sandy beach."
+    },
+    {
+      "id": "mc_venedico",
+      "name": "Venedico Caccianemico",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "common",
+      "cost": 2,
+      "attack": 2,
+      "health": 3,
+      "keywords": ["drain"],
+      "text": "Drain.",
+      "flavor": "He sold his own kin for coin, and he never stopped counting.",
+      "circle": "malebolge",
+      "art": "A man in a long cloak handing a pouch of coins to a veiled woman."
+    },
+    {
+      "id": "mc_alessio",
+      "name": "Alessio Interminei",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "common",
+      "cost": 2,
+      "attack": 1,
+      "health": 3,
+      "keywords": ["ward"],
+      "text": "Ward.",
+      "flavor": "All his flattery left him sitting in the muck.",
+      "circle": "malebolge",
+      "art": "A grinning man sitting waist-deep in brown muck, holding a cup up to his mouth."
+    },
+    {
+      "id": "mc_master_adam",
+      "name": "Master Adam",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "rare",
+      "cost": 2,
+      "attack": 2,
+      "health": 2,
+      "keywords": ["rebirth"],
+      "text": "Rebirth.",
+      "flavor": "Swollen with water, he still asks for one more drink.",
+      "circle": "malebolge",
+      "art": "A man with a huge round belly sitting on a stone rim, holding an empty cup."
+    },
+    {
+      "id": "mc_gilded_cloak",
+      "name": "Gilded Lead Cloak",
+      "set": "neutral",
+      "type": "spell",
+      "rarity": "common",
+      "cost": 2,
+      "effects": [
+        {"on": "play", "do": "buff", "target": "choose_friendly_minion", "attack": 0, "health": 3, "keywords": ["ward"]}
+      ],
+      "text": "Give a friendly minion +0/+3 and Ward.",
+      "flavor": "Shining on the outside, crushing on the inside.",
+      "circle": "malebolge",
+      "art": "A heavy cloak of gold-coloured metal folded over a stone bench."
+    },
+    {
+      "id": "mc_frozen_tears",
+      "name": "Frozen Tears",
+      "set": "neutral",
+      "type": "spell",
+      "rarity": "common",
+      "cost": 2,
+      "effects": [
+        {"on": "play", "do": "freeze", "target": "choose_enemy_minion"}
+      ],
+      "text": "Freeze an enemy minion.",
+      "flavor": "Their tears froze before they could fall.",
+      "circle": "cocytus",
+      "art": "A single tear of clear ice hanging from the cheek of a pale face."
+    },
+    {
+      "id": "mc_caiaphas",
+      "name": "Caiaphas, the Hypocrite",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "common",
+      "cost": 2,
+      "attack": 1,
+      "health": 4,
+      "keywords": ["guard"],
+      "text": "Guard.",
+      "flavor": "Nailed to the ground, every hypocrite walks over him.",
+      "circle": "malebolge",
+      "art": "A man stretched flat on the ground with a heavy wooden cross lying across his body."
+    },
+    {
+      "id": "mc_pier_medicina",
+      "name": "Pier da Medicina",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "common",
+      "cost": 3,
+      "attack": 2,
+      "health": 3,
+      "effects": [
+        {"on": "turn_start", "do": "silence", "target": "random_enemy_minion"}
+      ],
+      "text": "Start of Turn: Silence a random enemy minion.",
+      "flavor": "He sowed quarrels with his tongue, and now he cannot speak.",
+      "circle": "malebolge",
+      "art": "A pale man with a deep wound across his throat, one hand raised as if to speak."
+    },
+    {
+      "id": "mc_tiresias",
+      "name": "Tiresias, the Seer",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "rare",
+      "cost": 3,
+      "attack": 2,
+      "health": 4,
+      "effects": [
+        {"on": "turn_start", "do": "draw", "amount": 1}
+      ],
+      "text": "Start of Turn: Draw a card.",
+      "flavor": "His head is turned backwards, yet he still sees what is coming.",
+      "circle": "malebolge",
+      "art": "A man walking forward with his head twisted completely around, looking over his shoulder."
+    },
+    {
+      "id": "mc_mosca",
+      "name": "Mosca dei Lamberti",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "common",
+      "cost": 3,
+      "attack": 3,
+      "health": 2,
+      "effects": [
+        {"on": "death", "do": "damage", "target": "all_enemy_minions", "amount": 1}
+      ],
+      "text": "Last Breath: Deal 1 damage to all enemy minions.",
+      "flavor": "One reckless remark split a whole city in two.",
+      "circle": "malebolge",
+      "art": "A man raising two stumps where his hands used to be, standing in a crowded street."
+    },
+    {
+      "id": "mc_manto",
+      "name": "Manto, the Prophetess",
+      "set": "neutral",
+      "type": "spell",
+      "rarity": "common",
+      "cost": 3,
+      "effects": [
+        {"on": "play", "do": "draw", "amount": 2}
+      ],
+      "text": "Draw 2 cards.",
+      "flavor": "She reads a city's future before the fires begin.",
+      "circle": "malebolge",
+      "art": "A woman with long loose hair standing over a smoking bowl in an open field."
+    },
+    {
+      "id": "mc_michael_scot",
+      "name": "Michael Scot, the Sorcerer",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "rare",
+      "cost": 3,
+      "attack": 3,
+      "health": 3,
+      "effects": [
+        {"on": "play", "do": "silence", "target": "choose_enemy_minion"}
+      ],
+      "text": "On Play: Silence an enemy minion.",
+      "flavor": "He studied the stars and claimed every secret they held.",
+      "circle": "malebolge",
+      "art": "A bearded scholar in a long robe holding an astrolabe over an open book."
+    },
+    {
+      "id": "mc_earth_swallows",
+      "name": "Earth Swallows the Seer",
+      "set": "neutral",
+      "type": "spell",
+      "rarity": "common",
+      "cost": 3,
+      "effects": [
+        {"on": "play", "do": "damage", "target": "choose_enemy_minion", "amount": 3}
+      ],
+      "text": "Deal 3 damage to an enemy minion.",
+      "flavor": "The ground opened and took him, chariot and all.",
+      "circle": "malebolge",
+      "art": "A deep crack opening in the ground beneath a horse-drawn chariot."
+    },
+    {
+      "id": "mc_jovial_friars",
+      "name": "The Jovial Friars",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "common",
+      "cost": 3,
+      "attack": 2,
+      "health": 4,
+      "keywords": ["ward"],
+      "text": "Ward.",
+      "flavor": "Their gilded cloaks are made of lead, and they still smile.",
+      "circle": "malebolge",
+      "art": "Two hooded monks in long robes walking side by side, their hoods pulled low."
+    },
+    {
+      "id": "mc_vanni_fucci",
+      "name": "Vanni Fucci, the Thief",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "rare",
+      "cost": 3,
+      "attack": 3,
+      "health": 3,
+      "keywords": ["venom"],
+      "text": "Venom.",
+      "flavor": "He stole from the sacristy, and the serpents came to collect.",
+      "circle": "malebolge",
+      "art": "A naked man wrapped in serpent coils, one snake sinking its fangs into his neck."
+    },
+    {
+      "id": "mc_agnello",
+      "name": "Agnello Brunelleschi",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "common",
+      "cost": 4,
+      "attack": 3,
+      "health": 4,
+      "effects": [
+        {"on": "death", "do": "summon", "card": "mc_serpent", "count": 1}
+      ],
+      "text": "Last Breath: Summon a 2/2 Serpent with Venom.",
+      "flavor": "He trades his human shape for a serpent's, and keeps the theft.",
+      "circle": "malebolge",
+      "art": "A man whose lower body is twisting into a serpent, coiled around a stone pillar."
+    },
+    {
+      "id": "mc_bertran",
+      "name": "Bertran de Born",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "rare",
+      "cost": 4,
+      "attack": 4,
+      "health": 3,
+      "keywords": ["rebirth"],
+      "text": "Rebirth.",
+      "flavor": "He carries his own severed head like a lantern.",
+      "circle": "malebolge",
+      "art": "A man holding his own severed head up by the hair, facing forward."
+    },
+    {
+      "id": "mc_ulysses",
+      "name": "Ulysses, the Schemer",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "rare",
+      "cost": 4,
+      "attack": 3,
+      "health": 3,
+      "effects": [
+        {"on": "play", "do": "bounce", "target": "choose_enemy_minion"}
+      ],
+      "text": "On Play: Return an enemy minion to its owner's hand.",
+      "flavor": "His clever counsel sent a whole fleet to the bottom.",
+      "circle": "malebolge",
+      "art": "A helmeted man at a ship's prow beside a lit beacon fire on dark water."
+    },
+    {
+      "id": "mc_guido",
+      "name": "Guido da Montefeltro",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "epic",
+      "cost": 4,
+      "attack": 3,
+      "health": 5,
+      "effects": [
+        {"on": "play", "do": "freeze", "target": "choose_enemy_minion"}
+      ],
+      "text": "On Play: Freeze an enemy minion.",
+      "flavor": "One crafty piece of advice, and he burns for it forever.",
+      "circle": "malebolge",
+      "art": "A hooded man wrapped in a tall tongue of fire, hands clasped in prayer."
+    },
+    {
+      "id": "mc_gianni_schicchi",
+      "name": "Gianni Schicchi",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "rare",
+      "cost": 4,
+      "attack": 4,
+      "health": 3,
+      "effects": [
+        {"on": "play", "do": "give_card", "card": "mc_gianni_schicchi", "count": 1}
+      ],
+      "text": "On Play: Add a copy of Gianni Schicchi to your hand.",
+      "flavor": "He pretended to be a dead man, and the trick paid well.",
+      "circle": "malebolge",
+      "art": "A man in a sickroom leaning over a bed, holding a forged will and a pen."
+    },
+    {
+      "id": "mc_myrrhas_disguise",
+      "name": "Myrrha's Disguise",
+      "set": "neutral",
+      "type": "spell",
+      "rarity": "common",
+      "cost": 4,
+      "effects": [
+        {"on": "play", "do": "buff", "target": "choose_friendly_minion", "attack": 2, "health": 2, "keywords": ["ward"]}
+      ],
+      "text": "Give a friendly minion +2/+2 and Ward.",
+      "flavor": "She wore another face, and nobody questioned it.",
+      "circle": "malebolge",
+      "art": "A veiled woman stepping out of a doorway, a cloth pulled over her face."
+    },
+    {
+      "id": "mc_bocca",
+      "name": "Bocca degli Abati",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "epic",
+      "cost": 5,
+      "attack": 4,
+      "health": 5,
+      "effects": [
+        {"on": "play", "do": "freeze", "target": "random_enemy_minion"}
+      ],
+      "text": "On Play: Freeze a random enemy minion.",
+      "flavor": "He betrayed his own side, and now the ice holds him still.",
+      "circle": "cocytus",
+      "art": "A pale man with a set face, frozen in a block of ice up to his shoulders."
+    },
+    {
+      "id": "mc_brutus",
+      "name": "Brutus, the Betrayer",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "common",
+      "cost": 5,
+      "attack": 5,
+      "health": 4,
+      "keywords": ["swift"],
+      "text": "Swift.",
+      "flavor": "He struck his friend from behind, and the ice kept the blade.",
+      "circle": "cocytus",
+      "art": "A man raising a dagger, frozen mid-stride inside a sheet of ice."
+    },
+    {
+      "id": "mc_cassius",
+      "name": "Cassius, the Conspirator",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "rare",
+      "cost": 5,
+      "attack": 4,
+      "health": 5,
+      "effects": [
+        {"on": "death", "do": "freeze", "target": "random_enemy_minion"}
+      ],
+      "text": "Last Breath: Freeze a random enemy minion.",
+      "flavor": "He led the plot, and now he is stuck in the same ice.",
+      "circle": "cocytus",
+      "art": "A bearded man with one arm raised, sunk to the chest in a frozen lake."
+    },
+    {
+      "id": "mc_frozen_lake",
+      "name": "Frozen Lake",
+      "set": "neutral",
+      "type": "spell",
+      "rarity": "epic",
+      "cost": 5,
+      "effects": [
+        {"on": "play", "do": "freeze", "target": "all_enemy_minions"}
+      ],
+      "text": "Freeze all enemy minions.",
+      "flavor": "Nothing moves on the lake where the traitors are held.",
+      "circle": "cocytus",
+      "art": "A vast flat sheet of white ice with cracks spreading across its surface under a grey sky."
+    },
+    {
+      "id": "mc_judas",
+      "name": "Judas Iscariot",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "epic",
+      "cost": 6,
+      "attack": 5,
+      "health": 6,
+      "effects": [
+        {"on": "death", "do": "summon", "card": "mc_frozen_shade", "count": 1}
+      ],
+      "text": "Last Breath: Summon a 1/2 Frozen Shade.",
+      "flavor": "He betrayed his master, and the deepest ice keeps him.",
+      "circle": "cocytus",
+      "art": "A man sunk in ice to the neck, head bowed low over a pale frozen lake."
+    },
+    {
+      "id": "mc_discord_silence",
+      "name": "Silence of the Sowers",
+      "set": "neutral",
+      "type": "spell",
+      "rarity": "rare",
+      "cost": 6,
+      "effects": [
+        {"on": "play", "do": "silence", "target": "all_enemy_minions"}
+      ],
+      "text": "Silence all enemy minions.",
+      "flavor": "Every argument ends, and every voice goes quiet.",
+      "circle": "malebolge",
+      "art": "A crowd of people standing still with their hands over their mouths in a torchlit square."
+    },
+    {
+      "id": "mc_ruggieri",
+      "name": "Archbishop Ruggieri",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "legendary",
+      "cost": 7,
+      "attack": 6,
+      "health": 7,
+      "keywords": ["guard"],
+      "effects": [
+        {"on": "death", "do": "freeze", "target": "all_enemy_minions"}
+      ],
+      "text": "Guard. Last Breath: Freeze all enemy minions.",
+      "flavor": "He locked his rival in a tower and let him starve.",
+      "circle": "cocytus",
+      "art": "A bishop in ornate robes standing behind a stone tower wall, a chained figure inside."
+    },
+    {
+      "id": "mc_alberigo",
+      "name": "Fra Alberigo",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "legendary",
+      "cost": 7,
+      "attack": 5,
+      "health": 7,
+      "effects": [
+        {"on": "turn_start", "do": "freeze", "target": "random_enemy_minion"}
+      ],
+      "text": "Start of Turn: Freeze a random enemy minion.",
+      "flavor": "He smiled at his guests, then froze them where they stood.",
+      "circle": "cocytus",
+      "art": "A friar with ice clinging to his eyelashes, tears frozen on his cheeks."
+    },
+    {
+      "id": "mc_winter_of_cocytus",
+      "name": "Winter of Cocytus",
+      "set": "neutral",
+      "type": "spell",
+      "rarity": "epic",
+      "cost": 8,
+      "effects": [
+        {"on": "play", "do": "damage", "target": "all_enemy_minions", "amount": 2},
+        {"on": "play", "do": "freeze", "target": "all_enemy_minions"}
+      ],
+      "text": "Deal 2 damage to all enemy minions. Freeze all enemy minions.",
+      "flavor": "The cold grows so deep that even the wind stops.",
+      "circle": "cocytus",
+      "art": "A bitter white snowstorm sweeping across an endless plain of ice."
+    },
+    {
+      "id": "mc_lucifer",
+      "name": "Lucifer, Emperor of Hell",
+      "set": "neutral",
+      "type": "minion",
+      "rarity": "legendary",
+      "cost": 10,
+      "attack": 10,
+      "health": 12,
+      "keywords": ["guard"],
+      "effects": [
+        {"on": "play", "do": "freeze", "target": "all_enemy_minions"},
+        {"on": "turn_end", "do": "damage", "target": "all_enemies", "amount": 2}
+      ],
+      "text": "Guard. On Play: Freeze all enemy minions. End of Turn: Deal 2 damage to all enemies.",
+      "flavor": "Frozen to the chest, he still rules the lowest pit.",
+      "circle": "cocytus",
+      "art": "A huge winged figure with three faces, sunk to the chest in a frozen lake."
+    },
+    {
+      "id": "mc_serpent",
+      "name": "Serpent",
+      "set": "token",
+      "type": "minion",
+      "rarity": "token",
+      "cost": 2,
+      "attack": 2,
+      "health": 2,
+      "keywords": ["venom"],
+      "text": "Venom.",
+      "flavor": "",
+      "circle": "malebolge",
+      "art": "A coiled green serpent raising its head to strike."
+    },
+    {
+      "id": "mc_frozen_shade",
+      "name": "Frozen Shade",
+      "set": "token",
+      "type": "minion",
+      "rarity": "token",
+      "cost": 1,
+      "attack": 1,
+      "health": 2,
+      "text": "",
+      "flavor": "",
+      "circle": "cocytus",
+      "art": "A pale ghostly figure locked inside a block of ice."
+    }
+  ]
+}

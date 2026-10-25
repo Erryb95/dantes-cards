@@ -1,0 +1,755 @@
+{
+ "set_name": "The Pilgrim's Journey",
+ "cards": [
+  {
+   "id": "pj_wanderer_dark_wood",
+   "name": "Wanderer of the Dark Wood",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 2,
+   "health": 1,
+   "text": "",
+   "flavor": "He woke up lost, and the straight path was gone.",
+   "circle": "dark_wood",
+   "art": "A bearded man in a torn cloak stands alone among dense trees at dusk."
+  },
+  {
+   "id": "pj_trembling_pilgrim",
+   "name": "Trembling Pilgrim",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 1,
+   "health": 2,
+   "effects": [
+    {
+     "on": "death",
+     "do": "summon",
+     "card": "pj_lost_shade",
+     "count": 1
+    }
+   ],
+   "text": "Last Breath: Summon a 1/1 Lost Shade.",
+   "flavor": "Every shadow looked like something to fear.",
+   "circle": "dark_wood",
+   "art": "A frightened man in a ragged robe cowers on a forest path with his hands raised."
+  },
+  {
+   "id": "pj_leopard_of_lust",
+   "name": "The Spotted Leopard",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 3,
+   "health": 2,
+   "keywords": [
+    "swift"
+   ],
+   "text": "Swift",
+   "flavor": "It blocked the sunlit hill, quick and bright-spotted.",
+   "circle": "lust",
+   "art": "A spotted leopard with a sleek coat stands on a sunlit hillside."
+  },
+  {
+   "id": "pj_lion_of_violence",
+   "name": "The Raging Lion",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 3,
+   "attack": 3,
+   "health": 4,
+   "keywords": [
+    "guard"
+   ],
+   "text": "Guard",
+   "flavor": "Hungry and proud, it charged up the hill toward him.",
+   "circle": "violence",
+   "art": "A fierce lion with an open roaring mouth stands on rocky ground."
+  },
+  {
+   "id": "pj_hungry_wolf",
+   "name": "The Hungry Wolf",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 3,
+   "health": 2,
+   "keywords": [
+    "drain"
+   ],
+   "text": "Drain",
+   "flavor": "Her hunger grows with every meal.",
+   "circle": "greed",
+   "art": "A gaunt grey she-wolf with bared teeth stands on a barren plain."
+  },
+  {
+   "id": "pj_horace",
+   "name": "Horace, the Satirist",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 3,
+   "keywords": [
+    "ward"
+   ],
+   "text": "Ward",
+   "flavor": "A sharp wit, even in a place with no way out.",
+   "circle": "limbo",
+   "art": "A bearded Roman poet with a scroll sits in a quiet meadow beside a stone wall."
+  },
+  {
+   "id": "pj_ovid",
+   "name": "Ovid, the Transformer",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 2,
+   "health": 4,
+   "keywords": [
+    "rebirth"
+   ],
+   "effects": [
+    {
+     "on": "play",
+     "do": "silence",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "Rebirth. On Play: Silence an enemy minion.",
+   "flavor": "He wrote of bodies changed into new shapes.",
+   "circle": "limbo",
+   "art": "A poet holds an open book while a figure beside him slowly turns into a tree."
+  },
+  {
+   "id": "pj_lucan",
+   "name": "Lucan, the Civil Poet",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 4,
+   "attack": 3,
+   "health": 5,
+   "effects": [
+    {
+     "on": "death",
+     "do": "damage",
+     "target": "all_enemy_minions",
+     "amount": 2
+    }
+   ],
+   "text": "Last Breath: Deal 2 damage to all enemy minions.",
+   "flavor": "He sang of a war that tore Rome apart.",
+   "circle": "limbo",
+   "art": "A poet with a laurel crown stands before a field of broken shields and fallen soldiers."
+  },
+  {
+   "id": "pj_homer",
+   "name": "Homer, the Sovereign Poet",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 6,
+   "attack": 6,
+   "health": 7,
+   "keywords": [
+    "rebirth"
+   ],
+   "effects": [
+    {
+     "on": "play",
+     "do": "silence",
+     "target": "all_enemy_minions"
+    }
+   ],
+   "text": "Rebirth. On Play: Silence all enemy minions.",
+   "flavor": "The first and greatest of the poets, he leads the company.",
+   "circle": "limbo",
+   "art": "An old blind bard holds a lyre at the head of a group of robed poets on a grassy hill."
+  },
+  {
+   "id": "pj_statius",
+   "name": "Statius, the Faithful Poet",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 3,
+   "health": 5,
+   "keywords": [
+    "rebirth"
+   ],
+   "text": "Rebirth",
+   "flavor": "He admired Virgil so deeply that he chose to follow him.",
+   "circle": "malebolge",
+   "art": "Two robed poets walk together along a stone ridge above a dark ravine."
+  },
+  {
+   "id": "pj_heavenly_messenger",
+   "name": "The Heavenly Messenger",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 3,
+   "health": 4,
+   "keywords": [
+    "swift"
+   ],
+   "effects": [
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "Swift. On Play: Freeze an enemy minion.",
+   "flavor": "He crossed the sky without a sound and opened the gate.",
+   "circle": "dis",
+   "art": "A winged messenger in white robes stands before a tall iron gate in a city wall."
+  },
+  {
+   "id": "pj_cato",
+   "name": "Cato of Utica",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 5,
+   "attack": 4,
+   "health": 6,
+   "keywords": [
+    "guard"
+   ],
+   "effects": [
+    {
+     "on": "turn_end",
+     "do": "armor",
+     "target": "own_hero",
+     "amount": 1
+    }
+   ],
+   "text": "Guard. End of Turn: Gain 1 Armor.",
+   "flavor": "The guardian of the shore asks only that the way stay open.",
+   "circle": "ante_inferno",
+   "art": "An old Roman man with a stern face stands on a rocky shore by the sea at dawn."
+  },
+  {
+   "id": "pj_reed_of_humility",
+   "name": "Reed of Humility",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 1,
+   "health": 3,
+   "keywords": [
+    "ward"
+   ],
+   "effects": [
+    {
+     "on": "turn_end",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 1
+    }
+   ],
+   "text": "Ward. End of Turn: Restore 1 Health to your hero.",
+   "flavor": "A humble reed can do what pride cannot.",
+   "circle": "ante_inferno",
+   "art": "A tall green reed bends in a soft breeze beside a grey shoreline."
+  },
+  {
+   "id": "pj_guiding_stars",
+   "name": "Guiding Stars",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 2,
+   "health": 4,
+   "effects": [
+    {
+     "on": "turn_start",
+     "do": "damage",
+     "target": "random_enemy_minion",
+     "amount": 1
+    }
+   ],
+   "text": "Start of Turn: Deal 1 damage to a random enemy minion.",
+   "flavor": "The light that guided them out still burns the wicked.",
+   "circle": "cocytus",
+   "art": "A cluster of bright stars shines above a frozen lake in a clear night sky."
+  },
+  {
+   "id": "pj_beatrice",
+   "name": "Beatrice, Sent from Heaven",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 7,
+   "attack": 5,
+   "health": 7,
+   "keywords": [
+    "ward"
+   ],
+   "effects": [
+    {
+     "on": "play",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 4
+    }
+   ],
+   "text": "Ward. On Play: Restore 4 Health to your hero.",
+   "flavor": "Love moved her to leave Heaven and help a lost man.",
+   "circle": "limbo",
+   "art": "A serene woman in a flowing white gown stands among clouds with a gentle expression."
+  },
+  {
+   "id": "pj_dantes_courage",
+   "name": "Dante's Courage",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "keywords": [
+    "guard"
+   ],
+   "text": "Guard",
+   "flavor": "He stood firm, though every step felt like falling.",
+   "circle": "ante_inferno",
+   "art": "A determined man in a red cloak plants his feet on a steep rocky path."
+  },
+  {
+   "id": "pj_swoon_of_pity",
+   "name": "Swoon of Pity",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 2,
+   "effects": [
+    {
+     "on": "death",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 2
+    }
+   ],
+   "text": "Last Breath: Restore 2 Health to your hero.",
+   "flavor": "Hearing their story, he fell as if dead from pity.",
+   "circle": "lust",
+   "art": "A pale man collapses to the ground, one hand pressed to his chest, in a stormy field."
+  },
+  {
+   "id": "pj_harpy_of_the_wood",
+   "name": "Harpy of the Wood",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 2,
+   "attack": 2,
+   "health": 2,
+   "keywords": [
+    "venom"
+   ],
+   "text": "Venom",
+   "flavor": "She nests in a tree that cries out when it is broken.",
+   "circle": "violence",
+   "art": "A winged harpy with a woman's face perches on a split, bleeding tree trunk."
+  },
+  {
+   "id": "pj_brunetto_latini",
+   "name": "Brunetto Latini",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "keywords": [
+    "drain"
+   ],
+   "text": "Drain",
+   "flavor": "My old teacher still walks the burning sand, still giving advice.",
+   "circle": "violence",
+   "art": "An elderly man in a scholar's cap walks across burning sand under falling flames."
+  },
+  {
+   "id": "pj_centaur_escort",
+   "name": "Centaur Escort",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 4,
+   "attack": 4,
+   "health": 3,
+   "keywords": [
+    "swift"
+   ],
+   "effects": [
+    {
+     "on": "turn_start",
+     "do": "buff",
+     "target": "random_friendly_minion",
+     "attack": 1,
+     "health": 0
+    }
+   ],
+   "text": "Swift. Start of Turn: Give a random friendly minion +1 Attack.",
+   "flavor": "He shoots at anyone who rises above the blood.",
+   "circle": "violence",
+   "art": "A centaur with a drawn bow stands on a grassy riverbank beside a boiling red river."
+  },
+  {
+   "id": "pj_serpent_of_the_pit",
+   "name": "Serpent of the Pit",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 2,
+   "health": 3,
+   "keywords": [
+    "venom"
+   ],
+   "text": "Venom",
+   "flavor": "Its bite poisons the sinner again and again.",
+   "circle": "malebolge",
+   "art": "A coiled green serpent with an open jaw rests on a ledge of dark rock above a pit."
+  },
+  {
+   "id": "pj_ciacco",
+   "name": "Ciacco the Glutton",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 3,
+   "health": 2,
+   "effects": [
+    {
+     "on": "death",
+     "do": "damage",
+     "target": "random_enemy_minion",
+     "amount": 1
+    }
+   ],
+   "text": "Last Breath: Deal 1 damage to a random enemy minion.",
+   "flavor": "He gorged himself, and he still wants more.",
+   "circle": "gluttony",
+   "art": "A bloated man lies face down in thick mud under a grey sky with falling rain."
+  },
+  {
+   "id": "pj_pier_della_vigna",
+   "name": "Pier della Vigna",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 1,
+   "health": 4,
+   "keywords": [
+    "venom"
+   ],
+   "effects": [
+    {
+     "on": "death",
+     "do": "buff",
+     "target": "random_friendly_minion",
+     "attack": 1,
+     "health": 1
+    }
+   ],
+   "text": "Venom. Last Breath: Give a random friendly minion +1/+1.",
+   "flavor": "A loyal servant, now a tree that cries when it is broken.",
+   "circle": "violence",
+   "art": "A gnarled dark tree with split bark, and a human face pressed into its trunk."
+  },
+  {
+   "id": "pj_cleopatra",
+   "name": "Cleopatra, Queen of Lust",
+   "set": "pilgrim",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 3,
+   "health": 5,
+   "keywords": [
+    "drain"
+   ],
+   "text": "Drain",
+   "flavor": "She ruled through desire, and now the wind carries her forever.",
+   "circle": "lust",
+   "art": "A queen with a golden crown is blown by a stormy wind across a dark sky."
+  },
+  {
+   "id": "pj_saint_lucy",
+   "name": "Saint Lucy's Light",
+   "set": "pilgrim",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_enemy",
+     "amount": 2
+    }
+   ],
+   "text": "Deal 2 damage to an enemy.",
+   "flavor": "A heavenly light sent to guide a lost pilgrim.",
+   "circle": "ante_inferno",
+   "art": "A radiant woman with a golden halo holds a lamp in a quiet room."
+  },
+  {
+   "id": "pj_beatrices_grace",
+   "name": "Beatrice's Grace",
+   "set": "pilgrim",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 3
+    },
+    {
+     "on": "play",
+     "do": "give_card",
+     "card": "pj_saint_lucy",
+     "count": 1
+    }
+   ],
+   "text": "Restore 3 Health to your hero. Add a copy of Saint Lucy's Light to your hand.",
+   "flavor": "Her grace came down from Heaven and opened the path.",
+   "circle": "limbo",
+   "art": "A woman in a blue robe gazes down from a golden cloud over a green meadow."
+  },
+  {
+   "id": "pj_virgins_mercy",
+   "name": "The Virgin's Mercy",
+   "set": "pilgrim",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 4,
+   "effects": [
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "all_enemy_minions"
+    },
+    {
+     "on": "play",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 2
+    }
+   ],
+   "text": "Freeze all enemy minions. Restore 2 Health to your hero.",
+   "flavor": "Mercy from Heaven stops every enemy in its tracks.",
+   "circle": "ante_inferno",
+   "art": "A veiled woman with open arms hovers above a ring of frozen stone figures."
+  },
+  {
+   "id": "pj_virgils_wisdom",
+   "name": "Virgil's Wisdom",
+   "set": "pilgrim",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "ramp",
+     "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "give_card",
+     "card": "pj_rope_belt",
+     "count": 2
+    }
+   ],
+   "text": "Gain 1 empty mana crystal. Add 2 copies of Rope Belt to your hand.",
+   "flavor": "Follow a wise guide, and the hard road becomes clear.",
+   "circle": "limbo",
+   "art": "An older poet with a laurel wreath points at a glowing scroll in a lamp-lit room."
+  },
+  {
+   "id": "pj_rope_belt",
+   "name": "Rope Belt",
+   "set": "pilgrim",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "Freeze an enemy minion.",
+   "flavor": "He dropped his cord into the abyss, and the beast came up to meet it.",
+   "circle": "violence",
+   "art": "A coil of rope falls down a dark cliff into a deep chasm."
+  },
+  {
+   "id": "pj_three_beasts",
+   "name": "Three Beasts Overcome",
+   "set": "pilgrim",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 4,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "all_enemy_minions",
+     "amount": 2
+    }
+   ],
+   "text": "Deal 2 damage to all enemy minions.",
+   "flavor": "The leopard, the lion and the wolf all turned away at last.",
+   "circle": "dark_wood",
+   "art": "A leopard, a lion and a wolf stand in a row on a forest path."
+  },
+  {
+   "id": "pj_ascent_of_mountain",
+   "name": "Ascent of the Mountain",
+   "set": "pilgrim",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "ramp",
+     "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
+    }
+   ],
+   "text": "Gain 1 empty mana crystal. Draw a card.",
+   "flavor": "Each step up the slope makes the next one easier.",
+   "circle": "ante_inferno",
+   "art": "A narrow stone path climbs a sunlit mountain slope toward a bright sky."
+  },
+  {
+   "id": "pj_veil_of_stillness",
+   "name": "Veil of Stillness",
+   "set": "pilgrim",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "silence",
+     "target": "choose_minion"
+    }
+   ],
+   "text": "Silence a minion.",
+   "flavor": "One quiet word strips away its tricks.",
+   "circle": "heresy",
+   "art": "An open stone tomb with a grey cloth draped over its edge."
+  },
+  {
+   "id": "pj_stars_again",
+   "name": "Stars Again",
+   "set": "pilgrim",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 2
+    },
+    {
+     "on": "play",
+     "do": "ramp",
+     "amount": 1
+    }
+   ],
+   "text": "Draw 2 cards. Gain 1 empty mana crystal.",
+   "flavor": "We climbed out of the dark to see the stars again.",
+   "circle": "cocytus",
+   "art": "A dense field of bright stars spreads over a dark horizon."
+  },
+  {
+   "id": "pj_dantes_resolve",
+   "name": "Dante's Resolve",
+   "set": "pilgrim",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 5,
+   "effects": [
+    {
+     "on": "play",
+     "do": "destroy",
+     "target": "choose_enemy_minion"
+    },
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
+    }
+   ],
+   "text": "Destroy an enemy minion. Draw a card.",
+   "flavor": "He chose to face the danger and did not look back.",
+   "circle": "dis",
+   "art": "A hooded pilgrim raises a dagger in front of a broken iron gate."
+  },
+  {
+   "id": "pj_led_back_dark_wood",
+   "name": "Led Back to the Dark Wood",
+   "set": "pilgrim",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "bounce",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "Return an enemy minion to its owner's hand.",
+   "flavor": "Sometimes the path forces you to go back the way you came.",
+   "circle": "dark_wood",
+   "art": "A grey wolf stumbles backward along a forest path, with a bright light behind it."
+  },
+  {
+   "id": "pj_lost_shade",
+   "name": "Lost Shade",
+   "set": "token",
+   "type": "minion",
+   "rarity": "token",
+   "cost": 1,
+   "attack": 1,
+   "health": 1,
+   "text": "",
+   "flavor": ""
+  }
+ ]
+}

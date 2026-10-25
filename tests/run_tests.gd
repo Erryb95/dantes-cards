@@ -10,6 +10,7 @@ func _initialize() -> void:
 	_test_data()
 	_test_rules()
 	_soak(300)
+	_soak_random(400)
 	print("TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures > 0 else 0)
 
@@ -24,14 +25,16 @@ func ok(cond: bool, what: String) -> void:
 func _test_data() -> void:
 	for d in CardDB.decks():
 		var list := CardDB.deck_list(d.id)
-		ok(list.size() == 20, "deck %s has 20 cards (%d)" % [d.id, list.size()])
+		ok(list.size() == 30, "deck %s has 30 cards (%d)" % [d.id, list.size()])
 		ok(not CardDB.hero(d.hero).is_empty(), "deck %s hero exists" % d.id)
 		for id in list:
 			ok(not CardDB.card(id).is_empty(), "card %s exists" % id)
+			ok(list.count(id) <= (1 if CardDB.card(id).get("rarity") == "legendary" else 2), "deck %s copies of %s" % [d.id, id])
+			ok(CardDB.card(id).get("set") in [d.id, "neutral"], "deck %s class of %s" % [d.id, id])
 	for c in CardDB.all_cards():
 		for e in c.get("effects", []):
 			ok(e.do in ["damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card"], "%s effect %s" % [c.id, e.do])
-			if e.do == "summon":
+			if e.do in ["summon", "give_card"]:
 				ok(not CardDB.card(e.card).is_empty(), "%s summons a known card" % c.id)
 		for k in c.get("keywords", []):
 			ok(k in ["guard", "swift", "ward", "drain", "venom", "rebirth"], "%s keyword %s" % [c.id, k])
@@ -129,7 +132,7 @@ func _test_rules() -> void:
 	st.current = 1
 	st.sides[1].power_used = false
 	ok(st.use_power(1), "toll hero power")
-	ok(st.sides[0].hero.armor == 1 and st.sides[0].hero.health == 30, "armor soaked the toll")
+	ok(st.sides[0].hero.armor == 0 and st.sides[0].hero.health == 30, "armor soaked the toll")
 
 	# Board clear + summon effects.
 	st = _blank()
@@ -163,7 +166,7 @@ func _test_rules() -> void:
 	ok(st.turn == 0, "still waiting for the other side")
 	st.finish_mulligan(1, [])
 	ok(st.turn == 1 and not st.in_mulligan(), "game started")
-	ok(st.sides[0].deck.size() + st.sides[0].hand.size() == 20, "no card lost in the mulligan")
+	ok(st.sides[0].deck.size() + st.sides[0].hand.size() == 30, "no card lost in the mulligan")
 
 	# Fatigue.
 	st = _blank()
@@ -210,3 +213,59 @@ func _soak(games: int) -> void:
 		wins[w] += 1
 		turns += st.turn
 	print("SOAK: pilgrim %d / ferry %d / draws %d, avg turns %.1f" % [wins[0], wins[1], wins[2], float(turns) / games])
+
+
+## A random legal 30-card deck: class cards + neutrals, max 2 copies (1 for legendaries).
+static func random_deck(cls: String, rng: RandomNumberGenerator) -> Array[String]:
+	var pool := []
+	for c in CardDB.all_cards():
+		if c.get("set", "") in [cls, "neutral"]:
+			pool.append(c)
+	var out: Array[String] = []
+	while out.size() < 30:
+		var c: Dictionary = pool[rng.randi_range(0, pool.size() - 1)]
+		if out.count(c.id) < (1 if c.rarity == "legendary" else 2):
+			out.append(c.id)
+	return out
+
+
+## Random decks from the whole card pool, so every card (and its effects) gets played many times.
+func _soak_random(games: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 99
+	var played := {}
+	var wins := [0, 0, 0]
+	for g in games:
+		var st := BattleState.new()
+		st.start(random_deck("pilgrim", rng), "dante", random_deck("ferry", rng), "charon", 5000 + g)
+		var ais := [BattleAI.new(0), BattleAI.new(1)]
+		var steps := 0
+		while st.winner == -1 and steps < 6000:
+			steps += 1
+			var act: Dictionary = ais[st.current].next_action(st)
+			var done := false
+			match act.do:
+				"play":
+					for c in st.sides[st.current].hand:
+						if c.uid == act.uid:
+							played[c.id] = true
+					done = st.play_card(st.current, act.uid, act.target, act.index)
+				"attack":
+					done = st.attack(st.current, act.attacker, act.target)
+				"power":
+					done = st.use_power(st.current, act.target)
+			if not done:
+				st.end_turn()
+			for s in st.sides:
+				ok(s.board.size() <= BattleState.MAX_BOARD and s.hand.size() <= BattleState.MAX_HAND
+					and s.mana >= 0 and s.mana <= BattleState.MAX_MANA, "random invariants")
+				for u in s.board:
+					ok(u.health > 0 and u.health <= u.max_health, "random minion hp sane (%s)" % u.id)
+		ok(st.winner != -1, "random game %d finished" % g)
+		wins[st.winner] += 1
+	var total := 0
+	for c in CardDB.all_cards():
+		if c.get("set", "") != "token":
+			total += 1
+	print("RANDOM SOAK: pilgrim %d / ferry %d / draws %d, %d of %d cards played" % [wins[0], wins[1], wins[2],
+		played.size(), total])

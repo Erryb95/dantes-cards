@@ -86,8 +86,14 @@ static func deck_list(deck_id: String) -> Array[String]:
 	return out
 
 
+## The card's art, or the Acheron landscape as a placeholder until its painting arrives.
 static func art(id: String) -> Texture2D:
-	return _tex("res://assets/cards/art/%s.jpg" % id)
+	var t := _tex("res://assets/cards/art/%s.jpg" % id)
+	return t if t != null else _tex("res://assets/arenas/acheron.jpg")
+
+
+static func has_art(id: String) -> bool:
+	return ResourceLoader.exists("res://assets/cards/art/%s.jpg" % id)
 
 
 ## The card art cropped to `aspect` (w / h), centred on the upper part of the picture where faces usually are.
@@ -102,7 +108,7 @@ static func art_framed(id: String, aspect: float, focus_y: float = 0.36) -> Text
 		h = sz.y
 		w = h * aspect
 	# A real cropped texture (not an AtlasTexture) so shader UVs stay 0..1 for the oval mask.
-	var key := "%s@%.3f@%.2f" % [id, aspect, focus_y]
+	var key := "%s@%.3f@%.2f" % [tex.resource_path, aspect, focus_y]
 	if _framed.has(key):
 		return _framed[key]
 	var img := tex.get_image()

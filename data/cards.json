@@ -553,12 +553,12 @@
    "power": {
     "name": "Ferry Toll",
     "cost": 2,
-    "text": "Deal 1 damage to the enemy hero.",
+    "text": "Deal 2 damage to the enemy hero.",
     "effects": [
      {
       "do": "damage",
       "target": "enemy_hero",
-      "amount": 1
+      "amount": 2
      }
     ]
    },

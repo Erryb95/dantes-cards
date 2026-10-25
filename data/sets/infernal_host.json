@@ -1,0 +1,746 @@
+{
+ "set_name": "The Infernal Host",
+ "cards": [
+  {
+   "id": "ih_whip_demon",
+   "name": "Whip Demon",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 1,
+   "health": 1,
+   "keywords": [
+    "rebirth"
+   ],
+   "text": "Rebirth.",
+   "flavor": "He cracks the whip, and the line of sinners keeps moving.",
+   "circle": "malebolge",
+   "art": "A horned demon raising a barbed whip over a line of naked sinners on a stony bridge."
+  },
+  {
+   "id": "ih_thief_serpent",
+   "name": "Thief Serpent",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 1,
+   "health": 2,
+   "keywords": [
+    "venom"
+   ],
+   "text": "Venom.",
+   "flavor": "It bites the thief, and the thief turns into a snake.",
+   "circle": "malebolge",
+   "art": "A small green serpent coiled around a naked man whose body is merging with its coils."
+  },
+  {
+   "id": "ih_blood_swimmer",
+   "name": "Blood Swimmer",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 1,
+   "health": 2,
+   "keywords": [
+    "guard"
+   ],
+   "effects": [
+    {
+     "on": "death",
+     "do": "summon",
+     "card": "ih_tormented_shade",
+     "count": 1
+    }
+   ],
+   "text": "Guard. Last Breath: Summon a 1/1 Tormented Shade.",
+   "flavor": "Those who harmed others are kept in boiling blood up to the eyebrows.",
+   "circle": "violence",
+   "art": "The heads and shoulders of sinners rising above the surface of a river of boiling red liquid."
+  },
+  {
+   "id": "ih_barbed_imp",
+   "name": "Barbed Imp",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 1,
+   "health": 1,
+   "effects": [
+    {
+     "on": "death",
+     "do": "damage",
+     "target": "enemy_hero",
+     "amount": 1
+    }
+   ],
+   "text": "Last Breath: Deal 1 damage to the enemy hero.",
+   "flavor": "Its hooks tear at whoever touches it, even as it dies.",
+   "circle": "malebolge",
+   "art": "A small red demon with hooked claws clutching a pitchfork on a stony ledge."
+  },
+  {
+   "id": "ih_hellhound_pup",
+   "name": "Hellhound Pup",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 3,
+   "keywords": [
+    "ward"
+   ],
+   "text": "Ward.",
+   "flavor": "Cerberus has a brood, and every pup bites.",
+   "circle": "gluttony",
+   "art": "A small black hound with glowing red eyes baring its teeth on muddy ground."
+  },
+  {
+   "id": "ih_calcabrina",
+   "name": "Calcabrina",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 3,
+   "health": 2,
+   "keywords": [
+    "swift"
+   ],
+   "text": "Swift.",
+   "flavor": "He cheats, sneers, and runs before anyone can react.",
+   "circle": "malebolge",
+   "art": "A grinning winged demon mid-leap above a narrow stone bridge."
+  },
+  {
+   "id": "ih_pitch_sinner",
+   "name": "Pitch Sinner",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 2,
+   "effects": [
+    {
+     "on": "turn_end",
+     "do": "damage",
+     "target": "enemy_hero",
+     "amount": 1
+    }
+   ],
+   "text": "End of Turn: Deal 1 damage to the enemy hero.",
+   "flavor": "The pitch sticks to him, and the heat never lets go.",
+   "circle": "malebolge",
+   "art": "A naked sinner coated in black pitch, standing waist-deep in a bubbling tar pit."
+  },
+  {
+   "id": "ih_barbariccia",
+   "name": "Barbariccia",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 2,
+   "health": 3,
+   "keywords": [
+    "guard"
+   ],
+   "effects": [
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "choose_friendly_minion",
+     "attack": 1,
+     "health": 1
+    }
+   ],
+   "text": "Guard. On Play: Give a friendly minion +1/+1.",
+   "flavor": "She hands out orders with a horn, and her squad obeys.",
+   "circle": "malebolge",
+   "art": "A tusked demon blowing a curved horn in a rocky pit, with smaller demons gathered behind it."
+  },
+  {
+   "id": "ih_farfarello",
+   "name": "Farfarello",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 3,
+   "health": 2,
+   "effects": [
+    {
+     "on": "death",
+     "do": "damage",
+     "target": "enemy_hero",
+     "amount": 2
+    }
+   ],
+   "text": "Last Breath: Deal 2 damage to the enemy hero.",
+   "flavor": "Even while dying, he kicks his enemies on the way out.",
+   "circle": "malebolge",
+   "art": "A grinning demon with clawed hands reaching forward, lunging out of a rocky pit."
+  },
+  {
+   "id": "ih_cagnazzo",
+   "name": "Cagnazzo",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 3,
+   "health": 4,
+   "keywords": [
+    "drain"
+   ],
+   "text": "Drain.",
+   "flavor": "Every wound he deals feeds him.",
+   "circle": "malebolge",
+   "art": "A fanged demon with a dog-like snout sinking its jaws into a sinner's shoulder."
+  },
+  {
+   "id": "ih_cacus",
+   "name": "Cacus, the Centaur",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 2,
+   "health": 3,
+   "keywords": [
+    "swift"
+   ],
+   "effects": [
+    {
+     "on": "turn_start",
+     "do": "armor",
+     "target": "own_hero",
+     "amount": 1
+    }
+   ],
+   "text": "Swift. Start of Turn: Gain 1 Armor.",
+   "flavor": "He drags stolen cattle backward so no one can follow the tracks.",
+   "circle": "violence",
+   "art": "A hairy centaur dragging a herd of cattle backward into a cave mouth."
+  },
+  {
+   "id": "ih_draghignazzo",
+   "name": "Draghignazzo",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 4,
+   "attack": 3,
+   "health": 3,
+   "keywords": [
+    "drain"
+   ],
+   "effects": [
+    {
+     "on": "turn_start",
+     "do": "damage",
+     "target": "random_enemy_minion",
+     "amount": 1
+    }
+   ],
+   "text": "Drain. Start of Turn: Deal 1 damage to a random enemy minion.",
+   "flavor": "He throws his hooks at whoever is nearest, every single turn.",
+   "circle": "malebolge",
+   "art": "A demon with spiked wings and a barbed tail raising a long hooked staff over a pit."
+  },
+  {
+   "id": "ih_graffiacane",
+   "name": "Graffiacane",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 4,
+   "health": 4,
+   "keywords": [
+    "swift"
+   ],
+   "text": "Swift.",
+   "flavor": "He is always the first to leap and the last to be blamed.",
+   "circle": "malebolge",
+   "art": "A demon with a hound-like body and bat wings leaping forward from a rocky ledge."
+  },
+  {
+   "id": "ih_libicocco",
+   "name": "Libicocco",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 3,
+   "health": 5,
+   "keywords": [
+    "venom"
+   ],
+   "text": "Venom.",
+   "flavor": "Its venom makes every wound burn longer.",
+   "circle": "malebolge",
+   "art": "A grinning demon with a long hooked tail coiled around a stone pillar."
+  },
+  {
+   "id": "ih_ephialtes",
+   "name": "Ephialtes, the Giant",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 4,
+   "attack": 4,
+   "health": 5,
+   "keywords": [
+    "guard"
+   ],
+   "text": "Guard.",
+   "flavor": "The well comes only up to his chest.",
+   "circle": "cocytus",
+   "art": "A towering giant with chains on his arms, standing waist-deep in a stone well."
+  },
+  {
+   "id": "ih_briareus",
+   "name": "Briareus, Hundred-Hand",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 4,
+   "health": 4,
+   "keywords": [
+    "rebirth"
+   ],
+   "text": "Rebirth.",
+   "flavor": "A hundred arms and no hand free to hold him back.",
+   "circle": "cocytus",
+   "art": "A giant with many arms reaching up out of a stone well in a crowded pit."
+  },
+  {
+   "id": "ih_hellhound_guardian",
+   "name": "Hellhound Guardian",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 5,
+   "attack": 4,
+   "health": 5,
+   "keywords": [
+    "guard"
+   ],
+   "effects": [
+    {
+     "on": "turn_end",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 1
+    }
+   ],
+   "text": "Guard. End of Turn: Restore 1 Health to your hero.",
+   "flavor": "Its jaws never stop barking, even when the bones are gone.",
+   "circle": "gluttony",
+   "art": "A massive black hound with a spiked collar standing guard in front of a stone gate, teeth bared."
+  },
+  {
+   "id": "ih_scarmiglione",
+   "name": "Scarmiglione",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 5,
+   "attack": 5,
+   "health": 5,
+   "keywords": [
+    "drain"
+   ],
+   "text": "Drain.",
+   "flavor": "His grip on the damned is slow, and his hunger is quick.",
+   "circle": "malebolge",
+   "art": "A demon with tangled hair and sharp fangs gripping a sinner by the head."
+  },
+  {
+   "id": "ih_rubicante",
+   "name": "Rubicante, the Flame",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 5,
+   "attack": 4,
+   "health": 5,
+   "keywords": [
+    "ward"
+   ],
+   "effects": [
+    {
+     "on": "turn_end",
+     "do": "damage",
+     "target": "all_enemy_minions",
+     "amount": 1
+    }
+   ],
+   "text": "Ward. End of Turn: Deal 1 damage to all enemy minions.",
+   "flavor": "His fire never goes out, not even in the mud.",
+   "circle": "malebolge",
+   "art": "A demon wreathed in flames, holding a burning whip on a cracked, scorched plain."
+  },
+  {
+   "id": "ih_antaeus",
+   "name": "Antaeus, the Earth-Born",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 5,
+   "attack": 4,
+   "health": 5,
+   "effects": [
+    {
+     "on": "turn_start",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 2
+    }
+   ],
+   "text": "Start of Turn: Restore 2 Health to your hero.",
+   "flavor": "Touch the earth, and he rises stronger than before.",
+   "circle": "cocytus",
+   "art": "A giant rising from a rocky plain, one palm pressed flat on the ground beneath him."
+  },
+  {
+   "id": "ih_malacoda",
+   "name": "Malacoda, Chief Demon",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 7,
+   "attack": 6,
+   "health": 7,
+   "keywords": [
+    "venom"
+   ],
+   "effects": [
+    {
+     "on": "play",
+     "do": "summon",
+     "card": "ih_tormented_shade",
+     "count": 2
+    }
+   ],
+   "text": "Venom. On Play: Summon two 1/1 Tormented Shades.",
+   "flavor": "The chief sends his squad to do the dirty work.",
+   "circle": "malebolge",
+   "art": "A large horned demon with a hooked tail standing above a group of smaller demons on a rocky ledge."
+  },
+  {
+   "id": "ih_nimrod",
+   "name": "Nimrod, the Giant",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 7,
+   "attack": 5,
+   "health": 8,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_minion",
+     "amount": 2
+    }
+   ],
+   "text": "On Play: Deal 2 damage to a minion.",
+   "flavor": "He built a tower to reach heaven, and now no one understands him.",
+   "circle": "cocytus",
+   "art": "A huge bearded giant with a horn slung over his shoulder, standing among stone ruins."
+  },
+  {
+   "id": "ih_lucifer",
+   "name": "Lucifer, the Frozen King",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 9,
+   "attack": 8,
+   "health": 8,
+   "keywords": [
+    "rebirth"
+   ],
+   "effects": [
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "all_enemy_minions"
+    }
+   ],
+   "text": "Rebirth. On Play: Freeze all enemy minions.",
+   "flavor": "Stuck waist-deep in ice, he still freezes anyone who comes near.",
+   "circle": "cocytus",
+   "art": "A colossal three-faced figure with huge bat wings, frozen waist-deep in a sheet of blue ice."
+  },
+  {
+   "id": "ih_gate_angel",
+   "name": "Fallen Angel of Dis",
+   "set": "ferry",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 6,
+   "attack": 5,
+   "health": 5,
+   "keywords": [
+    "ward"
+   ],
+   "effects": [
+    {
+     "on": "play",
+     "do": "destroy",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "Ward. On Play: Destroy an enemy minion.",
+   "flavor": "He refused the gate, and nobody gets past him.",
+   "circle": "dis",
+   "art": "A fallen angel with tattered grey wings standing before a massive iron gate set in a fiery wall."
+  },
+  {
+   "id": "ih_burning_rain",
+   "name": "Burning Rain",
+   "set": "ferry",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_any",
+     "amount": 2
+    }
+   ],
+   "text": "Deal 2 damage to any target.",
+   "flavor": "Slow flakes of fire fall on the sand, and they never stop.",
+   "circle": "violence",
+   "art": "Slow flakes of fire falling through the air above a plain of gray sand."
+  },
+  {
+   "id": "ih_serpents_kiss",
+   "name": "Serpent's Kiss",
+   "set": "ferry",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "silence",
+     "target": "choose_minion"
+    }
+   ],
+   "text": "Silence a minion.",
+   "flavor": "One bite, and the minion forgets every trick it knew.",
+   "circle": "malebolge",
+   "art": "A green serpent with fangs bared in front of a small armored demon."
+  },
+  {
+   "id": "ih_cocytus_chill",
+   "name": "Cocytus Chill",
+   "set": "ferry",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "Freeze an enemy minion.",
+   "flavor": "The lake holds the damned so still they can't even twitch.",
+   "circle": "cocytus",
+   "art": "A frozen lake with a pale figure trapped in the ice up to the chest."
+  },
+  {
+   "id": "ih_sulphur_vent",
+   "name": "Sulphur Vent",
+   "set": "ferry",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "ramp",
+     "amount": 2
+    }
+   ],
+   "text": "Gain 2 empty mana crystals.",
+   "flavor": "The ground breathes out fumes, and the fumes are fuel.",
+   "circle": "malebolge",
+   "art": "Yellow sulphur smoke pouring out of a crack in a rocky ground."
+  },
+  {
+   "id": "ih_thieves_bargain",
+   "name": "Thieves' Bargain",
+   "set": "ferry",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "give_card",
+     "card": "ih_thief_serpent",
+     "count": 2
+    }
+   ],
+   "text": "Add two Thief Serpents to your hand.",
+   "flavor": "Steal what you can, and the serpents will steal it back for you.",
+   "circle": "malebolge",
+   "art": "Two small green serpents coiled around a pile of stolen gold coins."
+  },
+  {
+   "id": "ih_strength_of_earth",
+   "name": "Strength of the Earth",
+   "set": "ferry",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 3
+    }
+   ],
+   "text": "Restore 3 Health to your hero.",
+   "flavor": "Touch the soil, and the soil gives back what it took.",
+   "circle": "cocytus",
+   "art": "A bare hand pressed flat against cracked clay, with green shoots rising from it."
+  },
+  {
+   "id": "ih_cacus_stolen_herd",
+   "name": "Cacus's Stolen Herd",
+   "set": "ferry",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "enemy_hero",
+     "amount": 2
+    }
+   ],
+   "text": "Draw a card. Deal 2 damage to the enemy hero.",
+   "flavor": "He drags the stolen cattle backward, so no one can follow them.",
+   "circle": "violence",
+   "art": "Cattle being dragged backward on ropes into a cave mouth."
+  },
+  {
+   "id": "ih_demons_lash",
+   "name": "Demon's Lash",
+   "set": "ferry",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "bounce",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "Return an enemy minion to its owner's hand.",
+   "flavor": "One crack of the whip, and you start the whole way over.",
+   "circle": "malebolge",
+   "art": "A demon's long barbed whip wrapped around a naked sinner's wrists."
+  },
+  {
+   "id": "ih_rain_of_sand",
+   "name": "Rain of Burning Sand",
+   "set": "ferry",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 4,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "all_enemy_minions",
+     "amount": 2
+    }
+   ],
+   "text": "Deal 2 damage to all enemy minions.",
+   "flavor": "The sand falls like snow, and every flake burns.",
+   "circle": "violence",
+   "art": "Burning sand falling from a red sky onto a flat desert plain where figures lie under it."
+  },
+  {
+   "id": "ih_boiling_tide",
+   "name": "Tide of Boiling Blood",
+   "set": "ferry",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 5,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_minion",
+     "amount": 4
+    },
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
+    }
+   ],
+   "text": "Deal 4 damage to a minion. Draw a card.",
+   "flavor": "Anyone who rises too high from the boiling river is pulled back under.",
+   "circle": "violence",
+   "art": "A red river of boiling liquid with bubbles rising and a pale hand reaching up from the surface."
+  },
+  {
+   "id": "ih_cocytus_winter",
+   "name": "Winter of Cocytus",
+   "set": "ferry",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 6,
+   "effects": [
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "all_enemy_minions"
+    }
+   ],
+   "text": "Freeze all enemy minions.",
+   "flavor": "The lake freezes solid, and everything in it stops moving.",
+   "circle": "cocytus",
+   "art": "A wide sheet of blue ice with several pale shapes trapped beneath its surface."
+  },
+  {
+   "id": "ih_tormented_shade",
+   "name": "Tormented Shade",
+   "set": "token",
+   "type": "minion",
+   "rarity": "token",
+   "cost": 1,
+   "attack": 1,
+   "health": 1,
+   "text": "",
+   "flavor": ""
+  }
+ ]
+}

@@ -5,9 +5,17 @@ const MENU := "res://scenes/main_menu.tscn"
 const DECK_SELECT := "res://scenes/deck_select.tscn"
 const BATTLE := "res://scenes/battle.tscn"
 const COLLECTION := "res://scenes/collection.tscn"
+const PACKS := "res://scenes/pack_opening.tscn"
+const DECK_BUILDER := "res://scenes/deck_builder.tscn"
 
 var player_deck := "pilgrim"
 var enemy_deck := "ferry"
+var player_cards: Array[String] = CardDB.deck_list("pilgrim")
+var player_hero := "dante"
+var enemy_cards: Array[String] = CardDB.deck_list("ferry")
+var enemy_hero := "charon"
+var new_deck_cls := "pilgrim"
+var edit_deck := -1 ## index into Collection.decks for the deck builder, -1 = new
 var arena_id := "acheron"
 var last_winner := -1
 var stats := {"wins": 0, "losses": 0}
@@ -44,9 +52,20 @@ func _snap(path: String) -> void:
 	get_tree().quit()
 
 
+## Starts a battle with a starter deck (by id) against the other class's starter deck.
 func start_battle(deck_id: String) -> void:
-	player_deck = deck_id
-	enemy_deck = "ferry" if deck_id == "pilgrim" else "pilgrim"
+	var d := CardDB.deck(deck_id)
+	start_with(CardDB.deck_list(deck_id), d.hero, "ferry" if d.hero == "dante" else "pilgrim")
+
+
+## Starts a battle with any card list; the opponent plays the starter deck `enemy_id`.
+func start_with(cards: Array, hero: String, enemy_id: String) -> void:
+	player_cards.assign(cards)
+	player_hero = hero
+	player_deck = "pilgrim" if hero == "dante" else "ferry"
+	enemy_deck = enemy_id
+	enemy_cards = CardDB.deck_list(enemy_id)
+	enemy_hero = CardDB.deck(enemy_id).hero
 	go(BATTLE)
 
 

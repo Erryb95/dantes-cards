@@ -104,10 +104,8 @@ func _ready() -> void:
 	st.event.connect(func(ev): queue.append(ev))
 	ai = BattleAI.new(1)
 	ai_self = BattleAI.new(0)
-	var pd := CardDB.deck(Game.player_deck)
-	var ed := CardDB.deck(Game.enemy_deck)
 	_intro(arena)
-	st.start(CardDB.deck_list(pd.id), pd.hero, CardDB.deck_list(ed.id), ed.hero, 0, true)
+	st.start(Game.player_cards, Game.player_hero, Game.enemy_cards, Game.enemy_hero, 0, true)
 
 
 func _on_resize() -> void:
@@ -1076,10 +1074,19 @@ func _show_result(winner: int) -> void:
 	var sub := UI.label(line, 34, "italic", UI.BONE, 6, Color.BLACK)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(sub)
+	var reward := Collection.reward_battle(won)
+	var gain := UI.label("+%d Obols   ·   a pack costs %d" % [reward, Collection.PACK_PRICE], 34, "title",
+		Color(1.0, 0.85, 0.5), 6, Color.BLACK)
+	gain.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(gain)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 30)
 	box.add_child(row)
+	if Collection.packs > 0 or Collection.obols >= Collection.PACK_PRICE:
+		var packs := UI.button("Open Packs", 340)
+		packs.pressed.connect(func(): Game.go(Game.PACKS))
+		row.add_child(packs)
 	var again := UI.button("Play Again", 340)
 	again.pressed.connect(func(): Game.go(Game.BATTLE))
 	row.add_child(again)
