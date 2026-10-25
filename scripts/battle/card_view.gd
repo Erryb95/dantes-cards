@@ -81,6 +81,9 @@ func _build() -> void:
 func _build_face() -> void:
 	var is_spell: bool = card.get("type", "minion") == "spell"
 	var rarity: String = card.get("rarity", "common")
+	if UiSkin.has("card_border_spell" if is_spell else "card_border_minion"):
+		_build_full_art(is_spell, rarity)
+		return
 	var frame_bg := Color(0.16, 0.10, 0.07) if not is_spell else Color(0.20, 0.06, 0.07)
 	var frame_name := "card_frame_spell" if is_spell else "card_frame_minion"
 	if UiSkin.has(frame_name):
@@ -213,6 +216,108 @@ func _build_face() -> void:
 			var hp := Shapes.make(Shapes.Kind.DROP, Vector2(58, 70), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
 			hp.position = hp_at
 			_face.add_child(hp)
+		_face.add_child(_stat_label(str(int(card.get("attack", 0))), atk_at + Vector2(0, 2), 38))
+		_face.add_child(_stat_label(str(int(card.get("health", 0))), hp_at + Vector2(0, 4), 38))
+
+
+## Full-art layout (Enrico 2026-10-25): the painting fills the card inside a thin painted border; name ribbon,
+## rules text in light ink on a dark fade at the bottom, painted gems in the corners.
+func _build_full_art(is_spell: bool, rarity: String) -> void:
+	var art := TextureRect.new()
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	art.position = Vector2(5, 5)
+	art.size = Vector2(W - 10, H - 10)
+	art.texture = CardDB.art_framed(card_id, art.size.x / art.size.y, 0.42)
+	if art.texture == null:
+		art.texture = _placeholder()
+	_art_mat = ShaderMaterial.new()
+	_art_mat.shader = CARD_FX
+	_art_mat.set_shader_parameter("mask_mode", 2)
+	_art_mat.set_shader_parameter("corner", 0.07)
+	art.material = _art_mat
+	_face.add_child(art)
+
+	# Dark fade under the text so light ink stays readable on any painting.
+	var fade := TextureRect.new()
+	var g := GradientTexture2D.new()
+	g.width = 4
+	g.height = 128
+	g.fill_from = Vector2(0, 0)
+	g.fill_to = Vector2(0, 1)
+	var gr := Gradient.new()
+	var tint := Color(0.16, 0.02, 0.03) if is_spell else Color(0.03, 0.015, 0.01)
+	gr.set_color(0, Color(tint, 0.0))
+	gr.set_color(1, Color(tint, 0.94))
+	gr.add_point(0.3, Color(tint, 0.8))
+	g.gradient = gr
+	fade.texture = g
+	fade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	fade.stretch_mode = TextureRect.STRETCH_SCALE
+	fade.position = Vector2(5, 168)
+	fade.size = Vector2(W - 10, H - 173)
+	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fade.use_parent_material = true
+	_face.add_child(fade)
+	_face.add_child(UiSkin.rect("card_border_spell" if is_spell else "card_border_minion", Vector2(W, H)))
+
+	# Name ribbon.
+	var ry := 196.0
+	if UiSkin.has("name_ribbon"):
+		_face.add_child(UiSkin.rect("name_ribbon", Vector2(W + 20, 54), Vector2(-10, ry - 6)))
+	var nm: String = card.get("name", card_id)
+	var short := nm.split(",")[0] if nm.length() > 22 else nm
+	var name_l := UI.label(short, _fit_size(short, W - 64, 22, "title"), "title", UI.BONE, 4, Color(0.1, 0.02, 0.02))
+	name_l.position = Vector2(10, ry)
+	name_l.size = Vector2(W - 20, 40)
+	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_l.use_parent_material = true
+	_face.add_child(name_l)
+	if rarity != "token" and UiSkin.has("rarity_" + rarity):
+		_face.add_child(UiSkin.rect("rarity_" + rarity, Vector2(24, 24), Vector2(W / 2 - 12, ry + 36)))
+
+	# Rules text in light ink.
+	var txt := RichTextLabel.new()
+	txt.bbcode_enabled = true
+	txt.scroll_active = false
+	txt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	txt.position = Vector2(20, ry + 58)
+	txt.size = Vector2(W - 40, 70)
+	txt.use_parent_material = true
+	var body := UI.font("body")
+	var bold := FontVariation.new()
+	bold.base_font = body
+	bold.variation_embolden = 0.4
+	txt.add_theme_font_override("normal_font", body)
+	txt.add_theme_font_override("bold_font", bold)
+	txt.add_theme_font_override("italics_font", UI.font("italic"))
+	txt.add_theme_color_override("default_color", Color(0.96, 0.92, 0.84))
+	txt.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	txt.add_theme_constant_override("outline_size", 5)
+	var rules: String = card.get("text", "")
+	var size := 20 if rules.length() < 36 else (18 if rules.length() < 60 else 16)
+	if rules == "":
+		rules = "[i]" + card.get("flavor", "") + "[/i]"
+		size = 17
+		txt.add_theme_color_override("default_color", Color(0.85, 0.78, 0.66))
+	for k in ["normal_font_size", "bold_font_size", "italics_font_size"]:
+		txt.add_theme_font_size_override(k, size)
+	txt.text = UI.rules_bbcode(rules)
+	txt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_face.add_child(txt)
+
+	# Gems.
+	var mana_at := Vector2(28, 28)
+	_face.add_child(UiSkin.rect("gem_mana", Vector2(74, 74), mana_at - Vector2(37, 37)))
+	_cost_label = _stat_label(str(int(card.get("cost", 0))), mana_at, 40)
+	_face.add_child(_cost_label)
+	if not is_spell:
+		var atk_at := Vector2(28, H - 28)
+		var hp_at := Vector2(W - 28, H - 30)
+		_face.add_child(UiSkin.rect("gem_attack", Vector2(72, 72), atk_at - Vector2(36, 36)))
+		_face.add_child(UiSkin.rect("gem_health", Vector2(72, 72), hp_at - Vector2(36, 36)))
 		_face.add_child(_stat_label(str(int(card.get("attack", 0))), atk_at + Vector2(0, 2), 38))
 		_face.add_child(_stat_label(str(int(card.get("health", 0))), hp_at + Vector2(0, 4), 38))
 
