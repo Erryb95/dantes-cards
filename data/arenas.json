@@ -10,7 +10,9 @@
       "music": "music_combat",
       "ambience": "water_loop.ogg",
       "art": "wide panoramic view of the dark shore of the river Acheron in Hell, endless crowd of pale naked souls waiting on the rocky bank on the left and right, a wide calm black river across the middle of the image, the ancient ferryman Charon in a small boat with a glowing lantern far away on the water, distant cliffs under a starless sky with a faint red glow",
-      "scene": "res://scenes/arenas/acheron.tscn"
+      "scene": "res://scenes/arenas/acheron.tscn",
+      "board": "acheron_board.jpg",
+      "normal": "acheron_normal.png"
     }
   ]
 }
