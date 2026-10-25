@@ -96,7 +96,7 @@
    "rarity": "common",
    "cost": 2,
    "attack": 2,
-   "health": 3,
+   "health": 2,
    "keywords": [
     "ward"
    ],
@@ -183,7 +183,7 @@
    "rarity": "rare",
    "cost": 4,
    "attack": 3,
-   "health": 5,
+   "health": 4,
    "keywords": [
     "rebirth"
    ],
@@ -635,7 +635,7 @@
    "set": "pilgrim",
    "type": "spell",
    "rarity": "common",
-   "cost": 1,
+   "cost": 2,
    "effects": [
     {
      "on": "play",
@@ -678,7 +678,7 @@
    "set": "pilgrim",
    "type": "spell",
    "rarity": "common",
-   "cost": 3,
+   "cost": 4,
    "effects": [
     {
      "on": "play",

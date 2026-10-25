@@ -125,8 +125,31 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 				if card.type == "spell" and me.board.size() >= BattleState.MAX_BOARD:
 					return {}
 			"heal":
-				if card.type == "spell" and me.hand.size() >= 9:
+				if card.type == "spell" and (me.hand.size() >= 9
+						or e.get("target", "") == "own_hero" and me.hero.max_health - me.hero.health < int(e.amount)):
 					return {}
+			"freeze":
+				if tt != "":
+					target = _best_freeze(st)
+					if target == -1 and card.type == "spell":
+						return {}
+				elif card.type == "spell" and e.target in ["all_enemy_minions", "all_enemies"]:
+					var threat := 0
+					for u in foe.board:
+						threat += u.attack
+					if threat < 5:
+						return {}
+			"silence":
+				if tt != "":
+					target = _best_silence(st)
+					if target == -1 and card.type == "spell":
+						return {}
+				elif card.type == "spell" and e.target == "all_enemy_minions":
+					var worth := 0.0
+					for u in foe.board:
+						worth += _silence_value(u)
+					if worth < 6.0:
+						return {}
 	if tt != "" and target == -1:
 		if tt.contains("friendly"):
 			target = _best_friend(st)
@@ -161,6 +184,38 @@ func _best_damage_target(st: BattleState, amount: int, tt: String, optional: boo
 	if valid.has(foe.hero.uid):
 		return foe.hero.uid
 	return best if not optional else -1
+
+
+## The enemy minion most worth freezing: the hardest hitter, if it hits hard enough to matter.
+func _best_freeze(st: BattleState) -> int:
+	var best := -1
+	var best_a := 2
+	for u in st.sides[1 - side].board:
+		if not u.frozen and u.attack > best_a:
+			best_a = u.attack
+			best = u.uid
+	return best
+
+
+## How much a minion loses when silenced (keywords, card effects, buffs above its printed stats).
+func _silence_value(u) -> float:
+	if u.silenced:
+		return 0.0
+	var c := CardDB.card(u.id)
+	var v: float = 2.0 * u.keywords.size() + 3.0 * c.get("effects", []).size()
+	v += maxf(0.0, u.attack - int(c.get("attack", 0))) + maxf(0.0, u.max_health - int(c.get("health", 0)))
+	return v
+
+
+func _best_silence(st: BattleState) -> int:
+	var best := -1
+	var best_v := 2.5
+	for u in st.sides[1 - side].board:
+		var v: float = _silence_value(u)
+		if v > best_v:
+			best_v = v
+			best = u.uid
+	return best
 
 
 func _best_friend(st: BattleState) -> int:

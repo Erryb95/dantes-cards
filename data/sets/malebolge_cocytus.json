@@ -557,11 +557,17 @@
       "effects": [
         {
           "on": "play",
+          "do": "damage",
+          "target": "all_enemy_minions",
+          "amount": 1
+        },
+        {
+          "on": "play",
           "do": "freeze",
           "target": "all_enemy_minions"
         }
       ],
-      "text": "Freeze all enemy minions.",
+      "text": "Deal 1 damage to all enemy minions and Freeze them.",
       "flavor": "Nothing moves on the lake where the traitors are held.",
       "circle": "cocytus",
       "art": "A vast flat sheet of white ice with cracks spreading across its surface under a grey sky."
@@ -594,15 +600,20 @@
       "set": "neutral",
       "type": "spell",
       "rarity": "rare",
-      "cost": 6,
+      "cost": 3,
       "effects": [
         {
           "on": "play",
           "do": "silence",
           "target": "all_enemy_minions"
+        },
+        {
+          "on": "play",
+          "do": "draw",
+          "amount": 1
         }
       ],
-      "text": "Silence all enemy minions.",
+      "text": "Silence all enemy minions. Draw a card.",
       "flavor": "Every argument ends, and every voice goes quiet.",
       "circle": "malebolge",
       "art": "A crowd of people standing still with their hands over their mouths in a torchlit square."
@@ -664,7 +675,7 @@
           "on": "play",
           "do": "damage",
           "target": "all_enemy_minions",
-          "amount": 2
+          "amount": 3
         },
         {
           "on": "play",
@@ -672,7 +683,7 @@
           "target": "all_enemy_minions"
         }
       ],
-      "text": "Deal 2 damage to all enemy minions. Freeze all enemy minions.",
+      "text": "Deal 3 damage to all enemy minions. Freeze all enemy minions.",
       "flavor": "Three faces, six wings, and the wind that freezes all of Hell.",
       "circle": "cocytus",
       "art": "Six enormous dark wings beating above a frozen lake, a white wind blowing over the ice."
@@ -684,8 +695,8 @@
       "type": "minion",
       "rarity": "legendary",
       "cost": 10,
-      "attack": 10,
-      "health": 12,
+      "attack": 8,
+      "health": 10,
       "keywords": [
         "guard"
       ],
@@ -699,10 +710,10 @@
           "on": "turn_end",
           "do": "damage",
           "target": "all_enemies",
-          "amount": 2
+          "amount": 1
         }
       ],
-      "text": "Guard. On Play: Freeze all enemy minions. End of Turn: Deal 2 damage to all enemies.",
+      "text": "Guard. On Play: Freeze all enemy minions. End of Turn: Deal 1 damage to all enemies.",
       "flavor": "Frozen to the chest, he still rules the lowest pit.",
       "circle": "cocytus",
       "art": "A huge winged figure with three faces, sunk to the chest in a frozen lake."

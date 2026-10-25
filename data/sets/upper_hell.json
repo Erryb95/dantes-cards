@@ -606,7 +606,7 @@
    "set": "neutral",
    "type": "spell",
    "rarity": "common",
-   "cost": 2,
+   "cost": 0,
    "effects": [
     {
      "on": "play",
