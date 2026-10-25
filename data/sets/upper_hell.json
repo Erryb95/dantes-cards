@@ -1,41 +1,734 @@
 {
  "set_name": "Upper Hell",
  "cards": [
-  {"id": "uh_spotted_leopard", "name": "Spotted Leopard", "set": "neutral", "type": "minion", "rarity": "common", "cost": 1, "attack": 2, "health": 1, "keywords": ["swift"], "text": "Swift", "flavor": "It crossed the hill before the pilgrim could catch his breath.", "circle": "dark_wood", "art": "A spotted leopard leaping up a grassy hillside."},
-  {"id": "uh_wood_wanderer", "name": "Wanderer of the Wood", "set": "neutral", "type": "minion", "rarity": "common", "cost": 1, "attack": 1, "health": 2, "effects": [{"on": "death", "do": "draw", "amount": 1}], "text": "Last Breath: Draw a card.", "flavor": "Halfway through life, he lost the straight road.", "circle": "dark_wood", "art": "A weary man in a torn cloak pushing through tangled trees."},
-  {"id": "uh_undecided_soul", "name": "Undecided Soul", "set": "neutral", "type": "minion", "rarity": "common", "cost": 1, "attack": 1, "health": 3, "effects": [{"on": "turn_end", "do": "armor", "target": "own_hero", "amount": 1}], "text": "End of Turn: Gain 1 Armor.", "flavor": "He never chose a side, so no side will have him.", "circle": "ante_inferno", "art": "A pale naked man standing still on a grey plain beside a blank banner."},
-  {"id": "uh_camilla", "name": "Camilla, Volscian Maiden", "set": "neutral", "type": "minion", "rarity": "common", "cost": 2, "attack": 2, "health": 2, "keywords": ["swift"], "text": "Swift", "flavor": "She ran over the wheat without bending a single stalk.", "circle": "limbo", "art": "A young woman with a bow sprinting across a golden wheat field."},
-  {"id": "uh_socrates", "name": "Socrates, the Questioner", "set": "neutral", "type": "minion", "rarity": "rare", "cost": 3, "attack": 1, "health": 3, "effects": [{"on": "play", "do": "draw", "amount": 1}], "text": "On Play: Draw a card.", "flavor": "He questioned everyone until they admitted they knew nothing.", "circle": "limbo", "art": "An old bald man in a plain cloak questioning a small circle of students."},
-  {"id": "uh_ciacco", "name": "Ciacco, the Glutton", "set": "neutral", "type": "minion", "rarity": "rare", "cost": 3, "attack": 2, "health": 3, "effects": [{"on": "turn_end", "do": "heal", "target": "own_hero", "amount": 1}], "text": "End of Turn: Restore 1 Health to your hero.", "flavor": "Lying in the cold mud, he still wants more.", "circle": "gluttony", "art": "A man sprawled face-down in a muddy puddle under falling rain."},
-  {"id": "uh_sullen_one", "name": "The Sullen", "set": "neutral", "type": "minion", "rarity": "common", "cost": 2, "attack": 1, "health": 4, "keywords": ["guard"], "text": "Guard", "flavor": "They sulked in the black mud and refused to move.", "circle": "wrath", "art": "Two gaunt figures sunk to the waist in dark swamp water."},
-  {"id": "uh_avaricious_weight", "name": "Avaricious Weight", "set": "neutral", "type": "minion", "rarity": "common", "cost": 2, "attack": 2, "health": 3, "effects": [{"on": "play", "do": "ramp", "amount": 1}], "text": "On Play: Gain 1 empty mana crystal.", "flavor": "Hoarders and spenders shove their weights at each other forever.", "circle": "greed", "art": "A huge stone ball rolling along a cracked road between two crowds of shoving figures."},
-  {"id": "uh_lion", "name": "The Lion", "set": "neutral", "type": "minion", "rarity": "common", "cost": 3, "attack": 3, "health": 3, "keywords": ["rebirth"], "text": "Rebirth", "flavor": "It came at the pilgrim with its head held high and its hunger fierce.", "circle": "dark_wood", "art": "A lion with its head raised on a bare rocky ridge at dawn."},
-  {"id": "uh_great_refusal", "name": "The Great Refusal", "set": "neutral", "type": "minion", "rarity": "rare", "cost": 3, "attack": 2, "health": 4, "effects": [{"on": "turn_start", "do": "freeze", "target": "random_enemy_minion"}], "text": "Start of Turn: Freeze a random enemy minion.", "flavor": "He turned down the papal throne out of cowardice.", "circle": "ante_inferno", "art": "An old man in papal robes turning his back on a golden throne."},
-  {"id": "uh_electra", "name": "Electra, Mother of Troy", "set": "neutral", "type": "minion", "rarity": "common", "cost": 3, "attack": 2, "health": 3, "effects": [{"on": "death", "do": "summon", "card": "uh_limbo_shade", "count": 1}], "text": "Last Breath: Summon a 1/1 Shade of Limbo.", "flavor": "Grief for her fallen city keeps her standing in the dark.", "circle": "limbo", "art": "A veiled woman with bowed head standing among broken stone columns."},
-  {"id": "uh_saladin", "name": "Saladin, Sultan of Egypt", "set": "neutral", "type": "minion", "rarity": "common", "cost": 3, "attack": 3, "health": 3, "effects": [{"on": "play", "do": "heal", "target": "own_hero", "amount": 2}], "text": "On Play: Restore 2 Health to your hero.", "flavor": "Honor earned him a place among the wise, but not the gate.", "circle": "limbo", "art": "A bearded ruler in a white robe and turban seated on a carved stone throne."},
-  {"id": "uh_dido", "name": "Dido, Queen of Carthage", "set": "neutral", "type": "minion", "rarity": "epic", "cost": 3, "attack": 3, "health": 3, "effects": [{"on": "play", "do": "silence", "target": "choose_enemy_minion"}], "text": "On Play: Silence an enemy minion.", "flavor": "She loved too much, and the love left her with nothing.", "circle": "lust", "art": "A queen in a long gown standing beside a burning funeral pyre on the shore."},
-  {"id": "uh_helen", "name": "Helen of Troy", "set": "neutral", "type": "minion", "rarity": "rare", "cost": 4, "attack": 3, "health": 3, "effects": [{"on": "play", "do": "damage", "target": "choose_minion", "amount": 2}], "text": "On Play: Deal 2 damage to a minion.", "flavor": "Her beauty started a war, and the blame never left her.", "circle": "lust", "art": "A beautiful woman with long golden hair, seen from behind at a walled city gate."},
-  {"id": "uh_wrathful_shade", "name": "Wrathful Shade", "set": "neutral", "type": "minion", "rarity": "common", "cost": 3, "attack": 3, "health": 2, "effects": [{"on": "turn_end", "do": "damage", "target": "random_enemy_minion", "amount": 1}], "text": "End of Turn: Deal 1 damage to a random enemy minion.", "flavor": "Angry for no reason, it strikes whoever is near.", "circle": "wrath", "art": "A figure with clenched fists rising out of dark water."},
-  {"id": "uh_prodigal_weight", "name": "Prodigal Weight", "set": "neutral", "type": "minion", "rarity": "common", "cost": 3, "attack": 3, "health": 3, "effects": [{"on": "play", "do": "buff", "target": "choose_friendly_minion", "attack": 2, "health": 0}], "text": "On Play: Give a friendly minion +2 Attack.", "flavor": "Spending without measure is its own kind of weight.", "circle": "greed", "art": "A large stone weight rolling down a steep path past scattered gold coins."},
-  {"id": "uh_hector", "name": "Hector of Troy", "set": "neutral", "type": "minion", "rarity": "rare", "cost": 4, "attack": 4, "health": 5, "keywords": ["ward"], "text": "Ward", "flavor": "The finest Trojan fighter, still defending a city that burned.", "circle": "limbo", "art": "A bearded warrior in bronze armor holding a round shield before a burning city wall."},
-  {"id": "uh_penthesilea", "name": "Penthesilea, Amazon Queen", "set": "neutral", "type": "minion", "rarity": "epic", "cost": 4, "attack": 4, "health": 3, "keywords": ["venom"], "text": "Venom", "flavor": "A warrior queen who fought bravely and fell to Achilles.", "circle": "limbo", "art": "A warrior woman with a crescent shield and spear riding a horse."},
-  {"id": "uh_cleopatra", "name": "Cleopatra, Queen of Egypt", "set": "neutral", "type": "minion", "rarity": "rare", "cost": 4, "attack": 3, "health": 4, "keywords": ["drain"], "text": "Drain", "flavor": "She spent kingdoms on her desires and never counted the cost.", "circle": "lust", "art": "A dark-haired queen in a golden headdress reclining on a boat with sails."},
-  {"id": "uh_filippo_argenti", "name": "Filippo Argenti", "set": "neutral", "type": "minion", "rarity": "rare", "cost": 4, "attack": 3, "health": 4, "effects": [{"on": "death", "do": "damage", "target": "all_enemies", "amount": 2}], "text": "Last Breath: Deal 2 damage to all enemies.", "flavor": "He bit his own arm in the black water, and his rage never stopped.", "circle": "wrath", "art": "A furious man in dark water biting his own forearm."},
-  {"id": "uh_homer", "name": "Homer, the Blind Poet", "set": "neutral", "type": "minion", "rarity": "rare", "cost": 4, "attack": 3, "health": 5, "effects": [{"on": "play", "do": "give_card", "card": "uh_limbo_shade", "count": 2}], "text": "On Play: Add 2 Shades of Limbo to your hand.", "flavor": "The blind poet sang of war, and the shades still listen.", "circle": "limbo", "art": "A blind bearded poet holding a lyre and sitting on a stone bench."},
-  {"id": "uh_achilles", "name": "Achilles, Swift-Footed", "set": "neutral", "type": "minion", "rarity": "legendary", "cost": 6, "attack": 6, "health": 6, "keywords": ["swift"], "effects": [{"on": "death", "do": "damage", "target": "random_enemy_minion", "amount": 2}], "text": "Swift. Last Breath: Deal 2 damage to a random enemy minion.", "flavor": "He could outrun anyone, but not the arrow aimed at his heel.", "circle": "lust", "art": "A muscular warrior sprinting along a windy shore with a spear raised."},
-  {"id": "uh_semiramis", "name": "Semiramis, Queen of Babylon", "set": "neutral", "type": "minion", "rarity": "legendary", "cost": 7, "attack": 4, "health": 6, "keywords": ["drain"], "effects": [{"on": "play", "do": "ramp", "amount": 2}], "text": "Drain. On Play: Gain 2 empty mana crystals.", "flavor": "She made her own desires into law.", "circle": "lust", "art": "A crowned queen in a long gown standing on a stone throne above a city."},
-  {"id": "uh_caesar", "name": "Julius Caesar", "set": "neutral", "type": "minion", "rarity": "legendary", "cost": 5, "attack": 5, "health": 5, "effects": [{"on": "play", "do": "armor", "target": "own_hero", "amount": 3}], "text": "On Play: Gain 3 Armor.", "flavor": "He crossed the Rubicon, and now he waits in the shade of Limbo.", "circle": "limbo", "art": "A Roman general in a red-trimmed cloak raising one hand."},
-  {"id": "uh_avaricious_hoarder", "name": "Avaricious Hoarder", "set": "neutral", "type": "minion", "rarity": "epic", "cost": 5, "attack": 4, "health": 5, "effects": [{"on": "death", "do": "draw", "amount": 2}], "text": "Last Breath: Draw 2 cards.", "flavor": "He hoarded all his life, and now he must push the weight forever.", "circle": "greed", "art": "A heavy bald man straining to push a huge stone weight uphill."},
-  {"id": "uh_thorn_jab", "name": "Thorn Jab", "set": "neutral", "type": "spell", "rarity": "common", "cost": 1, "effects": [{"on": "play", "do": "damage", "target": "choose_any", "amount": 2}], "text": "Deal 2 damage to any target.", "flavor": "Snap a thorn off the wood and strike.", "circle": "dark_wood", "art": "A broken thorny branch lying on dead leaves."},
-  {"id": "uh_lost_path", "name": "Lost Path", "set": "neutral", "type": "spell", "rarity": "common", "cost": 1, "effects": [{"on": "play", "do": "draw", "amount": 1}, {"on": "play", "do": "heal", "target": "own_hero", "amount": 1}], "text": "Draw a card. Restore 1 Health to your hero.", "flavor": "Every road in the dark wood looks the same.", "circle": "dark_wood", "art": "A narrow dirt path disappearing into a dense forest."},
-  {"id": "uh_hidden_shield", "name": "Hidden Shield", "set": "neutral", "type": "spell", "rarity": "common", "cost": 2, "effects": [{"on": "play", "do": "armor", "target": "own_hero", "amount": 3}], "text": "Gain 3 Armor.", "flavor": "Sometimes the safest place is the one nobody notices.", "circle": "ante_inferno", "art": "A round bronze shield leaning against a stone wall in shadow."},
-  {"id": "uh_turned_away", "name": "Turned Away at the Hill", "set": "neutral", "type": "spell", "rarity": "epic", "cost": 2, "effects": [{"on": "play", "do": "bounce", "target": "choose_minion"}], "text": "Return a minion to its owner's hand.", "flavor": "Three beasts blocked the hill and drove him back down.", "circle": "dark_wood", "art": "A wild cat, a lion and a wolf circling a rocky hillside."},
-  {"id": "uh_silencing_word", "name": "Silencing Word", "set": "neutral", "type": "spell", "rarity": "common", "cost": 2, "effects": [{"on": "play", "do": "silence", "target": "choose_minion"}], "text": "Silence a minion.", "flavor": "One calm word, and the shouting stops.", "circle": "limbo", "art": "A finger pressed to closed lips above an open scroll."},
-  {"id": "uh_bitter_chill", "name": "Bitter Chill", "set": "neutral", "type": "spell", "rarity": "common", "cost": 2, "effects": [{"on": "play", "do": "freeze", "target": "choose_enemy_minion"}], "text": "Freeze an enemy minion.", "flavor": "The cold keeps it still for a full turn.", "circle": "ante_inferno", "art": "Ice crystals spreading over dead reeds at the edge of a grey lake."},
-  {"id": "uh_cup_of_forgetting", "name": "Cup of Forgetting", "set": "neutral", "type": "spell", "rarity": "common", "cost": 1, "effects": [{"on": "play", "do": "give_card", "card": "uh_limbo_shade", "count": 1}], "text": "Add a Shade of Limbo to your hand.", "flavor": "Drink, and the past slips away like a shadow.", "circle": "limbo", "art": "A plain clay cup on a stone table beside a still dark pool."},
-  {"id": "uh_gale_of_the_lustful", "name": "Gale of the Lustful", "set": "neutral", "type": "spell", "rarity": "rare", "cost": 4, "effects": [{"on": "play", "do": "damage", "target": "all_enemy_minions", "amount": 2}], "text": "Deal 2 damage to all enemy minions.", "flavor": "Lovers swept together by a storm that never ends.", "circle": "lust", "art": "A violent wind over a rough sea with many figures carried along."},
-  {"id": "uh_hoarded_coin", "name": "Hoarded Coin", "set": "neutral", "type": "spell", "rarity": "common", "cost": 1, "effects": [{"on": "play", "do": "ramp", "amount": 1}], "text": "Gain 1 empty mana crystal.", "flavor": "Gold you cannot spend is still gold.", "circle": "greed", "art": "A single gold coin lying on a dark stone floor."},
-  {"id": "uh_cut_the_thread", "name": "Cut the Thread", "set": "neutral", "type": "spell", "rarity": "epic", "cost": 6, "effects": [{"on": "play", "do": "destroy", "target": "choose_enemy_minion"}], "text": "Destroy an enemy minion.", "flavor": "Someone has to cut the thread, even in Hell.", "circle": "dis", "art": "Heavy iron shears cutting a long white thread."},
-  {"id": "uh_limbo_shade", "name": "Shade of Limbo", "set": "token", "type": "minion", "rarity": "token", "cost": 1, "attack": 1, "health": 1, "text": "", "flavor": "A pale shape that remembers nothing of its life.", "circle": "limbo", "art": "A pale translucent human silhouette drifting above grey stones."}
+  {
+   "id": "uh_greyhound",
+   "name": "The Greyhound",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 2,
+   "health": 1,
+   "keywords": [
+    "swift"
+   ],
+   "text": "Swift",
+   "flavor": "A hound is coming that will chase the she-wolf back to Hell.",
+   "circle": "dark_wood",
+   "art": "A lean greyhound running at full speed across a hillside at dawn."
+  },
+  {
+   "id": "uh_shore_soul",
+   "name": "Soul on the Shore",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 1,
+   "health": 2,
+   "effects": [
+    {
+     "on": "death",
+     "do": "draw",
+     "amount": 1
+    }
+   ],
+   "text": "Last Breath: Draw a card.",
+   "flavor": "It waits for the boat and tells you what it saw.",
+   "circle": "ante_inferno",
+   "art": "A pale naked soul sitting on a grey riverbank, looking across dark water."
+  },
+  {
+   "id": "uh_undecided_soul",
+   "name": "Undecided Soul",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 1,
+   "health": 3,
+   "effects": [
+    {
+     "on": "turn_end",
+     "do": "armor",
+     "target": "own_hero",
+     "amount": 1
+    }
+   ],
+   "text": "End of Turn: Gain 1 Armor.",
+   "flavor": "He never chose a side, so no side will have him.",
+   "circle": "ante_inferno",
+   "art": "A pale naked man standing still on a grey plain beside a blank banner."
+  },
+  {
+   "id": "uh_camilla",
+   "name": "Camilla, Volscian Maiden",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 2,
+   "keywords": [
+    "swift"
+   ],
+   "text": "Swift",
+   "flavor": "She ran over the wheat without bending a single stalk.",
+   "circle": "limbo",
+   "art": "A young woman with a bow sprinting across a golden wheat field."
+  },
+  {
+   "id": "uh_socrates",
+   "name": "Socrates, the Questioner",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 1,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
+    }
+   ],
+   "text": "On Play: Draw a card.",
+   "flavor": "He questioned everyone until they admitted they knew nothing.",
+   "circle": "limbo",
+   "art": "An old bald man in a plain cloak questioning a small circle of students."
+  },
+  {
+   "id": "uh_forese",
+   "name": "Forese Donati",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 2,
+   "health": 3,
+   "effects": [
+    {
+     "on": "turn_end",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 1
+    }
+   ],
+   "text": "End of Turn: Restore 1 Health to your hero.",
+   "flavor": "A friend of the poet, still hungry, still smiling.",
+   "circle": "gluttony",
+   "art": "A thin man with hollow cheeks smiling weakly beside a fruit tree he cannot reach."
+  },
+  {
+   "id": "uh_sullen_one",
+   "name": "The Sullen",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 1,
+   "health": 4,
+   "keywords": [
+    "guard"
+   ],
+   "text": "Guard",
+   "flavor": "They sulked in the black mud and refused to move.",
+   "circle": "wrath",
+   "art": "Two gaunt figures sunk to the waist in dark swamp water."
+  },
+  {
+   "id": "uh_avaricious_weight",
+   "name": "Avaricious Weight",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "ramp",
+     "amount": 1
+    }
+   ],
+   "text": "On Play: Gain 1 empty mana crystal.",
+   "flavor": "Hoarders and spenders shove their weights at each other forever.",
+   "circle": "greed",
+   "art": "A huge stone ball rolling along a cracked road between two crowds of shoving figures."
+  },
+  {
+   "id": "uh_phoenix",
+   "name": "The Phoenix",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "keywords": [
+    "rebirth"
+   ],
+   "text": "Rebirth",
+   "flavor": "It burns to ash and rises again, as the old poets said.",
+   "circle": "malebolge",
+   "art": "A phoenix rising out of a pile of glowing ashes with its wings spread wide."
+  },
+  {
+   "id": "uh_great_refusal",
+   "name": "The Great Refusal",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 2,
+   "health": 4,
+   "effects": [
+    {
+     "on": "turn_start",
+     "do": "freeze",
+     "target": "random_enemy_minion"
+    }
+   ],
+   "text": "Start of Turn: Freeze a random enemy minion.",
+   "flavor": "He turned down the papal throne out of cowardice.",
+   "circle": "ante_inferno",
+   "art": "An old man in papal robes turning his back on a golden throne."
+  },
+  {
+   "id": "uh_electra",
+   "name": "Electra, Mother of Troy",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 2,
+   "health": 3,
+   "effects": [
+    {
+     "on": "death",
+     "do": "summon",
+     "card": "uh_limbo_shade",
+     "count": 1
+    }
+   ],
+   "text": "Last Breath: Summon a 1/1 Shade of Limbo.",
+   "flavor": "Grief for her fallen city keeps her standing in the dark.",
+   "circle": "limbo",
+   "art": "A veiled woman with bowed head standing among broken stone columns."
+  },
+  {
+   "id": "uh_saladin",
+   "name": "Saladin, Sultan of Egypt",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 2
+    }
+   ],
+   "text": "On Play: Restore 2 Health to your hero.",
+   "flavor": "Honor earned him a place among the wise, but not the gate.",
+   "circle": "limbo",
+   "art": "A bearded ruler in a white robe and turban seated on a carved stone throne."
+  },
+  {
+   "id": "uh_dido",
+   "name": "Dido, Queen of Carthage",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "silence",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "On Play: Silence an enemy minion.",
+   "flavor": "She loved too much, and the love left her with nothing.",
+   "circle": "lust",
+   "art": "A queen in a long gown standing beside a burning funeral pyre on the shore."
+  },
+  {
+   "id": "uh_helen",
+   "name": "Helen of Troy",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_minion",
+     "amount": 2
+    }
+   ],
+   "text": "On Play: Deal 2 damage to a minion.",
+   "flavor": "Her beauty started a war, and the blame never left her.",
+   "circle": "lust",
+   "art": "A beautiful woman with long golden hair, seen from behind at a walled city gate."
+  },
+  {
+   "id": "uh_wrathful_shade",
+   "name": "Wrathful Shade",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 3,
+   "health": 2,
+   "effects": [
+    {
+     "on": "turn_end",
+     "do": "damage",
+     "target": "random_enemy_minion",
+     "amount": 1
+    }
+   ],
+   "text": "End of Turn: Deal 1 damage to a random enemy minion.",
+   "flavor": "Angry for no reason, it strikes whoever is near.",
+   "circle": "wrath",
+   "art": "A figure with clenched fists rising out of dark water."
+  },
+  {
+   "id": "uh_prodigal_weight",
+   "name": "Prodigal Weight",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "choose_friendly_minion",
+     "attack": 2,
+     "health": 0
+    }
+   ],
+   "text": "On Play: Give a friendly minion +2 Attack.",
+   "flavor": "Spending without measure is its own kind of weight.",
+   "circle": "greed",
+   "art": "A large stone weight rolling down a steep path past scattered gold coins."
+  },
+  {
+   "id": "uh_hector",
+   "name": "Hector of Troy",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 4,
+   "health": 5,
+   "keywords": [
+    "ward"
+   ],
+   "text": "Ward",
+   "flavor": "The finest Trojan fighter, still defending a city that burned.",
+   "circle": "limbo",
+   "art": "A bearded warrior in bronze armor holding a round shield before a burning city wall."
+  },
+  {
+   "id": "uh_penthesilea",
+   "name": "Penthesilea, Amazon Queen",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 4,
+   "attack": 4,
+   "health": 3,
+   "keywords": [
+    "venom"
+   ],
+   "text": "Venom",
+   "flavor": "A warrior queen who fought bravely and fell to Achilles.",
+   "circle": "limbo",
+   "art": "A warrior woman with a crescent shield and spear riding a horse."
+  },
+  {
+   "id": "uh_tristan",
+   "name": "Tristan",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 3,
+   "health": 4,
+   "keywords": [
+    "drain"
+   ],
+   "text": "Drain",
+   "flavor": "He drank the love potion once and is swept along by the wind forever.",
+   "circle": "lust",
+   "art": "A young knight in a torn tunic tossed by a howling wind in a dark sky."
+  },
+  {
+   "id": "uh_filippo_argenti",
+   "name": "Filippo Argenti",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 3,
+   "health": 4,
+   "effects": [
+    {
+     "on": "death",
+     "do": "damage",
+     "target": "all_enemies",
+     "amount": 2
+    }
+   ],
+   "text": "Last Breath: Deal 2 damage to all enemies.",
+   "flavor": "He bit his own arm in the black water, and his rage never stopped.",
+   "circle": "wrath",
+   "art": "A furious man in dark water biting his own forearm."
+  },
+  {
+   "id": "uh_orpheus",
+   "name": "Orpheus, the Singer",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 3,
+   "health": 5,
+   "effects": [
+    {
+     "on": "play",
+     "do": "give_card",
+     "card": "uh_limbo_shade",
+     "count": 2
+    }
+   ],
+   "text": "On Play: Add 2 Shades of Limbo to your hand.",
+   "flavor": "When he sings, even the shades come back to listen.",
+   "circle": "limbo",
+   "art": "A young musician playing a lyre while pale shades gather around him in a grey meadow."
+  },
+  {
+   "id": "uh_achilles",
+   "name": "Achilles, Swift-Footed",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 6,
+   "attack": 6,
+   "health": 6,
+   "keywords": [
+    "swift"
+   ],
+   "effects": [
+    {
+     "on": "death",
+     "do": "damage",
+     "target": "random_enemy_minion",
+     "amount": 2
+    }
+   ],
+   "text": "Swift. Last Breath: Deal 2 damage to a random enemy minion.",
+   "flavor": "He could outrun anyone, but not the arrow aimed at his heel.",
+   "circle": "lust",
+   "art": "A muscular warrior sprinting along a windy shore with a spear raised."
+  },
+  {
+   "id": "uh_semiramis",
+   "name": "Semiramis, Queen of Babylon",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 7,
+   "attack": 4,
+   "health": 6,
+   "keywords": [
+    "drain"
+   ],
+   "effects": [
+    {
+     "on": "play",
+     "do": "ramp",
+     "amount": 2
+    }
+   ],
+   "text": "Drain. On Play: Gain 2 empty mana crystals.",
+   "flavor": "She made her own desires into law.",
+   "circle": "lust",
+   "art": "A crowned queen in a long gown standing on a stone throne above a city."
+  },
+  {
+   "id": "uh_caesar",
+   "name": "Julius Caesar",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 5,
+   "attack": 5,
+   "health": 5,
+   "effects": [
+    {
+     "on": "play",
+     "do": "armor",
+     "target": "own_hero",
+     "amount": 3
+    }
+   ],
+   "text": "On Play: Gain 3 Armor.",
+   "flavor": "He crossed the Rubicon, and now he waits in the shade of Limbo.",
+   "circle": "limbo",
+   "art": "A Roman general in a red-trimmed cloak raising one hand."
+  },
+  {
+   "id": "uh_avaricious_hoarder",
+   "name": "Avaricious Hoarder",
+   "set": "neutral",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 5,
+   "attack": 4,
+   "health": 5,
+   "effects": [
+    {
+     "on": "death",
+     "do": "draw",
+     "amount": 2
+    }
+   ],
+   "text": "Last Breath: Draw 2 cards.",
+   "flavor": "He hoarded all his life, and now he must push the weight forever.",
+   "circle": "greed",
+   "art": "A heavy bald man straining to push a huge stone weight uphill."
+  },
+  {
+   "id": "uh_thorn_jab",
+   "name": "Thorn Jab",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_any",
+     "amount": 2
+    }
+   ],
+   "text": "Deal 2 damage to any target.",
+   "flavor": "Snap a thorn off the wood and strike.",
+   "circle": "dark_wood",
+   "art": "A broken thorny branch lying on dead leaves."
+  },
+  {
+   "id": "uh_lost_path",
+   "name": "Lost Path",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 1
+    }
+   ],
+   "text": "Draw a card. Restore 1 Health to your hero.",
+   "flavor": "Every road in the dark wood looks the same.",
+   "circle": "dark_wood",
+   "art": "A narrow dirt path disappearing into a dense forest."
+  },
+  {
+   "id": "uh_hidden_shield",
+   "name": "Hidden Shield",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "armor",
+     "target": "own_hero",
+     "amount": 3
+    }
+   ],
+   "text": "Gain 3 Armor.",
+   "flavor": "Sometimes the safest place is the one nobody notices.",
+   "circle": "ante_inferno",
+   "art": "A round bronze shield leaning against a stone wall in shadow."
+  },
+  {
+   "id": "uh_turned_away",
+   "name": "Turned Away at the Hill",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "bounce",
+     "target": "choose_minion"
+    }
+   ],
+   "text": "Return a minion to its owner's hand.",
+   "flavor": "Three beasts blocked the hill and drove him back down.",
+   "circle": "dark_wood",
+   "art": "A wild cat, a lion and a wolf circling a rocky hillside."
+  },
+  {
+   "id": "uh_silencing_word",
+   "name": "Silencing Word",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "silence",
+     "target": "choose_minion"
+    }
+   ],
+   "text": "Silence a minion.",
+   "flavor": "One calm word, and the shouting stops.",
+   "circle": "limbo",
+   "art": "A finger pressed to closed lips above an open scroll."
+  },
+  {
+   "id": "uh_bitter_chill",
+   "name": "Bitter Chill",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "Freeze an enemy minion.",
+   "flavor": "The cold keeps it still for a full turn.",
+   "circle": "ante_inferno",
+   "art": "Ice crystals spreading over dead reeds at the edge of a grey lake."
+  },
+  {
+   "id": "uh_cup_of_forgetting",
+   "name": "Cup of Forgetting",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "give_card",
+     "card": "uh_limbo_shade",
+     "count": 1
+    }
+   ],
+   "text": "Add a Shade of Limbo to your hand.",
+   "flavor": "Drink, and the past slips away like a shadow.",
+   "circle": "limbo",
+   "art": "A plain clay cup on a stone table beside a still dark pool."
+  },
+  {
+   "id": "uh_gale_of_the_lustful",
+   "name": "Gale of the Lustful",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 4,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "all_enemy_minions",
+     "amount": 2
+    }
+   ],
+   "text": "Deal 2 damage to all enemy minions.",
+   "flavor": "Lovers swept together by a storm that never ends.",
+   "circle": "lust",
+   "art": "A violent wind over a rough sea with many figures carried along."
+  },
+  {
+   "id": "uh_hoarded_coin",
+   "name": "Hoarded Coin",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "ramp",
+     "amount": 1
+    }
+   ],
+   "text": "Gain 1 empty mana crystal.",
+   "flavor": "Gold you cannot spend is still gold.",
+   "circle": "greed",
+   "art": "A single gold coin lying on a dark stone floor."
+  },
+  {
+   "id": "uh_cut_the_thread",
+   "name": "Cut the Thread",
+   "set": "neutral",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 6,
+   "effects": [
+    {
+     "on": "play",
+     "do": "destroy",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "Destroy an enemy minion.",
+   "flavor": "Someone has to cut the thread, even in Hell.",
+   "circle": "dis",
+   "art": "Heavy iron shears cutting a long white thread."
+  },
+  {
+   "id": "uh_limbo_shade",
+   "name": "Shade of Limbo",
+   "set": "token",
+   "type": "minion",
+   "rarity": "token",
+   "cost": 1,
+   "attack": 1,
+   "health": 1,
+   "text": "",
+   "flavor": "A pale shape that remembers nothing of its life.",
+   "circle": "limbo",
+   "art": "A pale translucent human silhouette drifting above grey stones."
+  }
  ]
 }

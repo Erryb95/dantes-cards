@@ -458,8 +458,8 @@
    "art": "A huge bearded giant with a horn slung over his shoulder, standing among stone ruins."
   },
   {
-   "id": "ih_lucifer",
-   "name": "Lucifer, the Frozen King",
+   "id": "ih_typhon",
+   "name": "Typhon, the Storm Giant",
    "set": "ferry",
    "type": "minion",
    "rarity": "legendary",
@@ -477,9 +477,9 @@
     }
    ],
    "text": "Rebirth. On Play: Freeze all enemy minions.",
-   "flavor": "Stuck waist-deep in ice, he still freezes anyone who comes near.",
+   "flavor": "The storm he breathes turns every river in the pit to ice.",
    "circle": "cocytus",
-   "art": "A colossal three-faced figure with huge bat wings, frozen waist-deep in a sheet of blue ice."
+   "art": "A towering giant chained in a rocky pit, breathing a freezing storm across a frozen plain."
   },
   {
    "id": "ih_gate_angel",

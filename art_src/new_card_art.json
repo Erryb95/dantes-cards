@@ -18,10 +18,10 @@
   "art": "A centaur with a bow across his shoulders stands on the bank of a dark red river."
  },
  {
-  "id": "cd_pier_della_vigna",
-  "name": "Pier della Vigna",
+  "id": "cd_nameless_bush",
+  "name": "The Nameless Bush",
   "rarity": "rare",
-  "art": "A gnarled leafless tree with a pale human face in its trunk, its broken branches dripping dark sap."
+  "art": "A thorny black bush with scattered torn leaves, a pale human face hidden in its branches."
  },
  {
   "id": "cd_giacomo",
@@ -42,10 +42,10 @@
   "art": "A knight in chain mail with a sword stands waist deep in a crimson river."
  },
  {
-  "id": "cd_brunetto",
-  "name": "Brunetto Latini",
+  "id": "cd_accorso",
+  "name": "Francesco d'Accorso",
   "rarity": "rare",
-  "art": "An elderly scholar in a long gown runs across pale sand under a shower of glowing sparks."
+  "art": "A scholar in a jurist's cap running across burning sand, clutching a thick law book."
  },
  {
   "id": "cd_guido_guerra",
@@ -120,10 +120,10 @@
   "art": "A crowned emperor with a long beard sits on a stone tomb with fire glowing under its lid."
  },
  {
-  "id": "cd_messenger_heaven",
-  "name": "Messenger from Heaven",
+  "id": "cd_nicholas_iii",
+  "name": "Pope Nicholas III",
   "rarity": "legendary",
-  "art": "A radiant winged figure in white robes holds a long staff before a huge iron gate."
+  "art": "A pope buried upside down in a round stone hole, only his burning feet showing above the rim."
  },
  {
   "id": "cd_attila",
@@ -348,10 +348,10 @@
   "art": "A huge bearded giant with a horn slung over his shoulder, standing among stone ruins."
  },
  {
-  "id": "ih_lucifer",
-  "name": "Lucifer, the Frozen King",
+  "id": "ih_typhon",
+  "name": "Typhon, the Storm Giant",
   "rarity": "legendary",
-  "art": "A colossal three-faced figure with huge bat wings, frozen waist-deep in a sheet of blue ice."
+  "art": "A towering giant chained in a rocky pit, breathing a freezing storm across a frozen plain."
  },
  {
   "id": "ih_gate_angel",
@@ -624,10 +624,10 @@
   "art": "A friar with ice clinging to his eyelashes, tears frozen on his cheeks."
  },
  {
-  "id": "mc_winter_of_cocytus",
-  "name": "Winter of Cocytus",
+  "id": "mc_six_wings",
+  "name": "Wind of the Six Wings",
   "rarity": "epic",
-  "art": "A bitter white snowstorm sweeping across an endless plain of ice."
+  "art": "Six enormous dark wings beating above a frozen lake, a white wind blowing over the ice."
  },
  {
   "id": "mc_lucifer",
@@ -858,16 +858,16 @@
   "art": "A grey wolf stumbles backward along a forest path, with a bright light behind it."
  },
  {
-  "id": "uh_spotted_leopard",
-  "name": "Spotted Leopard",
+  "id": "uh_greyhound",
+  "name": "The Greyhound",
   "rarity": "common",
-  "art": "A spotted leopard leaping up a grassy hillside."
+  "art": "A lean greyhound running at full speed across a hillside at dawn."
  },
  {
-  "id": "uh_wood_wanderer",
-  "name": "Wanderer of the Wood",
+  "id": "uh_shore_soul",
+  "name": "Soul on the Shore",
   "rarity": "common",
-  "art": "A weary man in a torn cloak pushing through tangled trees."
+  "art": "A pale naked soul sitting on a grey riverbank, looking across dark water."
  },
  {
   "id": "uh_undecided_soul",
@@ -888,10 +888,10 @@
   "art": "An old bald man in a plain cloak questioning a small circle of students."
  },
  {
-  "id": "uh_ciacco",
-  "name": "Ciacco, the Glutton",
+  "id": "uh_forese",
+  "name": "Forese Donati",
   "rarity": "rare",
-  "art": "A man sprawled face-down in a muddy puddle under falling rain."
+  "art": "A thin man with hollow cheeks smiling weakly beside a fruit tree he cannot reach."
  },
  {
   "id": "uh_sullen_one",
@@ -906,10 +906,10 @@
   "art": "A huge stone ball rolling along a cracked road between two crowds of shoving figures."
  },
  {
-  "id": "uh_lion",
-  "name": "The Lion",
+  "id": "uh_phoenix",
+  "name": "The Phoenix",
   "rarity": "common",
-  "art": "A lion with its head raised on a bare rocky ridge at dawn."
+  "art": "A phoenix rising out of a pile of glowing ashes with its wings spread wide."
  },
  {
   "id": "uh_great_refusal",
@@ -966,10 +966,10 @@
   "art": "A warrior woman with a crescent shield and spear riding a horse."
  },
  {
-  "id": "uh_cleopatra",
-  "name": "Cleopatra, Queen of Egypt",
+  "id": "uh_tristan",
+  "name": "Tristan",
   "rarity": "rare",
-  "art": "A dark-haired queen in a golden headdress reclining on a boat with sails."
+  "art": "A young knight in a torn tunic tossed by a howling wind in a dark sky."
  },
  {
   "id": "uh_filippo_argenti",
@@ -978,10 +978,10 @@
   "art": "A furious man in dark water biting his own forearm."
  },
  {
-  "id": "uh_homer",
-  "name": "Homer, the Blind Poet",
+  "id": "uh_orpheus",
+  "name": "Orpheus, the Singer",
   "rarity": "rare",
-  "art": "A blind bearded poet holding a lyre and sitting on a stone bench."
+  "art": "A young musician playing a lyre while pale shades gather around him in a grey meadow."
  },
  {
   "id": "uh_achilles",

@@ -10,7 +10,9 @@
    "cost": 1,
    "attack": 2,
    "health": 1,
-   "keywords": ["swift"],
+   "keywords": [
+    "swift"
+   ],
    "text": "Swift.",
    "flavor": "He spent his whole fortune, and now the hounds never let him rest.",
    "circle": "violence",
@@ -26,7 +28,12 @@
    "attack": 1,
    "health": 2,
    "effects": [
-    {"on": "play", "do": "give_card", "card": "cd_usurers_purse", "count": 1}
+    {
+     "on": "play",
+     "do": "give_card",
+     "card": "cd_usurers_purse",
+     "count": 1
+    }
    ],
    "text": "On Play: Add a Usurer's Purse to your hand.",
    "flavor": "He counted his coins even while burning.",
@@ -42,26 +49,31 @@
    "cost": 1,
    "attack": 1,
    "health": 3,
-   "keywords": ["guard"],
+   "keywords": [
+    "guard"
+   ],
    "text": "Guard.",
    "flavor": "A patient guard who never lets anyone climb too high.",
    "circle": "violence",
    "art": "A centaur with a bow across his shoulders stands on the bank of a dark red river."
   },
   {
-   "id": "cd_pier_della_vigna",
-   "name": "Pier della Vigna",
+   "id": "cd_nameless_bush",
+   "name": "The Nameless Bush",
    "set": "neutral",
    "type": "minion",
    "rarity": "rare",
    "cost": 2,
    "attack": 2,
    "health": 4,
-   "keywords": ["guard", "rebirth"],
+   "keywords": [
+    "guard",
+    "rebirth"
+   ],
    "text": "Guard. Rebirth.",
-   "flavor": "Cut from his own tree, he still grows back each time he is broken.",
+   "flavor": "Cut down, it grows back from its own torn leaves.",
    "circle": "violence",
-   "art": "A gnarled leafless tree with a pale human face in its trunk, its broken branches dripping dark sap."
+   "art": "A thorny black bush with scattered torn leaves, a pale human face hidden in its branches."
   },
   {
    "id": "cd_giacomo",
@@ -72,9 +84,16 @@
    "cost": 2,
    "attack": 3,
    "health": 2,
-   "keywords": ["swift"],
+   "keywords": [
+    "swift"
+   ],
    "effects": [
-    {"on": "death", "do": "summon", "card": "cd_black_hound", "count": 1}
+    {
+     "on": "death",
+     "do": "summon",
+     "card": "cd_black_hound",
+     "count": 1
+    }
    ],
    "text": "Swift. Last Breath: Summon a 1/1 Black Hound.",
    "flavor": "He ran from his debts, and the hounds ran after him.",
@@ -90,7 +109,9 @@
    "cost": 2,
    "attack": 2,
    "health": 3,
-   "keywords": ["drain"],
+   "keywords": [
+    "drain"
+   ],
    "text": "Drain.",
    "flavor": "Even in the sand, he asks to be remembered kindly by the living.",
    "circle": "violence",
@@ -106,7 +127,12 @@
    "attack": 2,
    "health": 3,
    "effects": [
-    {"on": "play", "do": "damage", "target": "choose_minion", "amount": 1}
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_minion",
+     "amount": 1
+    }
    ],
    "text": "On Play: Deal 1 damage to a minion.",
    "flavor": "He killed his cousin inside a church, and now the blood boils around him.",
@@ -114,8 +140,8 @@
    "art": "A knight in chain mail with a sword stands waist deep in a crimson river."
   },
   {
-   "id": "cd_brunetto",
-   "name": "Brunetto Latini",
+   "id": "cd_accorso",
+   "name": "Francesco d'Accorso",
    "set": "neutral",
    "type": "minion",
    "rarity": "rare",
@@ -123,12 +149,16 @@
    "attack": 2,
    "health": 4,
    "effects": [
-    {"on": "play", "do": "draw", "amount": 1}
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
+    }
    ],
    "text": "On Play: Draw a card.",
-   "flavor": "Once Dante's teacher, now he runs across the burning sand forever.",
+   "flavor": "A great teacher of the law, still lecturing as he runs.",
    "circle": "violence",
-   "art": "An elderly scholar in a long gown runs across pale sand under a shower of glowing sparks."
+   "art": "A scholar in a jurist's cap running across burning sand, clutching a thick law book."
   },
   {
    "id": "cd_guido_guerra",
@@ -139,7 +169,9 @@
    "cost": 3,
    "attack": 3,
    "health": 3,
-   "keywords": ["venom"],
+   "keywords": [
+    "venom"
+   ],
    "text": "Venom.",
    "flavor": "A great lord of Florence, now one more soul on the sand.",
    "circle": "violence",
@@ -155,7 +187,11 @@
    "attack": 2,
    "health": 4,
    "effects": [
-    {"on": "play", "do": "ramp", "amount": 1}
+    {
+     "on": "play",
+     "do": "ramp",
+     "amount": 1
+    }
    ],
    "text": "On Play: Gain an empty mana crystal.",
    "flavor": "The grammarian who wrote the rules, and still walks by them in the sand.",
@@ -171,9 +207,16 @@
    "cost": 3,
    "attack": 3,
    "health": 3,
-   "keywords": ["ward"],
+   "keywords": [
+    "ward"
+   ],
    "effects": [
-    {"on": "death", "do": "heal", "target": "all_friendly_minions", "amount": 2}
+    {
+     "on": "death",
+     "do": "heal",
+     "target": "all_friendly_minions",
+     "amount": 2
+    }
    ],
    "text": "Ward. Last Breath: Restore 2 Health to all friendly minions.",
    "flavor": "He taught that the soul dies with the body. Now he burns in a tomb to prove it wrong.",
@@ -189,9 +232,17 @@
    "cost": 3,
    "attack": 3,
    "health": 3,
-   "keywords": ["venom"],
+   "keywords": [
+    "venom"
+   ],
    "effects": [
-    {"on": "turn_start", "do": "buff", "target": "random_friendly_minion", "attack": 1, "health": 0}
+    {
+     "on": "turn_start",
+     "do": "buff",
+     "target": "random_friendly_minion",
+     "attack": 1,
+     "health": 0
+    }
    ],
    "text": "Venom. Start of Turn: Give a random friendly minion +1/+0.",
    "flavor": "A tyrant who ruled by fear, now boiling in the blood of his victims.",
@@ -207,9 +258,16 @@
    "cost": 3,
    "attack": 3,
    "health": 4,
-   "keywords": ["guard"],
+   "keywords": [
+    "guard"
+   ],
    "effects": [
-    {"on": "turn_end", "do": "damage", "target": "random_enemy_minion", "amount": 1}
+    {
+     "on": "turn_end",
+     "do": "damage",
+     "target": "random_enemy_minion",
+     "amount": 1
+    }
    ],
    "text": "Guard. End of Turn: Deal 1 damage to a random enemy minion.",
    "flavor": "He shoots anyone who climbs higher than the blood allows.",
@@ -226,7 +284,12 @@
    "attack": 3,
    "health": 4,
    "effects": [
-    {"on": "play", "do": "damage", "target": "choose_enemy_minion", "amount": 2}
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_enemy_minion",
+     "amount": 2
+    }
    ],
    "text": "On Play: Deal 2 damage to an enemy minion.",
    "flavor": "He rose from his tomb only to ask whether his son was still alive.",
@@ -242,9 +305,16 @@
    "cost": 4,
    "attack": 2,
    "health": 6,
-   "keywords": ["guard"],
+   "keywords": [
+    "guard"
+   ],
    "effects": [
-    {"on": "turn_end", "do": "heal", "target": "own_hero", "amount": 1}
+    {
+     "on": "turn_end",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 1
+    }
    ],
    "text": "Guard. End of Turn: Restore 1 Health to your hero.",
    "flavor": "A pope who strayed into heresy, now sealed in stone.",
@@ -260,7 +330,9 @@
    "cost": 4,
    "attack": 4,
    "health": 4,
-   "keywords": ["drain"],
+   "keywords": [
+    "drain"
+   ],
    "text": "Drain.",
    "flavor": "A warlord so cruel that his name still makes men pale.",
    "circle": "violence",
@@ -275,7 +347,9 @@
    "cost": 4,
    "attack": 4,
    "health": 4,
-   "keywords": ["swift"],
+   "keywords": [
+    "swift"
+   ],
    "text": "Swift.",
    "flavor": "The conqueror who never stopped, not even here.",
    "circle": "violence",
@@ -291,7 +365,11 @@
    "attack": 3,
    "health": 5,
    "effects": [
-    {"on": "play", "do": "freeze", "target": "choose_enemy_minion"}
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "choose_enemy_minion"
+    }
    ],
    "text": "On Play: Freeze an enemy minion.",
    "flavor": "One look, and the attacker is turned to stone.",
@@ -308,7 +386,11 @@
    "attack": 2,
    "health": 5,
    "effects": [
-    {"on": "turn_end", "do": "draw", "amount": 1}
+    {
+     "on": "turn_end",
+     "do": "draw",
+     "amount": 1
+    }
    ],
    "text": "End of Turn: Draw a card.",
    "flavor": "He collects his interest every day, even here.",
@@ -324,9 +406,15 @@
    "cost": 5,
    "attack": 5,
    "health": 5,
-   "keywords": ["ward"],
+   "keywords": [
+    "ward"
+   ],
    "effects": [
-    {"on": "play", "do": "freeze", "target": "choose_enemy_minion"}
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "choose_enemy_minion"
+    }
    ],
    "text": "Ward. On Play: Freeze an enemy minion.",
    "flavor": "An emperor who denied the soul, now sealed in a burning tomb.",
@@ -334,22 +422,28 @@
    "art": "A crowned emperor with a long beard sits on a stone tomb with fire glowing under its lid."
   },
   {
-   "id": "cd_messenger_heaven",
-   "name": "Messenger from Heaven",
+   "id": "cd_nicholas_iii",
+   "name": "Pope Nicholas III",
    "set": "neutral",
    "type": "minion",
    "rarity": "legendary",
    "cost": 5,
    "attack": 4,
    "health": 6,
-   "keywords": ["ward"],
+   "keywords": [
+    "ward"
+   ],
    "effects": [
-    {"on": "play", "do": "silence", "target": "choose_enemy_minion"}
+    {
+     "on": "play",
+     "do": "silence",
+     "target": "choose_enemy_minion"
+    }
    ],
    "text": "Ward. On Play: Silence an enemy minion.",
-   "flavor": "He walks through the gate, and the demons fall silent.",
-   "circle": "dis",
-   "art": "A radiant winged figure in white robes holds a long staff before a huge iron gate."
+   "flavor": "He took the pilgrim for his successor and fell silent.",
+   "circle": "malebolge",
+   "art": "A pope buried upside down in a round stone hole, only his burning feet showing above the rim."
   },
   {
    "id": "cd_attila",
@@ -360,9 +454,16 @@
    "cost": 5,
    "attack": 5,
    "health": 4,
-   "keywords": ["swift"],
+   "keywords": [
+    "swift"
+   ],
    "effects": [
-    {"on": "death", "do": "damage", "target": "all_enemy_minions", "amount": 2}
+    {
+     "on": "death",
+     "do": "damage",
+     "target": "all_enemy_minions",
+     "amount": 2
+    }
    ],
    "text": "Swift. Last Breath: Deal 2 damage to all enemy minions.",
    "flavor": "He spread ruin across the world, and here the ruin spreads back.",
@@ -378,9 +479,16 @@
    "cost": 6,
    "attack": 5,
    "health": 6,
-   "keywords": ["ward"],
+   "keywords": [
+    "ward"
+   ],
    "effects": [
-    {"on": "turn_end", "do": "damage", "target": "all_enemies", "amount": 1}
+    {
+     "on": "turn_end",
+     "do": "damage",
+     "target": "all_enemies",
+     "amount": 1
+    }
    ],
    "text": "Ward. End of Turn: Deal 1 damage to all enemies.",
    "flavor": "He defied the gods, and the rain of fire never stops falling on him.",
@@ -396,9 +504,16 @@
    "cost": 6,
    "attack": 6,
    "health": 5,
-   "keywords": ["swift"],
+   "keywords": [
+    "swift"
+   ],
    "effects": [
-    {"on": "death", "do": "damage", "target": "random_enemy_minion", "amount": 3}
+    {
+     "on": "death",
+     "do": "damage",
+     "target": "random_enemy_minion",
+     "amount": 3
+    }
    ],
    "text": "Swift. Last Breath: Deal 3 damage to a random enemy minion.",
    "flavor": "Half man, half bull, and all rage. He guards the river of blood.",
@@ -414,9 +529,16 @@
    "cost": 7,
    "attack": 6,
    "health": 9,
-   "keywords": ["guard"],
+   "keywords": [
+    "guard"
+   ],
    "effects": [
-    {"on": "turn_end", "do": "heal", "target": "own_hero", "amount": 2}
+    {
+     "on": "turn_end",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 2
+    }
    ],
    "text": "Guard. End of Turn: Restore 2 Health to your hero.",
    "flavor": "His tears feed every river in hell, and he never stops crying.",
@@ -431,7 +553,12 @@
    "rarity": "common",
    "cost": 1,
    "effects": [
-    {"on": "play", "do": "damage", "target": "choose_any", "amount": 2}
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_any",
+     "amount": 2
+    }
    ],
    "text": "Deal 2 damage.",
    "flavor": "The sand is hot enough to scorch anyone who stands on it.",
@@ -446,8 +573,16 @@
    "rarity": "common",
    "cost": 1,
    "effects": [
-    {"on": "play", "do": "draw", "amount": 1},
-    {"on": "play", "do": "ramp", "amount": 1}
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "ramp",
+     "amount": 1
+    }
    ],
    "text": "Draw a card. Gain an empty mana crystal.",
    "flavor": "Every coin lent is a coin owed, with interest.",
@@ -462,8 +597,18 @@
    "rarity": "common",
    "cost": 2,
    "effects": [
-    {"on": "play", "do": "damage", "target": "choose_minion", "amount": 2},
-    {"on": "play", "do": "heal", "target": "own_hero", "amount": 2}
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_minion",
+     "amount": 2
+    },
+    {
+     "on": "play",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 2
+    }
    ],
    "text": "Deal 2 damage to a minion. Restore 2 Health to your hero.",
    "flavor": "Snap a branch and it bleeds, as if it were a person.",
@@ -478,7 +623,12 @@
    "rarity": "common",
    "cost": 2,
    "effects": [
-    {"on": "play", "do": "armor", "target": "own_hero", "amount": 3}
+    {
+     "on": "play",
+     "do": "armor",
+     "target": "own_hero",
+     "amount": 3
+    }
    ],
    "text": "Gain 3 Armor.",
    "flavor": "The iron walls will hold, for a while.",
@@ -493,7 +643,11 @@
    "rarity": "rare",
    "cost": 2,
    "effects": [
-    {"on": "play", "do": "silence", "target": "choose_enemy_minion"}
+    {
+     "on": "play",
+     "do": "silence",
+     "target": "choose_enemy_minion"
+    }
    ],
    "text": "Silence an enemy minion.",
    "flavor": "The lid slides shut, and the sinner can no longer speak.",
@@ -508,7 +662,12 @@
    "rarity": "common",
    "cost": 3,
    "effects": [
-    {"on": "play", "do": "summon", "card": "cd_black_hound", "count": 2}
+    {
+     "on": "play",
+     "do": "summon",
+     "card": "cd_black_hound",
+     "count": 2
+    }
    ],
    "text": "Summon two 1/1 Black Hounds.",
    "flavor": "The black hounds run down the man who spent everything he had.",
@@ -523,7 +682,11 @@
    "rarity": "common",
    "cost": 3,
    "effects": [
-    {"on": "play", "do": "bounce", "target": "choose_enemy_minion"}
+    {
+     "on": "play",
+     "do": "bounce",
+     "target": "choose_enemy_minion"
+    }
    ],
    "text": "Return an enemy minion to its owner's hand.",
    "flavor": "A push at the gate sends the demon back where it came from.",
@@ -538,7 +701,12 @@
    "rarity": "rare",
    "cost": 4,
    "effects": [
-    {"on": "play", "do": "damage", "target": "all_enemy_minions", "amount": 2}
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "all_enemy_minions",
+     "amount": 2
+    }
    ],
    "text": "Deal 2 damage to all enemy minions.",
    "flavor": "The flames fall slowly, and nobody can run from them.",
@@ -553,7 +721,11 @@
    "rarity": "rare",
    "cost": 4,
    "effects": [
-    {"on": "play", "do": "destroy", "target": "choose_enemy_minion"}
+    {
+     "on": "play",
+     "do": "destroy",
+     "target": "choose_enemy_minion"
+    }
    ],
    "text": "Destroy an enemy minion.",
    "flavor": "One lash of the whip, and the sinner is gone.",
@@ -568,7 +740,11 @@
    "rarity": "epic",
    "cost": 6,
    "effects": [
-    {"on": "play", "do": "freeze", "target": "all_enemy_minions"}
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "all_enemy_minions"
+    }
    ],
    "text": "Freeze all enemy minions.",
    "flavor": "Every lid is shut, and nobody inside can move.",
@@ -584,7 +760,9 @@
    "cost": 1,
    "attack": 1,
    "health": 1,
-   "keywords": ["swift"],
+   "keywords": [
+    "swift"
+   ],
    "text": "Swift.",
    "flavor": "It never stops until it catches its prey.",
    "circle": "violence",
