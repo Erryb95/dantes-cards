@@ -26,8 +26,16 @@ func _ready() -> void:
 	var title := UI.label("Collection", 56, "title", UI.GOLD, 8, Color.BLACK)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(title)
-	for f in [["all", "All"], ["pilgrim", "Pilgrim"], ["ferry", "Ferryman"], ["token", "Tokens"]]:
-		var b := UI.button(f[1], 200, 64)
+	var owned_n := 0
+	var total := 0
+	for c in CardDB.all_cards():
+		if c.get("set", "") != "token":
+			total += 1
+			owned_n += int(Collection.copies(c.id) > 0)
+	var progress := UI.label("%d / %d" % [owned_n, total], 30, "title", UI.BONE, 5, Color.BLACK)
+	top.add_child(progress)
+	for f in [["all", "All"], ["pilgrim", "Pilgrim"], ["ferry", "Ferryman"], ["neutral", "Neutral"], ["token", "Tokens"]]:
+		var b := UI.button(f[1], 180, 64)
 		b.add_theme_font_size_override("font_size", 26)
 		b.pressed.connect(_set_filter.bind(f[0]))
 		top.add_child(b)
@@ -66,6 +74,14 @@ func _fill() -> void:
 		v.scale = Vector2(s, s)
 		v.position = slot.custom_minimum_size / 2
 		slot.add_child(v)
+		if c.set != "token":
+			var n := Collection.copies(c.id)
+			if n == 0:
+				v.modulate = Color(0.32, 0.3, 0.3)
+			else:
+				var badge := UI.label("x%d" % n, 26, "title", UI.GOLD, 6, Color.BLACK)
+				badge.position = Vector2(slot.custom_minimum_size.x - 40, 2)
+				slot.add_child(badge)
 		slot.mouse_entered.connect(func():
 			v.create_tween().tween_property(v, "scale", Vector2(s, s) * 1.06, 0.1)
 			Sfx.play("tick", -16.0))
