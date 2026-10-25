@@ -4,7 +4,7 @@
   python tools/cards/art_jobs.py run              # build + generate via tools/comfy/art.py + import
   python tools/cards/art_jobs.py import           # resize art_src/cards/*.png into assets/
   python tools/cards/art_jobs.py dore             # import the Dore batch (art_src/dore_cards) per card "image"
-  python tools/cards/art_jobs.py v2               # download output/dantes_cards_v2/<id>_s777.png for the set cards
+  python tools/cards/art_jobs.py v2               # download output/dantes_cards_v2/<id>_s777_00001_.png for the set cards
                                                   # still missing art (list: art_src/new_card_art.json) and import them
 
 House style (final, Enrico 2026-10-25): hand-tinted Dore engraving (dantes_00133_). The ComfyUI session runs the GPU;
@@ -183,7 +183,7 @@ def import_v2() -> None:
         dst = os.path.join(ROOT, "assets", "cards", "art", c["id"] + ".jpg")
         if os.path.exists(dst):
             continue
-        name = c["id"] + "_s777.png"
+        name = c["id"] + "_s777_00001_.png"
         src = os.path.join(src_dir, name)
         if not os.path.exists(src):
             q = urllib.parse.urlencode({"subfolder": "dantes_cards_v2", "type": "output", "filename": name})
