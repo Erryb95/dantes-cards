@@ -35,7 +35,11 @@ func _ready() -> void:
 
 ## Debug: `-- --snap=file.png` saves one screenshot of the opening scene and quits.
 func _snap(path: String) -> void:
-	await get_tree().create_timer(3.0).timeout
+	var delay := 3.0
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--snap-delay="):
+			delay = float(a.substr(13))
+	await get_tree().create_timer(delay).timeout
 	get_viewport().get_texture().get_image().save_png(path)
 	get_tree().quit()
 

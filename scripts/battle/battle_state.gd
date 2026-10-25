@@ -58,7 +58,9 @@ var _next_uid := 10
 
 # ---------------------------------------------------------------- setup
 
-func start(deck_a: Array[String], hero_a: String, deck_b: Array[String], hero_b: String, seed_value: int = 0) -> void:
+## With wait_mulligan the opening hands are dealt and the game waits for finish_mulligan() from both sides.
+func start(deck_a: Array[String], hero_a: String, deck_b: Array[String], hero_b: String, seed_value: int = 0,
+		wait_mulligan: bool = false) -> void:
 	rng.seed = seed_value if seed_value != 0 else randi()
 	sides.clear()
 	for i in 2:
@@ -78,10 +80,47 @@ func start(deck_a: Array[String], hero_a: String, deck_b: Array[String], hero_b:
 		sides.append(s)
 	_emit({"t": "start", "heroes": [sides[0].hero.snapshot(), sides[1].hero.snapshot()],
 		"decks": [sides[0].deck.size(), sides[1].deck.size()]})
+	if wait_mulligan:
+		_emit({"t": "mulligan_begin"})
 	for i in 2:
 		draw(i, START_HAND[i])
 	current = 0
-	_begin_turn()
+	if wait_mulligan:
+		_mulligan_pending = [true, true]
+		_emit({"t": "mulligan_wait"})
+	else:
+		_begin_turn()
+
+
+var _mulligan_pending := [false, false]
+
+
+func in_mulligan() -> bool:
+	return _mulligan_pending[0] or _mulligan_pending[1]
+
+
+## Shuffles the chosen opening cards back and draws replacements; the game starts once both sides are done.
+func finish_mulligan(side: int, replace_uids: Array) -> void:
+	if not _mulligan_pending[side]:
+		return
+	_mulligan_pending[side] = false
+	var s := sides[side]
+	var back: Array[String] = []
+	for uid in replace_uids:
+		var c := hand_card(side, uid)
+		if c.is_empty():
+			continue
+		var i := s.hand.find(c)
+		var id: String = s.deck.pop_back()
+		var fresh := {"uid": _uid(), "id": id}
+		s.hand[i] = fresh
+		back.append(c.id)
+		_emit({"t": "mulligan_swap", "side": side, "old": uid, "uid": fresh.uid, "id": id})
+	for id in back:
+		s.deck.insert(rng.randi_range(0, s.deck.size()), id)
+	if not in_mulligan():
+		_emit({"t": "mulligan_end"})
+		_begin_turn()
 
 
 func _shuffle(a: Array) -> void:

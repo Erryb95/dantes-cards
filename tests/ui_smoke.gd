@@ -18,6 +18,14 @@ func _idle() -> void:
 	while t < 30.0:
 		await get_tree().process_frame
 		t += get_process_delta_time()
+		if battle._mull_waiting:
+			# Replace the first card through the real input path, then confirm.
+			var c: CardView = battle.hand_views[0][0]
+			_mouse(c.position, true)
+			_mouse(c.position, false)
+			if battle._mull_marks.is_empty():
+				_fail("tapping a card in the mulligan did not mark it")
+			battle._confirm_mulligan()
 		if battle.queue.is_empty() and not battle.playing and battle.st.current == 0:
 			await get_tree().create_timer(0.2).timeout
 			if battle.queue.is_empty() and not battle.playing:

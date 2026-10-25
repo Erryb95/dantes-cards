@@ -45,3 +45,6 @@ in `C:\Progetti\Dante's Vengange` (sic), which is paused. Reuse its rules and as
   - CC0 SFX;
   - settings / menu / save code (`scripts/core/settings.gd`, `scripts/ui/menu`);
   - the AudioDirector.
+
+## Project docs
+- Structure, rules and roadmap: `docs/DESIGN.md`. Build, test and export commands: `docs/BUILD.md`.

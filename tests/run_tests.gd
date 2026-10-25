@@ -152,6 +152,19 @@ func _test_rules() -> void:
 	st.play_card(1, mi)
 	ok(st.sides[0].board.is_empty(), "minos destroyed the only enemy")
 
+	# Mulligan swaps cards and starts the game once both sides confirm.
+	st = BattleState.new()
+	var deck := CardDB.deck_list("pilgrim")
+	st.start(deck, "dante", CardDB.deck_list("ferry"), "charon", 3, true)
+	ok(st.in_mulligan() and st.turn == 0, "waiting for mulligan")
+	var first: int = st.sides[0].hand[0].uid
+	st.finish_mulligan(0, [first])
+	ok(st.sides[0].hand.size() == 3 and st.hand_card(0, first).is_empty(), "card replaced")
+	ok(st.turn == 0, "still waiting for the other side")
+	st.finish_mulligan(1, [])
+	ok(st.turn == 1 and not st.in_mulligan(), "game started")
+	ok(st.sides[0].deck.size() + st.sides[0].hand.size() == 20, "no card lost in the mulligan")
+
 	# Fatigue.
 	st = _blank()
 	st.sides[0].deck.clear()

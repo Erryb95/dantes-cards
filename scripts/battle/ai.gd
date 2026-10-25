@@ -62,6 +62,15 @@ func next_action(st: BattleState) -> Dictionary:
 	return {"do": "end"}
 
 
+## Opening hand: throw back anything that costs 4 or more.
+func mulligan_choice(st: BattleState) -> Array:
+	var out := []
+	for c in st.sides[side].hand:
+		if int(CardDB.card(c.id).cost) >= 4:
+			out.append(c.uid)
+	return out
+
+
 func _value(u) -> float:
 	return u.attack * 1.2 + u.health + (2.0 if u.has("guard") else 0.0) + (2.0 if u.has("ward") else 0.0) \
 		+ (1.5 if u.has("venom") else 0.0)

@@ -70,6 +70,11 @@ var _ai_delay := 0.0
 var _highlight_dirty := true
 var _hover_unit_t := 0.0
 var _hover_unit: Node2D
+var _in_mulligan := false
+var _mull_waiting := false
+var _mull_marks := {} ## card uid -> "replace" label
+var _mull_ui: Control
+signal mulligan_confirmed
 
 
 func _ready() -> void:
@@ -94,7 +99,7 @@ func _ready() -> void:
 	var pd := CardDB.deck(Game.player_deck)
 	var ed := CardDB.deck(Game.enemy_deck)
 	_intro(arena)
-	st.start(CardDB.deck_list(pd.id), pd.hero, CardDB.deck_list(ed.id), ed.hero)
+	st.start(CardDB.deck_list(pd.id), pd.hero, CardDB.deck_list(ed.id), ed.hero, 0, true)
 
 
 func _on_resize() -> void:
@@ -597,6 +602,19 @@ func _present(ev: Dictionary) -> void:
 			await _wait(0.25)
 		"turn_end":
 			pass
+		"mulligan_begin":
+			_in_mulligan = true
+		"mulligan_wait":
+			await _mulligan_wait()
+		"mulligan_swap":
+			await _mulligan_swap(ev)
+		"mulligan_end":
+			_in_mulligan = false
+			Sfx.play("swish_long", -6.0)
+			for c in hand_views[0]:
+				c.selected = false
+			_layout_hand(0)
+			await _wait(0.45)
 		"game_over":
 			await _on_game_over(ev)
 
@@ -611,6 +629,19 @@ func _on_draw(ev: Dictionary) -> void:
 	hand_views[side].append(c)
 	_set_deck_count(side, ev.deck)
 	Sfx.play("swish", -10.0, 1.1)
+	if side == 0 and _in_mulligan:
+		var i: int = hand_views[0].size() - 1
+		var t := c.create_tween().set_parallel(true)
+		t.tween_property(c, "position", _mull_slot(i), 0.35).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		t.tween_property(c, "rotation", 0.0, 0.35)
+		t.tween_property(c, "scale", Vector2(0.95, 0.95), 0.35)
+		await t.finished
+		var f := c.create_tween()
+		f.tween_property(c, "scale:x", 0.0, 0.08)
+		f.tween_callback(c.set_face_up.bind(true))
+		f.tween_property(c, "scale:x", 0.95, 0.08)
+		await f.finished
+		return
 	if side == 0:
 		# Fly to the middle, flip face up, then into the hand.
 		var mid := Vector2(V.x - 420, V.y * 0.55)
@@ -627,6 +658,122 @@ func _on_draw(ev: Dictionary) -> void:
 		await _wait(0.1)
 	_layout_hand(side)
 	await _wait(0.16)
+
+
+func _mull_slot(i: int) -> Vector2:
+	var n := BattleState.START_HAND[0]
+	return Vector2(V.x / 2 + (i - (n - 1) / 2.0) * 300.0, V.y * 0.47)
+
+
+func _mulligan_wait() -> void:
+	if autoplay:
+		_confirm_mulligan()
+		return
+	_mull_waiting = true
+	var dim := ColorRect.new()
+	dim.name = "MulliganDim"
+	dim.color = Color(0, 0, 0, 0)
+	dim.size = V + Vector2(200, 200)
+	dim.position = Vector2(-100, -100)
+	dim.z_index = -1
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hand_layer.add_child(dim)
+	dim.create_tween().tween_property(dim, "color:a", 0.6, 0.3)
+	_mull_ui = Control.new()
+	_mull_ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_mull_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(_mull_ui)
+	var title := UI.label("Your starting hand", 64, "title", UI.GOLD, 10, Color.BLACK)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.size = Vector2(V.x, 80)
+	title.position = Vector2(0, V.y * 0.12)
+	_mull_ui.add_child(title)
+	var sub := UI.label("Tap the cards you want to replace", 30, "italic", UI.BONE, 5, Color.BLACK)
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.size = Vector2(V.x, 40)
+	sub.position = Vector2(0, V.y * 0.12 + 80)
+	_mull_ui.add_child(sub)
+	var ok := UI.button("Confirm", 340, 84)
+	ok.position = Vector2(V.x / 2 - 170, V.y * 0.78)
+	ok.pressed.connect(_confirm_mulligan)
+	_mull_ui.add_child(ok)
+	await mulligan_confirmed
+
+
+func _toggle_mulligan(c: CardView) -> void:
+	if _mull_marks.has(c.uid):
+		_mull_marks[c.uid].queue_free()
+		_mull_marks.erase(c.uid)
+		c.modulate = Color.WHITE
+	else:
+		var x := UI.label("REPLACE", 40, "title", Color(1.0, 0.35, 0.25), 10, Color.BLACK)
+		x.size = Vector2(CardView.W, 60)
+		x.position = Vector2(-CardView.W / 2, -30)
+		x.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		x.rotation = -0.2
+		c.add_child(x)
+		_mull_marks[c.uid] = x
+		c.modulate = Color(0.6, 0.55, 0.55)
+	Sfx.play("tick", -6.0)
+	_pop(c, 1.04)
+
+
+func _confirm_mulligan() -> void:
+	if _mull_ui != null:
+		_mull_ui.queue_free()
+		_mull_ui = null
+	_mull_waiting = false
+	var dim := hand_layer.get_node_or_null("MulliganDim")
+	if dim != null:
+		var t := dim.create_tween()
+		t.tween_property(dim, "color:a", 0.0, 0.4)
+		t.tween_callback(dim.queue_free)
+	var chosen := _mull_marks.keys()
+	for uid in _mull_marks:
+		_mull_marks[uid].queue_free()
+	_mull_marks.clear()
+	for c in hand_views[0]:
+		c.modulate = Color.WHITE
+	st.finish_mulligan(1, ai.mulligan_choice(st))
+	st.finish_mulligan(0, chosen if not autoplay else ai_self.mulligan_choice(st))
+	mulligan_confirmed.emit()
+
+
+func _mulligan_swap(ev: Dictionary) -> void:
+	var side: int = ev.side
+	for i in hand_views[side].size():
+		var old: CardView = hand_views[side][i]
+		if old.uid != ev.old:
+			continue
+		if side == 1:
+			old.uid = ev.uid
+			old.card_id = ev.id
+			return
+		var c := CardView.new().setup(ev.id, ev.uid, false)
+		c.position = deck_views[0].position
+		c.rotation = PI / 2
+		c.scale = Vector2(0.36, 0.36)
+		hand_layer.add_child(c)
+		hand_views[0][i] = c
+		var slot := old.position
+		var t := old.create_tween().set_parallel(true)
+		t.tween_property(old, "position", deck_views[0].position, 0.3)
+		t.tween_property(old, "scale", Vector2(0.36, 0.36), 0.3)
+		t.tween_property(old, "rotation", PI / 2, 0.3)
+		t.chain().tween_callback(old.queue_free)
+		Sfx.play("swish", -8.0)
+		await _wait(0.15)
+		var t2 := c.create_tween().set_parallel(true)
+		t2.tween_property(c, "position", slot, 0.35).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		t2.tween_property(c, "rotation", 0.0, 0.35)
+		t2.tween_property(c, "scale", Vector2(0.95, 0.95), 0.35)
+		await t2.finished
+		var f := c.create_tween()
+		f.tween_property(c, "scale:x", 0.0, 0.08)
+		f.tween_callback(c.set_face_up.bind(true))
+		f.tween_property(c, "scale:x", 0.95, 0.08)
+		await f.finished
+		return
 
 
 func _on_play(ev: Dictionary) -> void:
@@ -959,6 +1106,8 @@ func _move(n: Node2D, pos: Vector2, rot: float, scl: float, dur: float = 0.22) -
 
 
 func _layout_hand(side: int) -> void:
+	if side == 0 and _in_mulligan:
+		return
 	var cards: Array = hand_views[side]
 	var n := cards.size()
 	if n == 0:
@@ -1026,7 +1175,7 @@ func _drop_index(x: float) -> int:
 # ================================================================ highlights
 
 func _my_turn() -> bool:
-	return not over and not autoplay and st.current == 0 and queue.is_empty() and not playing
+	return not over and not autoplay and st.current == 0 and queue.is_empty() and not playing and not st.in_mulligan()
 
 
 func _refresh_highlights() -> void:
@@ -1110,6 +1259,11 @@ func _pick_unit(p: Vector2):
 
 func _on_press(p: Vector2) -> void:
 	_hide_inspect()
+	if _mull_waiting:
+		var mc := _pick_hand(p)
+		if mc != null:
+			_toggle_mulligan(mc)
+		return
 	if mode in [Mode.AIM_BATTLECRY, Mode.AIM_ATTACK, Mode.AIM_POWER, Mode.AIM_SPELL] and _sticky:
 		_finish_aim(p)
 		return
@@ -1156,7 +1310,7 @@ func _on_press(p: Vector2) -> void:
 func _on_motion(p: Vector2) -> void:
 	match mode:
 		Mode.IDLE:
-			if _pressed:
+			if _pressed or _in_mulligan:
 				return
 			var c := _pick_hand(p) if not over else null
 			if c != hover_card:
@@ -1170,9 +1324,13 @@ func _on_motion(p: Vector2) -> void:
 				_hover_unit_t = 0.0
 				_hide_inspect()
 		Mode.DRAG_CARD:
-			drag_card.position = drag_card.position.lerp(p, 0.6)
 			var card := CardDB.card(drag_card.card_id)
 			var above := p.y < V.y * PLAY_LINE
+			# Over the hand the card is shown full size above the finger so it can be read on a phone.
+			var target := p if above else p + Vector2(0, -CardView.H * 0.45)
+			drag_card.position = drag_card.position.lerp(target, 0.6)
+			var want := 0.72 if above else 1.0
+			drag_card.scale = drag_card.scale.lerp(Vector2(want, want), 0.25)
 			if card.type == "minion":
 				var gi := _drop_index(p.x) if above and board_views[0].size() < BattleState.MAX_BOARD else -1
 				if gi != _gap_index:
@@ -1209,7 +1367,7 @@ func _on_release(p: Vector2) -> void:
 			if card.type == "minion":
 				var idx: int = _gap_index if _gap_index != -1 else board_views[0].size()
 				var tt := BattleState.target_type(card)
-				var valid := st.valid_targets(0, tt) if tt != "" else []
+				var valid: Array = st.valid_targets(0, tt) if tt != "" else []
 				if tt != "" and not valid.is_empty():
 					# Park the card in its slot and aim the battlecry from there.
 					mode = Mode.AIM_BATTLECRY
