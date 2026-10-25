@@ -59,7 +59,7 @@ func _ready() -> void:
 	add_child(credit)
 
 	# A fan of legendary cards floating on the right.
-	for id in ["minos", "homer", "aristotle"]:
+	for id in ["minos", "francesca", "ugolino"]:
 		var c := CardView.new().setup(id, -1, true)
 		add_child(c)
 		_showcase.append(c)

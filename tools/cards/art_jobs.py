@@ -3,8 +3,10 @@
   python tools/cards/art_jobs.py build            # writes art_src/cards/jobs.json (only missing images)
   python tools/cards/art_jobs.py run              # build + generate via tools/comfy/art.py + import
   python tools/cards/art_jobs.py import           # resize art_src/cards/*.png into assets/
+  python tools/cards/art_jobs.py dore             # import the Dore batch (art_src/dore_cards) per card "image"
 
-House style (chosen by Enrico, 2026-10-25): s2 "dark baroque oil", Qwen-Image 2512 + Lightning 4-step, seed 777.
+House style (final, Enrico 2026-10-25): hand-tinted Dore engraving (dantes_00133_). The ComfyUI session runs the GPU;
+this game session only imports (`dore`).
 """
 import json
 import os
@@ -13,8 +15,8 @@ import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SRC = os.path.join(ROOT, "art_src", "cards")
-STYLE = ("dark baroque oil painting, extreme chiaroscuro, candle and hellfire light, rich glazes, visible brushwork, "
-         "museum quality old master painting, crimson and gold against deep black")
+STYLE = ("masterpiece 19th century wood engraving in the style of Gustave Dore, dense fine crosshatching, dramatic "
+         "chiaroscuro, hand-tinted with glowing ember orange and deep crimson highlights on black and white, epic composition")
 TAIL = "no text, no letters, no watermark, no frame"
 SEED = 777
 
@@ -24,9 +26,13 @@ def jobs() -> list:
     arenas = json.load(open(os.path.join(ROOT, "data", "arenas.json"), encoding="utf-8"))
     out = []
     for c in cards["cards"]:
+        if "art" not in c:
+            continue
         subj = c["art"] + ", large central subject, strong rim light, clear silhouette"
         out.append(("card_" + c["id"], subj, 832, 1248, "cards/art/%s.jpg" % c["id"], (512, 768)))
     for h in cards["heroes"]:
+        if "art" not in h:
+            continue
         subj = h["art"] + ", head and shoulders, strong rim light, clear silhouette, dark background"
         out.append(("hero_" + h["id"], subj, 1024, 1024, "cards/heroes/%s.jpg" % h["id"], (512, 512)))
     for a in arenas["arenas"]:
@@ -122,6 +128,34 @@ def import_art() -> None:
     print("imported", n)
 
 
+DORE = os.path.join(ROOT, "art_src", "dore_cards")
+
+
+def import_dore() -> None:
+    """Imports the hand-tinted Dore batch (made by the ComfyUI session) using each card's "image" field."""
+    from PIL import Image
+    cards = json.load(open(os.path.join(ROOT, "data", "cards.json"), encoding="utf-8"))
+    todo = [(c["image"], "cards/art/%s.jpg" % c["id"], (512, 704), 0.5) for c in cards["cards"] if c.get("image")]
+    todo += [(h["image"], "cards/heroes/%s.jpg" % h["id"], (512, 512), 0.3) for h in cards["heroes"] if h.get("image")]
+    n = 0
+    for img, dst, (tw, th), focus in todo:
+        src = os.path.join(DORE, img + "_00001_.png")
+        if not os.path.exists(src):
+            print("missing", src)
+            continue
+        im = Image.open(src).convert("RGB")
+        sw, sh = im.size
+        scale = max(tw / sw, th / sh)
+        im = im.resize((round(sw * scale), round(sh * scale)), Image.LANCZOS)
+        l = (im.width - tw) // 2
+        t = int(min(max(im.height * focus - th / 2, 0), im.height - th))
+        out = os.path.join(ROOT, "assets", dst)
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        im.crop((l, t, l + tw, t + th)).save(out, quality=88)
+        n += 1
+    print("imported", n)
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "build"
     if mode in ("build", "run"):
@@ -130,3 +164,5 @@ if __name__ == "__main__":
             run_jobs(p)
     if mode in ("run", "import"):
         import_art()
+    if mode == "dore":
+        import_dore()

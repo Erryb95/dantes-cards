@@ -978,7 +978,7 @@ func _on_bounce(ev: Dictionary) -> void:
 func _on_aoe(ev: Dictionary) -> void:
 	var origin: Vector2 = heroes[ev.side].position
 	match ev.id:
-		"earthquake":
+		"minotaur_rampage":
 			Sfx.play("quake_rumble", -2.0, 1.0, 0.0)
 			Sfx.play("thunder", -6.0, 0.8)
 			_screen_flash(Color(0.9, 0.1, 0.05), 0.6)
@@ -987,12 +987,12 @@ func _on_aoe(ev: Dictionary) -> void:
 				Fx.dust(fx_layer, Vector2(V.x * (0.2 + i * 0.12), _board_y(i % 2) + 70), 260.0, 40)
 			await _wait(0.5)
 			shake(18.0)
-		"coal_eyed_glare":
+		"medusa_gaze":
 			Sfx.play("wail", -10.0, 0.7)
 			_screen_flash(Color(1.0, 0.25, 0.0), 0.45)
 			Fx.shockwave(fx_layer, origin, Color(1.0, 0.3, 0.05), 1200.0, 0.8)
 			await _wait(0.35)
-		"wailing_damned":
+		"furies":
 			Sfx.play("wail", -8.0, 1.1)
 			var src = board_views[ev.side].back() if not board_views[ev.side].is_empty() else heroes[ev.side]
 			Fx.shockwave(fx_layer, src.position, Color(0.7, 0.55, 1.0), 900.0, 0.7)

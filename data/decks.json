@@ -1,15 +1,48 @@
 {
-  "_doc": "Starter decks: 20 cards each. hero is a heroes[].id from cards.json.",
-  "decks": [
-    {"id": "pilgrim", "name": "The Pilgrim's Way", "hero": "dante",
-     "text": "Dante and the great souls of Limbo. Sturdy guards, card draw and a strong late game.",
-     "cards": {"lost_pilgrim": 2, "socrates": 1, "virtuous_pagan": 1, "horace": 2, "virgils_counsel": 2, "ovid": 2,
-               "lucan": 1, "light_of_reason": 2, "seven_walls": 1, "hector": 2, "aeneas": 1, "saladin": 1,
-               "homer": 1, "aristotle": 1}},
-    {"id": "ferry", "name": "The Ferryman's Host", "hero": "charon",
-     "text": "Charon and the cowards of the Ante-Inferno. A swarm of cheap souls, venom and board clears.",
-     "cards": {"banner_chaser": 2, "worm_fed_shade": 2, "eager_soul": 2, "oar_strike": 2, "great_refusal": 1,
-               "wasps_and_hornets": 1, "wailing_damned": 2, "mud_drinker": 2, "gatekeeper_demon": 2,
-               "coal_eyed_glare": 1, "shoreline_throng": 1, "earthquake": 1, "minos": 1}}
-  ]
+ "_doc": "Starter decks: 20 cards each. hero is a heroes[].id from cards.json.",
+ "decks": [
+  {
+   "id": "pilgrim",
+   "name": "The Pilgrim's Way",
+   "hero": "dante",
+   "text": "Dante, Virgil and the souls met on the way down. Sturdy guards, card draw and a strong late game.",
+   "cards": {
+    "lost_pilgrim": 2,
+    "limbo_philosophers": 1,
+    "virtuous_pagans": 1,
+    "farinata": 2,
+    "virgils_counsel": 2,
+    "virgil_guide": 2,
+    "chiron_centaurs": 1,
+    "centaur_arrows": 2,
+    "farinata_tomb": 1,
+    "geryon": 2,
+    "phlegyas": 1,
+    "paolo": 1,
+    "francesca": 1,
+    "ugolino": 1
+   }
+  },
+  {
+   "id": "ferry",
+   "name": "The Ferryman's Host",
+   "hero": "charon",
+   "text": "Charon and the guardians of Hell. Cheap souls, venom, beasts and board clears.",
+   "cards": {
+    "banner_chaser": 2,
+    "stung_neutral": 2,
+    "she_wolf": 2,
+    "oar_strike": 2,
+    "turned_back": 1,
+    "harpies_flock": 1,
+    "furies": 2,
+    "plutus": 2,
+    "cerberus": 2,
+    "medusa_gaze": 1,
+    "souls_of_the_styx": 1,
+    "minotaur_rampage": 1,
+    "minos": 1
+   }
+  }
+ ]
 }

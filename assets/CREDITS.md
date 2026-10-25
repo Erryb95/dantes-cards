@@ -15,7 +15,8 @@ Only CC0 / OFL / MIT / Apache material (or verified commercial licences) ships w
 ## AI-generated art (disclosed)
 Card, hero, arena and card-back images in assets/cards/ and assets/arenas/ are AI-generated on the owner's own ComfyUI
 with **Qwen-Image 2512** (Apache-2.0) + the Lightning 4-step LoRA (Apache-2.0). Prompts: data/cards.json (`art`) and
-tools/cards/art_jobs.py (house style "dark baroque oil", chosen by the owner on 2026-10-25).
+the ComfyUI session's notes (status/cards_style.md). House style: hand-tinted Gustave Dore-style engraving, chosen by the
+owner on 2026-10-25. Source files: art_src/dore_cards/; card -> image map: the "image" field in data/cards.json.
 
 TODO before a store release: as in the FPS, the St Matthews Choir (SMCE) recordings that may be in `intro` carry a licence
 set on archive.org by an uploader; get written confirmation from SMCE or swap those tracks.

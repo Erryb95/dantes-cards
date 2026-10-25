@@ -1,7 +1,7 @@
 extends Control
 ## Choose a starter deck; the other one becomes the opponent.
 
-const FEATURED := {"pilgrim": ["homer", "hector", "virgils_counsel"], "ferry": ["minos", "wasps_and_hornets", "gatekeeper_demon"]}
+const FEATURED := {"pilgrim": ["francesca", "geryon", "virgils_counsel"], "ferry": ["minos", "harpies_flock", "cerberus"]}
 
 
 func _ready() -> void:

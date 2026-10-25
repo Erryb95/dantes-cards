@@ -67,8 +67,8 @@ func _give(st: BattleState, side: int, id: String) -> int:
 func _test_rules() -> void:
 	# Guard forces attacks onto it.
 	var st := _blank()
-	var a := _put(st, 0, "eager_soul")
-	var g := _put(st, 1, "gatekeeper_demon")
+	var a := _put(st, 0, "she_wolf")
+	var g := _put(st, 1, "cerberus")
 	ok(st.attack_targets(0) == [g.uid], "guard is the only attack target")
 	ok(not st.attack(0, a.uid, st.sides[1].hero.uid), "cannot attack face past a guard")
 	ok(st.attack(0, a.uid, g.uid), "can attack the guard")
@@ -76,22 +76,22 @@ func _test_rules() -> void:
 
 	# Ward absorbs one hit.
 	st = _blank()
-	var s := _put(st, 1, "saladin")
-	var p := _put(st, 0, "aeneas")
+	var s := _put(st, 1, "paolo")
+	var p := _put(st, 0, "phlegyas")
 	st.attack(0, p.uid, s.uid)
 	ok(s.health == 5 and not s.has("ward"), "ward absorbed the hit and broke")
 
 	# Venom destroys whatever it damages.
 	st = _blank()
-	var h := _put(st, 0, "hornet")
-	var big := _put(st, 1, "hector")
+	var h := _put(st, 0, "harpy")
+	var big := _put(st, 1, "geryon")
 	st.attack(0, h.uid, big.uid)
 	ok(not st.units.has(big.uid), "venom destroyed the target")
 
 	# Drain heals the owner's hero.
 	st = _blank()
 	st.sides[1].hero.health = 20
-	var m := _put(st, 1, "mud_drinker")
+	var m := _put(st, 1, "plutus")
 	st.current = 1
 	m.sleeping = false
 	st.attack(1, m.uid, st.sides[0].hero.uid)
@@ -100,26 +100,26 @@ func _test_rules() -> void:
 
 	# Last Breath summons in place.
 	st = _blank()
-	var w := _put(st, 1, "worm_fed_shade")
+	var w := _put(st, 1, "stung_neutral")
 	st.sides[0].mana = 10
-	var oar := _give(st, 0, "light_of_reason")
+	var oar := _give(st, 0, "centaur_arrows")
 	ok(st.play_card(0, oar, w.uid), "spell with a target plays")
-	ok(st.sides[1].board.size() == 1 and st.sides[1].board[0].id == "maggot", "last breath summoned a maggot")
+	ok(st.sides[1].board.size() == 1 and st.sides[1].board[0].id == "lost_soul", "last breath summoned a maggot")
 
 	# Targeted spell without a target is refused; battlecry without targets is allowed.
 	st = _blank()
 	var hit := _give(st, 0, "oar_strike")
 	ok(not st.can_play(0, hit), "minion-only spell needs a minion")
-	var lucan := _give(st, 0, "lucan")
+	var lucan := _give(st, 0, "chiron_centaurs")
 	ok(st.play_card(0, lucan), "battlecry minion plays with no target")
 
 	# Bounce returns the minion to its owner's hand.
 	st = _blank()
-	var e := _put(st, 0, "homer")
+	var e := _put(st, 0, "francesca")
 	st.current = 1
-	var ref := _give(st, 1, "great_refusal")
+	var ref := _give(st, 1, "turned_back")
 	ok(st.play_card(1, ref, e.uid), "bounce plays")
-	ok(st.sides[0].board.is_empty() and st.sides[0].hand.any(func(c): return c.id == "homer"), "homer back in hand")
+	ok(st.sides[0].board.is_empty() and st.sides[0].hand.any(func(c): return c.id == "francesca"), "homer back in hand")
 	st.current = 0
 
 	# Armor soaks damage first.
@@ -134,19 +134,19 @@ func _test_rules() -> void:
 	# Board clear + summon effects.
 	st = _blank()
 	_put(st, 0, "lost_pilgrim")
-	_put(st, 0, "hector")
+	_put(st, 0, "geryon")
 	st.current = 1
-	var q := _give(st, 1, "earthquake")
+	var q := _give(st, 1, "minotaur_rampage")
 	st.play_card(1, q)
 	ok(st.sides[0].board.size() == 1 and st.sides[0].board[0].health == 2, "earthquake killed the 2/1, hurt hector")
 	st.sides[1].mana = 10
-	var thr := _give(st, 1, "shoreline_throng")
+	var thr := _give(st, 1, "souls_of_the_styx")
 	st.play_card(1, thr)
 	ok(st.sides[1].board.size() == 3, "throng summoned two souls")
 
 	# Minos destroys a random enemy minion.
 	st = _blank()
-	_put(st, 0, "hector")
+	_put(st, 0, "geryon")
 	st.current = 1
 	var mi := _give(st, 1, "minos")
 	st.play_card(1, mi)
