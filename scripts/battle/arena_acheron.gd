@@ -5,6 +5,8 @@ extends Node2D
 ## painted props exist (assets/arenas/props/*.png, ARENA_BRIEF.md) they replace the silhouettes, and a brazier and a
 ## skull pile join in.
 const PROPS := "res://assets/arenas/props/"
+## Arena lights only reach canvas items on this layer: the backdrop, board and river (not cards or UI).
+const LIGHT_MASK := 2
 
 var view: Node2D ## the battle view (for ripples and sounds)
 var V := Vector2(1920, 1080)
@@ -32,6 +34,7 @@ var _t := 0.0
 var brazier: Node2D
 var _flame: CPUParticles2D
 var _flare := 0.0
+var _brazier_light: PointLight2D
 var skulls: Node2D
 var _rattle := 0.0
 
@@ -141,6 +144,7 @@ func _build_boat() -> void:
 		boat.add_child(painted)
 		boat.move_child(painted, 1)
 		boat.move_child(_lantern, -1)
+	boat.add_child(_light(_lantern.position, Color(1.0, 0.7, 0.35), 1.1, 2.6))
 
 
 # ---------------------------------------------------------------- bell
@@ -241,7 +245,22 @@ func _build_brazier() -> void:
 	g.set_color(1, Color(0.8, 0.15, 0.02, 0.0))
 	_flame.color_ramp = g
 	brazier.add_child(_flame)
+	_brazier_light = _light(_flame.position, Color(1.0, 0.55, 0.2), 1.3, 3.2)
+	brazier.add_child(_brazier_light)
 
+
+## A warm 2D light. It only touches the arena layer (cards and UI live on other canvas layers), and it reads the
+## board's normal map when one is set.
+func _light(pos: Vector2, color: Color, energy: float, size: float) -> PointLight2D:
+	var l := PointLight2D.new()
+	l.texture = UI.dot_texture()
+	l.texture_scale = size * 4.0
+	l.color = color
+	l.energy = energy
+	l.height = 60.0
+	l.position = pos
+	l.range_item_cull_mask = LIGHT_MASK
+	return l
 
 # ---------------------------------------------------------------- layout / update
 
@@ -304,6 +323,7 @@ func _process(delta: float) -> void:
 		_flare = maxf(0.0, _flare - delta * 1.5)
 		_flame.speed_scale = 1.0 + _flare * 1.5
 		_flame.scale_amount_max = 0.55 + _flare * 0.8
+		_brazier_light.energy = (1.2 + 0.15 * sin(_t * 11.0) * sin(_t * 5.3)) * (1.0 + _flare * 1.5)
 	if skulls != null and _rattle > 0.0:
 		_rattle = maxf(0.0, _rattle - delta * 2.5)
 		skulls.rotation = sin(_t * 60.0) * 0.04 * _rattle

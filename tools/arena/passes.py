@@ -31,4 +31,8 @@ if guide is not None:
     guide = cv2.resize(guide, (clay.shape[1], clay.shape[0]))
     check = cv2.addWeighted(cv2.cvtColor(clay, cv2.COLOR_GRAY2BGR), 0.6, guide, 0.4, 0)
     cv2.imwrite(os.path.join(d, "layout_check.png"), check)
+# Normal map for Godot's 2D lights: the render is sRGB-encoded, the normal map must be linear (green = up).
+n = cv2.imread(os.path.join(d, "board_normal.png")).astype(np.float32) / 255.0
+lin = np.where(n <= 0.04045, n / 12.92, ((n + 0.055) / 1.055) ** 2.4)
+cv2.imwrite(os.path.join(d, "board_normal_linear.png"), np.clip(lin * 255.0 + 0.5, 0, 255).astype(np.uint8))
 print("ok")

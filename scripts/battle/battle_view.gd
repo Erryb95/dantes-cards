@@ -165,6 +165,7 @@ func _build_scene() -> void:
 		g.gradient = gr
 		back.texture = g
 	back.modulate = Color(0.78, 0.74, 0.72)
+	back.light_mask = ArenaAcheron.LIGHT_MASK
 	# A painted board (ARENA_BRIEF.md) replaces the landscape: same coordinates as the layout, 2560x1440.
 	var board_path := "res://assets/arenas/" + str(arena.get("board", ""))
 	_painted_board = arena.has("board") and ResourceLoader.exists(board_path)
@@ -175,6 +176,14 @@ func _build_scene() -> void:
 		var board := Sprite2D.new()
 		board.name = "Board"
 		board.texture = load(board_path)
+		var normal_path := "res://assets/arenas/" + str(arena.get("normal", ""))
+		if arena.has("normal") and ResourceLoader.exists(normal_path):
+			# The blockout's normals let the lantern and brazier light the painted rocks and water.
+			var ct := CanvasTexture.new()
+			ct.diffuse_texture = board.texture
+			ct.normal_texture = load(normal_path)
+			board.texture = ct
+		board.light_mask = ArenaAcheron.LIGHT_MASK
 		bg_layer.add_child(board)
 
 	# Two shore beds where the minions stand, the river between them.
@@ -190,6 +199,7 @@ func _build_scene() -> void:
 	_river_mat = ShaderMaterial.new()
 	_river_mat.shader = preload("res://assets/shaders/river.gdshader")
 	river.material = _river_mat
+	river.light_mask = ArenaAcheron.LIGHT_MASK
 	bg_layer.add_child(river)
 
 	if _painted_board:
