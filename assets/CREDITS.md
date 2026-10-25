@@ -10,6 +10,11 @@ Only CC0 / OFL / MIT / Apache material (or verified commercial licences) ships w
 | assets/audio/ui/*, assets/audio/sfx/{thunder,splash,wail,rubble,bell_far,sigh,bones,gust}_* | Copied from Dante's Vengeance; per-sound sources in audio/CREDITS_FPS_SOURCE.md | see that file | CC0 |
 | assets/audio/sfx/{slam,thud}_* | [Impact Sounds](https://kenney.nl/assets/impact-sounds) | Kenney | CC0 1.0 |
 | assets/audio/sfx/{title_sting,bell_funeral,quake_rumble,water_loop,thunder,limbo_drone}.ogg | OpenGameArt / Freesound CC0 (see audio/CREDITS_FPS_SOURCE.md and the FPS assets/CREDITS.md) | nene, aoristos, uagadugu, rubberduck, deleted_user_7146007, Umplix | CC0 |
+| assets/audio/sfx/{card_slide,card_place,card_fan,card_shuffle,pack_open,pack_take}_* | [Casino Audio](https://kenney.nl/assets/casino-audio) | Kenney | CC0 1.0 |
+| assets/audio/sfx/page_* | [RPG Audio](https://kenney.nl/assets/rpg-audio) | Kenney | CC0 1.0 |
+| assets/audio/sfx/glass_* | [Interface Sounds](https://kenney.nl/assets/interface-sounds) | Kenney | CC0 1.0 |
+| assets/audio/sfx/{coins,gem,spell,spell_fire,blade,roar,creature_die,chain,metal,lock}_* | [80 CC0 RPG SFX](https://opengameart.org/content/80-cc0-rpg-sfx) | rubberduck (OpenGameArt) | CC0 1.0 |
+| assets/vfx/k_*.png | [Particle Pack](https://kenney.nl/assets/particle-pack) (white-on-alpha textures, some downscaled to 256 px) | Kenney | CC0 1.0 |
 | Card swish / tick / chime | Synthesised in code (scripts/core/sfx.gd) | - | Original |
 
 ## AI-generated art (disclosed)

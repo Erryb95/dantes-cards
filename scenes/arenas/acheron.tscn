@@ -40,9 +40,6 @@ position = Vector2(1590, 54)
 [node name="PropBell" type="Marker2D" parent="Sockets"]
 position = Vector2(165, 300)
 
-[node name="PropTablet" type="Marker2D" parent="Sockets"]
-position = Vector2(170, 690)
-
 [node name="PropBrazier" type="Marker2D" parent="Sockets"]
 position = Vector2(1830, 860)
 

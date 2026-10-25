@@ -416,7 +416,7 @@ func _layout_static() -> void:
 	if props != null:
 		var anchors := {}
 		if _painted_board and arena_scene != null:
-			for n in ["PropBell", "PropTablet", "PropBrazier", "PropSkulls"]:
+			for n in ["PropBell", "PropBrazier", "PropSkulls"]:
 				if arena_scene.has_socket(n):
 					anchors[n] = _sock(n, Vector2.ZERO)
 		props.layout(V, _river_y(), ky, anchors)
@@ -637,7 +637,7 @@ func _present(ev: Dictionary) -> void:
 			var v = unit_views.get(ev.uid)
 			if v != null:
 				Fx.number(fx_layer, v.position, "+%d" % ev.amount, UI.HEAL, false)
-				Fx.burst(fx_layer, v.position, Color(0.4, 1.0, 0.4), 20, 160.0, 0.8, 9.0, -60.0)
+				Fx.burst(fx_layer, v.position, Color(0.4, 1.0, 0.4), 20, 160.0, 0.8, 22.0, -60.0, 180.0, "k_star_01")
 				_set_unit_hp(v, ev.hp)
 				Sfx.play("chime", -12.0, 1.3)
 			await _wait(0.2)
@@ -646,13 +646,15 @@ func _present(ev: Dictionary) -> void:
 			h.set_armor(ev.armor)
 			Fx.burst(fx_layer, h.position + Vector2(h.W / 2, -60), Color(0.75, 0.8, 0.9), 24, 200.0, 0.6, 10.0)
 			Sfx.play("slam", -12.0, 1.5)
+			Sfx.play("metal", -6.0)
 			await _wait(0.25)
 		"buff":
 			var m = unit_views.get(ev.uid)
 			if m is MinionView:
 				m.apply({"attack": ev.attack, "health": ev.health, "max_health": ev.max_health, "keywords": ev.keywords})
 				Fx.flash(fx_layer, "holy_light", m.position, 320.0, 0.7, Color.WHITE, 0.3)
-				Fx.burst(fx_layer, m.position, UI.GOLD, 30, 220.0, 0.8, 11.0, -100.0)
+				Fx.burst(fx_layer, m.position, UI.GOLD, 30, 220.0, 0.8, 24.0, -100.0, 180.0, "k_star_04")
+				Fx.flash(fx_layer, "k_twirl_01", m.position, 300.0, 0.6, UI.GOLD, 1.5)
 				_pop(m, 1.18)
 				Sfx.play("chime", -10.0, 1.15)
 			await _wait(0.2)
@@ -662,7 +664,9 @@ func _present(ev: Dictionary) -> void:
 				m.break_ward()
 				Fx.flash(fx_layer, "ward_bubble", m.position, 260.0, 0.4, Color.WHITE, 0.0)
 				Fx.burst(fx_layer, m.position, Color(1.0, 0.9, 0.5), 36, 340.0, 0.5, 9.0, 0.0)
+				Fx.sparks(fx_layer, m.position, Color(1.0, 0.9, 0.5), 16)
 				Sfx.play("tick", -4.0, 0.7)
+				Sfx.play("glass", -4.0, 1.2)
 				Sfx.play("bones", -14.0, 1.6)
 			await _wait(0.2)
 		"venom":
@@ -689,8 +693,12 @@ func _present(ev: Dictionary) -> void:
 				elif ev.kind == "destroy":
 					col = Color(0.6, 0.2, 1.0)
 				Sfx.play("swish_long", -6.0, 0.8)
+				Sfx.play({"freeze": "chain", "silence": "lock", "destroy": "spell", "buff": "gem"}.get(ev.kind, "spell_fire"), -8.0)
 				await Fx.projectile(fx_layer, a.position, b.position, col, 0.38 / _speed())
 				Sfx.play("thud", -6.0)
+				if ev.kind == "freeze":
+					Sfx.play("glass", -6.0, 0.8)
+					Fx.flash(fx_layer, "k_star_07", b.position, 300.0, 0.6, Color(0.6, 0.85, 1.0), 0.6)
 				if ev.kind == "destroy":
 					shake(10.0)
 		"aoe":
@@ -725,6 +733,7 @@ func _present(ev: Dictionary) -> void:
 		"mulligan_end":
 			_in_mulligan = false
 			Sfx.play("swish_long", -6.0)
+			Sfx.play("card_shuffle", -6.0)
 			for c in hand_views[0]:
 				c.selected = false
 			_layout_hand(0)
@@ -743,6 +752,7 @@ func _on_draw(ev: Dictionary) -> void:
 	hand_views[side].append(c)
 	_set_deck_count(side, ev.deck)
 	Sfx.play("swish", -10.0, 1.1)
+	Sfx.play("card_slide", -10.0, 1.05)
 	if side == 0 and _in_mulligan:
 		var i: int = hand_views[0].size() - 1
 		var t := c.create_tween().set_parallel(true)
@@ -907,6 +917,7 @@ func _on_play(ev: Dictionary) -> void:
 	c.selected = false
 	c.z_index = 30
 	Sfx.play("swish_long", -4.0)
+	Sfx.play("card_slide", -4.0)
 	if side == 1 or not c.face_up:
 		# Reveal the opponent's card.
 		var t := c.create_tween().set_parallel(true)
@@ -966,10 +977,15 @@ func _on_summon(ev: Dictionary) -> void:
 	await drop.finished
 	m.z_index = 0
 	Fx.dust(fx_layer, m.position + Vector2(0, MinionView.H * 0.42), MinionView.W * 1.2)
+	Fx.rune(fx_layer, m.position + Vector2(0, MinionView.H * 0.3), UI.RARITY.get(rarity, UI.EMBER), 300.0, 0.8, "k_circle_03")
 	Sfx.play("slam", -4.0)
+	Sfx.play("card_place", -6.0)
+	if int(CardDB.card(m.card_id).get("cost", 0)) >= 6:
+		Sfx.play("roar", -8.0, 0.9)
 	if rarity == "legendary":
 		shake(18.0)
 		Fx.shockwave(fx_layer, m.position, UI.GOLD, 520.0, 0.7)
+		Fx.rune(fx_layer, m.position + Vector2(0, MinionView.H * 0.3), UI.GOLD, 620.0, 1.6)
 		Fx.flash(fx_layer, "holy_light", m.position, 700.0, 1.0, Color(1, 0.85, 0.6), 0.2)
 		Fx.burst(fx_layer, m.position, UI.GOLD, 70, 520.0, 1.2, 14.0, 120.0)
 		_screen_flash(Color(1.0, 0.75, 0.3), 0.35)
@@ -996,8 +1012,11 @@ func _on_attack(ev: Dictionary) -> void:
 	t.tween_property(a, "position", hit, 0.13 / _speed()).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	await t.finished
 	Sfx.play("thud", -2.0, 0.9)
+	Sfx.play("blade", -6.0)
 	shake(9.0 if b is HeroView else 6.0)
 	Fx.flash(fx_layer, "claw_slash", b.position, 260.0, 0.35, Color.WHITE, 0.0)
+	Fx.slash(fx_layer, b.position, dir, 320.0, Color(1.0, 0.85, 0.6))
+	Fx.sparks(fx_layer, b.position - dir * 40.0, Color(1.0, 0.7, 0.3), 22)
 	Fx.burst(fx_layer, (a.position + b.position) / 2, Color(1.0, 0.75, 0.4), 22, 300.0, 0.4, 8.0, 200.0)
 	_push(b, dir * 18.0)
 	var back: Tween = a.create_tween().set_parallel(true)
@@ -1048,9 +1067,11 @@ func _on_death(ev: Dictionary) -> void:
 		return
 	board_views[ev.side].erase(m)
 	Sfx.play("sigh", -10.0, 1.0, 0.15)
+	Sfx.play("creature_die", -12.0, 1.1)
 	Fx.flash(fx_layer, "fire_burst", m.position, 300.0, 0.7)
 	Fx.flash(fx_layer, "smoke_puff", m.position + Vector2(0, -30), 340.0, 1.2, Color(1, 1, 1, 0.7), 0.2)
 	Fx.burst(fx_layer, m.position, UI.EMBER, 40, 180.0, 1.4, 10.0, -140.0, 120.0)
+	Fx.smoke(fx_layer, m.position, Color(0.2, 0.17, 0.15, 0.75), 220.0)
 	m.burn_away(0.85 / _speed())
 	get_tree().create_timer(0.85 / _speed()).timeout.connect(_remove_dead.bind(m, ev.side))
 	await _wait(0.22)
@@ -1154,6 +1175,7 @@ func _show_result(winner: int) -> void:
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(sub)
 	var reward := Collection.reward_battle(won)
+	Sfx.play("coins", -4.0)
 	var gain := UI.label("+%d Obols   ·   a pack costs %d" % [reward, Collection.PACK_PRICE], 34, "title",
 		Color(1.0, 0.85, 0.5), 6, Color.BLACK)
 	gain.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

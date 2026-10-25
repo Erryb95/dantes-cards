@@ -3,10 +3,11 @@ class_name Fx
 
 
 static func burst(parent: Node, pos: Vector2, color: Color, amount: int = 24, speed: float = 260.0,
-		life: float = 0.7, size: float = 10.0, gravity: float = 300.0, spread: float = 180.0) -> CPUParticles2D:
+		life: float = 0.7, size: float = 10.0, gravity: float = 300.0, spread: float = 180.0,
+		tex_name: String = "") -> CPUParticles2D:
 	var p := CPUParticles2D.new()
 	p.position = pos
-	p.texture = UI.dot_texture()
+	p.texture = _tex(tex_name)
 	p.amount = amount
 	p.one_shot = true
 	p.explosiveness = 0.95
@@ -18,8 +19,12 @@ static func burst(parent: Node, pos: Vector2, color: Color, amount: int = 24, sp
 	p.gravity = Vector2(0, gravity)
 	p.damping_min = 40.0
 	p.damping_max = 120.0
-	p.scale_amount_min = size / 64.0 * 0.5
-	p.scale_amount_max = size / 64.0 * 1.4
+	var px := 64.0 if p.texture == UI.dot_texture() else p.texture.get_width() * 0.25
+	p.scale_amount_min = size / px * 0.5
+	p.scale_amount_max = size / px * 1.4
+	if p.texture != UI.dot_texture():
+		p.angle_min = -180.0
+		p.angle_max = 180.0
 	var ramp := Gradient.new()
 	ramp.set_color(0, Color(color.r * 1.4, color.g * 1.4, color.b * 1.4, 1.0))
 	ramp.set_color(1, Color(color.r, color.g * 0.5, color.b * 0.3, 0.0))
@@ -153,15 +158,15 @@ static func projectile(parent: Node, from: Vector2, to: Vector2, color: Color, d
 	orb.position = from
 	parent.add_child(orb)
 	var core := Sprite2D.new()
-	core.texture = UI.dot_texture()
-	core.scale = Vector2(1.1, 1.1)
+	core.texture = _tex("k_magic_05")
+	core.scale = Vector2(1.1, 1.1) if core.texture == UI.dot_texture() else Vector2.ONE * 110.0 / core.texture.get_width()
 	core.modulate = Color(color.r * 1.5, color.g * 1.5, color.b * 1.5)
 	var add := CanvasItemMaterial.new()
 	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	core.material = add
 	orb.add_child(core)
 	var trail := CPUParticles2D.new()
-	trail.texture = UI.dot_texture()
+	trail.texture = _tex("k_star_04")
 	trail.amount = 60
 	trail.lifetime = 0.45
 	trail.local_coords = false
@@ -169,8 +174,11 @@ static func projectile(parent: Node, from: Vector2, to: Vector2, color: Color, d
 	trail.initial_velocity_max = 50.0
 	trail.spread = 180.0
 	trail.gravity = Vector2(0, -40)
-	trail.scale_amount_min = 0.25
-	trail.scale_amount_max = 0.6
+	var dot := trail.texture == UI.dot_texture()
+	trail.scale_amount_min = 0.25 if dot else 0.06
+	trail.scale_amount_max = 0.6 if dot else 0.16
+	trail.angle_min = -180.0
+	trail.angle_max = 180.0
 	var ramp := Gradient.new()
 	ramp.set_color(0, Color(color.r * 1.3, color.g * 1.3, color.b * 1.3, 0.9))
 	ramp.set_color(1, Color(color.r, color.g * 0.4, color.b * 0.2, 0.0))
@@ -180,7 +188,10 @@ static func projectile(parent: Node, from: Vector2, to: Vector2, color: Color, d
 	var mid := (from + to) / 2 + Vector2(0, -minf(260.0, from.distance_to(to) * 0.35))
 	var t := orb.create_tween()
 	t.tween_method(Fx._bezier.bind(orb, from, mid, to), 0.0, 1.0, duration).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+	core.create_tween().tween_property(core, "rotation", TAU * 1.5, duration)
 	await t.finished
+	flash(parent, "k_flare_01", to, 340.0, 0.4, Color(color.r * 1.3, color.g * 1.3, color.b * 1.3), 0.0)
+	sparks(parent, to, color, 18)
 	core.visible = false
 	trail.emitting = false
 	flash(parent, "fire_burst", to, 220.0, 0.45, Color(color.r * 1.2, color.g * 1.2, color.b * 1.2))
@@ -190,3 +201,107 @@ static func projectile(parent: Node, from: Vector2, to: Vector2, color: Color, d
 
 static func _bezier(k: float, node: Node2D, a: Vector2, m: Vector2, b: Vector2) -> void:
 	node.position = a.lerp(m, k).lerp(m.lerp(b, k), k)
+
+
+static func _tex(name: String) -> Texture2D:
+	if name != "" and UiSkin.has(name):
+		return UiSkin.tex(name)
+	return UI.dot_texture()
+
+
+## Streaking sparks aligned to their velocity (Kenney spark textures), for hits and impacts.
+static func sparks(parent: Node, pos: Vector2, color: Color, amount: int = 20, speed: float = 520.0) -> void:
+	var p := burst(parent, pos, color, amount, speed, 0.45, 26.0, 700.0, 180.0, "k_spark_04")
+	p.particle_flag_align_y = true
+	p.angle_min = 0.0
+	p.angle_max = 0.0
+	p.damping_min = 10.0
+	p.damping_max = 40.0
+
+
+## Slow rising, spinning smoke that grows as it fades (normal blend, so it darkens the board).
+static func smoke(parent: Node, pos: Vector2, tint: Color = Color(0.25, 0.22, 0.2, 0.7), size: float = 180.0,
+		amount: int = 8) -> void:
+	var p := CPUParticles2D.new()
+	p.position = pos
+	p.texture = _tex("k_smoke_04")
+	p.amount = amount
+	p.one_shot = true
+	p.explosiveness = 0.8
+	p.lifetime = 1.6
+	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = size * 0.2
+	p.direction = Vector2.UP
+	p.spread = 40.0
+	p.initial_velocity_min = 30.0
+	p.initial_velocity_max = 90.0
+	p.gravity = Vector2(0, -30)
+	p.angular_velocity_min = -60.0
+	p.angular_velocity_max = 60.0
+	p.angle_min = -180.0
+	p.angle_max = 180.0
+	var k := size / p.texture.get_width()
+	p.scale_amount_min = k * 0.6
+	p.scale_amount_max = k
+	var grow := Curve.new()
+	grow.max_value = 2.0
+	grow.add_point(Vector2(0, 0.5))
+	grow.add_point(Vector2(1, 1.6))
+	p.scale_amount_curve = grow
+	var ramp := Gradient.new()
+	ramp.set_color(0, tint)
+	ramp.set_color(1, Color(tint.r, tint.g, tint.b, 0.0))
+	p.color_ramp = ramp
+	p.z_index = 55
+	parent.add_child(p)
+	p.emitting = true
+	p.finished.connect(p.queue_free)
+
+
+## A slash stroke oriented along `dir`, stretched as it fades.
+static func slash(parent: Node, pos: Vector2, dir: Vector2, size: float = 300.0, tint: Color = Color.WHITE) -> void:
+	if not UiSkin.has("k_slash_02"):
+		return
+	var s := Sprite2D.new()
+	s.texture = UiSkin.tex("k_slash_02")
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	s.material = mat
+	s.modulate = tint
+	s.position = pos
+	s.rotation = dir.angle() + PI * 0.5 + randf_range(-0.3, 0.3)
+	s.z_index = 66
+	var base := size / s.texture.get_width()
+	s.scale = Vector2(base * 0.5, base * 0.3)
+	parent.add_child(s)
+	var t := s.create_tween().set_parallel(true)
+	t.tween_property(s, "scale", Vector2(base * 1.1, base), 0.12).set_ease(Tween.EASE_OUT)
+	t.tween_property(s, "modulate:a", 0.0, 0.25).set_delay(0.1)
+	t.chain().tween_callback(s.queue_free)
+
+
+## A magic circle lying flat on the board (squashed for a tabletop perspective), spinning in and out.
+static func rune(parent: Node, pos: Vector2, color: Color, size: float = 360.0, duration: float = 1.1,
+		name: String = "k_magic_01") -> void:
+	if not UiSkin.has(name):
+		return
+	var holder := Node2D.new()
+	holder.position = pos
+	holder.scale = Vector2(1.0, 0.42)
+	holder.z_index = 4
+	var s := Sprite2D.new()
+	s.texture = UiSkin.tex(name)
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	s.material = mat
+	s.modulate = Color(color.r * 1.3, color.g * 1.3, color.b * 1.3, 0.0)
+	var base := size / s.texture.get_width()
+	s.scale = Vector2.ONE * base * 0.6
+	holder.add_child(s)
+	parent.add_child(holder)
+	var t := s.create_tween().set_parallel(true)
+	t.tween_property(s, "scale", Vector2.ONE * base, duration * 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	t.tween_property(s, "rotation", PI * 0.8, duration)
+	t.tween_property(s, "modulate:a", 1.0, duration * 0.2)
+	t.tween_property(s, "modulate:a", 0.0, duration * 0.5).set_delay(duration * 0.5)
+	t.chain().tween_callback(holder.queue_free)

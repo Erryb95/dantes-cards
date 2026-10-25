@@ -94,7 +94,7 @@ func _refresh() -> void:
 
 func _buy() -> void:
 	if Collection.buy_pack():
-		Sfx.play("chime", -4.0)
+		Sfx.play("coins", -2.0)
 		_refresh()
 		if pack == null and _state != "reveal":
 			_next_pack()
@@ -206,6 +206,7 @@ func _open() -> void:
 	t.tween_property(pack, "scale", Vector2(0.92, 1.1), 0.12)
 	t.tween_property(pack, "scale", Vector2(1.2, 1.2), 0.18)
 	Sfx.play("rubble", -6.0, 1.3)
+	Sfx.play("pack_open", -2.0)
 	await t.finished
 	_shake = 14.0
 	_screen_flash(Color(1.0, 0.8, 0.5), 0.5)
@@ -240,6 +241,7 @@ func _open() -> void:
 		tt.tween_property(v, "rotation", randf_range(-0.08, 0.08), 0.45).set_delay(i * 0.07)
 		_cards.append({"view": v, "data": d, "glow": glow, "revealed": false})
 	Sfx.play("swish_long", -4.0, 1.1)
+	Sfx.play("pack_take", -4.0)
 	await get_tree().create_timer(0.8).timeout
 	_state = "reveal"
 
@@ -258,15 +260,17 @@ func _reveal(c: Dictionary) -> void:
 	await get_tree().create_timer(0.24).timeout
 	match d.rarity:
 		"common":
-			Sfx.play("swish", -6.0)
+			Sfx.play("card_place", -4.0)
 			Fx.burst(fx, v.position, col, 20, 220.0, 0.6, 9.0, 0.0)
 		"rare":
 			Sfx.play("chime", -6.0, 1.1)
+			Sfx.play("gem", -4.0)
 			Fx.burst(fx, v.position, col, 50, 420.0, 0.9, 12.0, 0.0)
 			Fx.shockwave(fx, v.position, col, 300.0, 0.5)
 			_shake = 4.0
 		"epic":
 			Sfx.play("chime", -2.0, 0.85)
+			Sfx.play("gem", -2.0, 0.8)
 			Sfx.play("wail", -14.0, 1.3)
 			Fx.burst(fx, v.position, col, 80, 600.0, 1.1, 14.0, 0.0)
 			Fx.shockwave(fx, v.position, col, 500.0, 0.6)
@@ -289,6 +293,7 @@ func _reveal(c: Dictionary) -> void:
 		_tag(v, "NEW", Color(0.5, 1.0, 0.5))
 	elif d.refund > 0:
 		_tag(v, "+%d obols" % d.refund, Color(1.0, 0.85, 0.5))
+		Sfx.play("coins", -8.0)
 	if _cards.all(func(x): return x.revealed):
 		_state = "done"
 		_refresh()

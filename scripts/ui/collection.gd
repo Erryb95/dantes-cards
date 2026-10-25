@@ -111,7 +111,7 @@ func _show_zoom(id: String) -> void:
 	info.size = Vector2(minf(560.0, vs.x * 0.3), 400)
 	info.position = Vector2(vs.x * 0.62, vs.y / 2 - 150)
 	_zoom.add_child(info)
-	Sfx.play("swish", -8.0)
+	Sfx.play("page", -6.0)
 	_zoom.gui_input.connect(func(e):
 		if e is InputEventMouseButton and e.pressed:
 			_zoom.queue_free()

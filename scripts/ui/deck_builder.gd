@@ -238,7 +238,7 @@ func _add(id: String) -> void:
 			t.tween_property(v, "rotation", 0.0, 0.05)
 		return
 	deck.cards[id] = have + 1
-	Sfx.play("swish", -8.0, 1.2)
+	Sfx.play("card_place", -6.0)
 	_refresh()
 
 
@@ -248,7 +248,7 @@ func _remove(id: String) -> void:
 		deck.cards.erase(id)
 	else:
 		deck.cards[id] = have - 1
-	Sfx.play("tick", -10.0)
+	Sfx.play("card_slide", -8.0)
 	_refresh()
 
 

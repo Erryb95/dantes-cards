@@ -26,9 +26,6 @@ var _bell_body: Node2D
 var _bell_swing := 0.0
 var _bell_vel := 0.0
 
-var tablet: Node2D
-var _letters: Label
-var _glow := 0.0
 var _t := 0.0
 
 var brazier: Node2D
@@ -43,7 +40,6 @@ func setup(p_view: Node2D) -> ArenaAcheron:
 	view = p_view
 	_build_boat()
 	_build_bell()
-	_build_tablet()
 	if ResourceLoader.exists(PROPS + "brazier.png"):
 		_build_brazier()
 	if ResourceLoader.exists(PROPS + "skulls.png"):
@@ -190,36 +186,6 @@ func _build_bell() -> void:
 		_bell_body.add_child(painted)
 
 
-# ---------------------------------------------------------------- inscription
-
-func _build_tablet() -> void:
-	tablet = Node2D.new()
-	add_child(tablet)
-	var stone := Polygon2D.new()
-	stone.polygon = PackedVector2Array([Vector2(-120, -60), Vector2(-100, -84), Vector2(100, -84), Vector2(120, -60),
-		Vector2(120, 70), Vector2(-120, 70)])
-	stone.color = Color(0.16, 0.13, 0.11, 0.92)
-	tablet.add_child(stone)
-	var rim := Line2D.new()
-	rim.points = stone.polygon
-	rim.closed = true
-	rim.width = 3.0
-	rim.default_color = Color(0.35, 0.28, 0.2)
-	tablet.add_child(rim)
-	_letters = UI.label("ABANDON\nEVERY HOPE,\nYOU WHO\nENTER HERE", 20, "title", Color(0.42, 0.35, 0.28), 0)
-	_letters.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_letters.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_letters.size = Vector2(230, 150)
-	_letters.position = Vector2(-115, -82)
-	_letters.add_theme_constant_override("line_spacing", -2)
-	tablet.add_child(_letters)
-	var painted := _painted("tablet", 260.0)
-	if painted != null:
-		_hide_silhouette(tablet, [_letters])
-		tablet.add_child(painted)
-		tablet.move_child(painted, 0)
-
-
 func _build_brazier() -> void:
 	brazier = Node2D.new()
 	add_child(brazier)
@@ -272,9 +238,7 @@ func layout(p_v: Vector2, p_river_y: float, p_ky: float, anchors: Dictionary = {
 	var left := minf(170.0, (V.x - 1220.0) / 4.0 + 40.0)
 	var s := clampf((V.x - 1220.0) / 2.0 / 260.0, 0.55, 1.0) if anchors.is_empty() else ky
 	bell.position = anchors.get("PropBell", Vector2(maxf(left, 90.0), 300 * ky))
-	tablet.position = anchors.get("PropTablet", Vector2(maxf(left, 120.0), 690 * ky))
 	bell.scale = Vector2(s, s)
-	tablet.scale = Vector2(s, s)
 	if brazier != null:
 		brazier.position = anchors.get("PropBrazier", Vector2(V.x - 90, 860 * ky))
 		brazier.scale = Vector2(s, s)
@@ -312,13 +276,6 @@ func _process(delta: float) -> void:
 	_bell_vel *= 1.0 - 1.2 * delta
 	_bell_swing += _bell_vel * delta
 	_bell_body.rotation = _bell_swing
-	# Inscription glow fades.
-	if _glow > 0.0:
-		_glow = maxf(0.0, _glow - delta * 0.35)
-		var base := Color(0.42, 0.35, 0.28)
-		_letters.add_theme_color_override("font_color", base.lerp(Color(1.0, 0.55, 0.15), _glow))
-		_letters.add_theme_constant_override("outline_size", int(10 * _glow))
-		_letters.add_theme_color_override("font_outline_color", Color(0.9, 0.2, 0.0, _glow * 0.6))
 	if _flame != null:
 		_flare = maxf(0.0, _flare - delta * 1.5)
 		_flame.speed_scale = 1.0 + _flare * 1.5
@@ -336,12 +293,6 @@ func touch(p: Vector2) -> bool:
 		_bell_vel += 2.6 * (1.0 if lb.x < 0 else -1.0)
 		Sfx.play("bell_far", -4.0, 1.25)
 		Fx.shockwave(view.fx_layer, bell.position + Vector2(0, -30), Color(1.0, 0.8, 0.45), 260.0, 0.8)
-		return true
-	var lt := tablet.to_local(p)
-	if absf(lt.x) < 125 and lt.y > -90 and lt.y < 75:
-		_glow = 1.0
-		Sfx.play("sigh", -8.0, 0.8)
-		Fx.burst(view.fx_layer, tablet.position, UI.EMBER, 30, 160.0, 1.2, 9.0, -80.0)
 		return true
 	if brazier != null and brazier.to_local(p).length() < 80:
 		_flare = 1.0

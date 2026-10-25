@@ -23,8 +23,6 @@ func _ready() -> void:
 	col.add_child(title)
 	var sub := UI.label("THE CARD GAME", 40, "title", UI.BONE, 6, Color.BLACK)
 	col.add_child(sub)
-	var quote := UI.label("\"Abandon every hope, you who enter here.\"", 30, "italic", Color(0.85, 0.75, 0.62), 4, Color.BLACK)
-	col.add_child(quote)
 	var spacer := Control.new()
 	spacer.custom_minimum_size = Vector2(0, 40)
 	col.add_child(spacer)
