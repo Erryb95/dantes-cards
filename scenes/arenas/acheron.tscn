@@ -1,0 +1,50 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/battle/arena_scene.gd" id="1"]
+
+[node name="Acheron" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Sockets" type="Node2D" parent="."]
+
+[node name="HeroPlayer" type="Marker2D" parent="Sockets"]
+position = Vector2(960, 808)
+
+[node name="HeroEnemy" type="Marker2D" parent="Sockets"]
+position = Vector2(960, 150)
+
+[node name="BoardPlayer" type="Marker2D" parent="Sockets"]
+position = Vector2(960, 592)
+
+[node name="BoardEnemy" type="Marker2D" parent="Sockets"]
+position = Vector2(960, 352)
+
+[node name="River" type="Marker2D" parent="Sockets"]
+position = Vector2(960, 472)
+
+[node name="EndTurn" type="Marker2D" parent="Sockets"]
+position = Vector2(1745, 472)
+
+[node name="DeckPlayer" type="Marker2D" parent="Sockets"]
+position = Vector2(1800, 632)
+
+[node name="DeckEnemy" type="Marker2D" parent="Sockets"]
+position = Vector2(1800, 312)
+
+[node name="ManaPlayer" type="Marker2D" parent="Sockets"]
+position = Vector2(1590, 1026)
+
+[node name="ManaEnemy" type="Marker2D" parent="Sockets"]
+position = Vector2(1590, 54)
+
+[node name="PropBell" type="Marker2D" parent="Sockets"]
+position = Vector2(165, 300)
+
+[node name="PropTablet" type="Marker2D" parent="Sockets"]
+position = Vector2(170, 690)
+
+[node name="PropBrazier" type="Marker2D" parent="Sockets"]
+position = Vector2(1830, 860)
+
+[node name="PropSkulls" type="Marker2D" parent="Sockets"]
+position = Vector2(140, 960)

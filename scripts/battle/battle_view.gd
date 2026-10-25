@@ -46,6 +46,7 @@ var _ripple_i := 0
 var _ripples: Array[Vector4] = [Vector4.ZERO, Vector4.ZERO, Vector4.ZERO, Vector4.ZERO]
 var _wisps: Array[Sprite2D] = []
 var props: ArenaAcheron
+var arena_scene: ArenaScene ## editor-placed sockets (scenes/arenas/*.tscn)
 var mana_views: Array = [null, null]
 var deck_views: Array = [null, null]
 var end_btn: Node2D
@@ -167,10 +168,14 @@ func _build_scene() -> void:
 	# A painted board (ARENA_BRIEF.md) replaces the landscape: same coordinates as the layout, 2560x1440.
 	var board_path := "res://assets/arenas/" + str(arena.get("board", ""))
 	_painted_board = arena.has("board") and ResourceLoader.exists(board_path)
-	if _painted_board:
-		back.texture = load(board_path)
-		back.modulate = Color.WHITE
 	bg_layer.add_child(back)
+	if _painted_board:
+		# The landscape stays underneath, darkened, for the side bands of screens wider than the board.
+		back.modulate = Color(0.35, 0.32, 0.3)
+		var board := Sprite2D.new()
+		board.name = "Board"
+		board.texture = load(board_path)
+		bg_layer.add_child(board)
 
 	# Two shore beds where the minions stand, the river between them.
 	for i in 2:
@@ -203,6 +208,10 @@ func _build_scene() -> void:
 					s.modulate = Color(1, 1, 1, 0.35)
 				bg_layer.add_child(s)
 
+	var scene_path := str(arena.get("scene", ""))
+	if scene_path != "" and ResourceLoader.exists(scene_path):
+		arena_scene = load(scene_path).instantiate()
+		bg_layer.add_child(arena_scene)
 	if Game.arena_id == "acheron":
 		props = ArenaAcheron.new().setup(self)
 		bg_layer.add_child(props)
@@ -365,15 +374,18 @@ func _layout_static() -> void:
 	var back: Sprite2D = bg_layer.get_node("Backdrop")
 	var ts := back.texture.get_size()
 	var s := maxf(V.x / ts.x, V.y / ts.y) * 1.04
-	if _painted_board:
-		# Fit the height so the painted sockets sit on the layout; wider screens show the board's own margin.
-		s = maxf(V.y / ts.y, V.x / ts.x)
 	back.scale = Vector2(s, s)
 	back.position = V / 2
+	var board := bg_layer.get_node_or_null("Board") as Sprite2D
+	if board != null:
+		# Fit the height so the painted sockets sit exactly on the layout (see _sock).
+		var bs := V.y / board.texture.get_size().y
+		board.scale = Vector2(bs, bs)
+		board.position = V / 2
 	for layer in ["frame", "mist"]:
 		var n := bg_layer.get_node_or_null("Board_" + layer) as Sprite2D
-		if n != null:
-			var ls := s * ts.x / n.texture.get_size().x
+		if n != null and board != null:
+			var ls := board.scale.x * board.texture.get_size().x / n.texture.get_size().x
 			n.scale = Vector2(ls, ls)
 			n.position = V / 2 if layer == "frame" else Vector2(V.x / 2, _river_y())
 	var bed_w := minf(V.x - 520.0, 1220.0)
@@ -390,13 +402,18 @@ func _layout_static() -> void:
 	var em: CPUParticles2D = bg_layer.get_node("Embers")
 	em.position = Vector2(V.x / 2, V.y + 20)
 	em.emission_rect_extents = Vector2(V.x / 2, 10)
-	end_btn.position = Vector2(V.x - 175, _river_y())
+	end_btn.position = _sock("EndTurn", Vector2(V.x - 175, _river_y()))
 	if props != null:
-		props.layout(V, _river_y(), ky)
-	mana_views[0].position = Vector2(V.x - 330, V.y - 54)
-	mana_views[1].position = Vector2(V.x - 330, 54)
-	deck_views[0].position = Vector2(V.x - 120, _board_y(0) + 40 * ky)
-	deck_views[1].position = Vector2(V.x - 120, _board_y(1) - 40 * ky)
+		var anchors := {}
+		if _painted_board and arena_scene != null:
+			for n in ["PropBell", "PropTablet", "PropBrazier", "PropSkulls"]:
+				if arena_scene.has_socket(n):
+					anchors[n] = _sock(n, Vector2.ZERO)
+		props.layout(V, _river_y(), ky, anchors)
+	mana_views[0].position = _sock("ManaPlayer", Vector2(V.x - 330, V.y - 54))
+	mana_views[1].position = _sock("ManaEnemy", Vector2(V.x - 330, 54))
+	deck_views[0].position = _sock("DeckPlayer", Vector2(V.x - 120, _board_y(0) + 40 * ky))
+	deck_views[1].position = _sock("DeckEnemy", Vector2(V.x - 120, _board_y(1) - 40 * ky))
 	for i in 2:
 		if heroes[i] != null:
 			heroes[i].home = _hero_pos(i)
@@ -406,6 +423,14 @@ func _layout_static() -> void:
 	_flash_rect.size = V
 	ui.get_node("MenuButton").position = Vector2(24, 20)
 	_tips.position = Vector2(400, V.y / 2 - 160)
+
+
+## Screen position of an arena socket. Sockets follow the painted board (fit to height, centred); without a painted
+## board the old edge-anchored layout (`fallback`) keeps the side widgets near the screen edges on wide phones.
+func _sock(n: String, fallback: Vector2) -> Vector2:
+	if not _painted_board or arena_scene == null or not arena_scene.has_socket(n):
+		return fallback
+	return V / 2 + (arena_scene.socket(n) - Vector2(960, 540)) * ky
 
 
 func _board_y(side: int) -> float:

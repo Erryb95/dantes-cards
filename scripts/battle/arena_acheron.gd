@@ -245,21 +245,22 @@ func _build_brazier() -> void:
 
 # ---------------------------------------------------------------- layout / update
 
-func layout(p_v: Vector2, p_river_y: float, p_ky: float) -> void:
+## `anchors` (screen positions from the arena scene's sockets) override the edge-anchored defaults.
+func layout(p_v: Vector2, p_river_y: float, p_ky: float, anchors: Dictionary = {}) -> void:
 	V = p_v
 	river_y = p_river_y
 	ky = p_ky
 	var left := minf(170.0, (V.x - 1220.0) / 4.0 + 40.0)
-	bell.position = Vector2(maxf(left, 90.0), 300 * ky)
-	tablet.position = Vector2(maxf(left, 120.0), 690 * ky)
-	var s := clampf((V.x - 1220.0) / 2.0 / 260.0, 0.55, 1.0)
+	var s := clampf((V.x - 1220.0) / 2.0 / 260.0, 0.55, 1.0) if anchors.is_empty() else ky
+	bell.position = anchors.get("PropBell", Vector2(maxf(left, 90.0), 300 * ky))
+	tablet.position = anchors.get("PropTablet", Vector2(maxf(left, 120.0), 690 * ky))
 	bell.scale = Vector2(s, s)
 	tablet.scale = Vector2(s, s)
 	if brazier != null:
-		brazier.position = Vector2(V.x - 90, 860 * ky)
+		brazier.position = anchors.get("PropBrazier", Vector2(V.x - 90, 860 * ky))
 		brazier.scale = Vector2(s, s)
 	if skulls != null:
-		skulls.position = Vector2(maxf(left, 140.0), 960 * ky)
+		skulls.position = anchors.get("PropSkulls", Vector2(maxf(left, 140.0), 960 * ky))
 		skulls.scale = Vector2(s, s)
 	if _boat_x == 0.0:
 		_boat_x = V.x * 0.8
