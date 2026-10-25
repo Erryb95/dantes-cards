@@ -5,3 +5,4 @@ art_src/cards/run.log
 *.tmp
 __pycache__/
 .claude/worktrees/
+art_src/dore_cards_v2/

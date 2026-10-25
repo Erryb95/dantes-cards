@@ -4,6 +4,8 @@
   python tools/cards/art_jobs.py run              # build + generate via tools/comfy/art.py + import
   python tools/cards/art_jobs.py import           # resize art_src/cards/*.png into assets/
   python tools/cards/art_jobs.py dore             # import the Dore batch (art_src/dore_cards) per card "image"
+  python tools/cards/art_jobs.py v2               # download output/dantes_cards_v2/<id>_s777.png for the set cards
+                                                  # still missing art (list: art_src/new_card_art.json) and import them
 
 House style (final, Enrico 2026-10-25): hand-tinted Dore engraving (dantes_00133_). The ComfyUI session runs the GPU;
 this game session only imports (`dore`).
@@ -156,6 +158,46 @@ def import_dore() -> None:
     print("imported", n)
 
 
+def _fit(src: str, dst: str, size=(512, 704), focus=0.45) -> None:
+    from PIL import Image
+    tw, th = size
+    im = Image.open(src).convert("RGB")
+    scale = max(tw / im.width, th / im.height)
+    im = im.resize((round(im.width * scale), round(im.height * scale)), Image.LANCZOS)
+    l = (im.width - tw) // 2
+    t = int(min(max(im.height * focus - th / 2, 0), im.height - th))
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    im.crop((l, t, l + tw, t + th)).save(dst, quality=88)
+
+
+def import_v2() -> None:
+    """Fetches the second card batch from the ComfyUI PC (read-only /view requests) and imports what exists."""
+    import urllib.parse
+    import urllib.request
+    base = open(r"C:\Servers\comfy_url.txt", encoding="utf-8").readline().strip().rstrip("/")
+    todo = json.load(open(os.path.join(ROOT, "art_src", "new_card_art.json"), encoding="utf-8"))
+    src_dir = os.path.join(ROOT, "art_src", "dore_cards_v2")
+    os.makedirs(src_dir, exist_ok=True)
+    got = missing = 0
+    for c in todo:
+        dst = os.path.join(ROOT, "assets", "cards", "art", c["id"] + ".jpg")
+        if os.path.exists(dst):
+            continue
+        name = c["id"] + "_s777.png"
+        src = os.path.join(src_dir, name)
+        if not os.path.exists(src):
+            q = urllib.parse.urlencode({"subfolder": "dantes_cards_v2", "type": "output", "filename": name})
+            try:
+                data = urllib.request.urlopen(base + "/view?" + q, timeout=60).read()
+            except Exception:  # noqa: BLE001 - not generated yet
+                missing += 1
+                continue
+            open(src, "wb").write(data)
+        _fit(src, dst)
+        got += 1
+    print("imported", got, "still missing", missing)
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "build"
     if mode in ("build", "run"):
@@ -166,3 +208,5 @@ if __name__ == "__main__":
         import_art()
     if mode == "dore":
         import_dore()
+    if mode == "v2":
+        import_v2()
