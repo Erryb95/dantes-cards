@@ -1,0 +1,107 @@
+{
+ "cliffs": [
+  230,
+  26,
+  26
+ ],
+ "near_bank": [
+  26,
+  230,
+  26
+ ],
+ "riverbed": [
+  26,
+  26,
+  230
+ ],
+ "far_bank": [
+  230,
+  230,
+  26
+ ],
+ "river": [
+  230,
+  26,
+  230
+ ],
+ "hero_plinth_enemy": [
+  26,
+  230,
+  230
+ ],
+ "hero_plinth_player": [
+  230,
+  128,
+  26
+ ],
+ "power_socket_enemy": [
+  128,
+  26,
+  230
+ ],
+ "power_socket_player": [
+  26,
+  128,
+  51
+ ],
+ "end_turn_socket": [
+  153,
+  153,
+  153
+ ],
+ "deck_niche_enemy": [
+  128,
+  76,
+  26
+ ],
+ "deck_niche_player": [
+  51,
+  51,
+  128
+ ],
+ "mana_tray_enemy": [
+  230,
+  153,
+  178
+ ],
+ "mana_tray_player": [
+  102,
+  204,
+  102
+ ],
+ "souls": [
+  76,
+  153,
+  230
+ ],
+ "landing_stage": [
+  204,
+  204,
+  128
+ ],
+ "prop_boat": [
+  230,
+  26,
+  26
+ ],
+ "prop_bell": [
+  26,
+  230,
+  26
+ ],
+ "prop_tablet": [
+  26,
+  26,
+  230
+ ],
+ "prop_brazier": [
+  230,
+  230,
+  26
+ ],
+ "prop_skulls": [
+  230,
+  26,
+  230
+ ]
+}
