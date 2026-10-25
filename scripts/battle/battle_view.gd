@@ -42,7 +42,9 @@ var arrow: TargetArrow
 var river: ColorRect
 var _river_mat: ShaderMaterial
 var _ripple_i := 0
+var _ripples: Array[Vector4] = [Vector4.ZERO, Vector4.ZERO, Vector4.ZERO, Vector4.ZERO]
 var _wisps: Array[Sprite2D] = []
+var props: ArenaAcheron
 var mana_views: Array = [null, null]
 var deck_views: Array = [null, null]
 var end_btn: Node2D
@@ -175,6 +177,10 @@ func _build_scene() -> void:
 	_river_mat.shader = preload("res://assets/shaders/river.gdshader")
 	river.material = _river_mat
 	bg_layer.add_child(river)
+
+	if Game.arena_id == "acheron":
+		props = ArenaAcheron.new().setup(self)
+		bg_layer.add_child(props)
 
 	var embers := CPUParticles2D.new()
 	embers.name = "Embers"
@@ -345,6 +351,8 @@ func _layout_static() -> void:
 	em.position = Vector2(V.x / 2, V.y + 20)
 	em.emission_rect_extents = Vector2(V.x / 2, 10)
 	end_btn.position = Vector2(V.x - 175, _river_y())
+	if props != null:
+		props.layout(V, _river_y(), ky)
 	mana_views[0].position = Vector2(V.x - 330, V.y - 54)
 	mana_views[1].position = Vector2(V.x - 330, 54)
 	deck_views[0].position = Vector2(V.x - 120, _board_y(0) + 40 * ky)
@@ -1498,18 +1506,22 @@ func _board_touch(p: Vector2) -> void:
 		var d := w.position - p
 		if d.length() < 260.0:
 			w.set_meta("flee", w.get_meta("flee") + d.normalized() * (260.0 - d.length()) * 1.4)
+	if props != null and props.touch(p):
+		return
 	if absf(p.y - _river_y()) < 60.0 * ky:
-		var ripples: Array = _river_mat.get_shader_parameter("ripples")
-		if ripples == null or ripples.size() != 4:
-			ripples = [Vector4.ZERO, Vector4.ZERO, Vector4.ZERO, Vector4.ZERO]
-		var uv := Vector2((p.x - river.position.x) / river.size.x, (p.y - river.position.y) / river.size.y)
-		ripples[_ripple_i] = Vector4(uv.x, uv.y, Time.get_ticks_msec() / 1000.0, 1.0)
-		_ripple_i = (_ripple_i + 1) % 4
-		_river_mat.set_shader_parameter("ripples", ripples)
+		add_ripple(p, 1.0)
 		Sfx.play("splash", -12.0)
 	else:
 		Fx.dust(fx_layer, p, 60.0, 14)
 		Fx.burst(fx_layer, p, UI.EMBER, 10, 120.0, 0.8, 7.0, -40.0)
+
+
+func add_ripple(p: Vector2, strength: float) -> void:
+	var ripples := _ripples
+	var uv := Vector2((p.x - river.position.x) / river.size.x, (p.y - river.position.y) / river.size.y)
+	ripples[_ripple_i] = Vector4(uv.x, uv.y, Time.get_ticks_msec() / 1000.0, strength)
+	_ripple_i = (_ripple_i + 1) % 4
+	_river_mat.set_shader_parameter("ripples", ripples)
 
 
 # ================================================================ inspect
