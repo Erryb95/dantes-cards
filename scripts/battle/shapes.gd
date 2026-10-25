@@ -87,6 +87,12 @@ func _draw() -> void:
 		draw_polyline(closed, line, width, true)
 
 
+func set_diameter(d: float) -> void:
+	size = Vector2(d, d)
+	width = maxf(2.0, 7.0 * (1.0 - d / 2400.0))
+	queue_redraw()
+
+
 func set_fill(c: Color) -> void:
 	fill = c
 	queue_redraw()

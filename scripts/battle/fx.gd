@@ -34,6 +34,32 @@ static func burst(parent: Node, pos: Vector2, color: Color, amount: int = 24, sp
 	return p
 
 
+## A painted additive VFX sprite (assets/vfx/<name>, black background) that pops, spins a little and fades.
+## Returns false when the texture is missing so callers keep their particle fallback.
+static func flash(parent: Node, name: String, pos: Vector2, size: float, duration: float = 0.45,
+		tint: Color = Color.WHITE, spin: float = 0.4) -> bool:
+	if not UiSkin.has(name):
+		return false
+	var s := Sprite2D.new()
+	s.texture = UiSkin.tex(name)
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	s.material = mat
+	s.modulate = tint
+	s.position = pos
+	s.rotation = randf_range(-PI, PI) if spin > 0.0 else 0.0
+	s.z_index = 65
+	var base := size / s.texture.get_size().x
+	s.scale = Vector2.ONE * base * 0.4
+	parent.add_child(s)
+	var t := s.create_tween().set_parallel(true)
+	t.tween_property(s, "scale", Vector2.ONE * base, duration * 0.35).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	t.tween_property(s, "rotation", s.rotation + spin, duration)
+	t.tween_property(s, "modulate:a", 0.0, duration * 0.6).set_delay(duration * 0.4)
+	t.chain().tween_callback(s.queue_free)
+	return true
+
+
 ## Dust ring when a minion slams down.
 static func dust(parent: Node, pos: Vector2, width: float = 140.0, amount: int = 30) -> void:
 	var p := CPUParticles2D.new()
@@ -93,19 +119,31 @@ static func number(parent: Node, pos: Vector2, text: String, color: Color, splat
 	t.tween_callback(root.queue_free)
 
 
+## A thin expanding ring (grown by radius, so the line stays thin), with a soft inner flash.
 static func shockwave(parent: Node, pos: Vector2, color: Color, radius: float = 300.0, duration: float = 0.5) -> void:
-	var ring := Shapes.make(Shapes.Kind.ELLIPSE, Vector2(40, 40), Color.TRANSPARENT, color, 10.0)
+	var ring := Shapes.make(Shapes.Kind.ELLIPSE, Vector2(40, 40), Color.TRANSPARENT, color, 7.0)
 	ring.use_parent_material = false
+	ring.shade = false
 	ring.position = pos
 	ring.z_index = 60
 	var mat := CanvasItemMaterial.new()
 	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	ring.material = mat
 	parent.add_child(ring)
+	var glow := Sprite2D.new()
+	glow.texture = UI.dot_texture()
+	glow.material = mat
+	glow.modulate = Color(color.r, color.g, color.b, 0.5)
+	glow.position = pos
+	glow.z_index = 59
+	parent.add_child(glow)
 	var t := ring.create_tween().set_parallel(true)
-	t.tween_property(ring, "scale", Vector2.ONE * radius / 20.0, duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	t.tween_property(ring, "modulate:a", 0.0, duration)
+	t.tween_method(ring.set_diameter, 40.0, radius * 2.0, duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	t.tween_property(ring, "modulate:a", 0.0, duration).set_ease(Tween.EASE_IN)
+	t.tween_property(glow, "scale", Vector2.ONE * radius / 90.0, duration * 0.6)
+	t.tween_property(glow, "modulate:a", 0.0, duration * 0.6)
 	t.chain().tween_callback(ring.queue_free)
+	t.tween_callback(glow.queue_free)
 
 
 ## A glowing orb with a particle trail flying along an arc; awaitable (returns on impact).
@@ -145,6 +183,7 @@ static func projectile(parent: Node, from: Vector2, to: Vector2, color: Color, d
 	await t.finished
 	core.visible = false
 	trail.emitting = false
+	flash(parent, "fire_burst", to, 220.0, 0.45, Color(color.r * 1.2, color.g * 1.2, color.b * 1.2))
 	burst(parent, to, color, 28, 320.0, 0.55, 12.0, 200.0)
 	parent.get_tree().create_timer(0.6).timeout.connect(orb.queue_free)
 

@@ -19,6 +19,7 @@ var shots_dir := ""
 var _shot_i := 0
 var _shot_t := 0.0
 var _shot_every := 3.0
+var _shots_after_over := 0
 
 var queue: Array[Dictionary] = []
 var playing := false
@@ -261,6 +262,7 @@ func _build_end_button() -> void:
 	board_layer.add_child(end_btn)
 	_end_glow = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(236, 104), Color.TRANSPARENT, UI.PLAYABLE, 9.0)
 	_end_glow.use_parent_material = false
+	_end_glow.visible = false
 	end_btn.add_child(_end_glow)
 	_end_disc = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(220, 88), Color(0.38, 0.1, 0.05), UI.GOLD, 5.0)
 	_end_disc.use_parent_material = false
@@ -572,6 +574,7 @@ func _present(ev: Dictionary) -> void:
 			var m = unit_views.get(ev.uid)
 			if m is MinionView:
 				m.apply({"attack": ev.attack, "health": ev.health, "max_health": ev.max_health, "keywords": ev.keywords})
+				Fx.flash(fx_layer, "holy_light", m.position, 320.0, 0.7, Color.WHITE, 0.3)
 				Fx.burst(fx_layer, m.position, UI.GOLD, 30, 220.0, 0.8, 11.0, -100.0)
 				_pop(m, 1.18)
 				Sfx.play("chime", -10.0, 1.15)
@@ -580,6 +583,7 @@ func _present(ev: Dictionary) -> void:
 			var m = unit_views.get(ev.uid)
 			if m is MinionView:
 				m.break_ward()
+				Fx.flash(fx_layer, "ward_bubble", m.position, 260.0, 0.4, Color.WHITE, 0.0)
 				Fx.burst(fx_layer, m.position, Color(1.0, 0.9, 0.5), 36, 340.0, 0.5, 9.0, 0.0)
 				Sfx.play("tick", -4.0, 0.7)
 				Sfx.play("bones", -14.0, 1.6)
@@ -587,6 +591,7 @@ func _present(ev: Dictionary) -> void:
 		"venom":
 			var m = unit_views.get(ev.uid)
 			if m != null:
+				Fx.flash(fx_layer, "venom_drops", m.position, 240.0, 0.6)
 				Fx.burst(fx_layer, m.position, Color(0.35, 1.0, 0.25), 30, 200.0, 0.7, 11.0, 100.0)
 				m.flash(Color(0.3, 1.0, 0.2))
 		"death":
@@ -691,7 +696,7 @@ func _mulligan_wait() -> void:
 	dim.z_index = -1
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hand_layer.add_child(dim)
-	dim.create_tween().tween_property(dim, "color:a", 0.6, 0.3)
+	dim.create_tween().tween_property(dim, "color:a", 0.82, 0.3)
 	_mull_ui = Control.new()
 	_mull_ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_mull_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -827,6 +832,7 @@ func _on_play(ev: Dictionary) -> void:
 		t.tween_property(c, "scale", Vector2(0.85, 0.85), 0.2 / _speed())
 		t.tween_property(c, "rotation", 0.0, 0.2 / _speed())
 		await t.finished
+		Fx.flash(fx_layer, "fire_burst", c.position, 380.0, 0.8)
 		Fx.burst(fx_layer, c.position, UI.EMBER, 40, 300.0, 0.9, 12.0, -50.0)
 		c.burn_away(0.9 / _speed())
 		await _wait(0.25)
@@ -868,6 +874,7 @@ func _on_summon(ev: Dictionary) -> void:
 	if rarity == "legendary":
 		shake(18.0)
 		Fx.shockwave(fx_layer, m.position, UI.GOLD, 520.0, 0.7)
+		Fx.flash(fx_layer, "holy_light", m.position, 700.0, 1.0, Color(1, 0.85, 0.6), 0.2)
 		Fx.burst(fx_layer, m.position, UI.GOLD, 70, 520.0, 1.2, 14.0, 120.0)
 		_screen_flash(Color(1.0, 0.75, 0.3), 0.35)
 		Sfx.play("thunder", -8.0, 0.9)
@@ -894,6 +901,7 @@ func _on_attack(ev: Dictionary) -> void:
 	await t.finished
 	Sfx.play("thud", -2.0, 0.9)
 	shake(9.0 if b is HeroView else 6.0)
+	Fx.flash(fx_layer, "claw_slash", b.position, 260.0, 0.35, Color.WHITE, 0.0)
 	Fx.burst(fx_layer, (a.position + b.position) / 2, Color(1.0, 0.75, 0.4), 22, 300.0, 0.4, 8.0, 200.0)
 	_push(b, dir * 18.0)
 	var back: Tween = a.create_tween().set_parallel(true)
@@ -926,6 +934,7 @@ func _on_damage(ev: Dictionary) -> void:
 	else:
 		_set_unit_hp(v, ev.hp)
 		shake(2.0 + ev.amount)
+	Fx.flash(fx_layer, "blood_splat", v.position, 150.0 + ev.amount * 20.0, 0.5)
 	Fx.burst(fx_layer, v.position, Color(0.8, 0.1, 0.05), 10 + ev.amount * 3, 240.0, 0.6, 9.0, 400.0)
 
 
@@ -943,6 +952,8 @@ func _on_death(ev: Dictionary) -> void:
 		return
 	board_views[ev.side].erase(m)
 	Sfx.play("sigh", -10.0, 1.0, 0.15)
+	Fx.flash(fx_layer, "fire_burst", m.position, 300.0, 0.7)
+	Fx.flash(fx_layer, "smoke_puff", m.position + Vector2(0, -30), 340.0, 1.2, Color(1, 1, 1, 0.7), 0.2)
 	Fx.burst(fx_layer, m.position, UI.EMBER, 40, 180.0, 1.4, 10.0, -140.0, 120.0)
 	m.burn_away(0.85 / _speed())
 	get_tree().create_timer(0.85 / _speed()).timeout.connect(_remove_dead.bind(m, ev.side))
@@ -1620,6 +1631,8 @@ func _take_shot() -> void:
 	DirAccess.make_dir_recursive_absolute(shots_dir)
 	var img := get_viewport().get_texture().get_image()
 	img.save_png(shots_dir.path_join("shot_%02d.png" % _shot_i))
+	if over:
+		_shots_after_over += 1
 	_shot_i += 1
-	if _shot_i >= 40 or over and _shot_i > 2:
+	if _shot_i >= 40 or (over and _shots_after_over >= 2):
 		get_tree().quit()
