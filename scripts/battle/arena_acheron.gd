@@ -1,7 +1,10 @@
 class_name ArenaAcheron
 extends Node2D
 ## Living props of the Acheron arena: Charon's boat crossing the river, the bell of the Gate,
-## and the carved inscription. All drawn in code (silhouettes + additive light) so they sit on any backdrop.
+## and the carved inscription. Drawn in code (silhouettes + additive light) so they sit on any backdrop; when the
+## painted props exist (assets/arenas/props/*.png, ARENA_BRIEF.md) they replace the silhouettes, and a brazier and a
+## skull pile join in.
+const PROPS := "res://assets/arenas/props/"
 
 var view: Node2D ## the battle view (for ripples and sounds)
 var V := Vector2(1920, 1080)
@@ -26,13 +29,42 @@ var _letters: Label
 var _glow := 0.0
 var _t := 0.0
 
+var brazier: Node2D
+var _flame: CPUParticles2D
+var _flare := 0.0
+var skulls: Node2D
+var _rattle := 0.0
+
 
 func setup(p_view: Node2D) -> ArenaAcheron:
 	view = p_view
 	_build_boat()
 	_build_bell()
 	_build_tablet()
+	if ResourceLoader.exists(PROPS + "brazier.png"):
+		_build_brazier()
+	if ResourceLoader.exists(PROPS + "skulls.png"):
+		skulls = Node2D.new()
+		add_child(skulls)
+		skulls.add_child(_painted("skulls", 220.0))
 	return self
+
+
+## A painted prop sprite `width` px wide, or null when it isn't there. Hides the code silhouette it replaces.
+func _painted(name: String, width: float) -> Sprite2D:
+	if not ResourceLoader.exists(PROPS + name + ".png"):
+		return null
+	var sp := Sprite2D.new()
+	sp.texture = load(PROPS + name + ".png")
+	var k := width / sp.texture.get_size().x
+	sp.scale = Vector2(k, k)
+	return sp
+
+
+func _hide_silhouette(node: Node, keep: Array) -> void:
+	for c in node.get_children():
+		if c is CanvasItem and not keep.has(c):
+			(c as CanvasItem).visible = false
 
 
 func _add_mat() -> CanvasItemMaterial:
@@ -102,6 +134,13 @@ func _build_boat() -> void:
 	boat.add_child(core)
 	boat.scale = Vector2(0.95, 0.95)
 	boat.modulate.a = 1.0
+	var painted := _painted("boat", 300.0)
+	if painted != null:
+		_hide_silhouette(boat, [_reflect, _lantern, core])
+		painted.position = Vector2(0, -40)
+		boat.add_child(painted)
+		boat.move_child(painted, 1)
+		boat.move_child(_lantern, -1)
 
 
 # ---------------------------------------------------------------- bell
@@ -136,6 +175,15 @@ func _build_bell() -> void:
 	clapper.polygon = PackedVector2Array([Vector2(-4, 60), Vector2(4, 60), Vector2(5, 74), Vector2(-5, 74)])
 	clapper.color = Color(0.2, 0.14, 0.08)
 	_bell_body.add_child(clapper)
+	var painted := _painted("bell", 170.0)
+	if painted != null:
+		# The painting has the gallows and the bell in one piece: swing it gently from the top beam.
+		_hide_silhouette(bell, [_bell_body])
+		_hide_silhouette(_bell_body, [])
+		painted.offset = Vector2(0, painted.texture.get_size().y / 2)
+		painted.position = Vector2(0, -94)
+		_bell_body.position = Vector2.ZERO
+		_bell_body.add_child(painted)
 
 
 # ---------------------------------------------------------------- inscription
@@ -161,6 +209,38 @@ func _build_tablet() -> void:
 	_letters.position = Vector2(-115, -82)
 	_letters.add_theme_constant_override("line_spacing", -2)
 	tablet.add_child(_letters)
+	var painted := _painted("tablet", 260.0)
+	if painted != null:
+		_hide_silhouette(tablet, [_letters])
+		tablet.add_child(painted)
+		tablet.move_child(painted, 0)
+
+
+func _build_brazier() -> void:
+	brazier = Node2D.new()
+	add_child(brazier)
+	var sp := _painted("brazier", 130.0)
+	brazier.add_child(sp)
+	_flame = CPUParticles2D.new()
+	_flame.texture = UI.dot_texture()
+	_flame.material = _add_mat()
+	_flame.amount = 40
+	_flame.lifetime = 0.9
+	_flame.position = Vector2(0, -sp.texture.get_size().y * sp.scale.y * 0.3)
+	_flame.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	_flame.emission_rect_extents = Vector2(26, 4)
+	_flame.direction = Vector2.UP
+	_flame.spread = 12.0
+	_flame.gravity = Vector2(0, -90)
+	_flame.initial_velocity_min = 30.0
+	_flame.initial_velocity_max = 70.0
+	_flame.scale_amount_min = 0.25
+	_flame.scale_amount_max = 0.55
+	var g := Gradient.new()
+	g.set_color(0, Color(1.0, 0.85, 0.4, 0.9))
+	g.set_color(1, Color(0.8, 0.15, 0.02, 0.0))
+	_flame.color_ramp = g
+	brazier.add_child(_flame)
 
 
 # ---------------------------------------------------------------- layout / update
@@ -175,6 +255,12 @@ func layout(p_v: Vector2, p_river_y: float, p_ky: float) -> void:
 	var s := clampf((V.x - 1220.0) / 2.0 / 260.0, 0.55, 1.0)
 	bell.scale = Vector2(s, s)
 	tablet.scale = Vector2(s, s)
+	if brazier != null:
+		brazier.position = Vector2(V.x - 90, 860 * ky)
+		brazier.scale = Vector2(s, s)
+	if skulls != null:
+		skulls.position = Vector2(maxf(left, 140.0), 960 * ky)
+		skulls.scale = Vector2(s, s)
 	if _boat_x == 0.0:
 		_boat_x = V.x * 0.8
 
@@ -213,6 +299,13 @@ func _process(delta: float) -> void:
 		_letters.add_theme_color_override("font_color", base.lerp(Color(1.0, 0.55, 0.15), _glow))
 		_letters.add_theme_constant_override("outline_size", int(10 * _glow))
 		_letters.add_theme_color_override("font_outline_color", Color(0.9, 0.2, 0.0, _glow * 0.6))
+	if _flame != null:
+		_flare = maxf(0.0, _flare - delta * 1.5)
+		_flame.speed_scale = 1.0 + _flare * 1.5
+		_flame.scale_amount_max = 0.55 + _flare * 0.8
+	if skulls != null and _rattle > 0.0:
+		_rattle = maxf(0.0, _rattle - delta * 2.5)
+		skulls.rotation = sin(_t * 60.0) * 0.04 * _rattle
 
 
 ## Returns true when the touch hit a prop.
@@ -228,6 +321,15 @@ func touch(p: Vector2) -> bool:
 		_glow = 1.0
 		Sfx.play("sigh", -8.0, 0.8)
 		Fx.burst(view.fx_layer, tablet.position, UI.EMBER, 30, 160.0, 1.2, 9.0, -80.0)
+		return true
+	if brazier != null and brazier.to_local(p).length() < 80:
+		_flare = 1.0
+		Sfx.play("thunder", -16.0, 1.8)
+		Fx.burst(view.fx_layer, brazier.position + Vector2(0, -50), UI.EMBER, 50, 320.0, 1.0, 12.0, -120.0)
+		return true
+	if skulls != null and absf(skulls.to_local(p).x) < 110 and absf(skulls.to_local(p).y) < 80:
+		_rattle = 1.0
+		Sfx.play("bones", -6.0)
 		return true
 	var lbt := boat.to_local(p)
 	if absf(lbt.x) < 120 and lbt.y > -110 and lbt.y < 40:
