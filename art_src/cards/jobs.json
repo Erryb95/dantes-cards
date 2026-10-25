@@ -1,26 +1,5 @@
 [
  {
-  "name": "card_lost_pilgrim",
-  "prompt": "a weary medieval pilgrim in a torn hooded cloak gripping a wooden staff, lost in a dark twisted forest, lantern glow on his face, large central subject, strong rim light, clear silhouette. dark baroque oil painting, extreme chiaroscuro, candle and hellfire light, rich glazes, visible brushwork, museum quality old master painting, crimson and gold against deep black. no text, no letters, no watermark, no frame",
-  "seed": 777,
-  "w": 832,
-  "h": 1248
- },
- {
-  "name": "card_socrates",
-  "prompt": "the old bearded philosopher Socrates in a white himation, calm and stubborn, one hand raised as if asking a question, marble columns of a ruined castle behind him, large central subject, strong rim light, clear silhouette. dark baroque oil painting, extreme chiaroscuro, candle and hellfire light, rich glazes, visible brushwork, museum quality old master painting, crimson and gold against deep black. no text, no letters, no watermark, no frame",
-  "seed": 777,
-  "w": 832,
-  "h": 1248
- },
- {
-  "name": "card_virtuous_pagan",
-  "prompt": "a dignified ancient Roman soul in a toga with a laurel wreath, standing in a pale green meadow of Limbo, melancholic expression, faint mist, large central subject, strong rim light, clear silhouette. dark baroque oil painting, extreme chiaroscuro, candle and hellfire light, rich glazes, visible brushwork, museum quality old master painting, crimson and gold against deep black. no text, no letters, no watermark, no frame",
-  "seed": 777,
-  "w": 832,
-  "h": 1248
- },
- {
   "name": "card_horace",
   "prompt": "the Roman poet Horace with a sly smirk, holding a sharp stylus like a dagger and a scroll, laurel wreath, warm candlelight, large central subject, strong rim light, clear silhouette. dark baroque oil painting, extreme chiaroscuro, candle and hellfire light, rich glazes, visible brushwork, museum quality old master painting, crimson and gold against deep black. no text, no letters, no watermark, no frame",
   "seed": 777,

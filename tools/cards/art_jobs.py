@@ -51,6 +51,54 @@ def build() -> str:
     return path
 
 
+def run_jobs(path: str) -> None:
+    """Keeps up to comfy.MAX_QUEUED of our jobs queued (the rule is <= 4 per agent) and saves each as it lands."""
+    import time
+    sys.path.insert(0, os.path.join(ROOT, "tools", "comfy"))
+    import comfy
+    todo = json.load(open(path, encoding="utf-8"))
+    owner = "dantescards-art"
+    comfy.acquire(owner, "qwen")
+    inflight = {}
+    try:
+        while todo or inflight:
+            while todo and len(inflight) < comfy.MAX_QUEUED:
+                j = todo.pop(0)
+                wf = comfy.workflow_t2i(j["prompt"], j["seed"], j["w"], j["h"])
+                pid = json.loads(comfy._req("/prompt", {"prompt": wf, "client_id": comfy.CLIENT_ID}))["prompt_id"]
+                inflight[pid] = (j, time.time())
+            time.sleep(3)
+            for pid in list(inflight):
+                j, t0 = inflight[pid]
+                hist = json.loads(comfy._req("/history/" + pid)).get(pid)
+                if not hist:
+                    q = json.loads(comfy._req("/queue"))
+                    ids = {e[1] for e in q["queue_running"] + q["queue_pending"]}
+                    if pid not in ids and time.time() - t0 > 30:
+                        print("lost from queue, resubmitting", j["name"], flush=True)
+                        del inflight[pid]
+                        todo.insert(0, j)
+                    continue
+                st = hist.get("status", {})
+                if st.get("status_str") == "error":
+                    print("Error", j["name"], json.dumps(st.get("messages", []))[-300:], flush=True)
+                    del inflight[pid]
+                    continue
+                if not st.get("completed"):
+                    continue
+                for o in hist.get("outputs", {}).values():
+                    for im in o.get("images", []):
+                        data = comfy._req("/view?" + __import__("urllib.parse").parse.urlencode(
+                            {"filename": im["filename"], "subfolder": im["subfolder"], "type": im["type"]}))
+                        out = os.path.join(SRC, j["name"] + ".png")
+                        open(out, "wb").write(data)
+                        print("saved", out, "%.0fs" % (time.time() - t0), flush=True)
+                del inflight[pid]
+                comfy.touch(owner)
+    finally:
+        comfy.release(owner)
+
+
 def import_art() -> None:
     from PIL import Image
     n = 0
@@ -79,6 +127,6 @@ if __name__ == "__main__":
     if mode in ("build", "run"):
         p = build()
         if mode == "run" and json.load(open(p, encoding="utf-8")):
-            subprocess.check_call([sys.executable, os.path.join(ROOT, "tools", "comfy", "art.py"), "t2i", p])
+            run_jobs(p)
     if mode in ("run", "import"):
         import_art()

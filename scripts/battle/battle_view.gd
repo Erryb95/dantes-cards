@@ -18,6 +18,7 @@ var autoplay := false
 var shots_dir := ""
 var _shot_i := 0
 var _shot_t := 0.0
+var _shot_every := 3.0
 
 var queue: Array[Dictionary] = []
 var playing := false
@@ -85,6 +86,8 @@ func _ready() -> void:
 		elif a.begins_with("--shots="):
 			shots_dir = a.substr(8)
 			autoplay = true
+		elif a.begins_with("--shot-every="):
+			_shot_every = float(a.substr(13))
 	V = get_viewport_rect().size
 	ky = V.y / 1080.0
 	_build_scene()
@@ -396,7 +399,7 @@ func _process(delta: float) -> void:
 	_tick_fx(delta)
 	if shots_dir != "":
 		_shot_t += delta
-		if _shot_t > 3.0:
+		if _shot_t > _shot_every:
 			_shot_t = 0.0
 			_take_shot()
 	if playing:
@@ -858,7 +861,8 @@ func _on_summon(ev: Dictionary) -> void:
 		Fx.burst(fx_layer, m.position, UI.GOLD, 70, 520.0, 1.2, 14.0, 120.0)
 		_screen_flash(Color(1.0, 0.75, 0.3), 0.35)
 		Sfx.play("thunder", -8.0, 0.9)
-		await _wait(0.5)
+		_show_banner(str(CardDB.card(snap.id).get("name", "")).split(",")[0].to_upper(), UI.RARITY.legendary, 84)
+		await _wait(0.9)
 	else:
 		shake(3.0 + float(CardDB.card(snap.id).get("cost", 1)) * 1.2)
 		await _wait(0.2)
@@ -1602,5 +1606,5 @@ func _take_shot() -> void:
 	var img := get_viewport().get_texture().get_image()
 	img.save_png(shots_dir.path_join("shot_%02d.png" % _shot_i))
 	_shot_i += 1
-	if _shot_i >= 12 or over and _shot_i > 2:
+	if _shot_i >= 40 or over and _shot_i > 2:
 		get_tree().quit()

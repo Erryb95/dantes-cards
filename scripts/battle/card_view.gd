@@ -101,11 +101,13 @@ func _build_face() -> void:
 	if is_spell:
 		art.position = Vector2(20, 22)
 		art.size = Vector2(W - 40, 182)
+		art.texture = CardDB.art_framed(card_id, art.size.x / art.size.y, 0.45)
 		_art_mat.set_shader_parameter("mask_mode", 2)
 		_art_mat.set_shader_parameter("corner", 0.12)
 	else:
 		art.position = Vector2(30, 16)
 		art.size = Vector2(W - 60, 200)
+		art.texture = CardDB.art_framed(card_id, art.size.x / art.size.y)
 		_art_mat.set_shader_parameter("mask_mode", 1)
 	if art.texture == null:
 		art.texture = _placeholder()

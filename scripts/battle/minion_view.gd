@@ -64,7 +64,7 @@ func _build() -> void:
 	add_child(_glow)
 
 	var art := TextureRect.new()
-	art.texture = CardDB.art(card_id)
+	art.texture = CardDB.art_framed(card_id, W / H, 0.34)
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
