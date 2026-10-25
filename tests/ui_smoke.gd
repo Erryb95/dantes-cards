@@ -75,7 +75,12 @@ func _run() -> void:
 			if card.type != "minion" or not st.can_play(0, c.uid):
 				continue
 			var before: int = st.sides[0].board.size()
-			await _drag(c.position, Vector2(battle.V.x / 2, battle._board_y(0)))
+			# Grab the card by its visible left edge: in the fan the right half is under the next card.
+			var grab: Vector2 = c.position + Vector2(-CardView.W, -CardView.H * 0.6) * c.scale.x * 0.4
+			if battle._pick_hand(grab) != c:
+				_fail("cannot grab %s by its visible corner" % c.card_id)
+				continue
+			await _drag(grab, Vector2(battle.V.x / 2, battle._board_y(0)))
 			if battle.mode == battle.Mode.AIM_BATTLECRY:
 				var t: int = st.valid_targets(0, BattleState.target_type(card))[0]
 				var v = battle.unit_views[t]

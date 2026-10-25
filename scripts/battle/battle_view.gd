@@ -1388,6 +1388,7 @@ func _on_release(p: Vector2) -> void:
 					_move(c, slot, 0.0, 0.5, 0.12)
 					c.selected = true
 					_start_aim(slot, valid)
+					_sticky = true ## the finger is already up: the next tap picks the target
 					return
 				drag_card = null
 				mode = Mode.IDLE
