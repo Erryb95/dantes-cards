@@ -193,7 +193,14 @@ def import_v2() -> None:
                 missing += 1
                 continue
             open(src, "wb").write(data)
-        _fit(src, dst)
+        try:
+            _fit(src, dst)
+        except OSError:  # still being written on the PC when we fetched it: drop it and retry next run
+            os.remove(src)
+            if os.path.exists(dst):
+                os.remove(dst)
+            missing += 1
+            continue
         got += 1
     print("imported", got, "still missing", missing)
 
