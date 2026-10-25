@@ -82,12 +82,16 @@ func _build_face() -> void:
 	var is_spell: bool = card.get("type", "minion") == "spell"
 	var rarity: String = card.get("rarity", "common")
 	var frame_bg := Color(0.16, 0.10, 0.07) if not is_spell else Color(0.20, 0.06, 0.07)
-	var frame := UI.panel(Vector2(W, H), UI.box(frame_bg, UI.GOLD_DARK, 4, 20), Vector2.ZERO)
-	frame.use_parent_material = true
-	_face.add_child(frame)
-	var inner := UI.panel(Vector2(W - 16, H - 16), UI.box(Color(0.07, 0.045, 0.035), UI.GOLD, 2, 15), Vector2(8, 8))
-	inner.use_parent_material = true
-	_face.add_child(inner)
+	var frame_name := "card_frame_spell" if is_spell else "card_frame_minion"
+	if UiSkin.has(frame_name):
+		_face.add_child(UiSkin.rect(frame_name, Vector2(W, H)))
+	else:
+		var frame := UI.panel(Vector2(W, H), UI.box(frame_bg, UI.GOLD_DARK, 4, 20), Vector2.ZERO)
+		frame.use_parent_material = true
+		_face.add_child(frame)
+		var inner := UI.panel(Vector2(W - 16, H - 16), UI.box(Color(0.07, 0.045, 0.035), UI.GOLD, 2, 15), Vector2(8, 8))
+		inner.use_parent_material = true
+		_face.add_child(inner)
 
 	# Art: an oval for minions, a rounded panel for spells.
 	var art := TextureRect.new()
@@ -112,7 +116,9 @@ func _build_face() -> void:
 	if art.texture == null:
 		art.texture = _placeholder()
 	_face.add_child(art)
-	if not is_spell:
+	if not is_spell and UiSkin.has("oval_ring"):
+		_face.add_child(UiSkin.rect("oval_ring", art.size * Vector2(1.13, 1.1), art.position - art.size * Vector2(0.065, 0.05)))
+	elif not is_spell:
 		var ring := Shapes.make(Shapes.Kind.ELLIPSE, art.size + Vector2(6, 6), Color.TRANSPARENT, UI.GOLD, 5.0)
 		ring.position = art.position + art.size / 2
 		_face.add_child(ring)
@@ -122,10 +128,13 @@ func _build_face() -> void:
 		_face.add_child(rim)
 
 	# Rules text box (parchment).
-	var tb := UI.panel(Vector2(W - 36, 116), UI.box(Color(0.86, 0.78, 0.62), UI.GOLD_DARK, 2, 8,
-		Color(0, 0, 0, 0.4), 4), Vector2(18, 226))
-	tb.use_parent_material = true
-	_face.add_child(tb)
+	if UiSkin.has("text_parchment"):
+		_face.add_child(UiSkin.rect("text_parchment", Vector2(W - 24, 128), Vector2(12, 222)))
+	else:
+		var tb := UI.panel(Vector2(W - 36, 116), UI.box(Color(0.86, 0.78, 0.62), UI.GOLD_DARK, 2, 8,
+			Color(0, 0, 0, 0.4), 4), Vector2(18, 226))
+		tb.use_parent_material = true
+		_face.add_child(tb)
 	var txt := RichTextLabel.new()
 	txt.bbcode_enabled = true
 	txt.fit_content = false
@@ -156,10 +165,13 @@ func _build_face() -> void:
 	_face.add_child(txt)
 
 	# Name banner across the bottom of the art.
-	var banner := UI.panel(Vector2(W - 20, 40), UI.box(UI.CRIMSON.darkened(0.15), UI.GOLD, 3, 6,
-		Color(0, 0, 0, 0.5), 6), Vector2(10, 196))
-	banner.use_parent_material = true
-	_face.add_child(banner)
+	if UiSkin.has("name_ribbon"):
+		_face.add_child(UiSkin.rect("name_ribbon", Vector2(W + 24, 56), Vector2(-12, 188)))
+	else:
+		var banner := UI.panel(Vector2(W - 20, 40), UI.box(UI.CRIMSON.darkened(0.15), UI.GOLD, 3, 6,
+			Color(0, 0, 0, 0.5), 6), Vector2(10, 196))
+		banner.use_parent_material = true
+		_face.add_child(banner)
 	var nm: String = card.get("name", card_id)
 	var short := nm.split(",")[0] if nm.length() > 22 else nm
 	var name_l := UI.label(short, _fit_size(short, W - 40, 22, "title"), "title", UI.BONE, 4, Color(0.1, 0.02, 0.02))
@@ -171,26 +183,38 @@ func _build_face() -> void:
 	_face.add_child(name_l)
 
 	# Rarity gem.
-	if rarity != "token":
+	if rarity != "token" and UiSkin.has("rarity_" + rarity):
+		_face.add_child(UiSkin.rect("rarity_" + rarity, Vector2(26, 26), Vector2(W / 2 - 13, 226)))
+	elif rarity != "token":
 		var gem := Shapes.make(Shapes.Kind.DIAMOND, Vector2(20, 26), UI.RARITY.get(rarity, Color.WHITE), UI.GOLD_DARK, 2.0)
 		gem.position = Vector2(W / 2, 236)
 		_face.add_child(gem)
 
 	# Mana gem, attack and health.
-	var mana := Shapes.make(Shapes.Kind.GEM, Vector2(64, 64), Color(0.12, 0.35, 0.85), UI.GOLD, 4.0)
-	mana.position = Vector2(26, 26)
-	_face.add_child(mana)
-	_cost_label = _stat_label(str(int(card.get("cost", 0))), mana.position, 40)
+	var mana_at := Vector2(26, 26)
+	if UiSkin.has("gem_mana"):
+		_face.add_child(UiSkin.rect("gem_mana", Vector2(76, 76), mana_at - Vector2(38, 38)))
+	else:
+		var mana := Shapes.make(Shapes.Kind.GEM, Vector2(64, 64), Color(0.12, 0.35, 0.85), UI.GOLD, 4.0)
+		mana.position = mana_at
+		_face.add_child(mana)
+	_cost_label = _stat_label(str(int(card.get("cost", 0))), mana_at, 40)
 	_face.add_child(_cost_label)
 	if not is_spell:
-		var atk := Shapes.make(Shapes.Kind.SWORD, Vector2(60, 70), Color(0.85, 0.62, 0.2), Color(0.35, 0.2, 0.05), 3.0)
-		atk.position = Vector2(26, H - 28)
-		_face.add_child(atk)
-		_face.add_child(_stat_label(str(int(card.get("attack", 0))), atk.position + Vector2(0, 4), 38))
-		var hp := Shapes.make(Shapes.Kind.DROP, Vector2(58, 70), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
-		hp.position = Vector2(W - 26, H - 30)
-		_face.add_child(hp)
-		_face.add_child(_stat_label(str(int(card.get("health", 0))), hp.position + Vector2(0, 6), 38))
+		var atk_at := Vector2(26, H - 28)
+		var hp_at := Vector2(W - 26, H - 30)
+		if UiSkin.has("gem_attack") and UiSkin.has("gem_health"):
+			_face.add_child(UiSkin.rect("gem_attack", Vector2(74, 74), atk_at - Vector2(37, 37)))
+			_face.add_child(UiSkin.rect("gem_health", Vector2(74, 74), hp_at - Vector2(37, 37)))
+		else:
+			var atk := Shapes.make(Shapes.Kind.SWORD, Vector2(60, 70), Color(0.85, 0.62, 0.2), Color(0.35, 0.2, 0.05), 3.0)
+			atk.position = atk_at
+			_face.add_child(atk)
+			var hp := Shapes.make(Shapes.Kind.DROP, Vector2(58, 70), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
+			hp.position = hp_at
+			_face.add_child(hp)
+		_face.add_child(_stat_label(str(int(card.get("attack", 0))), atk_at + Vector2(0, 2), 38))
+		_face.add_child(_stat_label(str(int(card.get("health", 0))), hp_at + Vector2(0, 4), 38))
 
 
 func _stat_label(text: String, center: Vector2, size: int) -> Label:

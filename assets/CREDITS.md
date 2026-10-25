@@ -17,6 +17,9 @@ Card, hero, arena and card-back images in assets/cards/ and assets/arenas/ are A
 with **Qwen-Image 2512** (Apache-2.0) + the Lightning 4-step LoRA (Apache-2.0). Prompts: data/cards.json (`art`) and
 the ComfyUI session's notes (status/cards_style.md). House style: hand-tinted Gustave Dore-style engraving, chosen by the
 owner on 2026-10-25. Source files: art_src/dore_cards/; card -> image map: the "image" field in data/cards.json.
+The painted UI parts in assets/ui/ (card frames, oval ring, name ribbon, parchment, gems, rarity cabochons) come from the
+same ComfyUI setup (Qwen-Image 2512, alpha cut with BiRefNet, MIT); sources in art_src/ui/. Cards without a painting yet
+show the Acheron arena image as a placeholder.
 
 TODO before a store release: as in the FPS, the St Matthews Choir (SMCE) recordings that may be in `intro` carry a licence
 set on archive.org by an uploader; get written confirmation from SMCE or swap those tracks.
