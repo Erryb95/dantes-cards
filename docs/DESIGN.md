@@ -1,38 +1,51 @@
-# Dante's Inferno: The Card Game (design notes, v0.1)
+# Dante's Inferno: The Card Game (design notes, v0.2)
 
 ## Structure
 
 | Path | What |
 |---|---|
 | `data/cards.json` | every card and hero: stats, keywords, effects, rules text, flavour, art prompt |
-| `data/decks.json` | the two starter decks (20 cards each) |
+| `data/sets/*.json` | expansion sets (loaded automatically); schema and balance guide in `docs/CARD_SCHEMA.md`, check with `python tools/cards/validate.py` |
+| `data/decks.json` | the two starter decks (30 cards each) |
 | `data/arenas.json` | arenas (backdrop, music, ambience, intro text, art prompt) |
-| `scripts/core/` | `CardDB` (static data access), autoloads `Settings`, `Sfx`, `Game` (scene flow + stats) |
+| `scripts/core/` | `CardDB` (static data access), autoloads `Settings`, `Sfx`, `Game` (scene flow + stats), `Collection` (owned cards, Obols, packs, custom decks in `user://collection.cfg`) |
 | `scripts/battle/battle_state.gd` | **the rules**: pure logic, no nodes; every change goes out as an event |
 | `scripts/battle/ai.gd` | greedy AI that returns one action at a time |
 | `scripts/battle/battle_view.gd` | the board: replays events as animations, handles input |
 | `scripts/battle/{card,minion,hero}_view.gd` | the pieces; `fx.gd`, `shapes.gd`, `target_arrow.gd` for the juice |
-| `scripts/ui/` | main menu, deck select, collection, options, shared look (`ui.gd`) |
+| `scripts/ui/` | main menu, deck select, deck builder, pack opening, collection, options, shared look (`ui.gd`), painted skin loader (`ui_skin.gd`) |
 | `assets/shaders/` | `card_fx` (art mask, hit flash, burn-away dissolve, legendary foil), `river`, `fog` |
 | `tools/cards/art_jobs.py` | builds the ComfyUI jobs from the data and imports the results |
-| `tests/` | `run_tests.gd` (rules + 300-game AI soak), `ui_smoke.tscn` (drives the real board with input events) |
+| `tests/` | `run_tests.gd` (rules, 300-game starter soak, 400-game random-deck soak over the whole pool), `ui_smoke.tscn` (drives the real board with input events) |
 
 The view never changes game values. It queues `BattleState.event` dictionaries and plays them one by one;
 input is accepted only while the queue is empty. This is what keeps the animations in sync with the rules,
 and it is the seam for PvP later (events over the network).
 
-## Rules (v0.1)
+## Rules (v0.2)
 - 30 health heroes; mana 1 to 10, refilled each turn; hand limit 10 (overdraw burns); board limit 7; fatigue.
 - Mulligan: you start with 3 cards, the opponent with 4, and either can replace any of them.
-- Hero power: 2 mana, once per turn. Dante: gain 2 Armor. Charon: 1 damage to the enemy hero.
+- Hero power: 2 mana, once per turn. Dante: gain 2 Armor. Charon: 2 damage to the enemy hero.
 - Keywords: **Guard** (must be attacked first), **Swift** (attacks at once), **Ward** (blocks the first
-  damage), **Drain** (its damage heals your hero), **Venom** (destroys any minion it damages).
-- Triggers: **On Play**, **Last Breath**.
-- Effects: damage, heal, draw, buff, summon, bounce, armor, destroy. Targets: `choose_*` are picked by the
+  damage), **Drain** (its damage heals your hero), **Venom** (destroys any minion it damages), **Rebirth**
+  (returns once after dying).
+- Triggers: **On Play**, **Last Breath**, **End of Turn**, **Start of Turn**.
+- Effects: damage, heal, draw, buff, summon, bounce, armor, destroy, freeze, silence, ramp, give_card. Targets: `choose_*` are picked by the
   player; `all_*`, `own_hero`, `enemy_hero`, `random_enemy_minion` and `other_friendly_minions` resolve on their own.
 
-Balance check: `run_tests.gd` plays 300 AI-vs-AI games with alternating seats. At v0.1 it reports
-Pilgrim 46% / Ferryman 54%.
+- Decks (as in Hearthstone): exactly 30 cards, your class (Pilgrim or Ferryman) plus Neutral, at most 2 copies
+  of a card and 1 of a legendary.
+
+Balance check: `run_tests.gd` plays 300 starter-deck games with alternating seats. At v0.2 it reports
+Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman class pool needs more power.
+
+## Collection and packs (v0.2)
+- 202 cards: core 27 + Pilgrim's Journey 35 + Infernal Host 35 + Upper Hell, City of Dis, Malebolge and Cocytus
+  (35 neutral each).
+- First run: you own the two starter decks and get 3 packs. Battles pay Obols (win 100, loss 25); a pack costs 100.
+- A pack holds 5 cards: per slot legendary 1.5%, epic 5.5%, rare 21%; at least one rare; a legendary within
+  20 packs. Copies beyond the deck limit refund Obols (5 / 20 / 100 / 400).
+- Deck builder: owned cards only; Auto-fill completes a deck along a mana curve.
 
 ## Adding content
 - **Card:** add an entry to `cards.json` and use it in a deck. Run `python tools/cards/art_jobs.py run`
@@ -46,8 +59,9 @@ Pilgrim 46% / Ferryman 54%.
   tap-tap aiming works for attacks and targets.
 
 ## Next (roadmap)
-1. Run map (Slay-the-Spire style) through the circles: Limbo, Minos, the Lustful, Cerberus...; card rewards
+1. Paintings for the 175 new cards (list in `art_src/new_card_art.json`, made on the ComfyUI PC).
+2. Run map (Slay-the-Spire style) through the circles: Limbo, Minos, the Lustful, Cerberus...; card rewards
    after each win; deck building between fights.
-2. More keywords (Rebirth, Frenzy, Silence), weapons for heroes, secrets ("Judgements").
-3. Animated legendary art (Wan video loops), per-card sounds, voice lines.
-4. Proper release keystore for Android; store icons; iOS / macOS signing.
+3. More keywords (Frenzy), weapons for heroes, secrets ("Judgements").
+4. Animated legendary art (Wan video loops), per-card sounds, voice lines.
+5. Proper release keystore for Android; store icons; iOS / macOS signing.
