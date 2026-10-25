@@ -30,11 +30,11 @@ func _test_data() -> void:
 			ok(not CardDB.card(id).is_empty(), "card %s exists" % id)
 	for c in CardDB.all_cards():
 		for e in c.get("effects", []):
-			ok(e.do in ["damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy"], "%s effect %s" % [c.id, e.do])
+			ok(e.do in ["damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card"], "%s effect %s" % [c.id, e.do])
 			if e.do == "summon":
 				ok(not CardDB.card(e.card).is_empty(), "%s summons a known card" % c.id)
 		for k in c.get("keywords", []):
-			ok(k in ["guard", "swift", "ward", "drain", "venom"], "%s keyword %s" % [c.id, k])
+			ok(k in ["guard", "swift", "ward", "drain", "venom", "rebirth"], "%s keyword %s" % [c.id, k])
 	ok(CardDB.arenas().size() >= 1, "at least one arena")
 
 

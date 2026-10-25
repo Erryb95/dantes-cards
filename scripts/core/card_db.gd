@@ -18,6 +18,10 @@ static func _ensure() -> void:
 		_cards[card.id] = card
 	for h in c.get("heroes", []):
 		_heroes[h.id] = h
+	for f in DirAccess.get_files_at("res://data/sets"):
+		if f.ends_with(".json"):
+			for card in _read("res://data/sets/" + f).get("cards", []):
+				_cards[card.id] = card
 	_decks = _read("res://data/decks.json").get("decks", [])
 	_arenas = _read("res://data/arenas.json").get("arenas", [])
 

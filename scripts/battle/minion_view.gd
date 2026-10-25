@@ -178,6 +178,17 @@ func _refresh_glow() -> void:
 		_glow.set_line(Color(1.0, 0.3, 0.15) if targetable else UI.PLAYABLE)
 
 
+var frozen := false
+
+
+func set_frozen(v: bool) -> void:
+	frozen = v
+	_art_mat.set_shader_parameter("desat", 0.6 if v else 0.0)
+	modulate = Color(0.75, 0.88, 1.15) if v else Color.WHITE
+	if v:
+		flash(Color(0.6, 0.85, 1.0), 0.5)
+
+
 func set_sleeping(v: bool) -> void:
 	sleeping = v
 	_refresh()

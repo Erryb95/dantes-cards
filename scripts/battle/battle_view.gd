@@ -605,6 +605,10 @@ func _present(ev: Dictionary) -> void:
 				var col := UI.EMBER
 				if ev.kind == "buff":
 					col = UI.GOLD
+				elif ev.kind == "freeze":
+					col = Color(0.5, 0.8, 1.0)
+				elif ev.kind == "silence":
+					col = Color(0.8, 0.8, 0.9)
 				elif ev.kind == "destroy":
 					col = Color(0.6, 0.2, 1.0)
 				Sfx.play("swish_long", -6.0, 0.8)
@@ -620,6 +624,21 @@ func _present(ev: Dictionary) -> void:
 			await _wait(0.25)
 		"turn_end":
 			pass
+		"status":
+			var sm = unit_views.get(ev.uid)
+			if sm is MinionView:
+				sm.apply({"keywords": ev.keywords, "attack": ev.attack, "health": ev.health, "max_health": ev.max_health})
+				sm.set_frozen(ev.frozen)
+				if ev.silenced:
+					sm.flash(Color(0.8, 0.8, 0.9))
+			await _wait(0.12)
+		"trigger":
+			var tm = unit_views.get(ev.uid)
+			if tm != null:
+				_pop(tm, 1.15)
+				Fx.burst(fx_layer, tm.position, UI.GOLD, 16, 160.0, 0.5, 8.0, 0.0)
+				Sfx.play("tick", -8.0, 0.8)
+			await _wait(0.25)
 		"mulligan_begin":
 			_in_mulligan = true
 		"mulligan_wait":

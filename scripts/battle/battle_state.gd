@@ -26,13 +26,16 @@ class Unit:
 	var sleeping := true
 	var attacks_made := 0
 	var dead := false
+	var frozen := false
+	var silenced := false
 
 	func has(k: String) -> bool:
 		return keywords.has(k)
 
 	func snapshot() -> Dictionary:
 		return {"uid": uid, "id": id, "side": side, "is_hero": is_hero, "attack": attack, "health": health,
-			"max_health": max_health, "armor": armor, "keywords": keywords.keys(), "sleeping": sleeping}
+			"max_health": max_health, "armor": armor, "keywords": keywords.keys(), "sleeping": sleeping,
+			"frozen": frozen, "silenced": silenced}
 
 
 class SideState:
@@ -151,11 +154,20 @@ func _begin_turn() -> void:
 	_emit({"t": "wake", "side": current, "uids": s.board.map(func(u): return u.uid)})
 	draw(current, 1)
 	_cleanup()
+	_fire_turn_triggers(current, "turn_start")
 
 
 func end_turn() -> void:
 	if winner != -1:
 		return
+	_fire_turn_triggers(current, "turn_end")
+	if winner != -1:
+		return
+	# Frozen minions thaw at the end of their owner's turn.
+	for u in sides[current].board:
+		if u.frozen:
+			u.frozen = false
+			_emit_status(u)
 	_emit({"t": "turn_end", "side": current})
 	current = 1 - current
 	if turn >= TURN_LIMIT:
@@ -163,6 +175,24 @@ func end_turn() -> void:
 		_emit({"t": "game_over", "winner": 2})
 		return
 	_begin_turn()
+
+
+func _fire_turn_triggers(side: int, trigger: String) -> void:
+	for u in sides[side].board.duplicate():
+		if u.dead or u.silenced:
+			continue
+		for e in CardDB.card(u.id).get("effects", []):
+			if e.get("on", "") == trigger:
+				_emit({"t": "trigger", "uid": u.uid})
+				_resolve(e, side, u, -1, u.id)
+				_cleanup()
+				if winner != -1:
+					return
+
+
+func _emit_status(u: Unit) -> void:
+	_emit({"t": "status", "uid": u.uid, "frozen": u.frozen, "silenced": u.silenced, "keywords": u.keywords.keys(),
+		"attack": u.attack, "health": u.health, "max_health": u.max_health})
 
 
 func draw(side: int, n: int) -> void:
@@ -264,7 +294,7 @@ func can_use_power(side: int) -> bool:
 
 func can_attack(u: Unit) -> bool:
 	return u != null and not u.is_hero and not u.dead and u.side == current and winner == -1 \
-		and u.attack > 0 and not u.sleeping and u.attacks_made < 1
+		and u.attack > 0 and not u.sleeping and u.attacks_made < 1 and not u.frozen
 
 
 func attack_targets(side: int) -> Array[int]:
@@ -374,7 +404,7 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 	var origin := source.uid if source != null else sides[side].hero.uid
 	match e.do:
 		"damage":
-			if ttype.begins_with("choose_") or ttype == "random_enemy_minion":
+			if ttype.begins_with("choose_") or ttype.begins_with("random_"):
 				for t in targets:
 					_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "damage"})
 			elif not targets.is_empty():
@@ -413,6 +443,33 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 		"bounce":
 			for t in targets:
 				_bounce(t)
+		"freeze":
+			for t in targets:
+				if ttype.begins_with("choose_"):
+					_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "freeze"})
+				t.frozen = true
+				_emit_status(t)
+		"silence":
+			for t in targets:
+				if t.is_hero:
+					continue
+				if ttype.begins_with("choose_"):
+					_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "silence"})
+				t.keywords.clear()
+				t.silenced = true
+				_emit_status(t)
+		"ramp":
+			var rs := sides[side]
+			rs.max_mana = mini(MAX_MANA, rs.max_mana + int(e.get("amount", 1)))
+			_emit({"t": "mana", "side": side, "mana": rs.mana, "max": rs.max_mana})
+		"give_card":
+			var gs := sides[side]
+			for i in int(e.get("count", 1)):
+				if gs.hand.size() >= MAX_HAND:
+					break
+				var gc := {"uid": _uid(), "id": e.card}
+				gs.hand.append(gc)
+				_emit({"t": "draw", "side": side, "uid": gc.uid, "id": e.card, "deck": gs.deck.size()})
 		"destroy":
 			for t in targets:
 				_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "destroy"})
@@ -442,6 +499,22 @@ func _targets(ttype: String, side: int, source: Unit, chosen: int) -> Array[Unit
 			var alive := foe.board.filter(func(u): return not u.dead)
 			if not alive.is_empty():
 				out.append(alive[rng.randi_range(0, alive.size() - 1)])
+		"random_enemy":
+			var pool: Array = foe.board.filter(func(u): return not u.dead)
+			pool.append(foe.hero)
+			out.append(pool[rng.randi_range(0, pool.size() - 1)])
+		"random_friendly_minion":
+			var mine: Array = me.board.filter(func(u): return not u.dead and u != source)
+			if not mine.is_empty():
+				out.append(mine[rng.randi_range(0, mine.size() - 1)])
+		"all_enemies":
+			out.assign(foe.board.filter(func(u): return not u.dead))
+			out.append(foe.hero)
+		"all_friendly_minions":
+			out.assign(me.board.filter(func(u): return not u.dead))
+		"self":
+			if source != null and not source.dead:
+				out.append(source)
 	return out
 
 
@@ -512,6 +585,14 @@ func _cleanup() -> void:
 			_emit({"t": "death", "uid": u.uid, "side": u.side})
 		for d in died:
 			var u: Unit = d[0]
+			if u.has("rebirth") and not u.silenced:
+				var r := _summon(u.side, u.id, mini(int(d[1]), sides[u.side].board.size()))
+				if r != null:
+					r.keywords.erase("rebirth")
+					r.health = 1
+					_emit_status(r)
+			if u.silenced:
+				continue
 			for e in CardDB.card(u.id).get("effects", []):
 				if e.get("on", "") == "death":
 					if e.do == "summon":

@@ -127,6 +127,13 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 			"heal":
 				if card.type == "spell" and me.hand.size() >= 9:
 					return {}
+	if tt != "" and target == -1:
+		if tt.contains("friendly"):
+			target = _best_friend(st)
+		else:
+			target = _best_damage_target(st, 0, tt, card.type == "minion")
+		if target == -1 and card.type == "spell":
+			return {}
 	return {"uid": c.uid, "target": target, "score": score}
 
 

@@ -120,7 +120,8 @@ static func dot_texture() -> Texture2D:
 ## Keywords are shown in bold in rules text.
 static func rules_bbcode(text: String) -> String:
 	var t := text
-	for k in ["On Play:", "Last Breath:", "Guard", "Swift", "Ward", "Drain", "Venom"]:
+	for k in ["On Play:", "Last Breath:", "End of Turn:", "Start of Turn:", "Guard", "Swift", "Ward", "Drain",
+			"Venom", "Rebirth", "Freeze", "Silence"]:
 		t = t.replace(k, "[b]" + k + "[/b]")
 	return "[center]" + t + "[/center]"
 
@@ -131,6 +132,9 @@ const KEYWORD_HELP := {
 	"ward": ["Ward", "The first damage it would take is blocked."],
 	"drain": ["Drain", "Damage it deals also heals your hero."],
 	"venom": ["Venom", "Destroys any minion it damages."],
+	"rebirth": ["Rebirth", "The first time it dies, it returns with 1 Health."],
+	"turn_end": ["End of Turn", "Does something at the end of your turn."],
+	"turn_start": ["Start of Turn", "Does something at the start of your turn."],
 	"death": ["Last Breath", "Does something when it dies."],
 	"play": ["On Play", "Does something when you play it from your hand."],
 }
