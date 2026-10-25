@@ -93,9 +93,33 @@ static func button(text: String, width: float = 420.0, height: float = 84.0) -> 
 	b.add_theme_stylebox_override("pressed", box(Color(0.45, 0.1, 0.05, 1.0), GOLD, 4, 10, Color(1.0, 0.5, 0.1, 0.6), 22))
 	b.add_theme_stylebox_override("disabled", box(Color(0.1, 0.07, 0.06, 0.8), Color(0.3, 0.25, 0.2), 2, 10))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	if width >= 200.0 and UiSkin.has("menu_plate"):
+		# The painted bronze plate (ComfyUI UI pass): dark ink on gold.
+		b.add_theme_stylebox_override("normal", plate(Color(0.92, 0.88, 0.82)))
+		b.add_theme_stylebox_override("hover", plate(Color(1.15, 1.05, 0.9)))
+		b.add_theme_stylebox_override("pressed", plate(Color(0.75, 0.62, 0.5)))
+		b.add_theme_stylebox_override("disabled", plate(Color(0.4, 0.38, 0.36)))
+		b.add_theme_color_override("font_color", Color(0.2, 0.08, 0.03))
+		b.add_theme_color_override("font_hover_color", Color(0.3, 0.04, 0.02))
+		b.add_theme_color_override("font_pressed_color", Color(0.12, 0.04, 0.02))
+		b.add_theme_color_override("font_disabled_color", Color(0.22, 0.2, 0.18))
 	b.mouse_entered.connect(func(): Sfx.play("ui_hover", -10.0))
 	b.pressed.connect(func(): Sfx.play("ui_confirm", -6.0))
 	return b
+
+
+## The painted button plate as a nine-patch: the scrollwork ends keep their shape at any width.
+static func plate(tint: Color) -> StyleBoxTexture:
+	var s := StyleBoxTexture.new()
+	s.texture = UiSkin.tex("menu_plate")
+	s.texture_margin_left = 70
+	s.texture_margin_right = 70
+	s.texture_margin_top = 22
+	s.texture_margin_bottom = 22
+	s.content_margin_left = 40
+	s.content_margin_right = 40
+	s.modulate_color = tint
+	return s
 
 
 ## Soft round particle sprite (generated once).

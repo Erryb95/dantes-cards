@@ -49,6 +49,7 @@ var props: ArenaAcheron
 var mana_views: Array = [null, null]
 var deck_views: Array = [null, null]
 var end_btn: Node2D
+var _end_seal: Sprite2D
 var _end_label: Label
 var _end_glow: Shapes
 var _end_disc: Shapes
@@ -265,6 +266,11 @@ func _build_end_button() -> void:
 	_end_disc = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(220, 88), Color(0.38, 0.1, 0.05), UI.GOLD, 5.0)
 	_end_disc.use_parent_material = false
 	end_btn.add_child(_end_disc)
+	if UiSkin.has("end_turn_seal"):
+		_end_disc.visible = false
+		_end_seal = UiSkin.sprite("end_turn_seal", Vector2(260, 130))
+		_end_seal.use_parent_material = false
+		end_btn.add_child(_end_seal)
 	_end_label = UI.label("END TURN", 28, "title", UI.BONE, 6, Color.BLACK)
 	_end_label.size = Vector2(220, 88)
 	_end_label.position = Vector2(-110, -44)
@@ -1136,6 +1142,8 @@ func _set_end_button(side: int) -> void:
 	_end_label.text = "END TURN" if mine else "ENEMY TURN"
 	_end_label.add_theme_font_size_override("font_size", 28 if mine else 22)
 	_end_disc.set_fill(Color(0.38, 0.1, 0.05) if mine else Color(0.15, 0.12, 0.1))
+	if _end_seal != null:
+		_end_seal.modulate = Color.WHITE if mine else Color(0.45, 0.42, 0.4)
 	_end_glow.visible = false
 	var t := end_btn.create_tween()
 	t.tween_property(end_btn, "scale:y", 0.0, 0.1)

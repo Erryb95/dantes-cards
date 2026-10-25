@@ -17,7 +17,8 @@ Card, hero, arena and card-back images in assets/cards/ and assets/arenas/ are A
 with **Qwen-Image 2512** (Apache-2.0) + the Lightning 4-step LoRA (Apache-2.0). Prompts: data/cards.json (`art`) and
 the ComfyUI session's notes (status/cards_style.md). House style: hand-tinted Gustave Dore-style engraving, chosen by the
 owner on 2026-10-25. Source files: art_src/dore_cards/; card -> image map: the "image" field in data/cards.json.
-The painted UI parts in assets/ui/ (card frames, oval ring, name ribbon, parchment, gems, rarity cabochons) come from the
+The painted UI parts in assets/ui/ (card borders, ribbon, gems, rarity cabochons, button plate, end-turn seal, power disc,
+icons) and the VFX sprites in assets/vfx/ come from the
 same ComfyUI setup (Qwen-Image 2512, alpha cut with BiRefNet, MIT); sources in art_src/ui/. Cards without a painting yet
 show the Acheron arena image as a placeholder.
 

@@ -73,7 +73,7 @@ func _build() -> void:
 	var ring := Shapes.make(Shapes.Kind.ELLIPSE, Vector2(W + 4, H + 4), Color.TRANSPARENT, UI.GOLD, 6.0)
 	add_child(ring)
 
-	var hp := Shapes.make(Shapes.Kind.DROP, Vector2(62, 76), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
+	var hp: Node2D = UiSkin.sprite("gem_health", Vector2(78, 78)) if UiSkin.has("gem_health") else 		Shapes.make(Shapes.Kind.DROP, Vector2(62, 76), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
 	hp.position = Vector2(W / 2 - 4, H / 2 - 30)
 	add_child(hp)
 	_hp_l = UI.label(str(health), 38, "title", Color.WHITE, 8, Color(0.05, 0.02, 0.02))
@@ -88,8 +88,11 @@ func _build() -> void:
 	_armor.position = Vector2(W / 2 - 4, H / 2 - 100)
 	_armor.use_parent_material = true
 	add_child(_armor)
-	var sh := Shapes.make(Shapes.Kind.SHIELD, Vector2(56, 62), Color(0.55, 0.55, 0.6), Color(0.2, 0.2, 0.25), 3.0)
-	_armor.add_child(sh)
+	if UiSkin.has("gem_armor"):
+		_armor.add_child(UiSkin.sprite("gem_armor", Vector2(70, 70)))
+	else:
+		var sh := Shapes.make(Shapes.Kind.SHIELD, Vector2(56, 62), Color(0.55, 0.55, 0.6), Color(0.2, 0.2, 0.25), 3.0)
+		_armor.add_child(sh)
 	_armor_l = UI.label("0", 32, "title", Color.WHITE, 7, Color.BLACK)
 	_armor_l.size = Vector2(70, 50)
 	_armor_l.position = -_armor_l.size / 2
@@ -110,12 +113,21 @@ func _build_power(def: Dictionary) -> void:
 	power.add_child(_power_glow)
 	_power_face = Node2D.new()
 	power.add_child(_power_face)
-	var disc := Shapes.make(Shapes.Kind.ELLIPSE, Vector2(98, 98), Color(0.3, 0.07, 0.05), UI.GOLD, 5.0)
-	_power_face.add_child(disc)
-	var icon_kind := Shapes.Kind.SHIELD if hero_id == "dante" else Shapes.Kind.DIAMOND
-	var icon := Shapes.make(icon_kind, Vector2(44, 50), UI.GOLD.darkened(0.1), Color(0.25, 0.12, 0.03), 3.0)
-	_power_face.add_child(icon)
-	var cost := Shapes.make(Shapes.Kind.GEM, Vector2(38, 38), Color(0.12, 0.35, 0.85), UI.GOLD, 3.0)
+	var icon_name := "icon_shield" if hero_id == "dante" else "icon_obol"
+	if UiSkin.has("power_disc") and UiSkin.has(icon_name):
+		_power_face.add_child(UiSkin.sprite("power_disc", Vector2(106, 106)))
+		_power_face.add_child(UiSkin.sprite(icon_name, Vector2(60, 60)))
+	else:
+		var disc := Shapes.make(Shapes.Kind.ELLIPSE, Vector2(98, 98), Color(0.3, 0.07, 0.05), UI.GOLD, 5.0)
+		_power_face.add_child(disc)
+		var icon_kind := Shapes.Kind.SHIELD if hero_id == "dante" else Shapes.Kind.DIAMOND
+		var icon := Shapes.make(icon_kind, Vector2(44, 50), UI.GOLD.darkened(0.1), Color(0.25, 0.12, 0.03), 3.0)
+		_power_face.add_child(icon)
+	var cost: Node2D
+	if UiSkin.has("gem_mana"):
+		cost = UiSkin.sprite("gem_mana", Vector2(46, 46))
+	else:
+		cost = Shapes.make(Shapes.Kind.GEM, Vector2(38, 38), Color(0.12, 0.35, 0.85), UI.GOLD, 3.0)
 	cost.position = Vector2(0, -50)
 	_power_face.add_child(cost)
 	var cl := UI.label(str(int(def.get("power", {}).get("cost", 2))), 24, "title", Color.WHITE, 6, Color.BLACK)

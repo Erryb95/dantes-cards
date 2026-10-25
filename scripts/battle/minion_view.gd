@@ -98,11 +98,12 @@ func _build() -> void:
 	_icons.use_parent_material = true
 	add_child(_icons)
 
-	var atk := Shapes.make(Shapes.Kind.SWORD, Vector2(50, 58), Color(0.85, 0.62, 0.2), Color(0.35, 0.2, 0.05), 3.0)
+	var painted := UiSkin.has("gem_attack") and UiSkin.has("gem_health")
+	var atk: Node2D = UiSkin.sprite("gem_attack", Vector2(64, 64)) if painted else 		Shapes.make(Shapes.Kind.SWORD, Vector2(50, 58), Color(0.85, 0.62, 0.2), Color(0.35, 0.2, 0.05), 3.0)
 	atk.position = Vector2(-W / 2 + 12, H / 2 - 22)
 	add_child(atk)
 	_atk_l = _stat(atk.position + Vector2(0, 3))
-	var hp := Shapes.make(Shapes.Kind.DROP, Vector2(48, 58), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
+	var hp: Node2D = UiSkin.sprite("gem_health", Vector2(62, 62)) if painted else 		Shapes.make(Shapes.Kind.DROP, Vector2(48, 58), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
 	hp.position = Vector2(W / 2 - 12, H / 2 - 24)
 	add_child(hp)
 	_hp_l = _stat(hp.position + Vector2(0, 5))
