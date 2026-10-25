@@ -1,0 +1,15 @@
+{
+  "_doc": "Starter decks: 20 cards each. hero is a heroes[].id from cards.json.",
+  "decks": [
+    {"id": "pilgrim", "name": "The Pilgrim's Way", "hero": "dante",
+     "text": "Dante and the great souls of Limbo. Sturdy guards, card draw and a strong late game.",
+     "cards": {"lost_pilgrim": 2, "socrates": 1, "virtuous_pagan": 1, "horace": 2, "virgils_counsel": 2, "ovid": 2,
+               "lucan": 1, "light_of_reason": 2, "seven_walls": 1, "hector": 2, "aeneas": 1, "saladin": 1,
+               "homer": 1, "aristotle": 1}},
+    {"id": "ferry", "name": "The Ferryman's Host", "hero": "charon",
+     "text": "Charon and the cowards of the Ante-Inferno. A swarm of cheap souls, venom and board clears.",
+     "cards": {"banner_chaser": 2, "worm_fed_shade": 2, "eager_soul": 2, "oar_strike": 2, "great_refusal": 1,
+               "wasps_and_hornets": 1, "wailing_damned": 2, "mud_drinker": 2, "gatekeeper_demon": 2,
+               "coal_eyed_glare": 1, "shoreline_throng": 1, "earthquake": 1, "minos": 1}}
+  ]
+}

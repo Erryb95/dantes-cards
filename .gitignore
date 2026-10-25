@@ -1,0 +1,6 @@
+.godot/
+build/
+art_src/cards/*.png
+art_src/cards/run.log
+*.tmp
+__pycache__/
