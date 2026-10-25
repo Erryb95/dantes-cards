@@ -57,12 +57,19 @@ def main() -> None:
         else:
             im.save(out, quality=90)
         got.append(name)
+    normal_src = os.path.join(ROOT, "art_src", "arena", "blockout", "board_normal_linear.png")
+    normal_dst = os.path.join(ROOT, "assets", "arenas", "acheron_normal.png")
+    if "arena_acheron_board" in got and os.path.exists(normal_src):
+        # The painting follows the blockout's depth, so the blockout's normals light it correctly.
+        board = Image.open(os.path.join(ROOT, "assets", "arenas", "acheron_board.jpg"))
+        Image.open(normal_src).convert("RGB").resize(board.size, Image.LANCZOS).save(normal_dst)
     if got:
         p = os.path.join(ROOT, "data", "arenas.json")
         d = json.load(open(p, encoding="utf-8"))
         for a in d["arenas"]:
             if a["id"] == "acheron":
-                for key, fn in (("board", "acheron_board.jpg"), ("frame", "acheron_frame.png"), ("mist", "acheron_mist.png")):
+                for key, fn in (("board", "acheron_board.jpg"), ("frame", "acheron_frame.png"), ("mist", "acheron_mist.png"),
+                        ("normal", "acheron_normal.png")):
                     if os.path.exists(os.path.join(ROOT, "assets", "arenas", fn)):
                         a[key] = fn
         json.dump(d, open(p, "w", encoding="utf-8", newline="\n"), indent=2, ensure_ascii=False)
