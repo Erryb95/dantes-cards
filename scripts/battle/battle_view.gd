@@ -50,6 +50,7 @@ var mana_views: Array = [null, null]
 var deck_views: Array = [null, null]
 var end_btn: Node2D
 var _end_seal: Sprite2D
+var _painted_board := false
 var _end_label: Label
 var _end_glow: Shapes
 var _end_disc: Shapes
@@ -163,6 +164,12 @@ func _build_scene() -> void:
 		g.gradient = gr
 		back.texture = g
 	back.modulate = Color(0.78, 0.74, 0.72)
+	# A painted board (ARENA_BRIEF.md) replaces the landscape: same coordinates as the layout, 2560x1440.
+	var board_path := "res://assets/arenas/" + str(arena.get("board", ""))
+	_painted_board = arena.has("board") and ResourceLoader.exists(board_path)
+	if _painted_board:
+		back.texture = load(board_path)
+		back.modulate = Color.WHITE
 	bg_layer.add_child(back)
 
 	# Two shore beds where the minions stand, the river between them.
@@ -179,6 +186,22 @@ func _build_scene() -> void:
 	_river_mat.shader = preload("res://assets/shaders/river.gdshader")
 	river.material = _river_mat
 	bg_layer.add_child(river)
+
+	if _painted_board:
+		river.modulate.a = 0.45
+		for i in 2:
+			bg_layer.get_node("Bed%d" % i).visible = false
+		for layer in ["mist", "frame"]:
+			var lp := "res://assets/arenas/" + str(arena.get(layer, ""))
+			if arena.has(layer) and ResourceLoader.exists(lp):
+				var s := Sprite2D.new()
+				s.name = "Board_" + layer
+				s.texture = load(lp)
+				if layer == "mist":
+					s.material = CanvasItemMaterial.new()
+					(s.material as CanvasItemMaterial).blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+					s.modulate = Color(1, 1, 1, 0.35)
+				bg_layer.add_child(s)
 
 	if Game.arena_id == "acheron":
 		props = ArenaAcheron.new().setup(self)
@@ -342,8 +365,17 @@ func _layout_static() -> void:
 	var back: Sprite2D = bg_layer.get_node("Backdrop")
 	var ts := back.texture.get_size()
 	var s := maxf(V.x / ts.x, V.y / ts.y) * 1.04
+	if _painted_board:
+		# Fit the height so the painted sockets sit on the layout; wider screens show the board's own margin.
+		s = maxf(V.y / ts.y, V.x / ts.x)
 	back.scale = Vector2(s, s)
 	back.position = V / 2
+	for layer in ["frame", "mist"]:
+		var n := bg_layer.get_node_or_null("Board_" + layer) as Sprite2D
+		if n != null:
+			var ls := s * ts.x / n.texture.get_size().x
+			n.scale = Vector2(ls, ls)
+			n.position = V / 2 if layer == "frame" else Vector2(V.x / 2, _river_y())
 	var bed_w := minf(V.x - 520.0, 1220.0)
 	for i in 2:
 		var bed: Panel = bg_layer.get_node("Bed%d" % i)
@@ -413,6 +445,12 @@ func _intro(arena: Dictionary) -> void:
 
 func _process(delta: float) -> void:
 	_tick_fx(delta)
+	if _painted_board:
+		var mist := bg_layer.get_node_or_null("Board_mist") as Sprite2D
+		if mist != null:
+			var t := Time.get_ticks_msec() / 1000.0
+			mist.position.x = V.x / 2 + sin(t * 0.07) * 120.0
+			mist.modulate.a = 0.3 + 0.08 * sin(t * 0.31)
 	if shots_dir != "":
 		_shot_t += delta
 		if _shot_t > _shot_every:

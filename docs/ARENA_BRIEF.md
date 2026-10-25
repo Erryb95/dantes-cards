@@ -28,14 +28,14 @@ in-game coordinates; the 1920x1080 layout is scaled x1.333.
   - roots and bones in the lower corners.
 - **Sockets (painted into the board, empty inside):**
   - two round stone **hero plinths** (radius about 130), at the top centre (960,150) and the bottom centre (960,808);
-  - a smaller round **power socket** beside each, at (1052,164) and (1052,822);
+  - a smaller round **power socket** beside each, at (1140,164) and (1140,822);
   - an oval **end-turn recess** of about 250x130 at (1745,472), sitting on the river's right edge like a stone
     landing;
   - two **deck niches** carved in the right cliff, at (1800,312) and (1800,632);
   - two **mana trays** of about 520x90, at the top right and the bottom right.
 - **Interactive toy spots** (props that react to taps, painted separately, see layer D):
-  - left cliff top (60-260, 150-360): the bell on its gallows;
-  - left middle (40-250, 500-650): the gate inscription tablet;
+  - left cliff top (90-240, 210-370): the bell on its gallows;
+  - left middle (50-290, 600-765): the gate inscription tablet;
   - right bottom corner: a brazier;
   - left bottom corner: a pile of skulls.
 
