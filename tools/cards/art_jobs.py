@@ -161,7 +161,8 @@ def import_dore() -> None:
 def _fit(src: str, dst: str, size=(512, 704), focus=0.45) -> None:
     from PIL import Image
     tw, th = size
-    im = Image.open(src).convert("RGB")
+    with Image.open(src) as f:  # closed even when a truncated file raises, so it can be deleted
+        im = f.convert("RGB")
     scale = max(tw / im.width, th / im.height)
     im = im.resize((round(im.width * scale), round(im.height * scale)), Image.LANCZOS)
     l = (im.width - tw) // 2
