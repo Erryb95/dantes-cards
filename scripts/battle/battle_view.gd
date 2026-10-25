@@ -88,6 +88,8 @@ func _ready() -> void:
 		elif a.begins_with("--shots="):
 			shots_dir = a.substr(8)
 			autoplay = true
+		elif a == "--fast":
+			Settings.fast_animations = true
 		elif a.begins_with("--shot-every="):
 			_shot_every = float(a.substr(13))
 	V = get_viewport_rect().size
