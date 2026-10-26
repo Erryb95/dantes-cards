@@ -277,6 +277,7 @@ func _build_scene() -> void:
 	_build_end_button()
 	for i in 2:
 		mana_views[i] = _build_mana(i)
+		_set_mana(i, 0, 0)
 		deck_views[i] = _build_deck(i)
 
 	banner = UI.label("", 96, "title", UI.BONE, 14, Color(0.15, 0.02, 0.0))
@@ -322,6 +323,9 @@ func _build_end_button() -> void:
 	_end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_end_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	end_btn.add_child(_end_label)
+	# Blank and dim until the first turn starts (the mulligan is not a turn).
+	_end_label.text = ""
+	end_btn.modulate = Color(0.55, 0.52, 0.5)
 
 
 func _build_mana(side: int) -> Node2D:
@@ -1018,8 +1022,7 @@ func _on_summon(ev: Dictionary) -> void:
 		Fx.burst(fx_layer, m.position, UI.GOLD, 70, 520.0, 1.2, 14.0, 120.0)
 		_screen_flash(Color(1.0, 0.75, 0.3), 0.35)
 		Sfx.play("thunder", -8.0, 0.9)
-		_show_banner(str(CardDB.card(snap.id).get("name", "")).split(",")[0].to_upper(), UI.RARITY.legendary, 84)
-		await _wait(0.9)
+		await _legendary_cutin(snap.id)
 	else:
 		shake(3.0 + float(CardDB.card(snap.id).get("cost", 1)) * 1.2)
 		await _wait(0.2)
@@ -1042,6 +1045,8 @@ func _on_attack(ev: Dictionary) -> void:
 	Sfx.play("thud", -2.0, 0.9)
 	Sfx.play("blade", -6.0)
 	shake(9.0 if b is HeroView else 6.0)
+	if int(a.attack if a is MinionView else 0) >= 5 or b is HeroView:
+		_hit_stop(0.07 if b is HeroView else 0.09)
 	Fx.flash(fx_layer, "claw_slash", b.position, 260.0, 0.35, Color.WHITE, 0.0)
 	Fx.slash(fx_layer, b.position, dir, 320.0, Color(1.0, 0.85, 0.6))
 	Fx.sparks(fx_layer, b.position - dir * 40.0, Color(1.0, 0.7, 0.3), 22)
@@ -1051,6 +1056,23 @@ func _on_attack(ev: Dictionary) -> void:
 	back.tween_property(a, "position", a.home, 0.28 / _speed()).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	back.tween_property(a, "scale", Vector2.ONE, 0.28 / _speed())
 	back.chain().tween_callback(_land.bind(a))
+
+
+## A freeze-frame on heavy hits: the world stops for a few frames, which sells the weight of the blow.
+var _stops := 0
+func _hit_stop(seconds: float) -> void:
+	if _speed() > 1.0:
+		return
+	_stops += 1
+	Engine.time_scale = 0.03
+	await get_tree().create_timer(seconds, true, false, true).timeout
+	_stops -= 1
+	if _stops == 0:
+		Engine.time_scale = 1.0
+
+
+func _exit_tree() -> void:
+	Engine.time_scale = 1.0 # never leave a hit-stop behind when the scene changes
 
 
 func _land(a: Node2D) -> void:
@@ -1235,6 +1257,67 @@ func _show_result(winner: int) -> void:
 		Sfx.play("bell_funeral", -6.0, 1.0, 0.0)
 
 
+## Legendary entrance: letterbox bars close in, the card swings in big beside its name, then everything sweeps away.
+func _legendary_cutin(id: String) -> void:
+	var card := CardDB.card(id)
+	var root := Control.new()
+	root.size = V
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(root)
+	var bar_h := V.y * 0.16
+	var bars: Array[ColorRect] = []
+	for top in [true, false]:
+		var b := ColorRect.new()
+		b.color = Color(0.02, 0.01, 0.01, 0.92)
+		b.size = Vector2(V.x, bar_h)
+		b.position = Vector2(0, -bar_h if top else V.y)
+		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.add_child(b)
+		bars.append(b)
+	var band := ColorRect.new()
+	band.color = Color(0.05, 0.02, 0.01, 0.0)
+	band.size = Vector2(V.x, V.y - bar_h * 2)
+	band.position = Vector2(0, bar_h)
+	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(band)
+	var parts := str(card.get("name", "")).split(",")
+	var name_l := UI.label(parts[0].strip_edges().to_upper(), 92, "title", UI.RARITY.legendary, 14, Color(0.12, 0.03, 0.0))
+	name_l.size = Vector2(V.x * 0.55, 120)
+	name_l.position = Vector2(V.x * 0.4, V.y / 2 - 90)
+	name_l.modulate.a = 0.0
+	root.add_child(name_l)
+	var epithet := UI.label(parts[1].strip_edges() if parts.size() > 1 else "Legendary", 40, "italic", UI.BONE, 6, Color.BLACK)
+	epithet.size = Vector2(V.x * 0.55, 60)
+	epithet.position = Vector2(V.x * 0.4 + 6, V.y / 2 + 30)
+	epithet.modulate.a = 0.0
+	root.add_child(epithet)
+	var cv := CardView.new().setup(id, -1, true)
+	cv.sway = true
+	cv.auto_tilt = false
+	cv.position = Vector2(-300, V.y / 2)
+	cv.rotation = -0.5
+	cv.scale = Vector2.ONE * 1.25 * ky
+	cv.z_index = 10
+	root.add_child(cv)
+	var sp := _speed()
+	var t := root.create_tween().set_parallel(true)
+	t.tween_property(bars[0], "position:y", 0.0, 0.25 / sp).set_ease(Tween.EASE_OUT)
+	t.tween_property(bars[1], "position:y", V.y - bar_h, 0.25 / sp).set_ease(Tween.EASE_OUT)
+	t.tween_property(band, "color:a", 0.75, 0.3 / sp)
+	t.tween_property(cv, "position", Vector2(V.x * 0.25, V.y / 2), 0.45 / sp).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(cv, "rotation", -0.06, 0.45 / sp).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(name_l, "modulate:a", 1.0, 0.3 / sp).set_delay(0.2 / sp)
+	t.tween_property(name_l, "position:x", V.x * 0.42, 1.4 / sp).set_delay(0.2 / sp)
+	t.tween_property(epithet, "modulate:a", 1.0, 0.3 / sp).set_delay(0.35 / sp)
+	Fx.burst(fx_layer, Vector2(V.x * 0.25, V.y / 2), UI.GOLD, 50, 600.0, 1.0, 12.0, 100.0)
+	await get_tree().create_timer(1.3 / sp).timeout
+	var out := root.create_tween().set_parallel(true)
+	out.tween_property(cv, "position:x", V.x + 300, 0.3 / sp).set_ease(Tween.EASE_IN)
+	out.tween_property(root, "modulate:a", 0.0, 0.3 / sp)
+	await out.finished
+	root.queue_free()
+
+
 func _show_banner(text: String, color: Color, size: int = 96) -> void:
 	banner.text = text
 	banner.add_theme_color_override("font_color", color)
@@ -1262,6 +1345,7 @@ func _pop(n: Node2D, s: float) -> void:
 
 func _set_end_button(side: int) -> void:
 	var mine := side == 0 and not autoplay
+	end_btn.modulate = Color.WHITE
 	_end_label.text = "END TURN" if mine else "ENEMY TURN"
 	_end_label.add_theme_font_size_override("font_size", 28 if mine else 22)
 	_end_disc.set_fill(Color(0.38, 0.1, 0.05) if mine else Color(0.15, 0.12, 0.1))

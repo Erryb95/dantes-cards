@@ -159,9 +159,20 @@ func flip_power(used: bool) -> void:
 
 
 func set_health(hp: int, p_armor: int = -1) -> void:
+	var old := health
 	health = hp
-	_hp_l.text = str(hp)
 	_hp_l.add_theme_color_override("font_color", Color.WHITE if hp >= 30 else Color(1.0, 0.45, 0.4))
+	# The number rolls to its new value and the gem thumps, instead of jumping.
+	if old != hp and is_inside_tree():
+		var t := _hp_l.create_tween()
+		t.tween_method(func(v: float): _hp_l.text = str(roundi(v)), float(old), float(hp),
+			clampf(absf(hp - old) * 0.06, 0.15, 0.6))
+		_hp_l.pivot_offset = _hp_l.size / 2
+		var p := _hp_l.create_tween()
+		p.tween_property(_hp_l, "scale", Vector2(1.45, 1.45), 0.08)
+		p.tween_property(_hp_l, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK)
+	else:
+		_hp_l.text = str(hp)
 	if p_armor >= 0:
 		set_armor(p_armor)
 
