@@ -81,12 +81,12 @@ func _build() -> void:
 		plate.visible = false
 	add_child(ring)
 
-	var hp: Node2D = UiSkin.sprite("gem_health", Vector2(78, 78)) if UiSkin.has("gem_health") else 		Shapes.make(Shapes.Kind.DROP, Vector2(62, 76), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
+	var hp: Node2D = UiSkin.sprite("gem_health", Vector2(84, 84)) if UiSkin.has("gem_health") else 		Shapes.make(Shapes.Kind.DROP, Vector2(62, 76), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
 	hp.position = Vector2(W / 2 - 4, H / 2 - 30)
 	add_child(hp)
-	_hp_l = UI.label(str(health), 38, "title", Color.WHITE, 8, Color(0.05, 0.02, 0.02))
+	_hp_l = UI.raised(UI.label(str(health), 32, "title", UI.NUMBER, 8, Color(0.05, 0.02, 0.02)))
 	_hp_l.size = Vector2(80, 56)
-	_hp_l.position = hp.position + Vector2(0, 6) - _hp_l.size / 2
+	_hp_l.position = hp.position + UI.gem_number_offset("gem_health", 84, 32) - _hp_l.size / 2
 	_hp_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hp_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hp_l.use_parent_material = true
@@ -101,9 +101,9 @@ func _build() -> void:
 	else:
 		var sh := Shapes.make(Shapes.Kind.SHIELD, Vector2(56, 62), Color(0.55, 0.55, 0.6), Color(0.2, 0.2, 0.25), 3.0)
 		_armor.add_child(sh)
-	_armor_l = UI.label("0", 32, "title", Color.WHITE, 7, Color.BLACK)
+	_armor_l = UI.raised(UI.label("0", 32, "title", UI.NUMBER, 7, Color.BLACK))
 	_armor_l.size = Vector2(70, 50)
-	_armor_l.position = -_armor_l.size / 2
+	_armor_l.position = UI.gem_number_offset("gem_armor", 70, 32) - _armor_l.size / 2
 	_armor_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_armor_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_armor_l.use_parent_material = true
@@ -138,9 +138,9 @@ func _build_power(def: Dictionary) -> void:
 		cost = Shapes.make(Shapes.Kind.GEM, Vector2(38, 38), Color(0.12, 0.35, 0.85), UI.GOLD, 3.0)
 	cost.position = Vector2(0, -50)
 	_power_face.add_child(cost)
-	var cl := UI.label(str(int(def.get("power", {}).get("cost", 2))), 24, "title", Color.WHITE, 6, Color.BLACK)
+	var cl := UI.raised(UI.label(str(int(def.get("power", {}).get("cost", 2))), 24, "title", UI.NUMBER, 6, Color.BLACK))
 	cl.size = Vector2(40, 34)
-	cl.position = cost.position - cl.size / 2
+	cl.position = cost.position + UI.gem_number_offset("gem_mana", 46, 24) - cl.size / 2
 	cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_power_face.add_child(cl)
@@ -169,7 +169,7 @@ func flip_power(used: bool) -> void:
 func set_health(hp: int, p_armor: int = -1) -> void:
 	var old := health
 	health = hp
-	_hp_l.add_theme_color_override("font_color", Color.WHITE if hp >= 30 else Color(1.0, 0.45, 0.4))
+	_hp_l.add_theme_color_override("font_color", UI.NUMBER if hp >= 30 else Color(1.0, 0.45, 0.4))
 	# The number rolls to its new value and the gem thumps, instead of jumping.
 	if old != hp and is_inside_tree():
 		var t := _hp_l.create_tween()

@@ -58,9 +58,16 @@ func setup(p_view: Node2D, p_arena: Dictionary = {}) -> ArenaProps:
 	view = p_view
 	arena = p_arena
 	_build_divider()
-	for p in arena.get("props", []):
-		_build_toy(p)
+	if corner_props(arena):
+		for p in arena.get("props", []):
+			_build_toy(p)
 	return self
+
+
+## The painted toys in the corners (lantern, column, laurel...) show only when the arena opts in with
+## "corner_props": true. The owner prefers the bare painted board plus the divider's animations (2026-10-26).
+static func corner_props(p_arena: Dictionary) -> bool:
+	return bool(p_arena.get("corner_props", false))
 
 
 func divider() -> Dictionary:

@@ -229,7 +229,7 @@ func _build_face() -> void:
 		var mana := Shapes.make(Shapes.Kind.GEM, Vector2(64, 64), Color(0.12, 0.35, 0.85), UI.GOLD, 4.0)
 		mana.position = mana_at
 		_face.add_child(mana)
-	_cost_label = _stat_label(str(int(card.get("cost", 0))), mana_at, 40)
+	_cost_label = _stat_label(str(int(card.get("cost", 0))), mana_at + UI.gem_number_offset("gem_mana", 76, 36), 36)
 	_face.add_child(_cost_label)
 	if not is_spell:
 		var atk_at := Vector2(26, H - 28)
@@ -244,8 +244,8 @@ func _build_face() -> void:
 			var hp := Shapes.make(Shapes.Kind.DROP, Vector2(58, 70), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
 			hp.position = hp_at
 			_face.add_child(hp)
-		_face.add_child(_stat_label(str(int(card.get("attack", 0))), atk_at + Vector2(0, 2), 38))
-		_face.add_child(_stat_label(str(int(card.get("health", 0))), hp_at + Vector2(0, 4), 38))
+		_face.add_child(_stat_label(str(int(card.get("attack", 0))), atk_at + UI.gem_number_offset("gem_attack", 74, 34), 34))
+		_face.add_child(_stat_label(str(int(card.get("health", 0))), hp_at + UI.gem_number_offset("gem_health", 74, 34), 34))
 
 
 ## Full-art layout (Enrico 2026-10-25): the painting fills the card inside a thin painted border; name ribbon,
@@ -339,19 +339,19 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	# Gems.
 	var mana_at := Vector2(28, 28)
 	_face.add_child(UiSkin.rect("gem_mana", Vector2(74, 74), mana_at - Vector2(37, 37)))
-	_cost_label = _stat_label(str(int(card.get("cost", 0))), mana_at, 40)
+	_cost_label = _stat_label(str(int(card.get("cost", 0))), mana_at + UI.gem_number_offset("gem_mana", 76, 36), 36)
 	_face.add_child(_cost_label)
 	if not is_spell:
 		var atk_at := Vector2(28, H - 28)
 		var hp_at := Vector2(W - 28, H - 30)
 		_face.add_child(UiSkin.rect("gem_attack", Vector2(72, 72), atk_at - Vector2(36, 36)))
 		_face.add_child(UiSkin.rect("gem_health", Vector2(72, 72), hp_at - Vector2(36, 36)))
-		_face.add_child(_stat_label(str(int(card.get("attack", 0))), atk_at + Vector2(0, 2), 38))
-		_face.add_child(_stat_label(str(int(card.get("health", 0))), hp_at + Vector2(0, 4), 38))
+		_face.add_child(_stat_label(str(int(card.get("attack", 0))), atk_at + UI.gem_number_offset("gem_attack", 74, 34), 34))
+		_face.add_child(_stat_label(str(int(card.get("health", 0))), hp_at + UI.gem_number_offset("gem_health", 74, 34), 34))
 
 
 func _stat_label(text: String, center: Vector2, size: int) -> Label:
-	var l := UI.label(text, size, "title", Color.WHITE, 8, Color(0.05, 0.02, 0.02))
+	var l := UI.raised(UI.label(text, size, "title", UI.NUMBER, 8, Color(0.05, 0.02, 0.02)))
 	l.size = Vector2(80, 60)
 	l.position = center - l.size / 2
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

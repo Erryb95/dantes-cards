@@ -26,6 +26,7 @@
       "art": "game board seen from above: grey-green meadow of Limbo, the seven walls of the Noble Castle at the top edge, a thin clear stream across the middle, carved stone frame and sockets as in the Acheron layout",
       "scene": "res://scenes/arenas/standard.tscn",
       "board": "limbo_board.jpg",
+      "normal": "limbo_normal.png",
       "mist": "limbo_mist.png",
       "divider": {"kind": "stream", "height": 64, "alpha": 0.55, "deep": [0.04, 0.07, 0.06, 0.45], "glint": [0.75, 0.95, 0.85]},
       "ambient": "motes",
@@ -66,7 +67,6 @@
     },
     {
       "id": "dis",
-      "draft": true,
       "name": "The City of Dis",
       "circle": "Sixth Circle: Heresy",
       "intro": "Behind red-hot iron walls, the heretics lie in open tombs of fire. The Furies are watching.",
@@ -75,6 +75,7 @@
       "art": "game board seen from above: inside the City of Dis, open burning tombs along the left and right edges, red-hot iron walls at the top, a glowing crack full of embers across the middle, carved stone frame and sockets as in the Acheron layout",
       "scene": "res://scenes/arenas/standard.tscn",
       "board": "dis_board.jpg",
+      "normal": "dis_normal.png",
       "mist": "dis_mist.png",
       "divider": {"kind": "embers", "height": 150, "span": [150, 1650]},
       "ambient": "embers_hot",

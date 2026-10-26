@@ -32,6 +32,8 @@ func setup(p_view: Node2D, p_arena: Dictionary = {}) -> ArenaProps:
 	view = p_view
 	arena = p_arena
 	_build_boat()
+	if not corner_props(arena):
+		return self # the boat on the river only
 	_build_bell()
 	if ResourceLoader.exists(PROPS + "brazier.png"):
 		_build_brazier()
@@ -213,8 +215,9 @@ func layout(p_v: Vector2, p_river_y: float, p_ky: float, anchors: Dictionary = {
 	ky = p_ky
 	var left := minf(170.0, (V.x - 1220.0) / 4.0 + 40.0)
 	var s := clampf((V.x - 1220.0) / 2.0 / 260.0, 0.55, 1.0) if anchors.is_empty() else ky
-	bell.position = anchors.get("PropBell", Vector2(maxf(left, 90.0), 300 * ky))
-	bell.scale = Vector2(s, s)
+	if bell != null:
+		bell.position = anchors.get("PropBell", Vector2(maxf(left, 90.0), 300 * ky))
+		bell.scale = Vector2(s, s)
 	if brazier != null:
 		brazier.position = anchors.get("PropBrazier", Vector2(V.x - 90, 860 * ky))
 		brazier.scale = Vector2(s, s)
@@ -250,10 +253,11 @@ func _process(delta: float) -> void:
 		_wake_t = 3.2
 		view.add_ripple(boat.position + Vector2(-_boat_dir * 50, 6), 0.45)
 	# Bell: damped pendulum.
-	_bell_vel += -_bell_swing * 30.0 * delta
-	_bell_vel *= 1.0 - 1.2 * delta
-	_bell_swing += _bell_vel * delta
-	_bell_body.rotation = _bell_swing
+	if bell != null:
+		_bell_vel += -_bell_swing * 30.0 * delta
+		_bell_vel *= 1.0 - 1.2 * delta
+		_bell_swing += _bell_vel * delta
+		_bell_body.rotation = _bell_swing
 	if _flame != null:
 		_flare = maxf(0.0, _flare - delta * 1.5)
 		_flame.speed_scale = 1.0 + _flare * 1.5
@@ -266,7 +270,7 @@ func _process(delta: float) -> void:
 
 ## Returns true when the touch hit a prop.
 func touch(p: Vector2) -> bool:
-	var lb := bell.to_local(p)
+	var lb := bell.to_local(p) if bell != null else Vector2.INF
 	if absf(lb.x) < 70 and absf(lb.y) < 80:
 		_bell_vel += 2.6 * (1.0 if lb.x < 0 else -1.0)
 		Sfx.play("bell_far", -4.0, 1.25)
@@ -292,7 +296,9 @@ func touch(p: Vector2) -> bool:
 
 
 func toy_points() -> Array[Vector2]:
-	var out: Array[Vector2] = [bell.position + Vector2(-10, 0)]
+	var out: Array[Vector2] = []
+	if bell != null:
+		out.append(bell.position + Vector2(-10, 0))
 	if brazier != null:
 		out.append(brazier.position)
 	if skulls != null:

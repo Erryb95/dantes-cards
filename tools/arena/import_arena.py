@@ -124,6 +124,9 @@ def main() -> None:
             missing.append(name)
             continue
         data, fn = r
+        src = os.path.join(ROOT, "art_src", "arena", name + ".png")
+        if os.path.exists(out) and os.path.exists(src) and open(src, "rb").read() == data:
+            continue  # the same painting: a --force run must not count it as new (it would pair it with a normal map)
         why = install(data, out, size, alpha)
         if why is not None:
             rejected.append("%s (%s: %s)" % (name, fn, why))
@@ -143,16 +146,26 @@ def main() -> None:
             board = Image.open(board_path)
             Image.open(normal_src).convert("RGB").resize(board.size, Image.LANCZOS).save(
                 os.path.join(ROOT, "assets", "arenas", aid + "_normal.png"))
-        # Point arenas.json at the optional layers once they exist.
-        for key, fn in (("board", aid + "_board.jpg"), ("frame", aid + "_frame.png"), ("mist", aid + "_mist.png"),
-                        ("normal", aid + "_normal.png")):
-            if os.path.exists(os.path.join(ROOT, "assets", "arenas", fn)) and a.get(key) != fn:
-                a[key] = fn
+    # Point arenas.json at the optional layers once they exist. The file is hand-formatted, so a new key is inserted
+    # as text after the arena's "board" line instead of re-dumping the whole file.
     with open(ARENAS_JSON, encoding="utf-8") as f:
-        before = f.read()
-    after = json.dumps(d, indent=2, ensure_ascii=False) + "\n"
-    if json.loads(before) != json.loads(after):
-        open(ARENAS_JSON, "w", encoding="utf-8", newline="\n").write(after)
+        text = f.read()
+    for a in d["arenas"]:
+        aid = a["id"]
+        for key, fn in (("frame", aid + "_frame.png"), ("mist", aid + "_mist.png"), ("normal", aid + "_normal.png")):
+            if not os.path.exists(os.path.join(ROOT, "assets", "arenas", fn)) or a.get(key) == fn:
+                continue
+            anchor = '"board": "%s_board.jpg",' % aid
+            at = text.find(anchor)
+            if key in a or at < 0:
+                print("arenas.json: set %s.%s = %s by hand" % (aid, key, fn))
+                continue
+            indent = text[text.rfind("\n", 0, at) + 1:at]
+            end = at + len(anchor)
+            text = text[:end] + '\n%s"%s": "%s",' % (indent, key, fn) + text[end:]
+            a[key] = fn
+    json.loads(text)  # still valid JSON
+    open(ARENAS_JSON, "w", encoding="utf-8", newline="\n").write(text)
     print("imported %d: %s" % (len(got), " ".join(got) or "-"))
     if rejected:
         print("rejected %d: %s" % (len(rejected), "; ".join(rejected)))

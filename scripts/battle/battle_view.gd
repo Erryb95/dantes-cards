@@ -399,8 +399,9 @@ func _build_end_button() -> void:
 		_end_seal.offset = tex.get_size() / 2 - vis.get_center()
 		_end_seal.use_parent_material = false
 		end_btn.add_child(_end_seal)
-	_end_label = UI.label("END TURN", 28, "title", UI.BONE, 6, Color.BLACK)
-	_end_label.size = Vector2(END_OVAL.x * 0.74, END_OVAL.y * 0.6)
+	# Engraved into the seal's smooth inner oval (about 56% of its width), not printed over the rope rim.
+	_end_label = UI.engraved(UI.label("END TURN", 28, "title"))
+	_end_label.size = Vector2(END_OVAL.x * 0.56, END_OVAL.y * 0.5)
 	_end_label.position = -_end_label.size / 2
 	_end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_end_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -414,7 +415,7 @@ func _build_mana(side: int) -> Node2D:
 	var n := Node2D.new()
 	n.z_index = 25 # above the hand, so the crystals always read
 	board_layer.add_child(n)
-	var l := UI.label("0/0", 34, "title", Color(0.75, 0.88, 1.0), 7, Color(0, 0.02, 0.08))
+	var l := UI.raised(UI.label("0/0", 34, "title", Color(0.75, 0.88, 1.0), 7, Color(0, 0.02, 0.08)))
 	l.name = "Label"
 	l.size = Vector2(110, 50)
 	l.position = Vector2(-230, -25)
@@ -1477,8 +1478,10 @@ func _set_end_button(side: int) -> void:
 	var mine := side == 0 and not autoplay
 	end_btn.modulate = Color.WHITE
 	_end_label.text = "END TURN" if mine else "ENEMY TURN"
+	# The dimmed seal of the enemy's turn is too dark for ink: the words go pale there.
+	UI.engraved(_end_label, Color(0.2, 0.08, 0.03) if mine else Color(0.62, 0.56, 0.48))
 	# Shrink until the words fit inside the seal's oval.
-	var fs := 30 if mine else 26
+	var fs := 28 if mine else 24
 	var font := _end_label.get_theme_font("font")
 	while fs > 16 and font.get_string_size(_end_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > _end_label.size.x:
 		fs -= 1

@@ -121,11 +121,11 @@ func _build() -> void:
 	var atk: Node2D = UiSkin.sprite("gem_attack", Vector2(64, 64)) if painted else 		Shapes.make(Shapes.Kind.SWORD, Vector2(50, 58), Color(0.85, 0.62, 0.2), Color(0.35, 0.2, 0.05), 3.0)
 	atk.position = Vector2(-W / 2 + 12, H / 2 - 22)
 	add_child(atk)
-	_atk_l = _stat(atk.position + Vector2(0, 3))
+	_atk_l = _stat(atk.position + UI.gem_number_offset("gem_attack", 64, 30))
 	var hp: Node2D = UiSkin.sprite("gem_health", Vector2(62, 62)) if painted else 		Shapes.make(Shapes.Kind.DROP, Vector2(48, 58), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
 	hp.position = Vector2(W / 2 - 12, H / 2 - 24)
 	add_child(hp)
-	_hp_l = _stat(hp.position + Vector2(0, 5))
+	_hp_l = _stat(hp.position + UI.gem_number_offset("gem_health", 62, 30))
 
 	_zzz = UI.label("z z", 28, "italic", Color(0.8, 0.85, 1.0, 0.9), 5, Color(0, 0, 0.1))
 	_zzz.position = Vector2(W / 2 - 40, -H / 2 - 30)
@@ -134,7 +134,7 @@ func _build() -> void:
 
 
 func _stat(center: Vector2) -> Label:
-	var l := UI.label("0", 34, "title", Color.WHITE, 8, Color(0.05, 0.02, 0.02))
+	var l := UI.raised(UI.label("0", 30, "title", UI.NUMBER, 8, Color(0.05, 0.02, 0.02)))
 	l.size = Vector2(70, 50)
 	l.position = center - l.size / 2
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -158,8 +158,8 @@ func apply(snap: Dictionary) -> void:
 func _refresh() -> void:
 	_atk_l.text = str(attack)
 	_hp_l.text = str(health)
-	_atk_l.add_theme_color_override("font_color", UI.HEAL if attack > base_attack else Color.WHITE)
-	var hp_col := Color.WHITE
+	_atk_l.add_theme_color_override("font_color", UI.HEAL if attack > base_attack else UI.NUMBER)
+	var hp_col := UI.NUMBER
 	if health < max_health:
 		hp_col = Color(1.0, 0.35, 0.3)
 	elif health > base_health:

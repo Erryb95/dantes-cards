@@ -24,16 +24,20 @@ static func font(kind: String = "body") -> Font:
 	var path: String = {"title": "res://assets/fonts/Cinzel.ttf", "body": "res://assets/fonts/IMFeENrm28P.ttf",
 		"italic": "res://assets/fonts/IMFeENit28P.ttf"}.get(kind, "res://assets/fonts/IMFeENrm28P.ttf")
 	var f: FontFile = load(path)
-	f.multichannel_signed_distance_field = true
-	f.msdf_pixel_range = 12
-	f.msdf_size = 64
 	f.generate_mipmaps = true
 	if kind == "title":
+		# Cinzel's outlines overlap, which MSDF renders as spikes and specks: rasterise it instead, three times
+		# oversampled so it stays sharp on scaled-up cards.
+		f.multichannel_signed_distance_field = false
+		f.oversampling = 3.0
 		var v := FontVariation.new()
 		v.base_font = f
 		v.variation_embolden = 0.6
 		_fonts[kind] = v
 		return v
+	f.multichannel_signed_distance_field = true
+	f.msdf_pixel_range = 12
+	f.msdf_size = 64
 	_fonts[kind] = f
 	return f
 
@@ -50,6 +54,39 @@ static func label(text: String, size: int, kind: String = "body", color: Color =
 		l.add_theme_color_override("font_outline_color", outline_color)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
+
+
+## Warm white of the stat numbers (white reads as pasted on top of the painted gems).
+const NUMBER := Color(1.0, 0.95, 0.84)
+
+
+## Stat numbers: a dark outline plus a soft drop shadow, so they sit on the gem like raised metal.
+static func raised(l: Label) -> Label:
+	l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
+	l.add_theme_constant_override("shadow_offset_x", 0)
+	l.add_theme_constant_override("shadow_offset_y", 3)
+	l.add_theme_constant_override("shadow_outline_size", 10)
+	return l
+
+
+## Text cut into a painted metal plate: dark ink, no outline, a thin light edge below like an engraving.
+static func engraved(l: Label, ink: Color = Color(0.2, 0.08, 0.03)) -> Label:
+	l.add_theme_color_override("font_color", ink)
+	l.add_theme_constant_override("outline_size", 0)
+	l.add_theme_color_override("font_shadow_color", Color(1.0, 0.9, 0.62, 0.35))
+	l.add_theme_constant_override("shadow_offset_x", 0)
+	l.add_theme_constant_override("shadow_offset_y", 2)
+	l.add_theme_constant_override("shadow_outline_size", 0)
+	return l
+
+
+## Where a stat number's label centre goes, relative to the centre of its painted gem `px` wide: on the gem's
+## visual centre (the shield's disc sits a little high, the drop's stone low), corrected for Cinzel's digits,
+## whose ink sits 0.0625 em above the centre of the line box.
+const GEM_CENTER := {"gem_attack": Vector2(0, -0.04), "gem_health": Vector2(0, 0.045), "gem_mana": Vector2.ZERO,
+	"gem_armor": Vector2(0, -0.03)}
+static func gem_number_offset(gem: String, px: float, font_size: int) -> Vector2:
+	return GEM_CENTER.get(gem, Vector2.ZERO) * px + Vector2(0, 0.0625 * font_size)
 
 
 static func box(bg: Color, border: Color = Color.TRANSPARENT, border_w: int = 0, radius: int = 12,

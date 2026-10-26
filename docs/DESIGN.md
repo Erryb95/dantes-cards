@@ -7,8 +7,8 @@
 | `data/cards.json` | every card and hero: stats, keywords, effects, rules text, flavour, art prompt |
 | `data/sets/*.json` | expansion sets (loaded automatically); schema and balance guide in `docs/CARD_SCHEMA.md`, check with `python tools/cards/validate.py` |
 | `data/decks.json` | the two starter decks (30 cards each) |
-| `data/arenas.json` | arenas: name, circle, intro text, music, ambience, painted board / mist, divider kind, ambient particles, tints, tappable props. Each match draws a random arena whose board is installed (never the previous one) |
-| `scripts/battle/arena_props.gd` | `ArenaProps`: an arena's living layer built from its data (divider VFX, ambient, toys); `arena_acheron.gd` subclasses it for Charon's boat and the bell. Sockets: `scenes/arenas/standard.tscn` |
+| `data/arenas.json` | arenas: name, circle, intro text, music, ambience, painted board / mist, divider kind, ambient particles, tints, tappable corner props (shown only with `"corner_props": true`; off everywhere since 2026-10-26: the board plus the middle animations is enough). Each match draws a random arena whose board is installed (never the previous one) |
+| `scripts/battle/arena_props.gd` | `ArenaProps`: an arena's living layer built from its data (divider VFX, ambient, toys); `arena_acheron.gd` subclasses it for Charon's boat (the bell, brazier and skulls are corner props). Sockets: `scenes/arenas/standard.tscn` |
 | `scripts/core/` | `CardDB` (static data access), autoloads `Settings`, `Sfx`, `Game` (scene flow + stats), `Collection` (owned cards, Obols, packs, custom decks in `user://collection.cfg`) |
 | `scripts/battle/battle_state.gd` | **the rules**: pure logic, no nodes; every change goes out as an event |
 | `scripts/battle/ai.gd` | greedy AI that returns one action at a time |
