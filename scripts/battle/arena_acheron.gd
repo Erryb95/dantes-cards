@@ -8,6 +8,7 @@ const PROPS := "res://assets/arenas/props/"
 ## Arena lights only reach canvas items on this layer: the backdrop, board and river (not cards or UI).
 const LIGHT_MASK := 2
 
+var _boat_faces_right := false
 var view: Node2D ## the battle view (for ripples and sounds)
 var V := Vector2(1920, 1080)
 var river_y := 472.0
@@ -133,10 +134,12 @@ func _build_boat() -> void:
 	boat.add_child(core)
 	boat.scale = Vector2(0.95, 0.95)
 	boat.modulate.a = 1.0
-	var painted := _painted("boat", 300.0)
+	var painted := _painted("boat", 320.0)
 	if painted != null:
+		# The painting faces right (the code silhouette faces left), and its lantern hangs where _lantern glows.
+		_boat_faces_right = true
 		_hide_silhouette(boat, [_reflect, _lantern, core])
-		painted.position = Vector2(0, -40)
+		painted.position = Vector2(0, -42)
 		boat.add_child(painted)
 		boat.move_child(painted, 1)
 		boat.move_child(_lantern, -1)
@@ -259,7 +262,7 @@ func _process(delta: float) -> void:
 		_boat_dir = -1.0
 	_bob = sin(_t * 1.3) * 3.0
 	boat.position = Vector2(_boat_x, river_y + 4 + _bob)
-	boat.scale.x = absf(boat.scale.x) * (-1.0 if _boat_dir > 0 else 1.0)
+	boat.scale.x = absf(boat.scale.x) * ((1.0 if _boat_dir > 0 else -1.0) if _boat_faces_right else (-1.0 if _boat_dir > 0 else 1.0))
 	boat.rotation = sin(_t * 0.9) * 0.025
 	var flick := 0.85 + 0.15 * sin(_t * 13.0) * sin(_t * 7.3)
 	_lantern.scale = Vector2.ONE * 1.25 * flick
