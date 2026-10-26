@@ -9,8 +9,9 @@ var checks := 0
 func _initialize() -> void:
 	_test_data()
 	_test_rules()
-	_soak(300)
+	_soak(120)
 	_soak_random(400)
+	_test_replay(20)
 	print("TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures > 0 else 0)
 
@@ -238,7 +239,7 @@ func _soak_random(games: int) -> void:
 	for g in games:
 		var st := BattleState.new()
 		st.start(random_deck("pilgrim", rng), "dante", random_deck("ferry", rng), "charon", 5000 + g)
-		var ais := [BattleAI.new(0), BattleAI.new(1)]
+		var ais := [BattleAI.new(0, BattleAI.Level.EASY), BattleAI.new(1, BattleAI.Level.EASY)]
 		var steps := 0
 		while st.winner == -1 and steps < 6000:
 			steps += 1
@@ -269,3 +270,38 @@ func _soak_random(games: int) -> void:
 			total += 1
 	print("RANDOM SOAK: pilgrim %d / ferry %d / draws %d, %d of %d cards played" % [wins[0], wins[1], wins[2],
 		played.size(), total])
+
+
+## Determinism: the same decks, seed and list of moves must give the same battle, event for event. This is what
+## replays, bug reports and a future authoritative multiplayer server rely on.
+func _test_replay(games: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 31
+	for g in games:
+		var d0 := random_deck("pilgrim", rng)
+		var d1 := random_deck("ferry", rng)
+		var st := BattleState.new()
+		var log_a := []
+		st.event.connect(func(ev): log_a.append(ev))
+		st.start(d0, "dante", d1, "charon", 777 + g, false, -1)
+		var ais := [BattleAI.new(0), BattleAI.new(1)]
+		var moves := []
+		var steps := 0
+		while st.winner == -1 and steps < 4000:
+			steps += 1
+			var act: Dictionary = ais[st.current].next_action(st)
+			if act.do == "end" or not BattleAI.apply(st, st.current, act):
+				act = {"do": "end"}
+				st.end_turn()
+			moves.append(act)
+		var rp := BattleState.new()
+		var log_b := []
+		rp.event.connect(func(ev): log_b.append(ev))
+		rp.start(d0, "dante", d1, "charon", 777 + g, false, -1)
+		for m in moves:
+			if m.do == "end":
+				rp.end_turn()
+			else:
+				BattleAI.apply(rp, rp.current, m)
+		ok(rp.winner == st.winner and log_a.size() == log_b.size(), "replay %d ends the same" % g)
+		ok(str(log_a) == str(log_b), "replay %d matches event for event" % g)

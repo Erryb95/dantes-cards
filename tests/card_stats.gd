@@ -16,25 +16,19 @@ func _initialize() -> void:
 	var class_wins := {"pilgrim": 0, "ferry": 0}
 	for g in games:
 		var st := BattleState.new()
-		st.start(RunTests.random_deck("pilgrim", rng), "dante", RunTests.random_deck("ferry", rng), "charon", 9000 + g)
+		st.start(RunTests.random_deck("pilgrim", rng), "dante", RunTests.random_deck("ferry", rng), "charon", 9000 + g,
+			false, -1)
 		var ais := [BattleAI.new(0), BattleAI.new(1)]
 		var seen := [{}, {}]
 		var steps := 0
 		while st.winner == -1 and steps < 6000:
 			steps += 1
 			var act: Dictionary = ais[st.current].next_action(st)
-			var done := false
-			match act.do:
-				"play":
-					for c in st.sides[st.current].hand:
-						if c.uid == act.uid:
-							seen[st.current][c.id] = true
-					done = st.play_card(st.current, act.uid, act.target, act.index)
-				"attack":
-					done = st.attack(st.current, act.attacker, act.target)
-				"power":
-					done = st.use_power(st.current, act.target)
-			if not done:
+			if act.do == "play":
+				for c in st.sides[st.current].hand:
+					if c.uid == act.uid:
+						seen[st.current][c.id] = true
+			if act.do == "end" or not BattleAI.apply(st, st.current, act):
 				st.end_turn()
 		if st.winner < 2:
 			class_wins["pilgrim" if st.winner == 0 else "ferry"] += 1

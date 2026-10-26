@@ -109,6 +109,55 @@ func _give_coin() -> void:
 var _mulligan_pending := [false, false]
 
 
+## A deep copy for look-ahead (the AI tries moves on it). It has no listeners, and its random stream is re-seeded
+## so a search cannot peek at how the real game's random effects will fall.
+func clone() -> BattleState:
+	var b := BattleState.new()
+	b.current = current
+	b.turn = turn
+	b.winner = winner
+	b._next_uid = _next_uid
+	b._mulligan_pending = _mulligan_pending.duplicate()
+	b.rng.seed = randi()
+	for s in sides:
+		var n := SideState.new()
+		n.hero_id = s.hero_id
+		n.deck = s.deck.duplicate()
+		for c in s.hand:
+			n.hand.append(c.duplicate())
+		n.mana = s.mana
+		n.max_mana = s.max_mana
+		n.power_used = s.power_used
+		n.fatigue = s.fatigue
+		n.hero = _copy_unit(s.hero)
+		b.units[n.hero.uid] = n.hero
+		for u in s.board:
+			var cu := _copy_unit(u)
+			n.board.append(cu)
+			b.units[cu.uid] = cu
+		b.sides.append(n)
+	return b
+
+
+static func _copy_unit(u: Unit) -> Unit:
+	var c := Unit.new()
+	c.uid = u.uid
+	c.id = u.id
+	c.side = u.side
+	c.is_hero = u.is_hero
+	c.attack = u.attack
+	c.health = u.health
+	c.max_health = u.max_health
+	c.armor = u.armor
+	c.keywords = u.keywords.duplicate()
+	c.sleeping = u.sleeping
+	c.attacks_made = u.attacks_made
+	c.dead = u.dead
+	c.frozen = u.frozen
+	c.silenced = u.silenced
+	return c
+
+
 func in_mulligan() -> bool:
 	return _mulligan_pending[0] or _mulligan_pending[1]
 

@@ -1,19 +1,185 @@
 class_name BattleAI
 extends RefCounted
-## Greedy opponent: returns one action at a time so the view can animate between steps.
+## The opponent: returns one action at a time so the view can animate between steps.
 ## Action: {"do": "play", "uid", "target", "index"} | {"do": "attack", "attacker", "target"} |
 ##         {"do": "power", "target"} | {"do": "end"}
+## Levels: EASY follows fixed rules (the most expensive card first, simple trades); NORMAL tries every legal move
+## on a copy of the battle, then plays the best few out to the end of the turn and keeps the line that leaves the
+## best position (see `evaluate`). It reads only what a player could see: its own hand, the board, counts.
+
+enum Level { EASY, NORMAL }
+
+const ROLLOUTS := 8 ## candidate first moves that get played out to the end of the turn
 
 var side := 1
+var level := Level.NORMAL
 
 
-func _init(p_side: int = 1) -> void:
+func _init(p_side: int = 1, p_level: Level = Level.NORMAL) -> void:
 	side = p_side
+	level = p_level
 
 
 func next_action(st: BattleState) -> Dictionary:
 	if st.winner != -1 or st.current != side:
 		return {"do": "end"}
+	if level == Level.NORMAL:
+		return _search(st)
+	return _rules(st)
+
+
+# ---------------------------------------------------------------- search
+
+## Every legal move right now (end turn excluded).
+func _moves(st: BattleState) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var me := st.sides[side]
+	for c in me.hand:
+		if not st.can_play(side, c.uid):
+			continue
+		var card := CardDB.card(c.id)
+		var tt := BattleState.target_type(card)
+		var targets := st.valid_targets(side, tt) if tt != "" else ([] as Array[int])
+		if targets.is_empty():
+			out.append({"do": "play", "uid": c.uid, "target": -1, "index": -1})
+		for t in targets:
+			out.append({"do": "play", "uid": c.uid, "target": t, "index": -1})
+	for u in me.board:
+		if st.can_attack(u):
+			for t in st.attack_targets(side):
+				out.append({"do": "attack", "attacker": u.uid, "target": t})
+	if st.can_use_power(side):
+		var tt := BattleState.power_target_type(CardDB.hero(me.hero_id))
+		if tt == "":
+			out.append({"do": "power", "target": -1})
+		else:
+			for t in st.valid_targets(side, tt):
+				out.append({"do": "power", "target": t})
+	return out
+
+
+static func apply(st: BattleState, side: int, m: Dictionary) -> bool:
+	match m.do:
+		"play":
+			return st.play_card(side, m.uid, m.target, m.index)
+		"attack":
+			return st.attack(side, m.attacker, m.target)
+		"power":
+			return st.use_power(side, m.target)
+	return false
+
+
+## Scores each move one step ahead, plays the best few out greedily to the end of the turn, and returns the first
+## move of the best line, or "end" when no line beats passing.
+func _search(st: BattleState) -> Dictionary:
+	var base := evaluate(st)
+	var scored := []
+	for m in _moves(st):
+		var b := st.clone()
+		if not apply(b, side, m):
+			continue
+		if b.winner == side:
+			return m
+		scored.append([evaluate(b), m, b])
+	if scored.is_empty():
+		return {"do": "end"}
+	scored.sort_custom(func(x, y): return x[0] > y[0])
+	var best: Dictionary = {}
+	var best_v := base + 0.25
+	for i in mini(ROLLOUTS, scored.size()):
+		var v := _rollout(scored[i][2])
+		if v > best_v:
+			best_v = v
+			best = scored[i][1]
+	return best if not best.is_empty() else {"do": "end"}
+
+
+## Greedy continuation: keep taking the best one-step move until none improves the position.
+func _rollout(st: BattleState) -> float:
+	var cur := evaluate(st)
+	for step in 12:
+		if st.winner != -1:
+			break
+		var next: BattleState = null
+		var next_v := cur + 0.25
+		for m in _moves(st):
+			var b := st.clone()
+			if not apply(b, side, m):
+				continue
+			var v := evaluate(b)
+			if v > next_v:
+				next_v = v
+				next = b
+		if next == null:
+			break
+		st = next
+		cur = next_v
+	return cur
+
+
+## How good the position is for this AI. Heroes count more as they get low; minions by stats and abilities;
+## cards in hand as options; and a heavy penalty when the enemy board can kill us next turn.
+func evaluate(st: BattleState) -> float:
+	if st.winner == side:
+		return 100000.0
+	if st.winner == 1 - side:
+		return -100000.0
+	var me := st.sides[side]
+	var foe := st.sides[1 - side]
+	var v := _hero_value(me.hero) - _hero_value(foe.hero)
+	var my_power := 0
+	for u in me.board:
+		v += _unit_value(u)
+		my_power += u.attack
+	var their_hit := 0
+	var guards := 0
+	for u in foe.board:
+		v -= _unit_value(u)
+		if not u.frozen:
+			their_hit += u.attack
+	for u in me.board:
+		if u.has("guard"):
+			guards += u.health
+	v += 2.5 * mini(me.hand.size(), 8) - 2.5 * mini(foe.hand.size(), 8)
+	# Danger: what reaches my face next turn (guards soak some of it).
+	var reach := maxi(0, their_hit - guards)
+	if reach >= me.hero.health + me.hero.armor:
+		v -= 60.0
+	# Pressure: our board threatens lethal next turn.
+	var their_guards := foe.board.filter(func(u): return u.has("guard")).size()
+	if their_guards == 0 and my_power >= foe.hero.health + foe.hero.armor:
+		v += 25.0
+	return v
+
+
+func _hero_value(h) -> float:
+	var hp := float(h.health + h.armor)
+	# Each point matters more when low: 30 hp ~ 30, 10 hp ~ 14.5 short of linear.
+	return hp + 12.0 * (1.0 - exp(-hp / 6.0)) * 2.0
+
+
+func _unit_value(u) -> float:
+	var v: float = 1.3 * u.attack + 1.0 * u.health + 1.0
+	if u.has("guard"):
+		v += 1.0 + 0.3 * u.health
+	if u.has("ward"):
+		v += 0.8 * u.attack + 1.0
+	if u.has("venom"):
+		v += 2.5
+	if u.has("drain"):
+		v += 0.6 * u.attack
+	if not u.silenced:
+		for e in CardDB.card(u.id).get("effects", []):
+			if e.get("on", "play") != "play":
+				v += 2.0
+	if u.frozen:
+		v -= 0.5 * u.attack
+	return v
+
+
+# ---------------------------------------------------------------- rules (Easy)
+
+func _rules(st: BattleState) -> Dictionary:
 	var me := st.sides[side]
 	var foe := st.sides[1 - side]
 
