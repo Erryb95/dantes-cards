@@ -121,6 +121,16 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 				if best == -1:
 					return {}
 				target = best
+			"mana":
+				# Charon's Obol: only when the extra crystal unlocks a card that is not playable now.
+				var unlock := 0
+				for o in me.hand:
+					var oc := CardDB.card(o.id)
+					if o.uid != c.uid and int(oc.cost) == me.mana + int(e.amount):
+						unlock = maxi(unlock, int(oc.cost))
+				if unlock == 0:
+					return {}
+				score = unlock * 10.0 - 1.0
 			"summon":
 				if card.type == "spell" and me.board.size() >= BattleState.MAX_BOARD:
 					return {}

@@ -33,7 +33,7 @@ func _test_data() -> void:
 			ok(CardDB.card(id).get("set") in [d.id, "neutral"], "deck %s class of %s" % [d.id, id])
 	for c in CardDB.all_cards():
 		for e in c.get("effects", []):
-			ok(e.do in ["damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card"], "%s effect %s" % [c.id, e.do])
+			ok(e.do in ["damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card", "mana"], "%s effect %s" % [c.id, e.do])
 			if e.do in ["summon", "give_card"]:
 				ok(not CardDB.card(e.card).is_empty(), "%s summons a known card" % c.id)
 		for k in c.get("keywords", []):

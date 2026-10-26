@@ -46,6 +46,7 @@ Cards live in `data/cards.json` (core set) and `data/sets/*.json` (expansions). 
 | `silence` | - | remove keywords and card effects from a minion |
 | `ramp` | `amount` | gain empty mana crystals (no target) |
 | `give_card` | `card`, `count` | add copies of a card id to your hand (no target) |
+| `mana` | `amount` | gain mana this turn only, up to 10 (no target; Charon's Obol) |
 
 **Targets**
 - **Picked by the player:** `choose_any`, `choose_enemy` (enemy hero or minion), `choose_minion`,
@@ -53,7 +54,7 @@ Cards live in `data/cards.json` (core set) and `data/sets/*.json` (expansions). 
 - **Automatic:** `own_hero`, `enemy_hero`, `self` (the minion itself), `all_minions`, `all_enemy_minions`,
   `all_friendly_minions`, `other_friendly_minions`, `all_enemies` (enemy hero + minions), `random_enemy`,
   `random_enemy_minion`, `random_friendly_minion`.
-- `draw`, `summon`, `ramp` and `give_card` take no target.
+- `draw`, `summon`, `ramp`, `give_card` and `mana` take no target.
 
 **Rules**
 - At most **one** `choose_*` target per card, and only on `play` effects.

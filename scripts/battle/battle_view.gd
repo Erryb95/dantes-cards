@@ -12,6 +12,7 @@ const PLAY_LINE := 0.70 ## releasing a dragged card above this fraction of the s
 enum Mode { IDLE, DRAG_CARD, AIM_SPELL, AIM_BATTLECRY, AIM_ATTACK, AIM_POWER }
 
 const DECK_SHEETS := 10
+var _first_side := 0 ## who takes the first turn (coin flip)
 var st: BattleState
 var ai: BattleAI
 var ai_self: BattleAI ## autoplay only
@@ -111,7 +112,7 @@ func _ready() -> void:
 	ai = BattleAI.new(1)
 	ai_self = BattleAI.new(0)
 	_intro(arena)
-	st.start(Game.player_cards, Game.player_hero, Game.enemy_cards, Game.enemy_hero, 0, true)
+	st.start(Game.player_cards, Game.player_hero, Game.enemy_cards, Game.enemy_hero, 0, true, -1)
 
 
 func _on_resize() -> void:
@@ -607,6 +608,8 @@ func _present(ev: Dictionary) -> void:
 	match ev.t:
 		"wait":
 			await _wait(ev.time)
+		"first":
+			_first_side = ev.side
 		"start":
 			for i in 2:
 				var h := HeroView.new().setup(ev.heroes[i])
@@ -820,7 +823,7 @@ func _on_draw(ev: Dictionary) -> void:
 
 
 func _mull_slot(i: int) -> Vector2:
-	var n := BattleState.START_HAND[0]
+	var n: int = hand_views[0].size()
 	return Vector2(V.x / 2 + (i - (n - 1) / 2.0) * 300.0, V.y * 0.47)
 
 
@@ -847,7 +850,8 @@ func _mulligan_wait() -> void:
 	title.size = Vector2(V.x, 80)
 	title.position = Vector2(0, V.y * 0.12)
 	_mull_ui.add_child(title)
-	var sub := UI.label("Tap the cards you want to replace", 30, "italic", UI.BONE, 5, Color.BLACK)
+	var order := "You go first." if _first_side == 0 else "You go second, with an extra card and Charon's Obol."
+	var sub := UI.label(order + "   Tap the cards you want to replace.", 30, "italic", UI.BONE, 5, Color.BLACK)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.size = Vector2(V.x, 40)
 	sub.position = Vector2(0, V.y * 0.12 + 80)

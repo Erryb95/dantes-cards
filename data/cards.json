@@ -525,6 +525,25 @@
    "text": "",
    "flavor": "",
    "image": "phlegyas_s777"
+  },
+  {
+   "id": "obol_coin",
+   "name": "Charon's Obol",
+   "set": "token",
+   "type": "spell",
+   "rarity": "token",
+   "cost": 0,
+   "text": "Gain 1 Mana Crystal this turn only.",
+   "flavor": "The ferryman's fare, pressed into the hand of whoever crosses second.",
+   "effects": [
+    {
+     "on": "play",
+     "do": "mana",
+     "amount": 1
+    }
+   ],
+   "image": "uh_hoarded_coin",
+   "art": "A single gold coin lying on a dark stone floor."
   }
  ],
  "heroes": [

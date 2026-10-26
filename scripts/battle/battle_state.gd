@@ -62,8 +62,10 @@ var _next_uid := 10
 # ---------------------------------------------------------------- setup
 
 ## With wait_mulligan the opening hands are dealt and the game waits for finish_mulligan() from both sides.
+## `first`: the side that takes the first turn (-1 = coin flip); the other side opens with one more card and
+## Charon's Obol after the mulligan.
 func start(deck_a: Array[String], hero_a: String, deck_b: Array[String], hero_b: String, seed_value: int = 0,
-		wait_mulligan: bool = false) -> void:
+		wait_mulligan: bool = false, first: int = 0) -> void:
 	rng.seed = seed_value if seed_value != 0 else randi()
 	sides.clear()
 	for i in 2:
@@ -85,14 +87,23 @@ func start(deck_a: Array[String], hero_a: String, deck_b: Array[String], hero_b:
 		"decks": [sides[0].deck.size(), sides[1].deck.size()]})
 	if wait_mulligan:
 		_emit({"t": "mulligan_begin"})
+	current = first if first != -1 else rng.randi() % 2
+	_emit({"t": "first", "side": current})
 	for i in 2:
-		draw(i, START_HAND[i])
-	current = 0
+		draw(i, START_HAND[0] if i == current else START_HAND[1])
 	if wait_mulligan:
 		_mulligan_pending = [true, true]
 		_emit({"t": "mulligan_wait"})
 	else:
+		_give_coin()
 		_begin_turn()
+
+
+const COIN := "obol_coin"
+
+
+func _give_coin() -> void:
+	_resolve({"do": "give_card", "card": COIN, "count": 1}, 1 - current, null, -1, "coin")
 
 
 var _mulligan_pending := [false, false]
@@ -123,6 +134,7 @@ func finish_mulligan(side: int, replace_uids: Array) -> void:
 		s.deck.insert(rng.randi_range(0, s.deck.size()), id)
 	if not in_mulligan():
 		_emit({"t": "mulligan_end"})
+		_give_coin()
 		_begin_turn()
 
 
@@ -462,6 +474,10 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 			var rs := sides[side]
 			rs.max_mana = mini(MAX_MANA, rs.max_mana + int(e.get("amount", 1)))
 			_emit({"t": "mana", "side": side, "mana": rs.mana, "max": rs.max_mana})
+		"mana":
+			var ms := sides[side]
+			ms.mana = mini(MAX_MANA, ms.mana + int(e.get("amount", 1)))
+			_emit({"t": "mana", "side": side, "mana": ms.mana, "max": ms.max_mana})
 		"give_card":
 			var gs := sides[side]
 			for i in int(e.get("count", 1)):

@@ -14,11 +14,11 @@ SETS = {"pilgrim", "ferry", "neutral", "token"}
 RARITY = {"common", "rare", "epic", "legendary", "token"}
 KEYWORDS = {"guard", "swift", "ward", "drain", "venom", "rebirth"}
 TRIGGERS = {"play", "death", "turn_end", "turn_start"}
-OPS = {"damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card"}
+OPS = {"damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card", "mana"}
 CHOOSE = {"choose_any", "choose_enemy", "choose_minion", "choose_enemy_minion", "choose_friendly_minion"}
 AUTO = {"own_hero", "enemy_hero", "self", "all_minions", "all_enemy_minions", "all_friendly_minions",
         "other_friendly_minions", "all_enemies", "random_enemy", "random_enemy_minion", "random_friendly_minion"}
-NO_TARGET = {"draw", "summon", "ramp", "give_card"}
+NO_TARGET = {"draw", "summon", "ramp", "give_card", "mana"}
 CIRCLES = {"dark_wood", "ante_inferno", "limbo", "lust", "gluttony", "greed", "wrath", "dis", "heresy", "violence",
            "malebolge", "cocytus"}
 PREFIX = {"play": "On Play:", "death": "Last Breath:", "turn_end": "End of Turn:", "turn_start": "Start of Turn:"}
@@ -105,7 +105,7 @@ def check(cards, only=None):
                     e(f"bad target '{tgt}' for {op}")
             if op == "armor" and tgt != "own_hero":
                 e("armor must target own_hero")
-            if op in ("damage", "heal", "armor", "ramp") and not isinstance(ef.get("amount"), int):
+            if op in ("damage", "heal", "armor", "ramp", "mana") and not isinstance(ef.get("amount"), int):
                 e(f"{op} needs int amount")
             if op == "draw" and not isinstance(ef.get("amount", 1), int):
                 e("draw amount must be int")
