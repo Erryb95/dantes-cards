@@ -14,9 +14,11 @@ func _ready() -> void:
 	add_child(battle)
 	await get_tree().create_timer(4.0).timeout
 	var v: Vector2 = battle.V
-	Fx.summon(battle.fx_layer, Vector2(v.x * 0.3, v.y * 0.6), UI.EMBER, 320.0, 1.0, 0.0)
-	Fx.summon(battle.fx_layer, Vector2(v.x * 0.5, v.y * 0.6), UI.RARITY.epic, 400.0, 1.2, 0.6)
-	Fx.summon(battle.fx_layer, Vector2(v.x * 0.72, v.y * 0.6), UI.GOLD, 680.0, 1.8, 1.0)
+	# Minion landings: a cheap common, a mid rare, a big epic; then the legendary circle on the right.
+	Fx.landing(battle.fx_layer, Vector2(v.x * 0.22, v.y * 0.62), UI.EMBER, 350.0, 0.0)
+	Fx.landing(battle.fx_layer, Vector2(v.x * 0.42, v.y * 0.62), UI.RARITY.rare, 420.0, 0.5)
+	Fx.landing(battle.fx_layer, Vector2(v.x * 0.62, v.y * 0.62), UI.RARITY.epic, 470.0, 1.0)
+	Fx.summon(battle.fx_layer, Vector2(v.x * 0.84, v.y * 0.6), UI.GOLD, 680.0, 1.8, 1.0)
 	battle.heroes[1].set_targeted(true)
 	battle.heroes[0].power_ready = true
 	battle.heroes[0]._refresh_power()

@@ -2,6 +2,8 @@ class_name Fx
 ## One-shot visual effects: particle bursts, damage splats, shockwaves, projectiles.
 
 const SUMMON_SHADER := preload("res://assets/shaders/summon_circle.gdshader")
+const LANDING_GROUND := preload("res://assets/shaders/landing_ground.gdshader")
+const LANDING_GLOW := preload("res://assets/shaders/landing_glow.gdshader")
 
 
 static func burst(parent: Node, pos: Vector2, color: Color, amount: int = 24, speed: float = 260.0,
@@ -68,7 +70,8 @@ static func flash(parent: Node, name: String, pos: Vector2, size: float, duratio
 
 
 ## Dust ring when a minion slams down.
-static func dust(parent: Node, pos: Vector2, width: float = 140.0, amount: int = 30) -> void:
+static func dust(parent: Node, pos: Vector2, width: float = 140.0, amount: int = 30,
+		tint: Color = Color(0.6, 0.5, 0.4, 0.55)) -> void:
 	var p := CPUParticles2D.new()
 	p.position = pos
 	p.texture = UI.dot_texture()
@@ -87,8 +90,8 @@ static func dust(parent: Node, pos: Vector2, width: float = 140.0, amount: int =
 	p.scale_amount_min = 0.5
 	p.scale_amount_max = 1.3
 	var ramp := Gradient.new()
-	ramp.set_color(0, Color(0.6, 0.5, 0.4, 0.55))
-	ramp.set_color(1, Color(0.3, 0.25, 0.2, 0.0))
+	ramp.set_color(0, tint)
+	ramp.set_color(1, Color(tint.r * 0.5, tint.g * 0.5, tint.b * 0.5, 0.0))
 	p.color_ramp = ramp
 	p.z_index = 5
 	parent.add_child(p)
@@ -352,3 +355,99 @@ static func summon(parent: Node, pos: Vector2, color: Color, size: float = 340.0
 	var e := burst(parent, pos, color, 24 + int(power * 40), 240.0 + power * 260.0, 1.2, 9.0, -160.0, 70.0)
 	e.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
 	e.emission_rect_extents = Vector2(size * 0.35, 10)
+
+
+## A minion slamming onto the board: the stone cracks around it with hellfire glowing up through the seams (in the
+## rarity colour), a dust ring rolls out, stone chips fly and fall back, and for big minions embers rise from the
+## cracks. Lies flat on the table like the summoning circle. `power` 0..1 grows it with the minion's cost.
+static func landing(parent: Node, pos: Vector2, glow: Color, size: float = 300.0, power: float = 0.0,
+		z: int = 0) -> void:
+	var holder := Node2D.new()
+	holder.position = pos
+	holder.scale = Vector2(1.0, 0.4)
+	holder.z_index = z # 0 on the table layer: drawn over the board, under the minions
+	parent.add_child(holder)
+	var mats: Array[ShaderMaterial] = []
+	for shader in [LANDING_GROUND, LANDING_GLOW]:
+		var r := ColorRect.new()
+		var m := ShaderMaterial.new()
+		m.shader = shader
+		m.set_shader_parameter("glow", glow)
+		m.set_shader_parameter("seed", randf() * 10.0)
+		m.set_shader_parameter("power", power)
+		r.material = m
+		r.size = Vector2(size, size)
+		r.position = -r.size / 2
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		holder.add_child(r)
+		mats.append(m)
+	# Both layers must share the crack pattern.
+	mats[1].set_shader_parameter("seed", mats[0].get_shader_parameter("seed"))
+	var duration := 1.0 + 0.5 * power
+	var t := holder.create_tween()
+	t.tween_method(func(v: float):
+		for m in mats:
+			m.set_shader_parameter("t", v), 0.0, 1.0, duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+	t.tween_callback(holder.queue_free)
+	_debris(parent, pos, size * 0.3, 10 + int(power * 14))
+	if power > 0.25:
+		# Embers rising from the cracks.
+		var e := burst(parent, pos, glow, 10 + int(power * 26), 160.0 + power * 120.0, 1.3, 7.0, -120.0, 60.0)
+		e.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+		e.emission_rect_extents = Vector2(size * 0.3, 12)
+
+
+## Stone chips thrown up by an impact; they arc and drop back with gravity.
+static func _debris(parent: Node, pos: Vector2, radius: float, amount: int) -> void:
+	var p := CPUParticles2D.new()
+	p.position = pos
+	p.amount = amount
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.lifetime = 0.75
+	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	p.emission_rect_extents = Vector2(radius, 10)
+	p.direction = Vector2.UP
+	p.spread = 70.0
+	p.initial_velocity_min = 160.0
+	p.initial_velocity_max = 420.0
+	p.gravity = Vector2(0, 1400)
+	p.angular_velocity_min = -720.0
+	p.angular_velocity_max = 720.0
+	p.angle_min = -180.0
+	p.angle_max = 180.0
+	p.scale_amount_min = 3.0 # no texture: each particle is a 1 px square scaled up into a chip
+	p.scale_amount_max = 8.0
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(0.32, 0.28, 0.25, 1.0))
+	ramp.set_color(1, Color(0.2, 0.17, 0.15, 0.0))
+	ramp.add_point(0.75, Color(0.25, 0.22, 0.2, 1.0))
+	p.color_ramp = ramp
+	p.z_index = 12
+	parent.add_child(p)
+	p.emitting = true
+	p.finished.connect(p.queue_free)
+
+
+## Embers drawn in to a point from all around, like a soul taking shape (plays while a minion drops in).
+static func gather(parent: Node, pos: Vector2, color: Color, radius: float = 170.0, duration: float = 0.25,
+		amount: int = 26) -> void:
+	for i in amount:
+		var s := Sprite2D.new()
+		s.texture = UI.dot_texture()
+		var add := CanvasItemMaterial.new()
+		add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		s.material = add
+		var ang := randf() * TAU
+		var from := pos + Vector2(cos(ang), sin(ang) * 0.45) * radius * randf_range(0.7, 1.2)
+		s.position = from
+		s.scale = Vector2.ONE * randf_range(0.12, 0.22)
+		s.modulate = Color(color.r * 1.4, color.g * 1.4, color.b * 1.4, 0.0)
+		s.z_index = 14
+		parent.add_child(s)
+		var d := duration * randf_range(0.7, 1.0)
+		var t := s.create_tween().set_parallel(true)
+		t.tween_property(s, "position", pos, d).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+		t.tween_property(s, "modulate:a", 0.9, d * 0.4)
+		t.tween_property(s, "scale", Vector2.ONE * 0.05, d).set_ease(Tween.EASE_IN)
+		t.chain().tween_callback(s.queue_free)

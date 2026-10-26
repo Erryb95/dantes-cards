@@ -8,6 +8,7 @@ extends Node2D
 const HAND_SCALE := 0.62
 const ENEMY_HAND_SCALE := 0.42
 const HOVER_SCALE := 1.12
+const END_OVAL := Vector2(236, 150) ## the end-turn seal's visible oval, px
 const MINION_GAP := 40.0
 const PLAY_LINE := 0.70 ## releasing a dragged card above this fraction of the screen height plays it
 
@@ -370,21 +371,29 @@ func _build_scene() -> void:
 func _build_end_button() -> void:
 	end_btn = Node2D.new()
 	board_layer.add_child(end_btn)
-	# Lights up (gold fire) when nothing is left to play.
-	_end_glow = Aura.make(Vector2(232, 100), true, 34.0)
+	# Lights up (gold fire) when nothing is left to play. The aura hugs the seal's visible oval (END_OVAL): the
+	# painting has transparent margins left and right, so the sprite is wider than the oval it shows.
+	_end_glow = Aura.make(END_OVAL, true, 30.0)
 	_end_glow.colors(Aura.SELECTED)
 	end_btn.add_child(_end_glow)
-	_end_disc = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(220, 88), Color(0.38, 0.1, 0.05), UI.GOLD, 5.0)
+	_end_disc = Shapes.make(Shapes.Kind.ELLIPSE, END_OVAL, Color(0.38, 0.1, 0.05), UI.GOLD, 5.0)
 	_end_disc.use_parent_material = false
 	end_btn.add_child(_end_disc)
 	if UiSkin.has("end_turn_seal"):
 		_end_disc.visible = false
-		_end_seal = UiSkin.sprite("end_turn_seal", Vector2(260, 130))
+		var tex := UiSkin.tex("end_turn_seal")
+		var vis := _opaque_rect(tex)
+		# Scale the painting so its opaque part is exactly END_OVAL, centred on the button.
+		var k := END_OVAL / vis.size
+		_end_seal = Sprite2D.new()
+		_end_seal.texture = tex
+		_end_seal.scale = k
+		_end_seal.offset = tex.get_size() / 2 - vis.get_center()
 		_end_seal.use_parent_material = false
 		end_btn.add_child(_end_seal)
 	_end_label = UI.label("END TURN", 28, "title", UI.BONE, 6, Color.BLACK)
-	_end_label.size = Vector2(220, 88)
-	_end_label.position = Vector2(-110, -44)
+	_end_label.size = Vector2(END_OVAL.x * 0.74, END_OVAL.y * 0.6)
+	_end_label.position = -_end_label.size / 2
 	_end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_end_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	end_btn.add_child(_end_label)
@@ -1088,16 +1097,20 @@ func _on_summon(ev: Dictionary) -> void:
 	m.scale = Vector2(1.55, 1.55)
 	m.modulate.a = 0.0
 	m.z_index = 10
+	var cost := int(CardDB.card(m.card_id).get("cost", 0))
+	var tint: Color = UI.RARITY.get(rarity, UI.EMBER) if rarity != "common" else UI.EMBER
+	Fx.gather(fx_layer, m.home, tint, 150.0 + cost * 8.0, 0.22 / _speed(), 16 + cost * 2)
 	var drop := m.create_tween().set_parallel(true)
 	drop.tween_property(m, "position", m.home, 0.2 / _speed()).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	drop.tween_property(m, "scale", Vector2.ONE, 0.2 / _speed()).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	drop.tween_property(m, "modulate:a", 1.0, 0.1 / _speed())
 	await drop.finished
 	m.z_index = 0
-	Fx.dust(fx_layer, m.position + Vector2(0, MinionView.H * 0.42), MinionView.W * 1.2)
-	var cost := int(CardDB.card(m.card_id).get("cost", 0))
-	Fx.summon(fx_layer, m.position + Vector2(0, MinionView.H * 0.32), UI.RARITY.get(rarity, UI.EMBER) if rarity != "common" else UI.EMBER,
-		300.0 + cost * 14.0, 1.0 + cost * 0.05, clampf((cost - 3) / 5.0, 0.0, 1.0))
+	Fx.dust(fx_layer, m.position + Vector2(0, MinionView.H * 0.42), MinionView.W * 1.3, 18, Color(0.3, 0.26, 0.22, 0.4))
+	# The slam cracks the stone under the minion; the magic circle is kept for legendaries (below).
+	# On the table layer, so the cracks run under the minion and out from beneath it.
+	Fx.landing(bg_layer, m.position + Vector2(0, MinionView.H * 0.3), tint, 440.0 + cost * 22.0,
+		clampf((cost - 2) / 6.0, 0.0, 1.0))
 	Sfx.play("slam", -4.0)
 	Sfx.play("card_place", -6.0)
 	if cost >= 6:
@@ -1437,11 +1450,28 @@ func _pop(n: Node2D, s: float) -> void:
 	t.tween_property(n, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK)
 
 
+## The bounding box of a texture's opaque pixels (alpha > 0.15), in texture pixels.
+static func _opaque_rect(tex: Texture2D) -> Rect2:
+	var img := tex.get_image()
+	if img == null:
+		return Rect2(Vector2.ZERO, tex.get_size())
+	if img.is_compressed():
+		img = img.duplicate()
+		img.decompress()
+	var r := img.get_used_rect()
+	return Rect2(r) if r.size.x > 0 else Rect2(Vector2.ZERO, tex.get_size())
+
+
 func _set_end_button(side: int) -> void:
 	var mine := side == 0 and not autoplay
 	end_btn.modulate = Color.WHITE
 	_end_label.text = "END TURN" if mine else "ENEMY TURN"
-	_end_label.add_theme_font_size_override("font_size", 28 if mine else 22)
+	# Shrink until the words fit inside the seal's oval.
+	var fs := 30 if mine else 26
+	var font := _end_label.get_theme_font("font")
+	while fs > 16 and font.get_string_size(_end_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > _end_label.size.x:
+		fs -= 1
+	_end_label.add_theme_font_size_override("font_size", fs)
 	_end_disc.set_fill(Color(0.38, 0.1, 0.05) if mine else Color(0.15, 0.12, 0.1))
 	if _end_seal != null:
 		_end_seal.modulate = Color.WHITE if mine else Color(0.45, 0.42, 0.4)
@@ -1665,7 +1695,8 @@ func _on_press(p: Vector2) -> void:
 		else:
 			_nope(heroes[0].power.global_position, "Already used" if st.sides[0].power_used else "Not enough mana")
 		return
-	if end_btn.to_local(p).length() < 110 and absf(end_btn.to_local(p).y) < 50:
+	var lp := end_btn.to_local(p) / (END_OVAL / 2)
+	if lp.length() < 1.0:
 		_end_turn()
 		return
 	if u != null:
