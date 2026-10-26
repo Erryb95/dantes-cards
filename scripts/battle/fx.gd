@@ -4,6 +4,36 @@ class_name Fx
 const SUMMON_SHADER := preload("res://assets/shaders/summon_circle.gdshader")
 const LANDING_GROUND := preload("res://assets/shaders/landing_ground.gdshader")
 const LANDING_GLOW := preload("res://assets/shaders/landing_glow.gdshader")
+const VFX_LIVE := preload("res://assets/shaders/vfx_live.gdshader")
+
+## Painted sprites whose names hold one of these words flow like fire (strong rising distortion); CALM ones (ice,
+## light, runes, wards) only shimmer; the rest get a gentle flow.
+const HOT := ["fire", "flame", "lava", "ash", "smoke", "explosion", "burst", "pitch", "ember", "blaze", "burn", "muzzle"]
+const CALM := ["ice", "frost", "snow", "shard", "rune", "ward", "shield", "lightning", "spark", "star", "glow",
+	"circle", "holy", "light", "trace", "slash"]
+
+
+## The living additive material for a painted sprite (see vfx_live.gdshader): it flows while shown and burns away
+## through noise as its alpha fades, so every existing fade tween becomes a dissolve.
+static func live(name: String) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = VFX_LIVE
+	var flow := 0.022
+	var rise := 0.3
+	for w in HOT:
+		if w in name:
+			flow = 0.05
+			rise = 0.75
+			break
+	for w in CALM:
+		if w in name:
+			flow = 0.008
+			rise = 0.12
+			break
+	m.set_shader_parameter("flow", flow)
+	m.set_shader_parameter("rise", rise)
+	m.set_shader_parameter("seed", randf() * 50.0)
+	return m
 
 
 static func burst(parent: Node, pos: Vector2, color: Color, amount: int = 24, speed: float = 260.0,
@@ -51,9 +81,7 @@ static func flash(parent: Node, name: String, pos: Vector2, size: float, duratio
 		return false
 	var s := Sprite2D.new()
 	s.texture = UiSkin.tex(name)
-	var mat := CanvasItemMaterial.new()
-	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	s.material = mat
+	s.material = live(name)
 	s.modulate = tint
 	s.position = pos
 	s.rotation = randf_range(-PI, PI) if spin > 0.0 else 0.0

@@ -1021,7 +1021,7 @@ static func _sprite(parent: Node, names: Array, pos: Vector2, size: float, tint:
 		return null
 	var s := Sprite2D.new()
 	s.texture = UiSkin.tex(n)
-	s.material = _add()
+	s.material = Fx.live(n)
 	s.modulate = Color(tint.r * 1.3, tint.g * 1.3, tint.b * 1.3, tint.a) if n.begins_with("k_") \
 		else Color(1, 1, 1, tint.a)
 	s.position = pos
