@@ -57,6 +57,15 @@ him, card by card. / At the river Acheron, Charon is waiting."
 
 - Decks (as in Hearthstone): exactly 30 cards, your class (Pilgrim or Ferryman) plus Neutral, at most 2 copies
   of a card and 1 of a legendary.
+- Preconstructed decks (`data/decks.json`), three per class, picked with the arrows on Choose your path (the last
+  pick per class is saved in `Settings.deck_choice`); the opponent plays a random one of the other class
+  (`Game.pick_enemy_deck`, never the same one twice in a row). Custom decks face a random one too.
+  - Pilgrim: *The Pilgrim's Way* (starter, midrange guards and draw), *Cato's Vigil* (guards, Armor, removal),
+    *The Noble School* (the poets of Limbo: draw, spells, Rebirth).
+  - Ferryman: *The Ferryman's Host* (starter, souls, venom, clears), *The Serpent Pit* (cheap souls and Venom swarm),
+    *The Malebranche Raid* (Swift aggro and burn).
+  - Deck balance: `ai_duel.gd -- --matrix --games=200` (Hard vs Hard, each deal from both seats) or
+    `-- --decks=<a>,<b>`; aim for 40-60% in every Pilgrim / Ferryman pairing.
 
 Balance check: `run_tests.gd` plays 300 starter-deck games with alternating seats. At v0.2 it reports
 Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman class pool needs more power.

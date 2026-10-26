@@ -86,13 +86,15 @@
     "pj_lion_of_violence"
    ],
    "cards": {
-    "uh_undecided_soul": 2,
+    "mc_manto": 1,
+    "pj_veil_of_stillness": 1,
     "cd_pholus": 1,
-    "uh_caesar": 1,
+    "cd_walls_of_dis": 1,
     "uh_avaricious_hoarder": 1,
     "pj_statius": 1,
-    "uh_cut_the_thread": 1,
-    "pj_saint_lucy": 2,
+    "uh_cut_the_thread": 2,
+    "mc_tiresias": 1,
+    "pj_saint_lucy": 1,
     "limbo_philosophers": 2,
     "cd_nameless_bush": 2,
     "uh_sullen_one": 1,
@@ -101,7 +103,7 @@
     "pj_lion_of_violence": 2,
     "geryon": 2,
     "virgil_guide": 2,
-    "pj_three_beasts": 2,
+    "pj_three_beasts": 1,
     "pj_virgins_mercy": 1,
     "pj_cato": 1,
     "pj_dantes_resolve": 2,
@@ -153,7 +155,8 @@
     "ih_libicocco"
    ],
    "cards": {
-    "ih_thief_serpent": 2,
+    "ih_thief_serpent": 1,
+    "she_wolf": 1,
     "ih_blood_swimmer": 2,
     "ih_whip_demon": 2,
     "banner_chaser": 2,
