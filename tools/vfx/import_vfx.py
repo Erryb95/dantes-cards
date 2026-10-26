@@ -20,7 +20,13 @@ BASE = open(r"C:\Servers\comfy_url.txt", encoding="utf-8").readline().strip().rs
 NAMES = ["flame_tongue", "fireball", "lava_crack", "ice_shard", "frost_star", "venom_glob", "serpent_coil",
          "light_beam", "angel_feather", "halo_ring", "soul_wisp", "skull_wisp", "whirlwind", "gust_streak",
          "water_splash", "claw_rake", "gold_coin", "glyph_ring", "judgment_sigil", "chain_glow", "blood_burst",
-         "page_glow"]
+         "page_glow",
+         # second batch: deaths, casting runes, more hits, heal / buff
+         "death_ice_shards", "death_soul", "death_stone", "death_venom", "death_ash", "death_shadow", "death_blood",
+         "rune_fire", "rune_ice", "rune_holy", "rune_shadow", "rune_venom", "rune_soul",
+         "lightning", "thorn_vines", "thorn_spike", "pitch_splash", "flaming_arrow", "ground_fissure",
+         "blood_column", "water_column", "sunburst", "shadow_burst", "fire_explosion",
+         "heal_swirl", "holy_shield", "buff_aura", "snowflake", "wind_ribbon"]
 
 
 def fetch(name: str) -> bytes | None:
