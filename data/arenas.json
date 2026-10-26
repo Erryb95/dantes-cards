@@ -51,6 +51,7 @@
       "art": "game board seen from above: wind-beaten cliffs of the second circle, pale souls whirling in the storm at the left and right edges, a current of wind and mist across the middle, carved stone frame and sockets as in the Acheron layout",
       "scene": "res://scenes/arenas/standard.tscn",
       "board": "lust_board.jpg",
+      "normal": "lust_normal.png",
       "mist": "lust_mist.png",
       "divider": {"kind": "wind", "height": 160, "span": [40, 1880]},
       "ambient": "dust",
