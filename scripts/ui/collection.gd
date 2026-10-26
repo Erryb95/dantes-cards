@@ -9,6 +9,7 @@ var _zoom: Control
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(MenuBackdrop.new())
+	Sfx.play_ambience("dungeon_drone.ogg", -22.0)
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.offset_left = 40

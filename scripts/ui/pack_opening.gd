@@ -95,6 +95,7 @@ func _refresh() -> void:
 func _buy() -> void:
 	if Collection.buy_pack():
 		Sfx.play("coins", -2.0)
+		Sfx.play("coin_pouch", -6.0)
 		_refresh()
 		if pack == null and _state != "reveal":
 			_next_pack()
@@ -254,6 +255,7 @@ func _reveal(c: Dictionary) -> void:
 	var t := v.create_tween()
 	t.tween_property(v, "scale:x", 0.0, 0.12)
 	t.tween_callback(v.set_face_up.bind(true))
+	Sfx.play("card_flip", -4.0)
 	t.tween_property(v, "scale:x", 0.8, 0.12)
 	t.tween_property(v, "scale", Vector2(0.92, 0.92), 0.1)
 	t.tween_property(v, "scale", Vector2(0.85, 0.85), 0.2).set_trans(Tween.TRANS_BACK)
@@ -293,7 +295,7 @@ func _reveal(c: Dictionary) -> void:
 		_tag(v, "NEW", Color(0.5, 1.0, 0.5))
 	elif d.refund > 0:
 		_tag(v, "+%d obols" % d.refund, Color(1.0, 0.85, 0.5))
-		Sfx.play("coins", -8.0)
+		Sfx.play("coin_spin", -8.0)
 	if _cards.all(func(x): return x.revealed):
 		_state = "done"
 		_refresh()

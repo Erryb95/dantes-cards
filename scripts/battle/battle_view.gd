@@ -726,10 +726,13 @@ func _present(ev: Dictionary) -> void:
 					col = Color(0.6, 0.2, 1.0)
 				Sfx.play("swish_long", -6.0, 0.8)
 				Sfx.play({"freeze": "chain", "silence": "lock", "destroy": "spell", "buff": "gem"}.get(ev.kind, "spell_fire"), -8.0)
+				if ev.kind in ["buff", "silence"]:
+					Sfx.play("magic", -10.0)
 				await Fx.projectile(fx_layer, a.position, b.position, col, 0.38 / _speed())
 				Sfx.play("thud", -6.0)
 				if ev.kind == "freeze":
 					Sfx.play("glass", -6.0, 0.8)
+					Sfx.play("ice", -6.0)
 					Fx.flash(fx_layer, "k_star_07", b.position, 300.0, 0.6, Color(0.6, 0.85, 1.0), 0.6)
 				if ev.kind == "destroy":
 					shake(10.0)
@@ -905,6 +908,7 @@ func _mulligan_swap(ev: Dictionary) -> void:
 			old.uid = ev.uid
 			old.card_id = ev.id
 			return
+		Sfx.play("card_flip", -8.0)
 		var c := CardView.new().setup(ev.id, ev.uid, false)
 		c.position = deck_views[0].position
 		c.rotation = PI / 2
@@ -948,7 +952,7 @@ func _on_play(ev: Dictionary) -> void:
 	c.playable = false
 	c.selected = false
 	c.z_index = 30
-	Sfx.play("swish_long", -4.0)
+	Sfx.play("whoosh", -6.0)
 	Sfx.play("card_slide", -4.0)
 	if side == 1 or not c.face_up:
 		# Reveal the opponent's card.
@@ -1012,8 +1016,11 @@ func _on_summon(ev: Dictionary) -> void:
 	Fx.rune(fx_layer, m.position + Vector2(0, MinionView.H * 0.3), UI.RARITY.get(rarity, UI.EMBER), 300.0, 0.8, "k_circle_03")
 	Sfx.play("slam", -4.0)
 	Sfx.play("card_place", -6.0)
-	if int(CardDB.card(m.card_id).get("cost", 0)) >= 6:
+	var cost := int(CardDB.card(m.card_id).get("cost", 0))
+	if cost >= 6:
 		Sfx.play("roar", -8.0, 0.9)
+	elif cost >= 4:
+		Sfx.play("growl", -12.0, 1.0, 0.1)
 	if rarity == "legendary":
 		shake(18.0)
 		Fx.shockwave(fx_layer, m.position, UI.GOLD, 520.0, 0.7)
@@ -1039,11 +1046,12 @@ func _on_attack(ev: Dictionary) -> void:
 	var hit: Vector2 = b.position - dir * 70.0
 	var t: Tween = a.create_tween()
 	t.tween_property(a, "scale", Vector2(1.14, 1.14), 0.12 / _speed()).set_trans(Tween.TRANS_QUAD)
+	Sfx.play("whoosh", -8.0, 0.9)
 	t.parallel().tween_property(a, "position", a.position - dir * 26.0, 0.12 / _speed())
 	t.tween_property(a, "position", hit, 0.13 / _speed()).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	await t.finished
 	Sfx.play("thud", -2.0, 0.9)
-	Sfx.play("blade", -6.0)
+	Sfx.play("clash" if b is MinionView else "blade", -6.0)
 	shake(9.0 if b is HeroView else 6.0)
 	if int(a.attack if a is MinionView else 0) >= 5 or b is HeroView:
 		_hit_stop(0.07 if b is HeroView else 0.09)
@@ -1116,7 +1124,7 @@ func _on_death(ev: Dictionary) -> void:
 	if m == null:
 		return
 	board_views[ev.side].erase(m)
-	Sfx.play("sigh", -10.0, 1.0, 0.15)
+	Sfx.play("moan", -14.0, 1.0, 0.12)
 	Sfx.play("creature_die", -12.0, 1.1)
 	Fx.flash(fx_layer, "fire_burst", m.position, 300.0, 0.7)
 	Fx.flash(fx_layer, "smoke_puff", m.position + Vector2(0, -30), 340.0, 1.2, Color(1, 1, 1, 0.7), 0.2)

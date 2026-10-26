@@ -93,16 +93,19 @@ static func button(text: String, width: float = 420.0, height: float = 84.0) -> 
 	b.add_theme_stylebox_override("pressed", box(Color(0.45, 0.1, 0.05, 1.0), GOLD, 4, 10, Color(1.0, 0.5, 0.1, 0.6), 22))
 	b.add_theme_stylebox_override("disabled", box(Color(0.1, 0.07, 0.06, 0.8), Color(0.3, 0.25, 0.2), 2, 10))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	if width >= 200.0 and UiSkin.has("menu_plate"):
-		# The painted bronze plate (ComfyUI UI pass): dark ink on gold.
-		b.add_theme_stylebox_override("normal", plate(Color(0.92, 0.88, 0.82)))
-		b.add_theme_stylebox_override("hover", plate(Color(1.15, 1.05, 0.9), -2))
-		b.add_theme_stylebox_override("pressed", plate(Color(0.75, 0.62, 0.5), 4))
-		b.add_theme_stylebox_override("disabled", plate(Color(0.4, 0.38, 0.36)))
+	if height >= 50.0 and width >= 120.0 and UiSkin.has("menu_plate"):
+		# The painted bronze plate (ComfyUI UI pass): dark ink on gold. Narrow buttons use a half-size plate so the
+		# scrollwork ends leave room for the label.
+		var small := width < 260.0
+		b.add_theme_stylebox_override("normal", plate(Color(0.92, 0.88, 0.82), 0, small))
+		b.add_theme_stylebox_override("hover", plate(Color(1.15, 1.05, 0.9), -2, small))
+		b.add_theme_stylebox_override("pressed", plate(Color(0.75, 0.62, 0.5), 4, small))
+		b.add_theme_stylebox_override("disabled", plate(Color(0.4, 0.38, 0.36), 0, small))
 		b.add_theme_color_override("font_color", Color(0.2, 0.08, 0.03))
 		b.add_theme_color_override("font_hover_color", Color(0.3, 0.04, 0.02))
 		b.add_theme_color_override("font_pressed_color", Color(0.12, 0.04, 0.02))
 		b.add_theme_color_override("font_disabled_color", Color(0.22, 0.2, 0.18))
+	b.ready.connect(fit_text.bind(b))
 	b.mouse_entered.connect(func(): Sfx.play("ui_hover", -10.0))
 	b.pressed.connect(func(): Sfx.play("ui_confirm", -6.0))
 	# Physical depth: the plate rises toward the pointer and sinks when pressed.
@@ -114,6 +117,17 @@ static func button(text: String, width: float = 420.0, height: float = 84.0) -> 
 	return b
 
 
+## Shrinks the label's font until it fits inside the button's content area (long labels on narrow plates).
+static func fit_text(b: Button) -> void:
+	var font := b.get_theme_font("font")
+	var size := b.get_theme_font_size("font_size")
+	var sb := b.get_theme_stylebox("normal")
+	var room := b.custom_minimum_size.x - sb.get_margin(SIDE_LEFT) - sb.get_margin(SIDE_RIGHT) - 6.0
+	while size > 16 and font.get_string_size(b.text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > room:
+		size -= 1
+	b.add_theme_font_size_override("font_size", size)
+
+
 static func _press_depth(b: Button, s: float) -> void:
 	if b.disabled and s > 1.0:
 		return
@@ -121,17 +135,28 @@ static func _press_depth(b: Button, s: float) -> void:
 
 
 ## The painted button plate as a nine-patch: the scrollwork ends keep their shape at any width.
-static func plate(tint: Color, sink: int = 0) -> StyleBoxTexture:
+static var _small_plate: Texture2D
+static func plate(tint: Color, sink: int = 0, small: bool = false) -> StyleBoxTexture:
 	var s := StyleBoxTexture.new()
-	s.texture = UiSkin.tex("menu_plate")
-	s.texture_margin_left = 70
-	s.texture_margin_right = 70
-	s.texture_margin_top = 22
-	s.texture_margin_bottom = 22
-	s.content_margin_left = 40
-	s.content_margin_right = 40
-	s.content_margin_top = 22 + sink
-	s.content_margin_bottom = 22 - sink
+	var k := 0.5 if small else 1.0
+	if small:
+		if _small_plate == null:
+			var img := UiSkin.tex("menu_plate").get_image()
+			if img.is_compressed():
+				img.decompress()
+			img.resize(img.get_width() / 2, img.get_height() / 2, Image.INTERPOLATE_LANCZOS)
+			_small_plate = ImageTexture.create_from_image(img)
+		s.texture = _small_plate
+	else:
+		s.texture = UiSkin.tex("menu_plate")
+	s.texture_margin_left = 70 * k
+	s.texture_margin_right = 70 * k
+	s.texture_margin_top = 22 * k
+	s.texture_margin_bottom = 22 * k
+	s.content_margin_left = 40 * k + (6 if small else 0)
+	s.content_margin_right = 40 * k + (6 if small else 0)
+	s.content_margin_top = 22 * k + sink
+	s.content_margin_bottom = 22 * k - sink
 	s.modulate_color = tint
 	return s
 

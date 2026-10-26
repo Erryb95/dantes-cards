@@ -24,6 +24,7 @@ var _views := {} ## id -> CardView
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(MenuBackdrop.new())
+	Sfx.play_ambience("dungeon_drone.ogg", -22.0)
 	_index = Game.edit_deck
 	if _index >= 0 and _index < Collection.decks.size():
 		deck = Collection.decks[_index].duplicate(true)

@@ -41,11 +41,18 @@ func _variants(name: String) -> Array:
 		return _cache[name]
 	var out := []
 	for dir in [SFX_DIR, UI_DIR]:
-		if ResourceLoader.exists(dir + name + ".ogg"):
-			out.append(load(dir + name + ".ogg"))
+		for ext in [".ogg", ".wav"]:
+			if ResourceLoader.exists(dir + name + ext):
+				out.append(load(dir + name + ext))
 		var i := 0
-		while ResourceLoader.exists(dir + "%s_%d.ogg" % [name, i]):
-			out.append(load(dir + "%s_%d.ogg" % [name, i]))
+		while true:
+			var base: String = dir + "%s_%d" % [name, i]
+			if ResourceLoader.exists(base + ".ogg"):
+				out.append(load(base + ".ogg"))
+			elif ResourceLoader.exists(base + ".wav"):
+				out.append(load(base + ".wav"))
+			else:
+				break
 			i += 1
 	_cache[name] = out
 	return out
