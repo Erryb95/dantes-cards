@@ -21,20 +21,12 @@ static var _fonts := {}
 static func font(kind: String = "body") -> Font:
 	if _fonts.has(kind):
 		return _fonts[kind]
-	var path: String = {"title": "res://assets/fonts/Cinzel.ttf", "body": "res://assets/fonts/IMFeENrm28P.ttf",
+	var path: String = {"title": "res://assets/fonts/CinzelTitle.ttf", "body": "res://assets/fonts/IMFeENrm28P.ttf",
 		"italic": "res://assets/fonts/IMFeENit28P.ttf"}.get(kind, "res://assets/fonts/IMFeENrm28P.ttf")
+	# The title face is Cinzel at a real 600 weight with merged outlines (tools/ui/make_title_font.py): the
+	# variable font's overlapping contours drew spikes and specks in MSDF, and a fake bold smeared the serifs.
 	var f: FontFile = load(path)
 	f.generate_mipmaps = true
-	if kind == "title":
-		# Cinzel's outlines overlap, which MSDF renders as spikes and specks: rasterise it instead, three times
-		# oversampled so it stays sharp on scaled-up cards.
-		f.multichannel_signed_distance_field = false
-		f.oversampling = 3.0
-		var v := FontVariation.new()
-		v.base_font = f
-		v.variation_embolden = 0.6
-		_fonts[kind] = v
-		return v
 	f.multichannel_signed_distance_field = true
 	f.msdf_pixel_range = 12
 	f.msdf_size = 64
