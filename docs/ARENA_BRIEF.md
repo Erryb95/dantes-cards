@@ -27,8 +27,9 @@ in-game coordinates; the 1920x1080 layout is scaled x1.333.
   - the Gate of Hell's stonework could form the top corners;
   - roots and bones in the lower corners.
 - **Sockets (painted into the board, empty inside):**
-  - two round stone **hero plinths** (radius about 130), at the top centre (960,150) and the bottom centre (960,808);
-  - a smaller round **power socket** beside each, at (1140,164) and (1140,822);
+  - two round stone **hero plinths** (radius about 128), at the top centre (960,143) and the bottom centre (960,801),
+    mirrored about the divider (y 472);
+  - a smaller round **power socket** (radius 52) beside each, at (1140,129) and (1140,815);
   - an oval **end-turn recess** of about 250x130 at (1745,472), sitting on the river's right edge like a stone
     landing;
   - two **deck niches** carved in the right cliff, at (1800,312) and (1800,632);
@@ -58,10 +59,12 @@ code adds its life: Limbo's stream (water shader), Lust's wind (`wind.gdshader` 
 edges), Dis's ember crack (`crack.gdshader` + heat haze + sparks) and Cocytus's frost crack (rime, glints, cold mist).
 Flames on props (the tomb, the torch) are code VFX: paint them unlit.
 
-Each board has its own 3D blockout (same camera, same sockets and socket ID colours, flat minion zones, detail on
-the frame) in `art_src/arena/blockout_<id>/`, made by `tools/blender/board_blockout.py --arena=<id>` +
-`tools/arena/passes.py`; `tools/arena/upload_blockout.py <id>` sends the passes to the ComfyUI PC as
-`<id>_bo_board_<pass>.png` (id, clay, depth, lineart, normal). The Acheron's stays in `art_src/arena/blockout/`.
+Each board has its own 3D blockout (same orthographic camera at 55 degrees, same sockets and socket ID colours,
+mirrored socket pairs built from one mesh, perfectly flat minion zones, detail on the frame only) in
+`art_src/arena/blockout_<id>/`, made by `tools/blender/board_blockout.py --arena=<id>` + `tools/arena/passes.py`;
+`tools/arena/upload_blockout.py [--tag=<tag>] <id>` sends the passes to the ComfyUI PC as
+`<id>_<tag>_board_<pass>.png` (id, clay, depth, lineart, normal; tag `bo` by default, `bo2` for the symmetric
+orthographic blockouts). The Acheron's stays in `art_src/arena/blockout/`.
 - Limbo: flat meadow, a thin stream sunk along the middle (no banks), the stepped walls and towers of the Noble
   Castle only along the top edge (the enemy hero stands in the gate), soft grassy hillocks at the sides.
 - Lust: flat rock plateau, a slightly lower smooth wind channel across the middle, jagged cliffs and spires only

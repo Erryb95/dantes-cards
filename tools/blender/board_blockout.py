@@ -7,9 +7,14 @@ the sockets (hero plinths, power sockets, end-turn recess, deck niches, mana tra
 the terrain, the scenery on the frame and the props change. The two minion zones stay flat in every arena: the detail
 goes to the frame.
 
-A tilted perspective camera looks at the board like a table (about 55 degrees elevation). Every socket is placed by
-casting a ray from the camera through its on-screen layout position (1920x1080 units, the same numbers the game
-uses in battle_view.gd), so the painted sockets land exactly under the heroes, decks and buttons.
+A tilted ORTHOGRAPHIC camera looks at the board like a table (55 degrees elevation, no perspective), so a piece
+has the same on-screen size and shape wherever it sits: the enemy's sockets render exactly like the player's. Every
+socket is placed by casting a (parallel) ray from the camera plane through its on-screen layout position (1920x1080
+units across the full render, the same numbers the game uses in battle_view.gd), then nudged so the centre of its
+on-screen bounding box lands exactly on that point. The paired sockets (hero plinths, power sockets, deck niches) are
+mirrored about the divider (y = 472) and built from the identical mesh; the mana trays share one mesh too but stay
+at the top and bottom edges (the player's hand sits at the bottom). The minion zones are perfectly flat in every
+arena; the terrain, the scenery and the props only live on the outer frame, and props never show in the board passes.
 
 Writes into <out_dir>:
   board_clay.png    grey clay render with shadows and cavity (base for img2img / canny)
@@ -49,13 +54,20 @@ scene = bpy.context.scene
 scene.render.resolution_x, scene.render.resolution_y = RES
 scene.render.resolution_percentage = 100
 
+# Orthographic camera, tilted 35 degrees from straight down (55 degrees elevation), looking at the world origin.
+# ORTHO_SCALE world units span the render's width, so 1920 layout units = 24 world units (80 per unit).
+CAM_TILT = math.radians(35.0)
+ORTHO_SCALE = 24.0
 cam_data = bpy.data.cameras.new("cam")
-cam_data.lens = 42.0
+cam_data.type = "ORTHO"
+cam_data.ortho_scale = ORTHO_SCALE
+cam_data.clip_start = 0.1
+cam_data.clip_end = 300.0
 cam = bpy.data.objects.new("cam", cam_data)
 scene.collection.objects.link(cam)
 scene.camera = cam
-cam.location = (0.0, -21.0, 19.0)
-cam.rotation_euler = (math.radians(47.0), 0.0, 0.0)
+cam.location = (0.0, -80.0 * math.sin(CAM_TILT), 80.0 * math.cos(CAM_TILT))
+cam.rotation_euler = (CAM_TILT, 0.0, 0.0)
 bpy.context.view_layer.update()
 
 IDS = {}
@@ -92,14 +104,15 @@ def tag(o, name, prop=False):
 
 
 def screen_ray(gx, gy):
-    """World-space ray through the layout point (gx, gy) in 1920x1080 units."""
+    """World-space ray through the layout point (gx, gy) in 1920x1080 units. The camera is orthographic: every ray
+    is parallel to the view axis and starts on the camera plane, at the layout point's place in the view frame."""
     frame = cam_data.view_frame(scene=scene)  # top-right, bottom-right, bottom-left, top-left (camera space)
     u, v = gx / LAYOUT[0], 1.0 - gy / LAYOUT[1]
     left = frame[2].lerp(frame[3], v)
     right = frame[1].lerp(frame[0], v)
     p = left.lerp(right, u)
-    origin = cam.matrix_world.translation
-    return origin, (cam.matrix_world @ p - origin).normalized()
+    origin = cam.matrix_world @ Vector((p.x, p.y, 0.0))
+    return origin, (cam.matrix_world.to_3x3() @ Vector((0.0, 0.0, -1.0))).normalized()
 
 
 def ground_at(gx, gy, z=0.0):
@@ -140,7 +153,7 @@ def frame_masks(gx, gy, top_px=70.0):
 
 
 # ----------------------------------------------------------------------------------------------------------------
-# Acheron (the original board; unchanged)
+# Acheron (the original board)
 
 def height_acheron(gx, gy, wx, wy):
     """Terrain height from the on-screen position: calm banks, a sunk river, cliffs at the frame."""
@@ -152,7 +165,8 @@ def height_acheron(gx, gy, wx, wy):
     rough = noise.noise(Vector((wx * 0.6, wy * 0.6, 0.0)))
     fine = noise.noise(Vector((wx * 2.5, wy * 2.5, 3.0)))
     play = 1.0 - min(1.0, side * 1.5 + top)
-    h += cliff * (1.0 + 0.5 * rough) + (0.03 * rough + 0.015 * fine) * play + (0.35 * rough + 0.12 * fine) * (1.0 - play)
+    # The banks stay perfectly flat: only the frame gets the noise.
+    h += cliff * (1.0 + 0.5 * rough) + (0.35 * rough + 0.12 * fine) * (1.0 - play)
     # The river cuts a gorge through the side cliffs too.
     return h * (1.0 - river) - 0.45 * river
 
@@ -181,22 +195,24 @@ def scenery_acheron():
     for k in range(70):
         gx = rnd.uniform(380, 1540)
         gy = rnd.uniform(18, 70)
+        hgt = rnd.uniform(0.55, 0.75)
+        if not clear_of_sockets(gx, gy):
+            continue
         z = height_at(gx, gy)
         p = ground_at(gx, gy, z)
-        hgt = rnd.uniform(0.55, 0.75)
         bpy.ops.mesh.primitive_cylinder_add(radius=0.09, depth=hgt, vertices=8, location=(p.x, p.y, z + hgt / 2))
         tag(bpy.context.object, "souls")
         bpy.ops.mesh.primitive_uv_sphere_add(radius=0.08, segments=10, ring_count=6, location=(p.x, p.y, z + hgt + 0.06))
         tag(bpy.context.object, "souls")
-    # Landing stage: planks from the far bank into the river, left of the play area.
+    # Landing stage: planks from the far bank into the river, on the left frame (clear of the minion zones).
     for k in range(6):
         gy = 380 + k * 18
-        p = ground_at(300, gy, -0.05)
+        p = ground_at(270, gy, -0.05)
         bpy.ops.mesh.primitive_cube_add(location=(p.x, p.y, -0.05))
         o = bpy.context.object
         o.scale = (0.7, 0.12, 0.05)
         tag(o, "landing_stage")
-    for gx in (262, 338):
+    for gx in (232, 308):
         p = ground_at(gx, 470, -0.4)
         bpy.ops.mesh.primitive_cylinder_add(radius=0.07, depth=0.9, vertices=8, location=(p.x, p.y, 0.0))
         tag(bpy.context.object, "landing_stage")
@@ -323,28 +339,77 @@ def px(gx, gy, n_px):
     return radius_at(gx, gy, n_px)
 
 
-# Pads keep the ground under the sockets on the frame level, as the sockets sit there: (cx, cy, rx, ry, z or None).
-# z None flattens to the raw terrain height at the centre. The end-turn recess is sunk like the Acheron's.
-SOCKET_PADS = [(1745, 472, 135, 78, -0.3, True), (1800, 312, 82, 74, 0.35, False), (1800, 632, 82, 74, 0.35, False),
-               (1640, 55, 275, 48, 0.15, False), (1640, 1025, 275, 48, 0.1, False)]
-_pad_z = {}
+# Socket layout points (1920x1080 units). The pairs mirror about the divider MID; the mana trays cannot (the hand
+# covers the bottom edge) but share one mesh. Keep in step with the game's battle_view.gd.
+HERO_PLINTHS = {"hero_plinth_enemy": (960, 143), "hero_plinth_player": (960, 801)}
+POWER_SOCKETS = {"power_socket_enemy": (1140, 129), "power_socket_player": (1140, 815)}
+DECK_NICHES = {"deck_niche_enemy": (1800, 312), "deck_niche_player": (1800, 632)}
+MANA_TRAYS = {"mana_tray_enemy": (1640, 55), "mana_tray_player": (1640, 1025)}
+END_TURN = (1745, 472)
+# Ground level of each socket (world z) and the upward screen shift of one world unit of height (orthographic).
+Z_PLINTH, Z_DECK, Z_TRAY, Z_END_TURN = 0.0, 0.35, 0.15, -0.3
+Z_SCREEN = math.sin(CAM_TILT) * LAYOUT[0] / ORTHO_SCALE
+
+# Pads flatten the ground under every socket to the socket's level: (cx, cy, rx, ry, z, ellipse), with (cx, cy)
+# the pad centre as seen at its height z. Mirrored sockets get mirrored pads at the same z. The end-turn recess is
+# sunk like the Acheron's.
+SOCKET_PADS = ([(gx, gy, 150, 135, Z_PLINTH, True) for gx, gy in HERO_PLINTHS.values()]
+               + [(gx, gy, 66, 60, Z_PLINTH, True) for gx, gy in POWER_SOCKETS.values()]
+               + [(gx, gy, 82, 74, Z_DECK, False) for gx, gy in DECK_NICHES.values()]
+               + [(gx, gy, 275, 48, Z_TRAY, False) for gx, gy in MANA_TRAYS.values()]
+               + [(END_TURN[0], END_TURN[1], 135, 78, Z_END_TURN, True)])
+
+
+def pad_distance(gx, gy, pad):
+    """Below 1 inside the pad, growing outwards; (gx, gy) is the layout point of the ground at z = 0."""
+    cx, cy, rx, ry, z, ellipse = pad
+    dx, dy = abs(gx - cx) / rx, abs(gy - z * Z_SCREEN - cy) / ry
+    return math.hypot(dx, dy) if ellipse else max(dx, dy)
+
+
+def clear_of_sockets(gx, gy, margin=0.2):
+    """True when the layout point is off every socket pad (with a margin): scenery must keep off them."""
+    return all(pad_distance(gx, gy, pad) > 1.0 + margin for pad in SOCKET_PADS)
+
+
+def hides_socket(gx, gy, h, rx=40.0, ry=40.0):
+    """True when a piece of scenery standing at the layout point (footprint half-size rx, ry layout units; h world
+    units tall) would cover part of a socket on screen: it stands in front of the socket and reaches into it."""
+    for cx, cy, prx, pry, z, ellipse in SOCKET_PADS:
+        # The pads are a little larger than their sockets: test against the socket's own extent.
+        if (abs(gx - cx) < 0.9 * prx + rx and gy + ry > cy - 0.75 * pry + z * Z_SCREEN
+                and gy - h * Z_SCREEN - ry < cy + pry):
+            return True
+    return False
+
+
+def scenery_ok(gx, gy, h, r=40.0):
+    """A free-standing piece of scenery keeps off the socket pads and out of the view of every socket."""
+    return clear_of_sockets(gx, gy, r / 100.0) and not hides_socket(gx, gy, h, r, r)
 
 
 def with_pads(raw):
     def h(gx, gy, wx, wy):
         v = raw(gx, gy, wx, wy)
-        # A low ledge on the right frame for the decks and the end-turn recess, with the frame rising behind it.
-        ledge = band(gy, 235, 740, 70) * smooth(1590.0, 1680.0, gx) * (1.0 - smooth(1880.0, 1960.0, gx))
+        # A low ledge on the right frame for the decks and the end-turn recess, with the frame rising behind it
+        # (mirrored about the divider, like the decks).
+        ledge = band(gy, MID - 240, MID + 240, 70) * smooth(1590.0, 1680.0, gx) * (1.0 - smooth(1880.0, 1960.0, gx))
         v *= 1.0 - 0.75 * ledge
-        for cx, cy, rx, ry, z, ellipse in SOCKET_PADS:
-            dx, dy = abs(gx - cx) / rx, abs(gy - cy) / ry
-            d = math.hypot(dx, dy) if ellipse else max(dx, dy)
-            w = 1.0 - smooth(1.0, 1.25 if ellipse else 1.6, d)
+        for pad in SOCKET_PADS:
+            d = pad_distance(gx, gy, pad)
+            # Soft round pads; the sunk end-turn recess fades out quicker, before it reaches the minion zones.
+            w = 1.0 - smooth(1.0, (1.2 if pad[4] < 0.0 else 1.5) if pad[5] else 1.6, d)
             if w > 0.0:
-                if (cx, cy) not in _pad_z:
-                    p = ground_at(cx, cy)
-                    _pad_z[(cx, cy)] = z if z is not None else raw(cx, cy, p.x, p.y)
-                v = v * (1.0 - w) + _pad_z[(cx, cy)] * w
+                v = v * (1.0 - w) + pad[4] * w
+        # Nothing in front of a socket may rise into the view of it: below each pad (on screen) the frame stays
+        # under the sight line that grazes the pad's front edge, so no socket is cut by the terrain. (The sunk
+        # recess is exempt: its socket's top is flush with the ground around it.)
+        for cx, cy, rx, ry, z, ellipse in SOCKET_PADS:
+            cover = 1.0 - smooth(rx, rx + 40.0, abs(gx - cx))
+            if z >= 0.0 and cover > 0.0 and gy > cy + ry + z * Z_SCREEN:
+                cap = (gy - cy - ry) / Z_SCREEN    # a point this high is seen exactly on the pad's front edge
+                if v > cap:
+                    v = v * (1.0 - cover) + cap * cover
         return v
     return h
 
@@ -379,6 +444,10 @@ def wall(m, pts, h, thick, merlon=0.16, gap=0.14, spikes=None, step=50.0):
         sub += [(x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n) for k in range(n)]
     sub.append(pts[-1])
     for (ax, ay), (bx, by) in zip(sub, sub[1:]):
+        # Leave a gap where the wall would stand in front of a socket.
+        if hides_socket((ax + bx) / 2, (ay + by) / 2, h + (spikes or merlon),
+                        abs(bx - ax) / 2 + 10, abs(by - ay) / 2 + 5):
+            continue
         a, b = spot(ax, ay), spot(bx, by)
         base, top = min(a.z, b.z) - 0.25, max(a.z, b.z) + h
         d = b - a
@@ -408,11 +477,9 @@ def height_limbo(gx, gy, wx, wy):
     s, t = smooth(0.0, 1.0, side), smooth(0.0, 1.0, top)
     rough = n2(wx, wy, 0.3, 11.0)
     fine = n2(wx, wy, 1.1, 5.0)
-    h = s * (1.1 + 0.8 * rough) + t * 0.3 + max(s, t) * 0.25 * fine     # soft grassy hillocks
-    play = 1.0 - min(1.0, side * 1.5 + top)
-    h += 0.008 * rough * play
+    h = s * (1.1 + 0.8 * rough) + t * 0.3 + max(s, t) * 0.25 * fine     # soft grassy hillocks on the frame only
     c = stream_y(gx)
-    st = band(gy, c - 20, c + 20, 9)
+    st = band(gy, c - 12, c + 12, 7)    # inside the gap between the minion zones
     return h * (1.0 - st) - 0.16 * st
 
 
@@ -424,11 +491,15 @@ def scenery_limbo():
             wall(walls, [(gx0, 64 - 15 * k), (gx1, 64 - 15 * k)], 0.32 + 0.24 * k, 0.16)
     for gx, gy, r, h in ((40, 46, 0.42, 1.5), (250, 52, 0.36, 1.2), (470, 52, 0.36, 1.25), (690, 50, 0.4, 1.4),
                          (790, 42, 0.55, 1.9), (1130, 42, 0.55, 1.9), (1345, 50, 0.4, 1.4)):
+        if hides_socket(gx, gy, h + r * 1.6, r * 80.0, r * 65.0):
+            continue
         p = spot(gx, gy, -0.2)
         towers.cyl(p, r, r * 0.95, h, n=16)
         towers.cyl(p + Vector((0, 0, h)), r * 1.12, 0.0, r * 1.6, n=16)
     rnd = random.Random(3)
     for gx, gy in ((70, 540), (240, 610), (90, 815), (270, 1030), (1690, 205), (1690, 765), (1885, 990), (45, 390)):
+        if not scenery_ok(gx, gy, 0.6):
+            continue
         p = spot(gx, gy)
         for k in range(3):
             r = rnd.uniform(0.18, 0.3)
@@ -473,9 +544,9 @@ def height_lust(gx, gy, wx, wy):
     r2 = ridged(wx, wy, 1.4, 8.0) ** 2
     r3 = ridged(wx, wy, 3.2, 2.0)
     cliff = s * (2.9 * (0.45 + 0.9 * r1) + 0.6 * r2 + 0.15 * r3) + t * (1.2 * (0.5 + 0.9 * r1) + 0.4 * r2)
-    play = 1.0 - min(1.0, side * 1.5 + top)
-    h = cliff + 0.01 * n2(wx, wy, 0.4, 4.0) * play
-    ch = band(gy, MID - 62, MID + 62, 34)
+    h = cliff
+    # The wind channel stays in the gap between the minion zones, which are perfectly flat.
+    ch = band(gy, MID - 10, MID + 10, 10)
     return h * (1.0 - 0.6 * ch) - 0.1 * ch
 
 
@@ -484,7 +555,7 @@ def scenery_lust():
     rnd = random.Random(12)
     spots = [(60, 120), (215, 70), (110, 600), (250, 760), (45, 1020), (1700, 150), (1880, 160), (1700, 860),
              (1880, 1060), (420, 22), (640, 30), (1260, 26), (1330, 40)]
-    for gx, gy in spots:
+    for gx, gy in [s for s in spots if scenery_ok(*s, 2.0)]:
         p = spot(gx, gy, -0.2)
         for k in range(rnd.randint(1, 3)):
             off = Vector((rnd.uniform(-0.35, 0.35), rnd.uniform(-0.25, 0.25), 0))
@@ -534,9 +605,7 @@ def height_dis(gx, gy, wx, wy):
     fine = n2(wx, wy, 2.2, 7.0)
     # A low kerb, then rubble rising towards the city walls.
     kerb = 0.22 * smooth(0.0, 0.3, side)
-    h = kerb + s * (0.9 + 0.4 * rough) + t * 0.5 + max(s, t) * 0.1 * fine
-    play = 1.0 - min(1.0, side * 1.5 + top)
-    h += 0.005 * rough * play
+    h = kerb + s * (0.9 + 0.4 * rough) + t * 0.5 + max(s, t) * 0.1 * fine   # the paving itself is flat
     cr = crack_band(gx, gy, 15.0, CRACK_SPAN, 4.0)
     return h * (1.0 - cr) - 0.2 * cr
 
@@ -559,8 +628,10 @@ def open_tomb(m, lid, gx, gy, yaw, size=1.0):
 def scenery_dis():
     walls, towers, tombs, lids = Mesh(), Mesh(), Mesh(), Mesh()
     # Red-hot iron walls along the top edge, with towers, and down both sides of the frame.
-    wall(walls, [(-80, 20), (2000, 20)], 1.0, 0.22, spikes=0.32)
+    wall(walls, [(-80, 14), (2000, 14)], 1.0, 0.22, spikes=0.32)  # just behind the enemy mana tray
     for gx in (60, 330, 600, 1330, 1600, 1860):
+        if hides_socket(gx, 22, 2.8, 34.0, 28.0):
+            continue
         p = spot(gx, 22, -0.3)
         towers.box(p + Vector((0, 0, 0.9)), (0.42, 0.42, 1.2))
         towers.cyl(p + Vector((0, 0, 2.1)), 0.5, 0.0, 0.7, n=4, rot=(0, 0, math.pi / 4))
@@ -568,7 +639,8 @@ def scenery_dis():
         wall(walls, [(gx, 40), (gx, 1100)], 0.8, 0.2, spikes=0.28, step=80.0)
     for gx, gy, yaw, sz in ((215, 150, 0.15, 1.0), (85, 420, -0.4, 1.0), (240, 560, 0.3, 0.9), (70, 760, 0.1, 1.0),
                             (1710, 175, -0.2, 0.9), (1690, 780, 0.25, 0.9), (1885, 1000, -0.1, 0.9)):
-        open_tomb(tombs, lids, gx, gy, yaw, sz)
+        if scenery_ok(gx, gy, 0.6, 50.0):
+            open_tomb(tombs, lids, gx, gy, yaw, sz)
     walls.build("iron_walls")
     towers.build("iron_towers")
     tombs.build("tombs")
@@ -617,6 +689,8 @@ def scenery_cocytus():
     rnd = random.Random(9)
     for gx, gy in ((60, 130), (230, 140), (80, 440), (250, 560), (60, 690), (240, 880), (1700, 180),
                    (1690, 800), (1880, 1010), (430, 40), (1290, 45)):
+        if not scenery_ok(gx, gy, 1.3):
+            continue
         p = spot(gx, gy, -0.15)
         yaw = rnd.uniform(-0.5, 0.5)
         h = rnd.uniform(0.45, 0.7)
@@ -690,12 +764,12 @@ def props_cocytus():
 # ----------------------------------------------------------------------------------------------------------------
 
 ARENAS = {
-    "acheron": dict(height=height_acheron, region=region_acheron, extras=extras_acheron, scenery=scenery_acheron,
-                    props=props_acheron, grid=(320, 200)),
+    "acheron": dict(height=with_pads(height_acheron), region=region_acheron, extras=extras_acheron,
+                    scenery=scenery_acheron, props=props_acheron, grid=(720, 400)),
     "limbo": dict(height=with_pads(height_limbo),
                   region=region_generic("grass_frame", "far_meadow", "near_meadow", "streambed",
-                                        (MID - 34, MID + 34)),
-                  extras=lambda: sheet("stream", MID - 26, MID + 26, -0.1), scenery=scenery_limbo,
+                                        (MID - 22, MID + 22)),
+                  extras=lambda: sheet("stream", MID - 18, MID + 18, -0.1), scenery=scenery_limbo,
                   props=props_limbo, grid=(720, 400)),
     "lust": dict(height=with_pads(height_lust),
                  # No region for the wind channel: its border would be a hard line in the line art.
@@ -781,18 +855,56 @@ def box(name, gx, gy, w_px, d_px, h, z=0.0, prop=False):
     return tag(o, name, prop)
 
 
+def screen_bbox(objs):
+    """On-screen bounding box (layout units) of the objects' evaluated meshes (bevels included)."""
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    pts = []
+    for o in objs:
+        ev = o.evaluated_get(dg)
+        me = ev.to_mesh()
+        pts += [to_layout(ev.matrix_world @ v.co) for v in me.vertices]
+        ev.to_mesh_clear()
+    xs, ys = zip(*pts)
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def place(objs, gx, gy):
+    """Slides a socket over the ground so the centre of its on-screen bounding box lands exactly on (gx, gy).
+    (With the tilted camera the visible rim makes a socket taller on screen than its top face; centring the whole
+    silhouette keeps mirrored sockets mirrored.)"""
+    x0, y0, x1, y1 = screen_bbox(objs)
+    shift = ground_at(gx, gy) - ground_at((x0 + x1) / 2, (y0 + y1) / 2)
+    for o in objs:
+        o.location += shift
+    x0, y0, x1, y1 = screen_bbox(objs)
+    print("socket %-20s centre (%.1f, %.1f) size %.1f x %.1f" % (objs[0]["element"], (x0 + x1) / 2, (y0 + y1) / 2,
+                                                                 x1 - x0, y1 - y0))
+
+
+def socket_pair(points, make):
+    """Builds the first socket of a pair with make(name, gx, gy) -> objects, and the second as linked copies of the
+    same meshes and modifiers. Every socket shape is symmetric front to back, so mirroring it about the divider is
+    the same as copying it: both sockets have the identical size and shape on screen."""
+    (n0, p0), (n1, p1) = points.items()
+    objs = make(n0, *p0)
+    place(objs, *p0)
+    copies = []
+    for o in objs:
+        c = o.copy()
+        scene.collection.objects.link(c)
+        copies.append(tag(c, n1))
+    place(copies, *p1)
+
+
 def sockets():
-    """The same in every arena: each is ray-cast through its layout point, onto the arena's terrain."""
-    for name, (gx, gy) in {"hero_plinth_enemy": (960, 150), "hero_plinth_player": (960, 808)}.items():
-        disc(name, gx, gy, 132, 0.28)
-        disc(name, gx, gy, 118, 0.36)       # raised inner ring
-    for name, (gx, gy) in {"power_socket_enemy": (1140, 164), "power_socket_player": (1140, 822)}.items():
-        disc(name, gx, gy, 58, 0.18)
-    disc("end_turn_socket", 1745, 472, 125, 0.3, z=-0.3, sy=0.55)
-    for name, (gx, gy) in {"deck_niche_enemy": (1800, 312), "deck_niche_player": (1800, 632)}.items():
-        box(name, gx, gy, 130, 120, 0.25, z=height_at(gx, gy))
-    for name, (gx, gy) in {"mana_tray_enemy": (1640, 55), "mana_tray_player": (1640, 1025)}.items():
-        box(name, gx, gy, 520, 70, 0.15, z=height_at(gx, gy))
+    """The same in every arena, each on its flat pad (SOCKET_PADS) and centred on its layout point."""
+    socket_pair(HERO_PLINTHS, lambda n, gx, gy: [disc(n, gx, gy, 128, 0.28, z=Z_PLINTH),
+                                                 disc(n, gx, gy, 114, 0.36, z=Z_PLINTH)])  # raised inner ring
+    socket_pair(POWER_SOCKETS, lambda n, gx, gy: [disc(n, gx, gy, 52, 0.18, z=Z_PLINTH)])
+    socket_pair(DECK_NICHES, lambda n, gx, gy: [box(n, gx, gy, 130, 120, 0.25, z=Z_DECK)])
+    socket_pair(MANA_TRAYS, lambda n, gx, gy: [box(n, gx, gy, 520, 70, 0.15, z=Z_TRAY)])
+    place([disc("end_turn_socket", *END_TURN, 125, 0.3, z=Z_END_TURN, sy=0.55)], *END_TURN)
 
 
 def height_at(gx, gy):
