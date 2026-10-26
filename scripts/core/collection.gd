@@ -182,28 +182,45 @@ func deck_problem(d: Dictionary) -> String:
 	return ""
 
 
-## Fills a deck up to 30 cards with owned cards, cheapest-first mix (the "Auto-fill" button).
+## Fills a deck up to 30 cards with the strongest owned cards (the "Auto-fill" button), keeping the cards already in
+## it. Strength is each card's measured win-rate edge (data/card_ratings.json, from AI games); a first pass keeps
+## a smooth mana curve, a second fills what is left with the best remaining cards.
 func autofill(d: Dictionary) -> void:
 	var pool := []
 	for c in CardDB.all_cards():
 		if c.get("set", "") != "token" and fits_class(c.id, d.cls) and copies(c.id) > 0:
 			pool.append(c)
-	# Class cards first, then a smooth curve: prefer what the curve is missing.
-	pool.shuffle()
-	pool.sort_custom(func(a, b): return int(a.set == d.cls) > int(b.set == d.cls))
+	var score := {}
+	for c in pool:
+		# A small nudge for class cards (the deck's identity) and a tiny jitter between near-equal cards.
+		score[c.id] = rating(c.id) + (0.01 if c.set == d.cls else 0.0) + randf_range(-0.004, 0.004)
+	pool.sort_custom(func(a, b): return score[a.id] > score[b.id])
 	var want := {1: 4, 2: 7, 3: 6, 4: 5, 5: 4, 6: 2, 7: 2}
-	for pass_i in 4: # two passes that respect the curve, then two that just fill
+	for pass_i in 2:
 		for c in pool:
-			if deck_count(d.cards) >= DECK_SIZE:
-				return
-			var have := int(d.cards.get(c.id, 0))
-			if have >= mini(max_copies(c.id), copies(c.id)):
-				continue
 			var cost := clampi(int(c.cost), 1, 7)
-			var in_cost := 0
-			for id in d.cards:
-				if clampi(int(CardDB.card(id).cost), 1, 7) == cost:
-					in_cost += int(d.cards[id])
-			if pass_i < 2 and in_cost >= want[cost]:
-				continue
-			d.cards[c.id] = have + 1
+			while deck_count(d.cards) < DECK_SIZE:
+				var have := int(d.cards.get(c.id, 0))
+				if have >= mini(max_copies(c.id), copies(c.id)):
+					break
+				if pass_i == 0 and _at_cost(d.cards, cost) >= want[cost]:
+					break
+				d.cards[c.id] = have + 1
+
+
+func _at_cost(cards: Dictionary, cost: int) -> int:
+	var n := 0
+	for id in cards:
+		if clampi(int(CardDB.card(id).cost), 1, 7) == cost:
+			n += int(cards[id])
+	return n
+
+
+var _ratings := {}
+## A card's measured strength: its win-rate edge over its class average (0 when unmeasured).
+func rating(id: String) -> float:
+	if _ratings.is_empty():
+		var f := FileAccess.open("res://data/card_ratings.json", FileAccess.READ)
+		var data = JSON.parse_string(f.get_as_text()) if f != null else null
+		_ratings = data.get("ratings", {}) if data is Dictionary else {"_": 0}
+	return float(_ratings.get(id, 0.0))
