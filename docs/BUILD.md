@@ -5,6 +5,7 @@
 ```sh
 timeout 300 $G --headless --path . -s res://tests/run_tests.gd        # rules + AI soak
 timeout 240 $G --headless --path . res://tests/ui_smoke.tscn          # input smoke test
+timeout 300 $G --headless --path . res://tests/intro_test.tscn        # opening cinematic data + player + skip
 timeout 600 $G --headless --path . --export-release "Windows Desktop" build/windows/DantesInfernoCards.exe
 timeout 600 $G --headless --path . --export-debug   "Android"         build/android/DantesInfernoCards.apk
 ```
@@ -25,3 +26,7 @@ arena toy and the divider after s seconds).
 
 Arena art: `python tools/arena/import_arena.py` fetches new boards / mists / props from the ComfyUI PC and lists what
 is still missing (`--force` re-imports).
+
+Intro: `-- --intro` plays the cinematic even if it was seen, `-- --no-intro` never; screenshots of every shot:
+`$G --path . res://scenes/intro.tscn -- --intro-shots=<dir> [--only=<shot id>] [--shot-size=2400x1080]`.
+The intro is never played in headless runs. Settings: `user://settings.cfg` (`[game] intro_seen`).

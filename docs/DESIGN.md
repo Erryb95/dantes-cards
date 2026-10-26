@@ -15,6 +15,7 @@
 | `scripts/battle/battle_view.gd` | the board: replays events as animations, handles input |
 | `scripts/battle/{card,minion,hero}_view.gd` | the pieces; `fx.gd`, `shapes.gd`, `target_arrow.gd` for the juice |
 | `scripts/ui/` | main menu, deck select, deck builder, pack opening, collection, options, shared look (`ui.gd`), painted skin loader (`ui_skin.gd`) |
+| `scripts/intro/`, `scenes/intro.tscn` | the opening cinematic (see "Opening cinematic" below) |
 | `assets/shaders/` | `card_fx` (art mask, hit flash, burn-away dissolve, legendary foil), `river`, `fog`, `crack` (Dis embers / Cocytus frost), `wind` (Lust), `heat_haze` |
 | `tools/cards/art_jobs.py` | builds the ComfyUI jobs from the data and imports the results |
 | `tests/` | `run_tests.gd` (rules, 300-game starter soak, 400-game random-deck soak over the whole pool), `ui_smoke.tscn` (drives the real board with input events) |
@@ -22,6 +23,25 @@
 The view never changes game values. It queues `BattleState.event` dictionaries and plays them one by one;
 input is accepted only while the queue is empty. This is what keeps the animations in sync with the rules,
 and it is the seam for PvP later (events over the network).
+
+## Opening cinematic (about 95 s)
+Recycled from the sister FPS (which keeps its own story and title). Doré's public-domain Inferno plates, animated by
+Wan 2.2 clips or by procedural "living engraving" loops, run through a camera + engraving shader (`intro_shot.gdshader`),
+with LibriVox narration of Longfellow's translation as subtitles, public-domain music and CC0 sound.
+Shots (`IntroTimeline.build()`): black + bell + "INFERNO · CANTO I", the dark wood (Inferno I 1-3), the panther, the lion,
+Virgil's offer to guide the pilgrim, the Gate of Hell (four lines of the inscription carved letter by letter), Charon
+on the Acheron (the first opponent), the story card, the title "DANTE'S INFERNO / THE CARD GAME".
+Story card: "Lost in a dark wood, a pilgrim must go down through Hell. / Its souls and its guardians will stand against
+him, card by card. / At the river Acheron, Charon is waiting."
+- **Flow:** the main menu starts `scenes/intro.tscn` when `Game.intro_due()` (first launch: `Settings.intro_seen` is false,
+  not headless, no `--no-intro` / `--snap=` / `--shots=` / `--autoplay`); the end or a skip sets `intro_seen` and goes to the
+  menu. Options > "Watch intro" plays it again. Options > "Intro subtitles" toggles the verses.
+- **Skip:** hold Esc / Space / gamepad A, or press and hold the mouse button or a finger anywhere, for 1 s (a ring fills at
+  the bottom right; the hint shows from second 1 and on every input).
+- **Aspect:** the picture always covers the screen (no bars); on narrower screens the window slides to keep the subjects
+  (`keep`); cards, inscription and title are sized on a 2.39:1 reference height. Checked at 16:9, 16:10, 20:9, 4:3.
+- **Assets:** `assets/intro/` (video 1600x880 Theora, plates, voice, audio). The sounds the game already has (funeral bell,
+  thunder, title sting, water) are used from `assets/audio/sfx/`; the score is `assets/audio/music/intro/c1_0` + `c5_0`.
 
 ## Rules (v0.2)
 - 30 health heroes; mana 1 to 10, refilled each turn; hand limit 10 (overdraw burns); board limit 7; fatigue.

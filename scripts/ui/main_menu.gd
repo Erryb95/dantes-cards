@@ -6,6 +6,9 @@ var _t := 0.0
 
 
 func _ready() -> void:
+	if Game.intro_due():  # first launch: the opening cinematic comes first, then this scene again
+		get_tree().change_scene_to_file.call_deferred(Game.INTRO)
+		return
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(MenuBackdrop.new())
 	Sfx.play_music("intro")

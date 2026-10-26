@@ -7,6 +7,7 @@ const BATTLE := "res://scenes/battle.tscn"
 const COLLECTION := "res://scenes/collection.tscn"
 const PACKS := "res://scenes/pack_opening.tscn"
 const DECK_BUILDER := "res://scenes/deck_builder.tscn"
+const INTRO := "res://scenes/intro.tscn"
 
 var player_deck := "pilgrim"
 var enemy_deck := "ferry"
@@ -23,6 +24,7 @@ var force_arena := "" ## debug / tests: always open this arena, even before its 
 var arena_forced := false ## the current battle's arena was forced (it may be shown on the Acheron stand-in)
 var last_winner := -1
 var stats := {"wins": 0, "losses": 0}
+var intro_played := false ## the cinematic has played in this run (so `--intro` does not loop)
 
 var _fade: ColorRect
 var _layer: CanvasLayer
@@ -119,6 +121,27 @@ func record_result(winner: int) -> void:
 	cfg.load("user://progress.cfg")
 	cfg.set_value("run", "stats", stats)
 	cfg.save("user://progress.cfg")
+
+
+## The opening cinematic plays once, on the first launch, before the main menu. Never in headless runs (tests) or
+## when a debug flag takes over the first scene (`--snap`, `--shots`, `--autoplay`, `--no-intro`); `--intro` forces it.
+func intro_due() -> bool:
+	if intro_played:
+		return false
+	var args := OS.get_cmdline_user_args()
+	if "--intro" in args:
+		return true
+	if Settings.intro_seen or DisplayServer.get_name() == "headless":
+		return false
+	for a in args:
+		if a == "--no-intro" or a == "--autoplay" or a.begins_with("--snap=") or a.begins_with("--shots="):
+			return false
+	return true
+
+
+## "Watch intro" (options): plays the cinematic again, then returns to the main menu.
+func play_intro() -> void:
+	go(INTRO)
 
 
 ## Fades to black, swaps the scene, fades back in.
