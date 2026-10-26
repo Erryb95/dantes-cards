@@ -567,7 +567,7 @@ func _river_y() -> float:
 
 
 func _hero_pos(side: int) -> Vector2:
-	return Vector2(V.x / 2, (808.0 if side == 0 else 150.0) * ky + _oy())
+	return Vector2(V.x / 2, (801.0 if side == 0 else 143.0) * ky + _oy()) # mirrored about the divider (472)
 
 
 ## Top of the 16:9 layout: screens taller than 16:9 (tablets) centre it vertically.

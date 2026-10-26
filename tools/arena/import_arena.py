@@ -2,6 +2,7 @@
 
   python tools/arena/import_arena.py            # import what is new, list what is still missing
   python tools/arena/import_arena.py --force    # re-import files that are already installed
+  python tools/arena/import_arena.py --force --only=arena_cocytus_board   # just these names (comma separated)
 
 Sources: output/dantes_arena/ on the ComfyUI PC (made by the image session, see docs/ARENA_BRIEF.md):
   arena_<id>_board*.png  2560x1440 opaque   -> assets/arenas/<id>_board.jpg
@@ -111,11 +112,14 @@ def install(data: bytes, out: str, size: tuple, alpha: bool) -> str | None:
 
 def main() -> None:
     force = "--force" in sys.argv
+    only = next((a[7:].split(",") for a in sys.argv if a.startswith("--only=")), None)
     d = json.load(open(ARENAS_JSON, encoding="utf-8"))
     files = wanted(d["arenas"])
     known = history_names()
     got, missing, rejected = [], [], []
     for name, (dst, size, alpha) in files.items():
+        if only is not None and name not in only:
+            continue
         out = os.path.join(ROOT, "assets", "arenas", dst)
         if os.path.exists(out) and not force:
             continue

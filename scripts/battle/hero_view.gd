@@ -115,7 +115,7 @@ func _build() -> void:
 
 func _build_power(def: Dictionary) -> void:
 	power = Node2D.new()
-	power.position = Vector2(W / 2 + 92, 14)
+	power.position = Vector2(W / 2 + 92, 14 if side == 0 else -14) # mirrored about the divider, like the board sockets
 	add_child(power)
 	_power_glow = Aura.make(Vector2(104, 104), true, 30.0)
 	power.add_child(_power_glow)

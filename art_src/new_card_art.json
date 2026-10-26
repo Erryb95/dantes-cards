@@ -1072,5 +1072,17 @@
   "name": "Shade of Limbo",
   "rarity": "token",
   "art": "A pale translucent human silhouette drifting above grey stones."
+ },
+ {
+  "id": "ih_tormented_shade",
+  "name": "Tormented Shade",
+  "rarity": "token",
+  "art": "A gaunt, pale damned soul writhing in grey-blue mist among icicles."
+ },
+ {
+  "id": "pj_lost_shade",
+  "name": "Lost Shade",
+  "rarity": "token",
+  "art": "A faint, lost soul reaching out a glowing hand in a dark wood."
  }
 ]

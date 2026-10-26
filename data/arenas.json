@@ -101,6 +101,7 @@
       "art": "game board seen from above: the frozen lake of Cocytus, sinners locked in the ice at the left and right edges, Lucifer's huge bat wings far away at the top, a crack in the ice across the middle, carved stone frame and sockets as in the Acheron layout",
       "scene": "res://scenes/arenas/standard.tscn",
       "board": "cocytus_board.jpg",
+      "normal": "cocytus_normal.png",
       "mist": "cocytus_mist.png",
       "divider": {"kind": "frost", "height": 150, "span": [150, 1650]},
       "ambient": "snow",
