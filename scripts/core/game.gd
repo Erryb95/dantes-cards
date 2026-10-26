@@ -30,7 +30,15 @@ var _fade: ColorRect
 var _layer: CanvasLayer
 
 
+## Frame caps: a card game needs no more than 60 fps, and a window in the background needs almost none. Leaves the
+## GPU to other programs (the art PC runs ComfyUI next to the game) and saves battery on phones.
+const FPS_ACTIVE := 60
+const FPS_BACKGROUND := 10
+
+
 func _ready() -> void:
+	if DisplayServer.get_name() != "headless": # tests run the frames as fast as they can
+		Engine.max_fps = FPS_ACTIVE
 	_layer = CanvasLayer.new()
 	_layer.layer = 100
 	add_child(_layer)
@@ -171,3 +179,12 @@ func go(path: String) -> void:
 	t2.tween_property(_fade, "color:a", 0.0, 0.45)
 	await t2.finished
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _notification(what: int) -> void:
+	if debug_run(): # tooling (snapshots, autoplay) runs unfocused and must not slow down
+		return
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		Engine.max_fps = FPS_BACKGROUND
+	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		Engine.max_fps = FPS_ACTIVE

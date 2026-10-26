@@ -95,35 +95,77 @@ func _deck_panel(d: Dictionary) -> Control:
 	return p
 
 
-## "Your decks": one button per saved deck (play it, or edit it with the pen), plus new-deck buttons.
+## "Your decks": the saved decks in a strip that scrolls sideways once they no longer fit (drag, or the mouse
+## wheel), each with its pen button; the two new-deck buttons stay fixed on the right.
+const DECKS_MAX_W := 1240.0 ## widest the saved-deck strip gets before it scrolls
+const CHIP_W := 300.0
+const EDIT_W := 124.0 ## wide enough for the painted plate
+const CHIP_GAP := 22.0
+
+
 func _my_decks() -> Control:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 14)
-	for i in Collection.decks.size():
-		var d: Dictionary = Collection.decks[i]
-		var ok := Collection.deck_problem(d) == ""
-		var b := UI.button(d.name if ok else "%s (%s)" % [d.name, Collection.deck_problem(d)], 340, 60)
-		b.add_theme_font_size_override("font_size", 22)
-		b.tooltip_text = "Pilgrim" if d.cls == "pilgrim" else "Ferryman"
-		b.pressed.connect(func():
-			if Collection.deck_problem(d) == "":
-				Sfx.play("ui_confirm", -4.0)
-				Game.start_with(Collection.deck_cards(d.cards), Collection.CLASS_HERO[d.cls],
-					"ferry" if d.cls == "pilgrim" else "pilgrim")
-			else:
-				_edit(i, d.cls))
-		row.add_child(b)
-		var e := UI.button("Edit", 90, 60)
-		e.add_theme_font_size_override("font_size", 22)
-		e.pressed.connect(_edit.bind(i, d.cls))
-		row.add_child(e)
-	for c in [["pilgrim", "+ Pilgrim deck"], ["ferry", "+ Ferryman deck"]]:
-		var n := UI.button(c[1], 340, 60)
+	row.add_theme_constant_override("separation", 28)
+	if not Collection.decks.is_empty():
+		var strip := HBoxContainer.new()
+		strip.add_theme_constant_override("separation", int(CHIP_GAP))
+		for i in Collection.decks.size():
+			strip.add_child(_deck_chip(i))
+		var scroll := ScrollContainer.new()
+		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		var full := Collection.decks.size() * (CHIP_W + EDIT_W + 4.0 + CHIP_GAP) - CHIP_GAP
+		scroll.custom_minimum_size = Vector2(minf(full, DECKS_MAX_W), 80)
+		scroll.add_child(strip)
+		var bar := scroll.get_h_scroll_bar()
+		bar.custom_minimum_size.y = 8
+		bar.add_theme_stylebox_override("scroll", UI.box(Color(0, 0, 0, 0.45), Color.TRANSPARENT, 0, 4))
+		bar.add_theme_stylebox_override("grabber", UI.box(UI.GOLD_DARK, Color.TRANSPARENT, 0, 4))
+		bar.add_theme_stylebox_override("grabber_highlight", UI.box(UI.GOLD, Color.TRANSPARENT, 0, 4))
+		bar.add_theme_stylebox_override("grabber_pressed", UI.box(UI.GOLD, Color.TRANSPARENT, 0, 4))
+		# The vertical mouse wheel scrolls the strip sideways.
+		scroll.gui_input.connect(func(e):
+			if e is InputEventMouseButton and e.pressed and e.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+				scroll.scroll_horizontal += 120 * (1 if e.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1)
+				scroll.accept_event())
+		row.add_child(scroll)
+	var news := HBoxContainer.new()
+	news.add_theme_constant_override("separation", 14)
+	for c in [["pilgrim", "+ Pilgrim"], ["ferry", "+ Ferryman"]]:
+		var n := UI.button(c[1], 240, 60)
 		n.add_theme_font_size_override("font_size", 22)
+		n.tooltip_text = "New %s deck" % ("Pilgrim" if c[0] == "pilgrim" else "Ferryman")
 		n.pressed.connect(_edit.bind(-1, c[0]))
-		row.add_child(n)
+		news.add_child(n)
+	row.add_child(news)
 	return row
+
+
+## One saved deck: its name (play it; an incomplete deck opens the editor instead) and a pen button to edit it.
+func _deck_chip(i: int) -> Control:
+	var d: Dictionary = Collection.decks[i]
+	var chip := HBoxContainer.new()
+	chip.add_theme_constant_override("separation", 4)
+	var problem := Collection.deck_problem(d)
+	var b := UI.button(str(d.name), CHIP_W, 60)
+	b.add_theme_font_size_override("font_size", 22)
+	b.tooltip_text = ("Pilgrim" if d.cls == "pilgrim" else "Ferryman") + (" deck" if problem == "" else " deck: " + problem)
+	if problem != "":
+		b.modulate = Color(0.75, 0.62, 0.58) # incomplete: dimmed, opens the editor
+	b.pressed.connect(func():
+		if Collection.deck_problem(d) == "":
+			Sfx.play("ui_confirm", -4.0)
+			Game.start_with(Collection.deck_cards(d.cards), Collection.CLASS_HERO[d.cls],
+				"ferry" if d.cls == "pilgrim" else "pilgrim")
+		else:
+			_edit(i, d.cls))
+	chip.add_child(b)
+	var e := UI.button("Edit", EDIT_W, 60)
+	e.add_theme_font_size_override("font_size", 20)
+	e.pressed.connect(_edit.bind(i, d.cls))
+	chip.add_child(e)
+	return chip
 
 
 func _edit(index: int, cls: String) -> void:
