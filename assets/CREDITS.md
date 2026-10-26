@@ -4,6 +4,14 @@ Only CC0 / OFL / MIT / Apache material (or verified commercial licences) ships w
 
 | Files | Source | Author | Licence |
 |---|---|---|---|
+| assets/intro/plates/* | Grayscale crops of the best scans found on [Wikimedia Commons](https://commons.wikimedia.org/wiki/Category:Gustave_Dor%C3%A9_-_Inferno) of Doré's Inferno plates (1870 Berlin edition scanned by the National Library of Poland, via Commons, and other Commons scans), downscaled to 1600x880. Copied from Dante's Vengeance, where every scan and its Commons page is listed (docs/art/dore_plates.json) | Gustave Dore (1832-1883) | Public domain |
+| assets/intro/voice/* | [LibriVox, The Divine Comedy (Longfellow), Inferno Canto I and III](https://librivox.org/the-divine-comedy-by-dante-alighieri/), cut and loudness-normalised (v_c_gate.ogg is cut down to four lines of the gate inscription). Human narration, no synthetic voice | Reader: Cori Samuel | Public domain (LibriVox) |
+| assets/intro/video/s2_forest, s3a_panther, s3b_lion, s5_gate (.ogv) | **AI-generated motion, disclosed.** Wan 2.2 I2V A14B (Q4_K_M GGUF, lightx2v 4-step LoRAs) image-to-video on the owner's PC, from the public-domain Dore plates (stable range, played ping-pong); upscaled 2x with [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) (realesr-animevideov3), then the static regions take the high frequencies of the plate scan. Re-encoded for this game with ffmpeg / libtheora to 1600x880 | Wan: Apache 2.0; Real-ESRGAN code and released weights: BSD-3-Clause; ncnn-vulkan port: MIT |
+| assets/intro/video/s4_virgil, s6_charon (.ogv) | 12 s seamless loops: the public-domain Dore plate itself, displaced inside hand-painted masks (hair, foliage, clouds, water, mist) with procedural sinusoid motion (OpenCV + NumPy). No AI pixels. Re-encoded to 1600x880 with ffmpeg / libtheora | Public domain plates; tools Apache 2.0 / BSD |
+| assets/intro/audio/bell_ambient.ogg | [ambientBell](https://freesound.org/people/Divinux/sounds/198416/) | Divinux | CC0 |
+| assets/intro/audio/wind_loop.ogg | [Wind spinning sound](https://freesound.org/people/xXx_JPMC_xXx/sounds/361222/) | xXx_JPMC_xXx | CC0 |
+| assets/intro/audio/growl_beast.ogg, roar_lion.ogg | [80 CC0 creature SFX](https://opengameart.org/content/80-cc0-creature-sfx) and [#2](https://opengameart.org/content/80-cc0-creture-sfx-2) | rubberduck | CC0 |
+| assets/audio/music/intro/c1_0.ogg, c5_0.ogg (the intro score) | c1: Tchaikovsky, Symphony No. 6, I (Musopen Kickstarter orchestra recording, Public Domain Mark 1.0); c5: Brahms, Ein deutsches Requiem II (St Matthews Choir, SMCE, live recording; CC0 as set by the uploader, see the TODO at the end of this file). Sources in audio/CREDITS_FPS_SOURCE.md | Musopen / SMCE | Public domain / CC0 |
 | assets/fonts/Cinzel.ttf | Cinzel | Natanael Gama | OFL (assets/fonts/OFL_Cinzel.txt) |
 | assets/fonts/IMFeEN*.ttf | IM Fell English | Igino Marini | OFL (assets/fonts/OFL_IMFellEnglish.txt) |
 | assets/audio/music/{music_combat,music_boss,intro}/c*_0.ogg | Copied from Dante's Vengeance (folders music_combat, music_boss, music_intro): CC0 OpenGameArt loops and public-domain Musopen / SMCE recordings. Per-track sources are in audio/CREDITS_FPS_SOURCE.md | see that file | CC0 / Public Domain Mark |
@@ -32,7 +40,10 @@ the ComfyUI session's notes (status/cards_style.md). House style: hand-tinted Gu
 owner on 2026-10-25. Source files: art_src/dore_cards/; card -> image map: the "image" field in data/cards.json.
 The painted UI parts in assets/ui/ (card borders, ribbon, gems, rarity cabochons, button plate, end-turn seal, power disc,
 icons) and the VFX sprites in assets/vfx/ come from the
-same ComfyUI setup (Qwen-Image 2512, alpha cut with BiRefNet, MIT); sources in art_src/ui/. Cards without a painting yet
+same ComfyUI setup (Qwen-Image 2512, alpha cut with BiRefNet, MIT); sources in art_src/ui/.
+The opening cinematic (assets/intro/) is made of Gustave Dore's public-domain plates. Four of its clips (forest, panther,
+lion, gate) were animated with the AI video model Wan 2.2 (Apache-2.0) on the owner's PC; the other two clips, the
+plates and the narration are not AI (the narration is a human LibriVox recording). Cards without a painting yet
 show the Acheron arena image as a placeholder.
 
 TODO before a store release: as in the FPS, the St Matthews Choir (SMCE) recordings that may be in `intro` carry a licence

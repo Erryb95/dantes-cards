@@ -39,6 +39,15 @@ func _ready() -> void:
 			Settings.fullscreen = on
 			Settings.apply()))
 	v.add_child(_toggle("Fast animations", Settings.fast_animations, func(on): Settings.fast_animations = on))
+	v.add_child(_toggle("Intro subtitles", Settings.subtitles, func(on): Settings.subtitles = on))
+	if get_tree().current_scene and get_tree().current_scene.scene_file_path == Game.MENU:  # not mid-battle
+		var intro := UI.button("Watch intro", 420)
+		intro.pressed.connect(func():
+			Settings.save()
+			Game.play_intro())
+		var ic := CenterContainer.new()
+		ic.add_child(intro)
+		v.add_child(ic)
 	var close := UI.button("Done", 300)
 	close.pressed.connect(_close)
 	var cc := CenterContainer.new()

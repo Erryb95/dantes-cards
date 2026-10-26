@@ -7,6 +7,8 @@ var music_volume := 0.7
 var sfx_volume := 0.9
 var fullscreen := false
 var fast_animations := false
+var subtitles := true ## subtitles of the intro narration
+var intro_seen := false ## the opening cinematic has been played (or skipped) once
 
 
 func _ready() -> void:
@@ -27,6 +29,8 @@ func load_settings() -> void:
 	sfx_volume = cfg.get_value("audio", "sfx", sfx_volume)
 	fullscreen = cfg.get_value("video", "fullscreen", fullscreen)
 	fast_animations = cfg.get_value("game", "fast_animations", fast_animations)
+	subtitles = cfg.get_value("game", "subtitles", subtitles)
+	intro_seen = cfg.get_value("game", "intro_seen", intro_seen)
 
 
 func save() -> void:
@@ -35,6 +39,8 @@ func save() -> void:
 	cfg.set_value("audio", "sfx", sfx_volume)
 	cfg.set_value("video", "fullscreen", fullscreen)
 	cfg.set_value("game", "fast_animations", fast_animations)
+	cfg.set_value("game", "subtitles", subtitles)
+	cfg.set_value("game", "intro_seen", intro_seen)
 	cfg.save(PATH)
 
 
