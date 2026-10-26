@@ -265,6 +265,13 @@ func _set_burn(v: float) -> void:
 	_art_mat.set_shader_parameter("burn", v)
 
 
+## The colours of the dissolve's glowing rim (frost for an ice giant, violet for a shade...).
+func set_burn_colors(edge: Color, hot: Color) -> void:
+	for m in [_mat, _art_mat]:
+		m.set_shader_parameter("burn_edge", edge)
+		m.set_shader_parameter("burn_hot", hot)
+
+
 func contains_point(global_point: Vector2) -> bool:
 	var p := to_local(global_point)
 	return pow(p.x / (W * 0.55), 2) + pow(p.y / (H * 0.55), 2) <= 1.0

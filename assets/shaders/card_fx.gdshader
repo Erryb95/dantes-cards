@@ -8,6 +8,8 @@ shader_type canvas_item;
 uniform int mask_mode = 0; // 0 none, 1 oval, 2 rounded rectangle
 uniform float corner = 0.08;
 uniform float burn : hint_range(0.0, 1.0) = 0.0;
+uniform vec4 burn_edge : source_color = vec4(0.9, 0.3, 0.05, 1.0); // the dissolve's glowing rim: outer colour
+uniform vec4 burn_hot : source_color = vec4(1.0, 0.9, 0.55, 1.0); // ... and its white-hot inner line
 uniform float flash : hint_range(0.0, 1.0) = 0.0;
 uniform vec4 flash_color : source_color = vec4(1.0, 0.25, 0.1, 1.0);
 uniform float desat : hint_range(0.0, 1.0) = 0.0;
@@ -105,7 +107,7 @@ void fragment() {
 			c.a = 0.0;
 		} else if (e < 0.1) {
 			float k = 1.0 - e / 0.1;
-			c.rgb = mix(c.rgb, mix(vec3(0.9, 0.3, 0.05), vec3(1.0, 0.9, 0.55), k), k);
+			c.rgb = mix(c.rgb, mix(burn_edge.rgb, burn_hot.rgb, k), k);
 			c.rgb *= 1.0 + k * 0.6;
 		}
 	}

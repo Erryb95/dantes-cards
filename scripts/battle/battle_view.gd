@@ -1095,7 +1095,7 @@ func _on_summon(ev: Dictionary) -> void:
 	m.z_index = 10
 	var cost := int(CardDB.card(m.card_id).get("cost", 0))
 	var tint: Color = UI.RARITY.get(rarity, UI.EMBER) if rarity != "common" else UI.EMBER
-	Fx.gather(fx_layer, m.home, tint, 150.0 + cost * 8.0, 0.22 / _speed(), 16 + cost * 2)
+	Fx.gather(fx_layer, m.home, Vfx.summon_tint(m.card_id), 150.0 + cost * 8.0, 0.22 / _speed(), 16 + cost * 2)
 	var drop := m.create_tween().set_parallel(true)
 	drop.tween_property(m, "position", m.home, 0.2 / _speed()).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	drop.tween_property(m, "scale", Vector2.ONE, 0.2 / _speed()).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
@@ -1147,10 +1147,7 @@ func _on_attack(ev: Dictionary) -> void:
 	shake(9.0 if b is HeroView else 6.0)
 	if int(a.attack if a is MinionView else 0) >= 5 or b is HeroView:
 		_hit_stop(0.07 if b is HeroView else 0.09)
-	Fx.flash(fx_layer, "claw_slash", b.position, 260.0, 0.35, Color.WHITE, 0.0)
-	Fx.slash(fx_layer, b.position, dir, 320.0, Color(1.0, 0.85, 0.6))
-	Fx.sparks(fx_layer, b.position - dir * 40.0, Color(1.0, 0.7, 0.3), 22)
-	Fx.burst(fx_layer, (a.position + b.position) / 2, Color(1.0, 0.75, 0.4), 22, 300.0, 0.4, 8.0, 200.0)
+	Vfx.strike(self, a, b, dir, int(a.attack) if a is MinionView else 2)
 	_push(b, dir * 18.0)
 	var back: Tween = a.create_tween().set_parallel(true)
 	back.tween_property(a, "position", a.home, 0.28 / _speed()).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
@@ -1225,10 +1222,7 @@ func _on_death(ev: Dictionary) -> void:
 	board_views[ev.side].erase(m)
 	Sfx.play("moan", -14.0, 1.0, 0.12)
 	Sfx.play("creature_die", -12.0, 1.1)
-	Fx.flash(fx_layer, "fire_burst", m.position, 300.0, 0.7)
-	Fx.flash(fx_layer, "smoke_puff", m.position + Vector2(0, -30), 340.0, 1.2, Color(1, 1, 1, 0.7), 0.2)
-	Fx.burst(fx_layer, m.position, UI.EMBER, 40, 180.0, 1.4, 10.0, -140.0, 120.0)
-	Fx.smoke(fx_layer, m.position, Color(0.2, 0.17, 0.15, 0.75), 220.0)
+	Vfx.death(self, m, m.card_id)
 	m.burn_away(0.85 / _speed())
 	get_tree().create_timer(0.85 / _speed()).timeout.connect(_remove_dead.bind(m, ev.side))
 	await _wait(0.22)

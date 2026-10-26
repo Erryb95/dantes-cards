@@ -1,7 +1,8 @@
 extends Node
 ## Films each card's effect (scripts/battle/vfx.gd) on a staged board: a few frames per card, saved as
 ## <out>/<card id>_<nn>.png at half size, for tools/vfx/contact_sheet.py to lay out side by side.
-##   Godot --path . res://tests/vfx_preview.tscn -- --out=<dir> [--cards=id1,id2 | --spells]
+##   Godot --path . res://tests/vfx_preview.tscn -- --out=<dir> [--cards=id1,id2 | --spells] [--deaths]
+## --deaths films the listed minions dying (and attacking) instead of their effects.
 
 const FRAME_GAP := 0.08
 
@@ -9,6 +10,7 @@ var out := "user://vfx_preview"
 var battle: Node
 var foes: Array[Node2D] = []
 var friend: Node2D
+var deaths := false
 
 
 func _ready() -> void:
@@ -18,6 +20,8 @@ func _ready() -> void:
 			out = a.substr(6)
 		elif a.begins_with("--cards="):
 			ids = Array(a.substr(8).split(","))
+		elif a == "--deaths":
+			deaths = true
 		elif a == "--spells":
 			for c in CardDB.all_cards():
 				if c.type == "spell":
@@ -74,6 +78,10 @@ func _film(id: String) -> void:
 
 
 func _play(id: String, done: Array) -> void:
+	if deaths:
+		await _die(id)
+		done[0] = true
+		return
 	var card := CardDB.card(id)
 	var hero: Node2D = battle.heroes[0]
 	if card.get("type") == "spell":
@@ -103,3 +111,21 @@ func _play(id: String, done: Array) -> void:
 					var ev := {"side": 0, "id": id, "kind": e.do, "uids": foes.map(func(f): return f.uid)}
 					await battle._on_aoe(ev)
 	done[0] = true
+
+
+## A fresh copy of minion `id` strikes an enemy, then dies in its school's way.
+func _die(id: String) -> void:
+	var c := CardDB.card(id)
+	var snap := {"uid": 9100, "id": id, "side": 0, "is_hero": false, "attack": int(c.get("attack", 1)),
+		"health": int(c.get("health", 1)), "max_health": int(c.get("health", 1)), "armor": 0, "keywords": [],
+		"sleeping": false, "frozen": false, "silenced": false}
+	var m := MinionView.new().setup(snap)
+	battle.board_layer.add_child(m)
+	m.home = friend.home + Vector2(MinionView.W + 60.0, 0)
+	m.position = m.home
+	await get_tree().create_timer(0.2).timeout
+	Vfx.strike(battle, m, foes[2], (foes[2].position - m.position).normalized(), m.attack)
+	await get_tree().create_timer(0.3).timeout
+	Vfx.death(battle, m, id)
+	await m.burn_away(0.85)
+	m.queue_free()

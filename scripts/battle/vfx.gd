@@ -24,6 +24,8 @@ static func cast(view, c: Node2D, id: String, side: int = 0) -> void:
 	var pos := c.position
 	Sfx.play(s.cast_sfx, -6.0, 0.9)
 	Sfx.play("magic", -14.0, 0.8)
+	if c.has_method("set_burn_colors"):
+		c.set_burn_colors(s.color, s.hot) # the card burns away in its school's colours
 	Fx.rune(fx, pos + Vector2(0, 150), s.color, 420.0 + 160.0 * p.power, 0.9 / k, s.rune)
 	Fx.gather(fx, pos, s.hot, 230.0, 0.3 / k, 20 + int(p.power * 16))
 	var glow := c.create_tween()
@@ -190,6 +192,89 @@ static func buff(view, m: Node2D, src: String) -> bool:
 	if p.school == "holy":
 		Fx.flash(fx, "holy_light", m.position, 320.0, 0.7, Color.WHITE, 0.3)
 	return true
+
+
+## A minion dying in its own school's way: the fire-born burn, ice shatters, souls rise, stone crumbles, venom
+## melts... The dissolve's rim takes the school's colours; size grows with the minion's cost. The caller starts the
+## dissolve (m.burn_away) after this.
+static func death(view, m: Node2D, id: String) -> void:
+	var p := VfxData.profile(id)
+	var s := VfxData.school(p)
+	var fx: Node2D = view.fx_layer
+	var pos := m.position
+	var big: float = 1.0 + 0.6 * p.power
+	if m.has_method("set_burn_colors"):
+		m.set_burn_colors(s.color, s.hot)
+	if p.school != "stone": # its painted impact is a glowing lava crack: a crumbling statue only raises dust
+		_paint(fx, s.impact, pos, 260.0 * big, 0.6, _mid(s))
+	match p.school:
+		"fire", "pitch", "judgment":
+			Fx.flash(fx, "fire_burst", pos, 300.0 * big, 0.7)
+			Fx.burst(fx, pos, UI.EMBER, int(40 * big), 180.0, 1.4, 10.0, -140.0, 120.0)
+			Fx.smoke(fx, pos, Color(0.2, 0.17, 0.15, 0.75) if p.school != "pitch" else Color(0.08, 0.06, 0.05, 0.85),
+				220.0 * big)
+		"ice":
+			_sparks(view, pos, s, int(24 * big))
+			var shards := _motes(view, pos, s, int(18 * big), 420.0, 26.0, 0.8, 180.0, 900.0,
+				"vfx_ice_shard" if UiSkin.has("vfx_ice_shard") else "k_star_08")
+			shards.angle_min = -180.0
+			shards.angle_max = 180.0
+			Sfx.play("glass", -6.0, 0.7)
+			Sfx.play("ice", -8.0, 0.9)
+		"soul", "shadow":
+			_rise(view, pos, s, ["vfx_skull_wisp", "k_light_02"] if p.school == "soul" else ["k_magic_05"], 200.0 * big)
+			Fx.smoke(fx, pos, Color(s.color.r * 0.25, s.color.g * 0.25, s.color.b * 0.3, 0.7), 220.0 * big)
+			_motes(view, pos, s, int(26 * big), 120.0, 14.0, 1.4, 60.0, -160.0)
+			Sfx.play("wail" if p.school == "soul" else "sigh", -12.0, 1.2)
+		"stone":
+			Fx._debris(fx, pos + Vector2(0, 30), 70.0 * big, int(22 * big))
+			Fx.dust(fx, pos + Vector2(0, 60), 180.0 * big, 30)
+			Fx.smoke(fx, pos, Color(0.35, 0.3, 0.25, 0.6), 240.0 * big)
+			Sfx.play("rubble", -6.0, 0.9)
+		"gold":
+			_coins(view, pos, int(14 * big))
+		"venom", "water", "blood":
+			_motes(view, pos, s, int(30 * big), 260.0, 16.0, 0.9, 120.0, 700.0)
+			Sfx.play("splash", -8.0, 0.8)
+		_:
+			_motes(view, pos, s, int(30 * big), 220.0, 14.0, 1.1, 180.0, -100.0 if s.rise else 300.0)
+			Fx.smoke(fx, pos, Color(s.color.r * 0.3, s.color.g * 0.3, s.color.b * 0.3, 0.6), 220.0 * big)
+	if p.big:
+		Fx.shockwave(fx, pos, s.color, 360.0 * big, 0.6)
+		view.shake(6.0)
+
+
+## The motes a minion's school throws while it drops onto the board (the landing itself keeps the rarity colour).
+static func summon_tint(id: String) -> Color:
+	return VfxData.school(VfxData.profile(id)).hot
+
+
+## The attacker's colour on a melee hit (sparks and slash); an attack of 5+ hits harder.
+static func strike(view, attacker: Node2D, target: Node2D, dir: Vector2, power: int) -> void:
+	var id: String = attacker.card_id if attacker is MinionView else ""
+	var s: Dictionary = VfxData.school(VfxData.profile(id)) if id != "" else VfxData.SCHOOLS.fire
+	var fx: Node2D = view.fx_layer
+	var k := clampf(0.8 + power * 0.08, 0.8, 1.6)
+	_paint(fx, ["vfx_claw_rake", "claw_slash"], target.position, 260.0 * k, 0.35, Color.WHITE)
+	Fx.slash(fx, target.position, dir, 320.0 * k, _mid(s))
+	_sparks(view, target.position - dir * 40.0, s, int(18 * k))
+	var p := Fx.burst(fx, (attacker.position + target.position) / 2, s.color, int(20 * k), 300.0, 0.4, 8.0, 200.0)
+	p.color_ramp = _ramp(s)
+
+
+## A sprite floating up and fading (a soul leaving its body).
+static func _rise(view, pos: Vector2, s: Dictionary, names: Array, size: float) -> void:
+	var g := _sprite(view.fx_layer, names, pos, size, s.hot, 68)
+	if g == null:
+		return
+	var k: float = view._speed()
+	g.modulate.a = 0.0
+	var t := g.create_tween().set_parallel(true)
+	t.tween_property(g, "modulate:a", 0.9, 0.2 / k)
+	t.tween_property(g, "position:y", pos.y - 220.0, 1.3 / k).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+	t.tween_property(g, "scale", g.scale * 1.3, 1.3 / k)
+	t.tween_property(g, "modulate:a", 0.0, 0.7 / k).set_delay(0.6 / k)
+	t.chain().tween_callback(g.queue_free)
 
 
 ## Effect damage landing in the source's colours (frost, scorch, venom...) instead of the default blood splat.
@@ -714,7 +799,7 @@ static func _freeze(view, t: Node2D) -> void:
 
 
 static func _coins(view, pos: Vector2, amount: int) -> void:
-	var c := Fx.burst(view.fx_layer, pos, Color(1.0, 0.8, 0.3), amount, 380.0, 1.1, 34.0, 900.0, 60.0,
+	var c := Fx.burst(view.fx_layer, pos, Color(1.0, 0.8, 0.3), amount, 380.0, 1.1, 22.0, 900.0, 60.0,
 		"vfx_gold_coin" if UiSkin.has("vfx_gold_coin") else "k_star_07")
 	c.color_ramp = _ramp(VfxData.SCHOOLS.gold)
 	Sfx.play("coins", -8.0)
