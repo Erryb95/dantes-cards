@@ -76,10 +76,7 @@ func begin_arena() -> String:
 		pick_arena()
 	arena_picked = false
 	last_arena = arena_id
-	var cfg := ConfigFile.new()
-	cfg.load("user://progress.cfg")
-	cfg.set_value("run", "last_arena", last_arena)
-	cfg.save("user://progress.cfg")
+	_save_progress("last_arena", last_arena)
 	return arena_id
 
 
@@ -117,9 +114,16 @@ func record_result(winner: int) -> void:
 		stats.wins += 1
 	elif winner == 1:
 		stats.losses += 1
+	_save_progress("stats", stats)
+
+
+## Tests and tooling (`debug_run`) keep their results in memory, so they never touch the player's real profile.
+func _save_progress(key: String, value: Variant) -> void:
+	if debug_run():
+		return
 	var cfg := ConfigFile.new()
 	cfg.load("user://progress.cfg")
-	cfg.set_value("run", "stats", stats)
+	cfg.set_value("run", key, value)
 	cfg.save("user://progress.cfg")
 
 

@@ -13,6 +13,8 @@ const ROLLOUTS := 8 ## candidate first moves that get played out to the end of t
 
 var side := 1
 var level := Level.NORMAL
+var abort := false ## set from the main thread to stop a search early (the battle is closing)
+var _seed := 0 ## seeds each simulated copy, so the worker thread never touches the global RNG
 
 
 func _init(p_side: int = 1, p_level: Level = Level.NORMAL) -> void:
@@ -24,6 +26,7 @@ func next_action(st: BattleState) -> Dictionary:
 	if st.winner != -1 or st.current != side:
 		return {"do": "end"}
 	if level == Level.NORMAL:
+		_seed = int(st.rng.state)
 		return _search(st)
 	return _rules(st)
 
@@ -75,7 +78,9 @@ func _search(st: BattleState) -> Dictionary:
 	var base := evaluate(st)
 	var scored := []
 	for m in _moves(st):
-		var b := st.clone()
+		if abort:
+			return {"do": "end"}
+		var b := _copy(st)
 		if not apply(b, side, m):
 			continue
 		if b.winner == side:
@@ -94,16 +99,21 @@ func _search(st: BattleState) -> Dictionary:
 	return best if not best.is_empty() else {"do": "end"}
 
 
+func _copy(st: BattleState) -> BattleState:
+	_seed += 1
+	return st.clone(_seed)
+
+
 ## Greedy continuation: keep taking the best one-step move until none improves the position.
 func _rollout(st: BattleState) -> float:
 	var cur := evaluate(st)
 	for step in 12:
-		if st.winner != -1:
+		if st.winner != -1 or abort:
 			break
 		var next: BattleState = null
 		var next_v := cur + 0.25
 		for m in _moves(st):
-			var b := st.clone()
+			var b := _copy(st)
 			if not apply(b, side, m):
 				continue
 			var v := evaluate(b)

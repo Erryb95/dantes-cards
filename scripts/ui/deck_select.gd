@@ -11,7 +11,7 @@ func _ready() -> void:
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.alignment = BoxContainer.ALIGNMENT_CENTER
-	root.add_theme_constant_override("separation", 22)
+	root.add_theme_constant_override("separation", 14)
 	add_child(root)
 	var title := UI.label("Choose your path", 70, "title", UI.GOLD, 10, Color.BLACK)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -31,7 +31,7 @@ func _ready() -> void:
 	for d in CardDB.decks():
 		row.add_child(_deck_panel(d))
 	root.add_child(_my_decks())
-	var back := UI.button("Back", 300, 70)
+	var back := UI.button("Back", 300, 64)
 	back.pressed.connect(func(): Game.go(Game.MENU))
 	var bc := CenterContainer.new()
 	bc.add_child(back)
@@ -41,7 +41,7 @@ func _ready() -> void:
 func _deck_panel(d: Dictionary) -> Control:
 	var hero := CardDB.hero(d.hero)
 	var p := PanelContainer.new()
-	p.custom_minimum_size = Vector2(700, 560)
+	p.custom_minimum_size = Vector2(700, 0)
 	var normal := UI.frame_box("panel_frame_filled", 96, 44,
 		UI.box(Color(0.08, 0.04, 0.035, 0.9), UI.GOLD_DARK, 3, 18, Color(0, 0, 0, 0.6), 24))
 	var hover := UI.frame_box("panel_frame_filled", 96, 44,
@@ -58,38 +58,38 @@ func _deck_panel(d: Dictionary) -> Control:
 			Game.start_battle(d.id))
 	var v := VBoxContainer.new()
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
-	v.add_theme_constant_override("separation", 12)
+	v.add_theme_constant_override("separation", 8)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(v)
 	var portrait := Control.new()
-	portrait.custom_minimum_size = Vector2(0, 250)
+	portrait.custom_minimum_size = Vector2(0, 210)
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(portrait)
 	var hv := HeroView.new().setup({"uid": -1, "side": 0, "id": d.hero, "health": hero.get("health", 30)})
-	hv.position = Vector2(350, 125)
+	hv.position = Vector2(350, 105)
 	hv.power.visible = false
 	portrait.add_child(hv)
 	var name := UI.label(d.name, 46, "title", UI.GOLD, 8, Color.BLACK)
 	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(name)
-	var hn := UI.label(str(hero.get("name", "")) + "  ·  Power: " + str(hero.power.name) + " - " + str(hero.power.text),
-		24, "italic", Color(0.85, 0.78, 0.65))
-	hn.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(hn)
+	for line in [str(hero.get("name", "")), "Power: %s - %s" % [hero.power.name, hero.power.text]]:
+		var hn := UI.label(line, 23, "italic", Color(0.85, 0.78, 0.65))
+		hn.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(hn)
 	var txt := UI.label(d.text, 26, "body", UI.BONE)
 	txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	txt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	txt.custom_minimum_size = Vector2(620, 0)
 	v.add_child(txt)
 	var cards := Control.new()
-	cards.custom_minimum_size = Vector2(0, 170)
+	cards.custom_minimum_size = Vector2(0, 160)
 	cards.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(cards)
 	var ids: Array = FEATURED.get(d.id, [])
 	for i in ids.size():
 		var c := CardView.new().setup(ids[i], -1, true)
 		c.scale = Vector2(0.44, 0.44)
-		c.position = Vector2(350 + (i - 1) * 125, 85 + absf(i - 1) * 8)
+		c.position = Vector2(350 + (i - 1) * 125, 80 + absf(i - 1) * 8)
 		c.rotation = (i - 1) * 0.12
 		cards.add_child(c)
 	return p
@@ -103,7 +103,7 @@ func _my_decks() -> Control:
 	for i in Collection.decks.size():
 		var d: Dictionary = Collection.decks[i]
 		var ok := Collection.deck_problem(d) == ""
-		var b := UI.button(d.name if ok else "%s (%s)" % [d.name, Collection.deck_problem(d)], 300, 64)
+		var b := UI.button(d.name if ok else "%s (%s)" % [d.name, Collection.deck_problem(d)], 340, 60)
 		b.add_theme_font_size_override("font_size", 22)
 		b.tooltip_text = "Pilgrim" if d.cls == "pilgrim" else "Ferryman"
 		b.pressed.connect(func():
@@ -114,12 +114,12 @@ func _my_decks() -> Control:
 			else:
 				_edit(i, d.cls))
 		row.add_child(b)
-		var e := UI.button("Edit", 90, 64)
+		var e := UI.button("Edit", 90, 60)
 		e.add_theme_font_size_override("font_size", 22)
 		e.pressed.connect(_edit.bind(i, d.cls))
 		row.add_child(e)
 	for c in [["pilgrim", "+ Pilgrim deck"], ["ferry", "+ Ferryman deck"]]:
-		var n := UI.button(c[1], 260, 64)
+		var n := UI.button(c[1], 340, 60)
 		n.add_theme_font_size_override("font_size", 22)
 		n.pressed.connect(_edit.bind(-1, c[0]))
 		row.add_child(n)

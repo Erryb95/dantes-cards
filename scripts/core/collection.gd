@@ -54,6 +54,8 @@ func _load() -> void:
 
 
 func save() -> void:
+	if Game.debug_run(): # tests and tooling never write the player's real collection
+		return
 	var cfg := ConfigFile.new()
 	cfg.set_value("collection", "owned", owned)
 	cfg.set_value("collection", "obols", obols)

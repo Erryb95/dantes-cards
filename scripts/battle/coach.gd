@@ -20,6 +20,7 @@ var _t := 0.0
 var _id := ""
 var _forced := false
 var _enabled := true
+var _fade: Tween
 
 
 func _ready() -> void:
@@ -60,9 +61,8 @@ func offer(id: String, target: Vector2) -> bool:
 		Settings.coach_seen.append(id)
 		Settings.save()
 	_bubble.reset_size()
+	_fade_to(1.0, 0.3)
 	visible = true
-	var tw := create_tween()
-	tw.tween_property(self, "modulate:a", 1.0, 0.3)
 	Sfx.play("tick", -10.0)
 	return true
 
@@ -71,9 +71,16 @@ func dismiss() -> void:
 	if not showing():
 		return
 	_id = ""
-	var tw := create_tween()
-	tw.tween_property(self, "modulate:a", 0.0, 0.2)
-	tw.tween_callback(hide)
+	_fade_to(0.0, 0.2)
+	_fade.tween_callback(hide)
+
+
+## One fade at a time: a tip offered while the last one is still fading out must not be hidden by that fade.
+func _fade_to(alpha: float, time: float) -> void:
+	if _fade != null:
+		_fade.kill()
+	_fade = create_tween()
+	_fade.tween_property(self, "modulate:a", alpha, time)
 
 
 func _process(delta: float) -> void:

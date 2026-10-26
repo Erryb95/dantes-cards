@@ -109,20 +109,26 @@ func _give_coin() -> void:
 var _mulligan_pending := [false, false]
 
 
-## A deep copy for look-ahead (the AI tries moves on it). It has no listeners, and its random stream is re-seeded
-## so a search cannot peek at how the real game's random effects will fall.
-func clone() -> BattleState:
+## A deep copy for look-ahead (the AI tries moves on it). It has no listeners; its random stream starts from `seed`
+## and both decks are reshuffled, so a search cannot peek at how random effects or draws will fall.
+func clone(seed: int) -> BattleState:
 	var b := BattleState.new()
 	b.current = current
 	b.turn = turn
 	b.winner = winner
 	b._next_uid = _next_uid
 	b._mulligan_pending = _mulligan_pending.duplicate()
-	b.rng.seed = randi()
+	b.rng.seed = seed
 	for s in sides:
 		var n := SideState.new()
 		n.hero_id = s.hero_id
 		n.deck = s.deck.duplicate()
+		# The copy must not know the real draw order: shuffle it with its own RNG (Fisher-Yates).
+		for k in range(n.deck.size() - 1, 0, -1):
+			var j := b.rng.randi_range(0, k)
+			var tmp = n.deck[k]
+			n.deck[k] = n.deck[j]
+			n.deck[j] = tmp
 		for c in s.hand:
 			n.hand.append(c.duplicate())
 		n.mana = s.mana

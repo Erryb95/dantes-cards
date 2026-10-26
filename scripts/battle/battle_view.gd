@@ -71,6 +71,7 @@ var banner: Label
 var inspect: CardView
 var _tips: VBoxContainer
 var _coach: Coach
+var _pause_dim: Control ## the open pause menu (no coach tips while it is up)
 var _flash_rect: ColorRect
 
 var mode := Mode.IDLE
@@ -148,7 +149,7 @@ func _on_resize() -> void:
 func _resolve_arena() -> void:
 	var id := Game.begin_arena()
 	arena = CardDB.arena(id).duplicate(true)
-	if CardDB.arena_ready(id):
+	if CardDB.arena_ready(id) or Game.arena_forced and CardDB.arena_painted(id):
 		return
 	if arena.is_empty() or not Game.arena_forced:
 		Game.arena_id = "acheron"
@@ -1185,6 +1186,9 @@ func _hit_stop(seconds: float) -> void:
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0 # never leave a hit-stop behind when the scene changes
 	if _ai_task != -1:
+		ai.abort = true
+		if ai_self != null:
+			ai_self.abort = true
 		WorkerThreadPool.wait_for_task_completion(_ai_task)
 		_ai_task = -1
 
@@ -1605,7 +1609,7 @@ func _refresh_highlights() -> void:
 
 ## First-game tips, most useful first: play a card, attack (Guard when it blocks), hero power, end turn.
 func _offer_coach(any: bool) -> void:
-	if autoplay or _in_mulligan or _coach.showing():
+	if autoplay or _in_mulligan or _coach.showing() or is_instance_valid(_pause_dim):
 		return
 	var xf := get_canvas_transform()
 	for c in hand_views[0]:
@@ -2039,6 +2043,8 @@ func _open_pause() -> void:
 	dim.color = Color(0, 0, 0, 0.7)
 	dim.size = V
 	ui.add_child(dim)
+	_pause_dim = dim
+	_coach.dismiss()
 	var box := VBoxContainer.new()
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.size = V

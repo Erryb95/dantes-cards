@@ -123,6 +123,9 @@ static func fit_text(b: Button) -> void:
 	var size := b.get_theme_font_size("font_size")
 	var sb := b.get_theme_stylebox("normal")
 	var room := b.custom_minimum_size.x - sb.get_margin(SIDE_LEFT) - sb.get_margin(SIDE_RIGHT) - 6.0
+	if sb is StyleBoxTexture:
+		# Keep the label off the painted scrollwork ends, which reach past the content margins.
+		room = minf(room, b.custom_minimum_size.x - 1.25 * (sb.texture_margin_left + sb.texture_margin_right) + 8.0)
 	while size > 16 and font.get_string_size(b.text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > room:
 		size -= 1
 	b.add_theme_font_size_override("font_size", size)

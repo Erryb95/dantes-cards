@@ -49,17 +49,17 @@ func _ready() -> void:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 12)
 	left.add_child(top)
-	var back := UI.button("Back", 160, 60)
+	var back := UI.button("Back", 170, 60)
 	back.pressed.connect(func(): Game.go(Game.DECK_SELECT))
 	top.add_child(back)
 	var cls_name := "Pilgrim" if deck.cls == "pilgrim" else "Ferryman"
 	for f in [["all", "All"], ["class", cls_name], ["neutral", "Neutral"]]:
-		var b := _small_button(f[1], 170)
+		var b := _small_button(f[1], 190)
 		b.pressed.connect(func():
 			_set_filter = f[0]
 			_fill())
 		top.add_child(b)
-	var own := _small_button("Owned only", 200)
+	var own := _small_button("Owned only", 250)
 	own.toggle_mode = true
 	own.toggled.connect(func(on: bool):
 		_show_unowned = not on
@@ -88,7 +88,7 @@ func _ready() -> void:
 
 	# Right: the deck.
 	var right := PanelContainer.new()
-	right.custom_minimum_size = Vector2(460, 0)
+	right.custom_minimum_size = Vector2(520, 0)
 	right.add_theme_stylebox_override("panel", UI.frame_box("panel_frame_filled", 96, 34,
 		UI.box(Color(0.07, 0.035, 0.03, 0.92), UI.GOLD_DARK, 3, 16, Color(0, 0, 0, 0.6), 20)))
 	root.add_child(right)
@@ -106,8 +106,14 @@ func _ready() -> void:
 	_name.text_changed.connect(func(t: String): deck.name = t)
 	rv.add_child(_name)
 	var hero := CardDB.hero(Collection.CLASS_HERO[deck.cls])
+	# Hero line with the card count on its right, so the count never crowds the bottom of the deck list.
+	var hr := HBoxContainer.new()
+	rv.add_child(hr)
 	var hl := UI.label("%s  ·  %s" % [hero.get("name", ""), cls_name], 24, "italic", UI.BONE, 3, Color.BLACK)
-	rv.add_child(hl)
+	hl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hr.add_child(hl)
+	_count = UI.label("", 32, "title", UI.BONE, 5, Color.BLACK)
+	hr.add_child(_count)
 	_curve = Control.new()
 	_curve.custom_minimum_size = Vector2(0, 90)
 	_curve.draw.connect(_draw_curve)
@@ -120,32 +126,31 @@ func _ready() -> void:
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 4)
 	ls.add_child(_list)
-	_count = UI.label("", 34, "title", UI.BONE, 5, Color.BLACK)
-	_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	rv.add_child(_count)
 	_problem = UI.label("", 20, "italic", Color(1.0, 0.6, 0.45), 3, Color.BLACK)
 	_problem.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_problem.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rv.add_child(_problem)
 	var r1 := HBoxContainer.new()
-	r1.add_theme_constant_override("separation", 10)
+	r1.alignment = BoxContainer.ALIGNMENT_CENTER
+	r1.add_theme_constant_override("separation", 6)
 	rv.add_child(r1)
-	var fill := _small_button("Auto-fill", 210)
+	var fill := _small_button("Auto-fill", 170 if _index >= 0 else 220)
 	fill.pressed.connect(func():
 		Collection.autofill(deck)
 		Sfx.play("swish_long", -6.0)
 		_refresh())
 	r1.add_child(fill)
-	var clear := _small_button("Clear", 100)
+	var clear := _small_button("Clear", 135 if _index >= 0 else 170)
 	clear.pressed.connect(func():
 		deck.cards.clear()
 		_refresh())
 	r1.add_child(clear)
 	if _index >= 0:
-		var del := _small_button("Delete", 120)
+		var del := _small_button("Delete", 135)
 		del.pressed.connect(_delete)
 		r1.add_child(del)
 	var r2 := HBoxContainer.new()
+	r2.alignment = BoxContainer.ALIGNMENT_CENTER
 	r2.add_theme_constant_override("separation", 10)
 	rv.add_child(r2)
 	var save := UI.button("Save", 200, 70)
