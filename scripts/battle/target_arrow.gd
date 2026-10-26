@@ -4,8 +4,8 @@ extends Node2D
 ## a turning rune reticle on valid targets (assets/ui/arrow_*.png, target_reticle.png). Falls back to drawn chevrons
 ## when the paintings are missing.
 
-const LINK_LEN := 54.0 ## px along the curve per painted chain piece
-const LINK_H := 22.0
+const LINK_LEN := 62.0 ## px along the curve per painted chain piece
+const LINK_H := 30.0
 
 var from := Vector2.ZERO
 var to := Vector2.ZERO
@@ -39,8 +39,16 @@ func _draw() -> void:
 	if _link == null or _head == null:
 		_draw_plain(len)
 		return
+	# A soft ember trail under the chain, so the arrow reads over any painting.
+	var pts := PackedVector2Array()
+	for i in 25:
+		pts.append(_point(i / 24.0 * 0.92))
+	var hue := Color(1.0, 0.45, 0.12) if valid else Color(0.85, 0.75, 0.6)
+	draw_polyline(pts, Color(hue.r, hue.g, hue.b, 0.18), 26.0, true)
+	draw_polyline(pts, Color(hue.r, hue.g, hue.b, 0.35), 10.0, true)
+	draw_polyline(pts, Color(1.0, 0.9, 0.7, 0.5), 3.0, true)
 	# Ember links: dim and small at the source, hot and full size near the head, crawling forward.
-	var tint := Color(1.25, 1.0, 0.85) if valid else Color(0.75, 0.68, 0.62)
+	var tint := Color(1.5, 1.15, 0.9) if valid else Color(1.0, 0.92, 0.82)
 	var n := int(len * 1.15 / LINK_LEN)
 	var off := fmod(_t * 1.6, 1.0)
 	for i in n:
@@ -52,15 +60,16 @@ func _draw() -> void:
 		var s := 0.55 + 0.45 * k
 		draw_set_transform(p, (q - p).angle(), Vector2(s, s))
 		draw_texture_rect(_link, Rect2(-LINK_LEN / 2, -LINK_H / 2, LINK_LEN, LINK_H), false,
-			Color(tint.r, tint.g, tint.b, 0.35 + 0.65 * k))
-	var dir := (to - _point(0.9)).angle()
-	var hs := 1.0 + (0.08 * sin(_t * 10.0) if valid else 0.0)
-	draw_set_transform(to, dir, Vector2(hs, hs))
-	draw_texture_rect(_head, Rect2(-86, -50, 100, 100), false, tint)
+			Color(tint.r, tint.g, tint.b, 0.6 + 0.4 * k))
+	# The reticle first, then the head on top of it so the point stays readable.
 	if valid and _reticle != null:
 		var r := 150.0 + sin(_t * 6.0) * 8.0
 		draw_set_transform(to, _t * 0.9, Vector2.ONE)
-		draw_texture_rect(_reticle, Rect2(-r / 2, -r / 2, r, r), false, Color(1.2, 0.9, 0.8, 0.95))
+		draw_texture_rect(_reticle, Rect2(-r / 2, -r / 2, r, r), false, Color(1.2, 0.9, 0.8, 0.8))
+	var dir := (to - _point(0.9)).angle()
+	var hs := 1.15 + (0.08 * sin(_t * 10.0) if valid else 0.0)
+	draw_set_transform(to, dir, Vector2(hs, hs))
+	draw_texture_rect(_head, Rect2(-86, -50, 100, 100), false, tint)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 

@@ -443,7 +443,9 @@ func _process(delta: float) -> void:
 		lift = 1.0
 	elif face_up and (look or (auto_tilt and is_visible_in_tree() and contains_point(get_global_mouse_position()))):
 		var m := to_local(get_global_mouse_position()) / Vector2(W / 2, H / 2)
-		target = m.clamp(-Vector2.ONE, Vector2.ONE) * 0.32
+		# A hand card lifted under the pointer leans gently: the pointer sits at its bottom edge, and a full lean
+		# would push that edge off the screen.
+		target = m.clamp(-Vector2.ONE, Vector2.ONE) * (0.13 if look else 0.32)
 		lift = 0.5
 	elif sway:
 		_sway_t += delta

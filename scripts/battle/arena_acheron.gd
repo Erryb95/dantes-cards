@@ -256,9 +256,11 @@ func _process(delta: float) -> void:
 	_t += delta
 	# Boat: slow crossing, turning at the edges.
 	_boat_x += _boat_dir * 22.0 * delta
-	if _boat_x < -150.0:
+	# The boat stays on the painted river, turning before the board's edges.
+	var half := 960.0 * ky - 230.0
+	if _boat_x < V.x / 2 - half:
 		_boat_dir = 1.0
-	elif _boat_x > V.x + 150.0:
+	elif _boat_x > V.x / 2 + half:
 		_boat_dir = -1.0
 	_bob = sin(_t * 1.3) * 3.0
 	boat.position = Vector2(_boat_x, river_y + 4 + _bob)

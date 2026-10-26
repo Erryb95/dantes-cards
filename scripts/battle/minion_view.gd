@@ -101,7 +101,7 @@ func _build() -> void:
 	add_child(_ring)
 	if UiSkin.has("ward_bubble"):
 		# The painted bubble (black background) drawn additively, so only its light shows.
-		_ward = UiSkin.sprite("ward_bubble", Vector2(W + 70, H + 70))
+		_ward = UiSkin.sprite("ward_bubble", Vector2(W + 80, H + 80))
 		_ward.use_parent_material = false
 		var add := CanvasItemMaterial.new()
 		add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
@@ -109,6 +109,7 @@ func _build() -> void:
 	else:
 		_ward = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(W + 22, H + 22), Color(1.0, 0.85, 0.35, 0.18), Color(1.0, 0.9, 0.5, 0.9), 3.0)
 		_ward.shade = false
+	_ward.set_meta("base", _ward.scale)
 	add_child(_ward)
 
 	_icons = Node2D.new()
@@ -233,7 +234,7 @@ func _process(delta: float) -> void:
 	_shadow.position = Vector2(6, 10).lerp(Vector2(30, 56), lift)
 	_shadow.modulate.a = 1.0 - 0.45 * lift
 	if _ward.visible:
-		_ward.scale = Vector2.ONE * (1.0 + 0.025 * sin(_t * 3.0))
+		_ward.scale = _ward.get_meta("base") * (1.0 + 0.025 * sin(_t * 3.0))
 		_ward.modulate.a = 0.75 + 0.25 * sin(_t * 2.1)
 	if _zzz.visible:
 		_zzz.position.y = -H / 2 - 30 + sin(_t * 1.6) * 6.0
@@ -272,10 +273,11 @@ func contains_point(global_point: Vector2) -> bool:
 func break_ward() -> void:
 	_ward.visible = true
 	var t := create_tween().set_parallel(true)
-	t.tween_property(_ward, "scale", Vector2(1.5, 1.5), 0.3)
+	var base: Vector2 = _ward.get_meta("base")
+	t.tween_property(_ward, "scale", base * 1.5, 0.3)
 	t.tween_property(_ward, "modulate:a", 0.0, 0.3)
 	await t.finished
-	_ward.scale = Vector2.ONE
+	_ward.scale = base
 	_ward.modulate.a = 1.0
 	keywords.erase("ward")
 	_refresh()

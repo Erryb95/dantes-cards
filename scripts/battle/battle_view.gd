@@ -6,6 +6,7 @@ extends Node2D
 
 const HAND_SCALE := 0.62
 const ENEMY_HAND_SCALE := 0.42
+const HOVER_SCALE := 1.12
 const MINION_GAP := 40.0
 const PLAY_LINE := 0.70 ## releasing a dragged card above this fraction of the screen height plays it
 
@@ -101,7 +102,7 @@ func _ready() -> void:
 		elif a.begins_with("--shot-every="):
 			_shot_every = float(a.substr(13))
 	V = get_viewport_rect().size
-	ky = V.y / 1080.0
+	ky = minf(V.y / 1080.0, V.x / 1920.0) # the 16:9 layout fits inside any screen (letterboxed on 16:10)
 	_build_scene()
 	get_viewport().size_changed.connect(_on_resize)
 	var arena := CardDB.arena(Game.arena_id)
@@ -117,7 +118,7 @@ func _ready() -> void:
 
 func _on_resize() -> void:
 	V = get_viewport_rect().size
-	ky = V.y / 1080.0
+	ky = minf(V.y / 1080.0, V.x / 1920.0) # the 16:9 layout fits inside any screen (letterboxed on 16:10)
 	cam.position = V / 2
 	_layout_static()
 	_layout_hand(0)
@@ -345,6 +346,7 @@ func _build_end_button() -> void:
 
 func _build_mana(side: int) -> Node2D:
 	var n := Node2D.new()
+	n.z_index = 25 # above the hand, so the crystals always read
 	board_layer.add_child(n)
 	var l := UI.label("0/0", 34, "title", Color(0.75, 0.88, 1.0), 7, Color(0, 0.02, 0.08))
 	l.name = "Label"
@@ -435,7 +437,7 @@ func _layout_static() -> void:
 	var board := bg_layer.get_node_or_null("Board") as Sprite2D
 	if board != null:
 		# Fit the height so the painted sockets sit exactly on the layout (see _sock).
-		var bs := V.y / board.texture.get_size().y
+		var bs := 1080.0 * ky / board.texture.get_size().y
 		board.scale = Vector2(bs, bs)
 		board.position = V / 2
 	for layer in ["frame", "mist"]:
@@ -490,15 +492,20 @@ func _sock(n: String, fallback: Vector2) -> Vector2:
 
 
 func _board_y(side: int) -> float:
-	return (592.0 if side == 0 else 352.0) * ky
+	return (592.0 if side == 0 else 352.0) * ky + _oy()
 
 
 func _river_y() -> float:
-	return 472.0 * ky
+	return 472.0 * ky + _oy()
 
 
 func _hero_pos(side: int) -> Vector2:
-	return Vector2(V.x / 2, (808.0 if side == 0 else 150.0) * ky)
+	return Vector2(V.x / 2, (808.0 if side == 0 else 150.0) * ky + _oy())
+
+
+## Top of the 16:9 layout: screens taller than 16:9 (tablets) centre it vertically.
+func _oy() -> float:
+	return (V.y - 1080.0 * ky) / 2.0
 
 
 func _intro(arena: Dictionary) -> void:
@@ -1406,7 +1413,11 @@ func _layout_hand(side: int) -> void:
 	if n == 0:
 		return
 	var s := HAND_SCALE if side == 0 else ENEMY_HAND_SCALE
-	var spacing := minf(CardView.W * s * 0.92, (minf(V.x - 700.0, 1100.0)) / n)
+	var room := minf(V.x - 700.0, 1100.0)
+	if side == 0:
+		# Keep the hand clear of the mana tray at the bottom right.
+		room = minf(room, maxf(640.0, 2.0 * (mana_views[0].position.x - 310.0 - V.x / 2)))
+	var spacing := minf(CardView.W * s * 0.92, room / n)
 	var hi := cards.find(hover_card) if side == 0 else -1
 	for i in n:
 		var c: CardView = cards[i]
@@ -1427,8 +1438,9 @@ func _layout_hand(side: int) -> void:
 		if hi != -1:
 			if i == hi:
 				c.z_index = 100
-				c.home = Vector2(x, V.y - CardView.H / 2 - 6)
-				_move(c, c.home, 0.0, 1.0, 0.12)
+				# Lifted clear of the screen edge and a bit larger, so the whole card reads.
+				c.home = Vector2(x, V.y - CardView.H * HOVER_SCALE / 2 - 24)
+				_move(c, c.home, 0.0, HOVER_SCALE, 0.12)
 				continue
 			x += 70.0 * signf(i - hi)
 		c.home = Vector2(x, y)
