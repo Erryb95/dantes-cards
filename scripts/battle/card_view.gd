@@ -183,10 +183,10 @@ func _build_face() -> void:
 	txt.add_theme_font_override("italics_font", UI.font("italic"))
 	txt.add_theme_color_override("default_color", Color(0.12, 0.07, 0.04))
 	var rules: String = card.get("text", "")
-	var size := 21 if rules.length() < 40 else 19
+	var size := UI.fit_rules_size(rules, txt.size.x, txt.size.y, 21)
 	if rules == "":
 		rules = "[i]" + card.get("flavor", "") + "[/i]"
-		size = 17
+		size = UI.fit_rules_size(card.get("flavor", ""), txt.size.x, txt.size.y, 17)
 		txt.add_theme_color_override("default_color", Color(0.3, 0.2, 0.12))
 	txt.add_theme_font_size_override("normal_font_size", size)
 	txt.add_theme_font_size_override("bold_font_size", size)
@@ -311,8 +311,10 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	txt.bbcode_enabled = true
 	txt.scroll_active = false
 	txt.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	txt.position = Vector2(20, ry + 58)
-	txt.size = Vector2(W - 40, 70)
+	# Between the name ribbon and the bottom edge; on minions the box narrows so lines stay clear of the
+	# attack and health gems in the lower corners.
+	txt.position = Vector2(20 if is_spell else 44, ry + 58)
+	txt.size = Vector2(W - 40 if is_spell else W - 88, 72 if is_spell else 66)
 	txt.use_parent_material = true
 	var body := UI.font("body")
 	var bold := FontVariation.new()
@@ -325,10 +327,10 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	txt.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
 	txt.add_theme_constant_override("outline_size", 5)
 	var rules: String = card.get("text", "")
-	var size := 20 if rules.length() < 36 else (18 if rules.length() < 60 else 16)
+	var size := UI.fit_rules_size(rules, txt.size.x, txt.size.y, 20)
 	if rules == "":
 		rules = "[i]" + card.get("flavor", "") + "[/i]"
-		size = 17
+		size = UI.fit_rules_size(card.get("flavor", ""), txt.size.x, txt.size.y, 17)
 		txt.add_theme_color_override("default_color", Color(0.85, 0.78, 0.66))
 	for k in ["normal_font_size", "bold_font_size", "italics_font_size"]:
 		txt.add_theme_font_size_override(k, size)

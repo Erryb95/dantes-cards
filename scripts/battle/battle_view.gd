@@ -516,8 +516,8 @@ func _layout_static() -> void:
 	var bed_w := minf(V.x - 520.0, 1220.0)
 	for i in 2:
 		var bed: Panel = bg_layer.get_node("Bed%d" % i)
-		bed.size = Vector2(bed_w, 196 * ky)
-		bed.position = Vector2(V.x / 2 - bed_w / 2, _board_y(1 - i) - 98 * ky)
+		bed.size = Vector2(bed_w, 176 * ky)
+		bed.position = Vector2(V.x / 2 - bed_w / 2, _board_y(1 - i) - 88 * ky)
 	river.position = Vector2(0, _river_y() - _river_h / 2 * ky)
 	river.size = Vector2(V.x, _river_h * ky)
 	_river_mat.set_shader_parameter("aspect", V.x / (_river_h * ky))
@@ -559,7 +559,7 @@ func _sock(n: String, fallback: Vector2) -> Vector2:
 
 
 func _board_y(side: int) -> float:
-	return (592.0 if side == 0 else 352.0) * ky + _oy()
+	return (576.0 if side == 0 else 368.0) * ky + _oy() # 104 px each side of the divider (472)
 
 
 func _river_y() -> float:

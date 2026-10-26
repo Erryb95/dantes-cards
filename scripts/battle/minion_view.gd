@@ -2,8 +2,8 @@ class_name MinionView
 extends Node2D
 ## A minion on the board: oval portrait, attack / health, keyword dressing (guard shield, ward bubble...).
 
-const W := 132.0
-const H := 168.0
+const W := 116.0
+const H := 148.0
 const CARD_FX := preload("res://assets/shaders/card_fx.gdshader")
 
 var uid := -1

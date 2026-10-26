@@ -256,6 +256,19 @@ static func dot_texture() -> Texture2D:
 
 
 ## Keywords are shown in bold in rules text.
+## The largest font size (max_size down to min_size) at which `plain` text wraps inside width x height, for a
+## RichTextLabel (bold keywords run a little wider, so the width keeps a 6% margin).
+static func fit_rules_size(plain: String, width: float, height: float, max_size: int, min_size: int = 12) -> int:
+	var f := font("body")
+	var s := max_size
+	while s > min_size:
+		var box := f.get_multiline_string_size(plain, HORIZONTAL_ALIGNMENT_CENTER, width * 0.94, s)
+		if box.y <= height:
+			break
+		s -= 1
+	return s
+
+
 static func rules_bbcode(text: String) -> String:
 	var t := text
 	for k in ["On Play:", "Last Breath:", "End of Turn:", "Start of Turn:", "Guard", "Swift", "Ward", "Drain",

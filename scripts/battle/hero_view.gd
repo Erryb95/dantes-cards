@@ -2,8 +2,8 @@ class_name HeroView
 extends Node2D
 ## Hero portrait with health / armor gems, plus the hero-power button next to it.
 
-const W := 176.0
-const H := 210.0
+const W := 156.0
+const H := 186.0
 const CARD_FX := preload("res://assets/shaders/card_fx.gdshader")
 
 var uid := -1
@@ -115,7 +115,7 @@ func _build() -> void:
 
 func _build_power(def: Dictionary) -> void:
 	power = Node2D.new()
-	power.position = Vector2(W / 2 + 92, 14 if side == 0 else -14) # mirrored about the divider, like the board sockets
+	power.position = Vector2(W / 2 + 90, 14 if side == 0 else -14) # mirrored about the divider, like the board sockets
 	add_child(power)
 	_power_glow = Aura.make(Vector2(104, 104), true, 30.0)
 	power.add_child(_power_glow)
