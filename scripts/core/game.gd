@@ -100,22 +100,34 @@ func _snap(path: String) -> void:
 	get_tree().quit()
 
 
-## Starts a battle with a preconstructed deck (by id) against a random preconstructed deck of the other class.
+## Starts a battle with a preconstructed deck (by id) against a random preconstructed deck of another class.
 func start_battle(deck_id: String) -> void:
-	var d := CardDB.deck(deck_id)
-	start_with(CardDB.deck_list(deck_id), d.hero, "ferry" if CardDB.deck_class(d) == "pilgrim" else "pilgrim")
+	start_with(CardDB.deck_list(deck_id), CardDB.deck(deck_id).hero)
 
 
-## Starts a battle with any card list; the opponent plays a random preconstructed deck of class `enemy_cls`.
-func start_with(cards: Array, hero: String, enemy_cls: String) -> void:
+## Starts a battle with any card list; the opponent plays a random preconstructed deck of class `enemy_cls`, or of
+## a random other class when it is "".
+func start_with(cards: Array, hero: String, enemy_cls := "") -> void:
 	player_cards.assign(cards)
 	player_hero = hero
-	player_deck = "pilgrim" if hero == "dante" else "ferry"
+	player_deck = CardDB.hero_class(hero)
+	if enemy_cls == "":
+		enemy_cls = pick_enemy_class(player_deck)
 	enemy_deck = enemy_cls
 	enemy_deck_id = pick_enemy_deck(enemy_cls)
 	enemy_cards = CardDB.deck_list(enemy_deck_id)
 	enemy_hero = CardDB.deck(enemy_deck_id).hero
 	go(BATTLE)
+
+
+## A random opponent class for a player of class `cls`: any other class with preconstructed decks (the same class
+## when it is the only one).
+func pick_enemy_class(cls: String) -> String:
+	var pool: Array[String] = []
+	for c in CardDB.other_classes(cls):
+		if not CardDB.class_decks(c).is_empty():
+			pool.append(c)
+	return pool.pick_random() if not pool.is_empty() else cls
 
 
 ## A random preconstructed deck of class `cls`, never the one faced last time when there is a choice.

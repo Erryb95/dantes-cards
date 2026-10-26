@@ -554,6 +554,10 @@
  "heroes": [
   {
    "id": "dante",
+   "class": "pilgrim",
+   "class_name": "Pilgrim",
+   "power_icon": "icon_shield",
+   "defeat_line": "The Pilgrim falls. The way down is closed to him.",
    "name": "Dante, the Pilgrim",
    "health": 30,
    "power": {
@@ -572,6 +576,10 @@
   },
   {
    "id": "charon",
+   "class": "ferry",
+   "class_name": "Ferryman",
+   "power_icon": "icon_obol",
+   "defeat_line": "Charon steps aside. The river can be crossed.",
    "name": "Charon, the Ferryman",
    "health": 30,
    "power": {

@@ -3,6 +3,7 @@ class_name CardDB
 
 static var _cards: Dictionary = {}
 static var _heroes: Dictionary = {}
+static var _classes: Array[String] = [] ## class ids in data order, one per hero
 static var _decks: Array = []
 static var _arenas: Array = []
 static var _loaded := false
@@ -19,6 +20,8 @@ static func _ensure() -> void:
 		_cards[card.id] = card
 	for h in c.get("heroes", []):
 		_heroes[h.id] = h
+		if str(h.get("class", "")) != "" and not h["class"] in _classes:
+			_classes.append(str(h["class"]))
 	for f in DirAccess.get_files_at("res://data/sets"):
 		if f.ends_with(".json"):
 			for card in _read("res://data/sets/" + f).get("cards", []):
@@ -46,6 +49,40 @@ static func hero(id: String) -> Dictionary:
 	return _heroes.get(id, {})
 
 
+## Every playable class (one hero each: data/cards.json "heroes", each with its "class"), in data order.
+static func classes() -> Array[String]:
+	_ensure()
+	return _classes
+
+
+## The hero of class `cls` ("" when there is none).
+static func class_hero(cls: String) -> String:
+	_ensure()
+	for h in _heroes.values():
+		if h.get("class", "") == cls:
+			return str(h.id)
+	return ""
+
+
+## The class's display name ("Pilgrim", "Ferryman"...).
+static func class_title(cls: String) -> String:
+	return str(hero(class_hero(cls)).get("class_name", cls.capitalize()))
+
+
+## The class a hero leads.
+static func hero_class(hero_id: String) -> String:
+	return str(hero(hero_id).get("class", ""))
+
+
+## Every class but `cls` (the possible opponents).
+static func other_classes(cls: String) -> Array[String]:
+	var out: Array[String] = []
+	for c in classes():
+		if c != cls:
+			out.append(c)
+	return out
+
+
 static func all_cards() -> Array:
 	_ensure()
 	return _cards.values()
@@ -64,7 +101,7 @@ static func deck(id: String) -> Dictionary:
 	return {}
 
 
-## A preconstructed deck's class ("pilgrim" or "ferry").
+## A preconstructed deck's class (one of classes()).
 static func deck_class(d: Dictionary) -> String:
 	return str(d.get("cls", d.get("id", "")))
 

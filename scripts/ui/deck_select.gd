@@ -12,7 +12,6 @@ const TILE := Vector2(380, 96)
 const TILE_GAP := 14.0
 const FRAME_PAD := 64.0 ## room the bronze frame's ornament takes on each side of a big panel
 const ARROW_SIZE := 62.0
-const FILTERS := [["all", "All decks"], ["pilgrim", "Pilgrim"], ["ferry", "Ferryman"]]
 const CARD_FX := preload("res://assets/shaders/card_fx.gdshader")
 
 var _entries: Array = [] ## every deck the library can show (see _all_entries)
@@ -77,14 +76,14 @@ func _row_height() -> float:
 ## Every deck as one shape: preconstructed ones first (by class, in file order), then the player's own.
 func _all_entries() -> Array:
 	var out := []
-	for cls in ["pilgrim", "ferry"]:
+	for cls in CardDB.classes():
 		for d in CardDB.class_decks(cls):
 			out.append({"key": "pre:" + str(d.id), "own": false, "id": str(d.id), "cls": cls, "name": str(d.name),
 				"hero": str(d.hero), "text": str(d.get("text", "")), "featured": d.get("featured", []), "problem": ""})
 	for i in Collection.decks.size():
 		var d: Dictionary = Collection.decks[i]
 		out.append({"key": "own:%d" % i, "own": true, "index": i, "cls": str(d.cls), "name": str(d.name),
-			"hero": Collection.CLASS_HERO[d.cls], "text": _own_text(d), "featured": _own_featured(d),
+			"hero": CardDB.class_hero(d.cls), "text": _own_text(d), "featured": _own_featured(d),
 			"problem": Collection.deck_problem(d)})
 	return out
 
@@ -133,7 +132,7 @@ func _play_entry(e: Dictionary) -> void:
 	Sfx.play("ui_confirm", -4.0)
 	if e.own:
 		var d: Dictionary = Collection.decks[e.index]
-		Game.start_with(Collection.deck_cards(d.cards), e.hero, "ferry" if e.cls == "pilgrim" else "pilgrim")
+		Game.start_with(Collection.deck_cards(d.cards), e.hero)
 	else:
 		Game.start_battle(e.id)
 
@@ -329,8 +328,13 @@ func _library() -> Control:
 	top.alignment = BoxContainer.ALIGNMENT_CENTER
 	top.add_theme_constant_override("separation", 12)
 	v.add_child(top)
-	for f in FILTERS:
-		var b := UI.button(f[1], 210 if f[0] == "all" else 190, 56)
+	# One filter per class after "All decks"; the plates narrow as classes are added so the row fits the panel.
+	var filters := [["all", "All decks"]]
+	for cls in CardDB.classes():
+		filters.append([cls, CardDB.class_title(cls)])
+	var fw := minf(210.0, (inner - 12.0 * (filters.size() - 1)) / filters.size())
+	for f in filters:
+		var b := UI.button(f[1], fw, 56)
 		b.add_theme_font_size_override("font_size", 24)
 		b.pressed.connect(func():
 			_filter = f[0]
@@ -385,7 +389,7 @@ func _refill() -> void:
 	for e in _entries:
 		if _filter == "all" or e.cls == _filter:
 			_grid.add_child(_tile(e))
-	for cls in ["pilgrim", "ferry"]:
+	for cls in CardDB.classes():
 		if _filter == "all" or _filter == cls:
 			_grid.add_child(_new_tile(cls))
 	_scroll.scroll_vertical = 0
@@ -484,7 +488,7 @@ func _tile(e: Dictionary) -> Button:
 	b.set_meta("key", e.key)
 	_tile_portrait(b, e.hero, e.problem != "")
 	_tile_label(b, e.name, 26, "title", UI.BONE if e.problem == "" else Color(0.75, 0.66, 0.6), 12, 40)
-	var cls_name := "Pilgrim" if e.cls == "pilgrim" else "Ferryman"
+	var cls_name := CardDB.class_title(e.cls)
 	var sub := ("Your deck · " if e.own else "Starter deck · ") + cls_name
 	var col := Color(0.86, 0.72, 0.48)
 	if e.problem != "":
@@ -533,7 +537,7 @@ func _mark_selected() -> void:
 ## "New deck" tile of a class: opens the deck editor on an empty deck.
 func _new_tile(cls: String) -> Button:
 	var b := _tile_base()
-	_tile_portrait(b, Collection.CLASS_HERO[cls], true)
+	_tile_portrait(b, CardDB.class_hero(cls), true)
 	var plus := UI.label("+", 54, "title", UI.GOLD, 6, Color.BLACK)
 	plus.position = Vector2(22, (TILE.y - 74) / 2)
 	plus.size = Vector2(60, 74)
@@ -542,7 +546,7 @@ func _new_tile(cls: String) -> Button:
 	plus.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(plus)
 	_tile_label(b, "New deck", 26, "title", UI.GOLD, 12, 40)
-	_tile_label(b, "Build a %s deck" % ("Pilgrim" if cls == "pilgrim" else "Ferryman"), 19, "italic",
+	_tile_label(b, "Build a %s deck" % CardDB.class_title(cls), 19, "italic",
 		Color(0.86, 0.72, 0.48), 50, 30)
 	b.pressed.connect(_edit.bind(-1, cls))
 	return b

@@ -30,10 +30,10 @@ func _test_data() -> void:
 		var cls := CardDB.deck_class(d)
 		ok(not deck_ids.has(d.id), "deck id %s is unique" % d.id)
 		deck_ids[d.id] = true
-		ok(cls in ["pilgrim", "ferry"], "deck %s class %s" % [d.id, cls])
+		ok(cls in CardDB.classes(), "deck %s class %s" % [d.id, cls])
 		ok(list.size() == 30, "deck %s has 30 cards (%d)" % [d.id, list.size()])
 		ok(not CardDB.hero(d.hero).is_empty(), "deck %s hero exists" % d.id)
-		ok(d.hero == {"pilgrim": "dante", "ferry": "charon"}.get(cls, ""), "deck %s hero matches its class" % d.id)
+		ok(d.hero == CardDB.class_hero(cls), "deck %s hero matches its class" % d.id)
 		ok(str(d.get("name", "")) != "" and str(d.get("text", "")) != "", "deck %s has a name and a plan" % d.id)
 		ok(d.get("featured", []).size() == 3, "deck %s features 3 cards" % d.id)
 		for id in d.get("featured", []):
@@ -42,7 +42,9 @@ func _test_data() -> void:
 			ok(not CardDB.card(id).is_empty(), "card %s exists" % id)
 			ok(list.count(id) <= (1 if CardDB.card(id).get("rarity") == "legendary" else 2), "deck %s copies of %s" % [d.id, id])
 			ok(CardDB.card(id).get("set") in [cls, "neutral"], "deck %s class of %s" % [d.id, id])
-	for cls in ["pilgrim", "ferry"]:
+	ok(CardDB.classes().size() >= 2, "at least two classes")
+	for cls in CardDB.classes():
+		ok(CardDB.class_title(cls) != "" and CardDB.hero_class(CardDB.class_hero(cls)) == cls, "class %s has a hero" % cls)
 		ok(not CardDB.class_decks(cls).is_empty() and CardDB.class_decks(cls)[0].get("starter", false),
 			"the first %s deck is the starter" % cls)
 	for c in CardDB.all_cards():
