@@ -30,7 +30,9 @@ func _ready() -> void:
 		deck = Collection.decks[_index].duplicate(true)
 	else:
 		_index = -1
-		deck = {"name": "New Deck", "cls": Game.new_deck_cls, "cards": {}}
+		var cls_title := "Pilgrim" if Game.new_deck_cls == "pilgrim" else "Ferryman"
+		var mine := Collection.decks.filter(func(d): return d.cls == Game.new_deck_cls).size()
+		deck = {"name": "%s Deck %d" % [cls_title, mine + 1], "cls": Game.new_deck_cls, "cards": {}}
 
 	var root := HBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -95,16 +97,36 @@ func _ready() -> void:
 	var rv := VBoxContainer.new()
 	rv.add_theme_constant_override("separation", 10)
 	right.add_child(rv)
+	# The deck's name: an inscription field with a caption and a Rename button, so it reads as editable.
+	var cap := UI.label("   Deck name", 20, "italic", UI.BONE, 3, Color.BLACK)
+	rv.add_child(cap)
+	var nr := HBoxContainer.new()
+	nr.add_theme_constant_override("separation", 8)
+	rv.add_child(nr)
 	_name = LineEdit.new()
 	_name.text = deck.name
+	_name.placeholder_text = "Name your deck"
 	_name.max_length = 24
+	_name.select_all_on_focus = true
+	_name.caret_blink = true
+	_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_name.add_theme_font_override("font", UI.font("title"))
-	_name.add_theme_font_size_override("font_size", 34)
+	_name.add_theme_font_size_override("font_size", 30)
 	_name.add_theme_color_override("font_color", UI.GOLD)
-	_name.add_theme_stylebox_override("normal", UI.box(Color(0, 0, 0, 0.35), UI.GOLD_DARK, 2, 8))
-	_name.add_theme_stylebox_override("focus", UI.box(Color(0, 0, 0, 0.5), UI.GOLD, 2, 8))
+	_name.add_theme_color_override("font_placeholder_color", UI.BONE.darkened(0.45))
+	_name.add_theme_color_override("caret_color", UI.GOLD)
+	_name.add_theme_color_override("selection_color", Color(0.55, 0.32, 0.08, 0.75))
+	_name.add_theme_color_override("font_selected_color", Color(1.0, 0.95, 0.8))
+	_name.add_theme_stylebox_override("normal", UI.box(Color(0, 0, 0, 0.45), UI.GOLD_DARK, 2, 8))
+	_name.add_theme_stylebox_override("focus", UI.box(Color(0.05, 0.02, 0.0, 0.7), UI.GOLD, 3, 8))
 	_name.text_changed.connect(func(t: String): deck.name = t)
-	rv.add_child(_name)
+	_name.text_submitted.connect(func(_t: String): _name.release_focus())
+	nr.add_child(_name)
+	var ren := _small_button("Rename", 150)
+	ren.pressed.connect(func():
+		_name.grab_focus()
+		_name.select_all())
+	nr.add_child(ren)
 	var hero := CardDB.hero(Collection.CLASS_HERO[deck.cls])
 	# Hero line with the card count on its right, so the count never crowds the bottom of the deck list.
 	var hr := HBoxContainer.new()
@@ -169,6 +191,8 @@ func _ready() -> void:
 	if "--autoplay" in OS.get_cmdline_user_args():
 		Collection.autofill(deck)
 	_fill()
+	if _index < 0:
+		_name.call_deferred("grab_focus") # a new deck starts by naming it (the text is selected: typing replaces it)
 
 
 func _small_button(text: String, w: float) -> Button:
