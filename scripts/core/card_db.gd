@@ -76,6 +76,12 @@ static func arena(id: String) -> Dictionary:
 	return {}
 
 
+## True when the arena exists and its painted board is installed (arenas without a board are skipped by the draw).
+static func arena_ready(id: String) -> bool:
+	var a := arena(id)
+	return not a.is_empty() and a.has("board") and ResourceLoader.exists("res://assets/arenas/" + str(a.board))
+
+
 ## Expands a deck's {id: count} map into a flat list of card ids.
 static func deck_list(deck_id: String) -> Array[String]:
 	var out: Array[String] = []

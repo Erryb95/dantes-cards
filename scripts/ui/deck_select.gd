@@ -16,8 +16,12 @@ func _ready() -> void:
 	var title := UI.label("Choose your path", 70, "title", UI.GOLD, 10, Color.BLACK)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(title)
-	var arena := CardDB.arena(Game.arena_id)
-	var sub := UI.label("First arena: " + str(arena.get("name", "")), 30, "italic", UI.BONE, 5, Color.BLACK)
+	# The arena is drawn now (a different one from last match), so the player knows where the fight will be.
+	var arena := CardDB.arena(Game.pick_arena())
+	var where := str(arena.get("name", ""))
+	if str(arena.get("circle", "")) != "":
+		where += "  ·  " + str(arena.circle)
+	var sub := UI.label("Next arena: " + where, 30, "italic", UI.BONE, 5, Color.BLACK)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(sub)
 	var row := HBoxContainer.new()

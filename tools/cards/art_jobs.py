@@ -38,6 +38,8 @@ def jobs() -> list:
         subj = h["art"] + ", head and shoulders, strong rim light, clear silhouette, dark background"
         out.append(("hero_" + h["id"], subj, 1024, 1024, "cards/heroes/%s.jpg" % h["id"], (512, 512)))
     for a in arenas["arenas"]:
+        if "backdrop" not in a:
+            continue  # painted game boards come from tools/arena/import_arena.py
         out.append(("arena_" + a["id"], a["art"] + ", atmospheric, low contrast in the centre", 1664, 928,
                     "arenas/" + a["backdrop"], (1920, 1080)))
     out.append(("card_back", "ornate symmetrical card back design, a golden circular emblem of nine concentric rings "

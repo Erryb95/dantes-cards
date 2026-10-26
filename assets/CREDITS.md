@@ -8,6 +8,9 @@ Only CC0 / OFL / MIT / Apache material (or verified commercial licences) ships w
 | assets/fonts/IMFeEN*.ttf | IM Fell English | Igino Marini | OFL (assets/fonts/OFL_IMFellEnglish.txt) |
 | assets/audio/music/{music_combat,music_boss,intro}/c*_0.ogg | Copied from Dante's Vengeance (folders music_combat, music_boss, music_intro): CC0 OpenGameArt loops and public-domain Musopen / SMCE recordings. Per-track sources are in audio/CREDITS_FPS_SOURCE.md | see that file | CC0 / Public Domain Mark |
 | assets/audio/ui/*, assets/audio/sfx/{thunder,splash,wail,rubble,bell_far,sigh,bones,gust}_* | Copied from Dante's Vengeance; per-sound sources in audio/CREDITS_FPS_SOURCE.md | see that file | CC0 |
+| assets/audio/sfx/wind_ghost_loop.ogg | Copied from Dante's Vengeance (amb_funnel_wind c2): [Wind_and_Ghost.mp3](https://freesound.org/people/Andrastos87/sounds/636440/) | Andrastos87 | CC0 |
+| assets/audio/sfx/cold_wind_loop.ogg | Copied from Dante's Vengeance (amb_funnel_wind c1, low-passed): [Air Rush (longer).wav](https://freesound.org/people/Henrythetrain/sounds/138430/) | Henrythetrain | CC0 |
+| assets/audio/sfx/fire_loop.ogg | Copied from Dante's Vengeance (amb_fire c1): [Fire Crackling](https://opengameart.org/content/fire-crackling) | AntumDeluge | CC0 |
 | assets/audio/sfx/{slam,thud}_* | [Impact Sounds](https://kenney.nl/assets/impact-sounds) | Kenney | CC0 1.0 |
 | assets/audio/sfx/{title_sting,bell_funeral,quake_rumble,water_loop,thunder,limbo_drone}.ogg | OpenGameArt / Freesound CC0 (see audio/CREDITS_FPS_SOURCE.md and the FPS assets/CREDITS.md) | nene, aoristos, uagadugu, rubberduck, deleted_user_7146007, Umplix | CC0 |
 | assets/audio/sfx/{card_slide,card_place,card_fan,card_shuffle,pack_open,pack_take}_* | [Casino Audio](https://kenney.nl/assets/casino-audio) | Kenney | CC0 1.0 |

@@ -40,6 +40,34 @@ func _test_data() -> void:
 		for k in c.get("keywords", []):
 			ok(k in ["guard", "swift", "ward", "drain", "venom", "rebirth"], "%s keyword %s" % [c.id, k])
 	ok(CardDB.arenas().size() >= 1, "at least one arena")
+	_test_arenas()
+
+
+## Arena data: every entry is complete, its sounds exist, and the Acheron (the fallback) is always playable.
+func _test_arenas() -> void:
+	ok(CardDB.arena_ready("acheron"), "the Acheron board is installed (every missing board falls back to it)")
+	for a in CardDB.arenas():
+		for key in ["id", "name", "circle", "intro", "music", "board"]:
+			ok(str(a.get(key, "")) != "", "arena %s has %s" % [a.get("id", "?"), key])
+		ok(str(a.get("divider", {}).get("kind", "river")) in ["river", "stream", "wind", "embers", "frost"],
+			"arena %s divider kind" % a.id)
+		ok(str(a.get("ambient", "embers")) in ["embers", "embers_hot", "motes", "dust", "snow"], "arena %s ambient" % a.id)
+		ok(str(a.get("ambience", "")) == "" or ResourceLoader.exists("res://assets/audio/sfx/" + str(a.ambience)),
+			"arena %s ambience file" % a.id)
+		ok(ResourceLoader.exists(str(a.get("scene", "res://scenes/arenas/standard.tscn"))), "arena %s scene" % a.id)
+		ok(ResourceLoader.exists("res://assets/audio/music/%s/c1_0.ogg" % a.music), "arena %s music" % a.id)
+		for p in a.get("props", []):
+			ok(p.has("name") and p.get("pos", []).size() == 2, "arena %s prop entry %s" % [a.id, p.get("name", "?")])
+			for key in ["sfx", "sfx2"]:
+				if p.has(key):
+					ok(_sfx_exists(str(p[key][0])), "arena %s prop %s sound %s" % [a.id, p.name, p[key][0]])
+
+
+func _sfx_exists(name: String) -> bool:
+	for f in [name + ".ogg", name + ".wav", name + "_0.ogg", name + "_0.wav"]:
+		if ResourceLoader.exists("res://assets/audio/sfx/" + f):
+			return true
+	return false
 
 
 ## A fresh battle with empty hands/boards for unit tests.
