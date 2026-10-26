@@ -131,19 +131,23 @@ def main() -> None:
         os.makedirs(os.path.join(ROOT, "art_src", "arena"), exist_ok=True)
         open(os.path.join(ROOT, "art_src", "arena", name + ".png"), "wb").write(data)
         got.append(name)
-    normal_src = os.path.join(ROOT, "art_src", "arena", "blockout", "board_normal_linear.png")
-    normal_dst = os.path.join(ROOT, "assets", "arenas", "acheron_normal.png")
-    if "arena_acheron_board" in got and os.path.exists(normal_src):
-        # The painting follows the blockout's depth, so the blockout's normals light it correctly.
-        board = Image.open(os.path.join(ROOT, "assets", "arenas", "acheron_board.jpg"))
-        Image.open(normal_src).convert("RGB").resize(board.size, Image.LANCZOS).save(normal_dst)
-    # Point arenas.json at the Acheron's optional layers once they exist (the other arenas name theirs already).
+    # The paintings follow their blockout's depth, so the blockout's normals light them correctly in Godot. Each
+    # arena has its own blockout (art_src/arena/blockout_<id>/, the Acheron's is blockout/); the normal map is only
+    # installed together with a freshly imported board, so it never pairs with a painting made on another layout.
     for a in d["arenas"]:
-        if a["id"] == "acheron":
-            for key, fn in (("board", "acheron_board.jpg"), ("frame", "acheron_frame.png"),
-                            ("mist", "acheron_mist.png"), ("normal", "acheron_normal.png")):
-                if os.path.exists(os.path.join(ROOT, "assets", "arenas", fn)) and a.get(key) != fn:
-                    a[key] = fn
+        aid = a["id"]
+        folder = "blockout" if aid == "acheron" else "blockout_" + aid
+        normal_src = os.path.join(ROOT, "art_src", "arena", folder, "board_normal_linear.png")
+        board_path = os.path.join(ROOT, "assets", "arenas", aid + "_board.jpg")
+        if "arena_%s_board" % aid in got and os.path.exists(normal_src) and os.path.exists(board_path):
+            board = Image.open(board_path)
+            Image.open(normal_src).convert("RGB").resize(board.size, Image.LANCZOS).save(
+                os.path.join(ROOT, "assets", "arenas", aid + "_normal.png"))
+        # Point arenas.json at the optional layers once they exist.
+        for key, fn in (("board", aid + "_board.jpg"), ("frame", aid + "_frame.png"), ("mist", aid + "_mist.png"),
+                        ("normal", aid + "_normal.png")):
+            if os.path.exists(os.path.join(ROOT, "assets", "arenas", fn)) and a.get(key) != fn:
+                a[key] = fn
     with open(ARENAS_JSON, encoding="utf-8") as f:
         before = f.read()
     after = json.dumps(d, indent=2, ensure_ascii=False) + "\n"
