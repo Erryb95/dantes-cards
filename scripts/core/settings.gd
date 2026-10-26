@@ -9,6 +9,8 @@ var fullscreen := false
 var fast_animations := false
 var subtitles := true ## subtitles of the intro narration
 var intro_seen := false ## the opening cinematic has been played (or skipped) once
+var easy_opponent := false ## the AI plays by simple rules instead of searching for the best line
+var coach_seen: Array = [] ## ids of the first-game tips already shown (scripts/battle/coach.gd)
 
 
 func _ready() -> void:
@@ -31,6 +33,8 @@ func load_settings() -> void:
 	fast_animations = cfg.get_value("game", "fast_animations", fast_animations)
 	subtitles = cfg.get_value("game", "subtitles", subtitles)
 	intro_seen = cfg.get_value("game", "intro_seen", intro_seen)
+	easy_opponent = cfg.get_value("game", "easy_opponent", easy_opponent)
+	coach_seen = cfg.get_value("game", "coach_seen", coach_seen)
 
 
 func save() -> void:
@@ -41,6 +45,8 @@ func save() -> void:
 	cfg.set_value("game", "fast_animations", fast_animations)
 	cfg.set_value("game", "subtitles", subtitles)
 	cfg.set_value("game", "intro_seen", intro_seen)
+	cfg.set_value("game", "easy_opponent", easy_opponent)
+	cfg.set_value("game", "coach_seen", coach_seen)
 	cfg.save(PATH)
 
 

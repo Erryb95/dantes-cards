@@ -139,6 +139,17 @@ func intro_due() -> bool:
 	return true
 
 
+## True for tests and tooling runs (headless, or a debug flag that drives the game), where first-time things such as
+## the intro and the coach tips must neither show nor be marked as seen.
+func debug_run() -> bool:
+	if DisplayServer.get_name() == "headless":
+		return true
+	for a in OS.get_cmdline_user_args():
+		if a == "--autoplay" or a.begins_with("--snap=") or a.begins_with("--shots=") or a.begins_with("--out="):
+			return true
+	return false
+
+
 ## "Watch intro" (options): plays the cinematic again, then returns to the main menu.
 func play_intro() -> void:
 	go(INTRO)

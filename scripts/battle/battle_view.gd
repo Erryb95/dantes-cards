@@ -70,6 +70,7 @@ var _end_disc: Shapes
 var banner: Label
 var inspect: CardView
 var _tips: VBoxContainer
+var _coach: Coach
 var _flash_rect: ColorRect
 
 var mode := Mode.IDLE
@@ -123,7 +124,7 @@ func _ready() -> void:
 	Sfx.play_ambience(arena.get("ambience", ""), -16.0)
 	st = BattleState.new()
 	st.event.connect(func(ev): queue.append(ev))
-	ai = BattleAI.new(1)
+	ai = BattleAI.new(1, BattleAI.Level.EASY if Settings.easy_opponent and not autoplay else BattleAI.Level.NORMAL)
 	ai_self = BattleAI.new(0)
 	_intro(arena)
 	st.start(Game.player_cards, Game.player_hero, Game.enemy_cards, Game.enemy_hero, 0, true, -1)
@@ -359,6 +360,12 @@ func _build_scene() -> void:
 	_tips.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_tips.add_theme_constant_override("separation", 8)
 	ui.add_child(_tips)
+	# The coach floats above everything, cards in hand included.
+	var coach_layer := CanvasLayer.new()
+	coach_layer.layer = 50
+	add_child(coach_layer)
+	_coach = Coach.new()
+	coach_layer.add_child(_coach)
 
 	var menu := UI.button("Menu", 150, 56)
 	menu.add_theme_font_size_override("font_size", 24)
@@ -1593,6 +1600,41 @@ func _refresh_highlights() -> void:
 	_end_glow.set_on(mine and not any)
 	if mine:
 		_set_mana(0, st.sides[0].mana, st.sides[0].max_mana)
+		_offer_coach(any)
+
+
+## First-game tips, most useful first: play a card, attack (Guard when it blocks), hero power, end turn.
+func _offer_coach(any: bool) -> void:
+	if autoplay or _in_mulligan or _coach.showing():
+		return
+	var xf := get_canvas_transform()
+	for c in hand_views[0]:
+		if c.playable and CardDB.card(c.card_id).type == "minion":
+			# Points at the empty board where the card goes, so the bubble never covers the hand.
+			if _coach.offer("play", xf * (Vector2(V.x / 2, _board_y(0)) + board_layer.position)):
+				return
+			break
+	for m in board_views[0]:
+		if m.can_attack:
+			for e in board_views[1]:
+				var u = st.units.get(e.uid)
+				if u != null and u.has("guard") and _coach.offer("guard", xf * (e.position + board_layer.position)):
+					return
+			if _coach.offer("attack", xf * (m.position + board_layer.position)):
+				return
+			break
+	if heroes[0] != null and heroes[0].power_ready and not any_card_playable():
+		if _coach.offer("power", xf * (heroes[0].power.global_position)):
+			return
+	if not any and st.turn >= 3:
+		_coach.offer("end", xf * (end_btn.global_position))
+
+
+func any_card_playable() -> bool:
+	for c in hand_views[0]:
+		if c.playable:
+			return true
+	return false
 
 
 func _set_targets(uids: Array) -> void:
@@ -1656,6 +1698,7 @@ func _pick_unit(p: Vector2):
 
 func _on_press(p: Vector2) -> void:
 	_hide_inspect()
+	_coach.dismiss()
 	if _mull_waiting:
 		var mc := _pick_hand(p)
 		if mc != null:

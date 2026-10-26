@@ -39,6 +39,7 @@ func _ready() -> void:
 			Settings.fullscreen = on
 			Settings.apply()))
 	v.add_child(_toggle("Fast animations", Settings.fast_animations, func(on): Settings.fast_animations = on))
+	v.add_child(_toggle("Easy opponent", Settings.easy_opponent, func(on): Settings.easy_opponent = on))
 	v.add_child(_toggle("Intro subtitles", Settings.subtitles, func(on): Settings.subtitles = on))
 	if get_tree().current_scene and get_tree().current_scene.scene_file_path == Game.MENU:  # not mid-battle
 		var intro := UI.button("Watch intro", 420)
