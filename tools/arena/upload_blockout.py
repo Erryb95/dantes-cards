@@ -2,9 +2,11 @@
 
   python tools/arena/upload_blockout.py <arena> [<arena> ...]      # e.g. limbo lust dis cocytus
   python tools/arena/upload_blockout.py --dry-run limbo
+  python tools/arena/upload_blockout.py --tag=bo2 acheron limbo lust dis cocytus
 
-Reads art_src/arena/blockout_<arena>/board_<pass>.png (made by tools/blender/board_blockout.py --arena=<arena> and
-tools/arena/passes.py) and uploads each as input/<arena>_bo_board_<pass>.png, overwriting the previous upload.
+Reads art_src/arena/blockout_<arena>/board_<pass>.png (the Acheron's: art_src/arena/blockout/; made by
+tools/blender/board_blockout.py --arena=<arena> and tools/arena/passes.py) and uploads each as
+input/<arena>_<tag>_board_<pass>.png (tag "bo" unless --tag=<tag> is given), overwriting the previous upload.
 Passes: id, clay, depth, lineart, normal (2560x1440). It never queues a job or touches the queue / GPU.
 The server URL is read from C:\\Servers\\comfy_url.txt (never written into the repo).
 """
@@ -41,6 +43,10 @@ def upload(base: str, name: str, data: bytes) -> dict:
 
 def main(args: list) -> int:
     dry = "--dry-run" in args
+    tag = next((a.split("=", 1)[1] for a in args if a.startswith("--tag=")), "bo")
+    if not tag.replace("_", "").isalnum():
+        print("bad --tag", tag)
+        return 2
     arenas = [a for a in args if not a.startswith("--")]
     if not arenas:
         print(__doc__)
@@ -48,10 +54,10 @@ def main(args: list) -> int:
     base = open(URL_FILE, encoding="utf-8").readline().strip().rstrip("/")
     failed = 0
     for arena in arenas:
-        d = os.path.join(ROOT, "art_src", "arena", "blockout_" + arena)
+        d = os.path.join(ROOT, "art_src", "arena", "blockout" if arena == "acheron" else "blockout_" + arena)
         for p in PASSES:
             src = os.path.join(d, "board_%s.png" % p)
-            name = "%s_bo_board_%s.png" % (arena, p)
+            name = "%s_%s_board_%s.png" % (arena, tag, p)
             if not os.path.exists(src):
                 print("MISSING", src)
                 failed += 1
