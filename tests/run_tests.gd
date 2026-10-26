@@ -41,6 +41,30 @@ func _test_data() -> void:
 			ok(k in ["guard", "swift", "ward", "drain", "venom", "rebirth"], "%s keyword %s" % [c.id, k])
 	ok(CardDB.arenas().size() >= 1, "at least one arena")
 	_test_arenas()
+	_test_vfx()
+
+
+## data/vfx.json: every spell has a profile and every name in it is one Vfx knows.
+func _test_vfx() -> void:
+	var d = JSON.parse_string(FileAccess.get_file_as_string(VfxData.DATA))
+	ok(d is Dictionary and d.has("cards"), "vfx.json parses")
+	var cards: Dictionary = d.get("cards", {}) if d is Dictionary else {}
+	for c in CardDB.all_cards():
+		if c.type == "spell":
+			ok(cards.has(c.id), "spell %s has a vfx profile" % c.id)
+	for id in cards:
+		var e: Dictionary = cards[id]
+		ok(not CardDB.card(id).is_empty() or id.begins_with("power_") and not CardDB.hero(id.substr(6)).is_empty(),
+			"vfx profile %s names a card" % id)
+		ok(VfxData.SCHOOLS.has(e.get("school", "fire")), "vfx %s school" % id)
+		ok(e.get("hit", "orb") in VfxData.HITS, "vfx %s hit" % id)
+		ok(e.get("mass", "rain") in VfxData.MASSES or e.get("mass", "") in VfxData.HITS, "vfx %s mass" % id)
+		ok(e.get("cast", "") in VfxData.CASTS, "vfx %s cast" % id)
+	for name in VfxData.SCHOOLS:
+		var s: Dictionary = VfxData.SCHOOLS[name]
+		ok(s.hit in VfxData.HITS and (s.mass in VfxData.MASSES), "school %s default patterns" % name)
+	for v in VfxData.CIRCLE_SCHOOL.values():
+		ok(VfxData.SCHOOLS.has(v), "circle school %s" % v)
 
 
 ## Arena data: every entry is complete, its sounds exist, and the Acheron (the fallback) is always playable.

@@ -14,6 +14,7 @@
 | `scripts/battle/ai.gd` | greedy AI that returns one action at a time |
 | `scripts/battle/battle_view.gd` | the board: replays events as animations, handles input |
 | `scripts/battle/{card,minion,hero}_view.gd` | the pieces; `fx.gd`, `shapes.gd`, `target_arrow.gd` for the juice |
+| `scripts/battle/vfx.gd`, `vfx_data.gd`, `data/vfx.json` | per-card spell looks: 15 schools (colours, textures, sounds; default from the card's circle) x single-target "hit" patterns x board-wide "mass" patterns; every spell has a profile (tested). Staged as anticipation, travel, impact (shake, hit-stop), aftermath. Painted sprites `assets/vfx/vfx_*.png` via `tools/vfx/import_vfx.py`; review with `tests/vfx_preview.tscn -- --out=<dir> --spells` + `tools/vfx/contact_sheet.py` |
 | `scripts/ui/` | main menu, deck select, deck builder, pack opening, collection, options, shared look (`ui.gd`), painted skin loader (`ui_skin.gd`) |
 | `scripts/intro/`, `scenes/intro.tscn` | the opening cinematic (see "Opening cinematic" below) |
 | `assets/shaders/` | `card_fx` (art mask, hit flash, burn-away dissolve, legendary foil), `river`, `fog`, `crack` (Dis embers / Cocytus frost), `wind` (Lust), `heat_haze` |

@@ -1,0 +1,835 @@
+class_name Vfx
+## Per-card spell and effect visuals, on top of the Fx primitives.
+##
+## Every card belongs to a school (fire, ice, venom, holy, soul ...): its colours, textures and sounds. Each card's
+## profile (VfxData, data/vfx.json) also picks how its effect reaches a single target ("hit": orb, shard, beam,
+## lash, seal ...) and how it covers the board ("mass": rain, gale, blizzard, quake ...). Each effect is staged the Hearthstone way: anticipation (a charge-up at the card), travel
+## (a coloured missile with a trail), impact (flash, sparks, shake and, for heavy blows, a hit-stop) and aftermath
+## (motes, smoke, frost).
+##
+## The battle view calls cast() when a spell is played, travel() for a targeted effect and mass() for a board-wide
+## one. It calls heal(), armor(), buff() and hurt() for the results. Painted sprites from the image session
+## (assets/vfx/vfx_*.png) are used when they exist; the Kenney particles stand in otherwise. Every function takes
+## the battle view untyped (it has no class_name), for fx_layer, shake(), _speed() and friends.
+
+# ================================================================ entry points
+
+## Anticipation for a spell held up in front of the board: a rune opens under the card, motes are drawn into it
+## and it glows; then it releases with the school's flash. Awaitable; the caller burns the card away after.
+static func cast(view, c: Node2D, id: String, side: int = 0) -> void:
+	var p := VfxData.profile(id)
+	var s := VfxData.school(p)
+	var k: float = view._speed()
+	var fx: Node2D = view.fx_layer
+	var pos := c.position
+	Sfx.play(s.cast_sfx, -6.0, 0.9)
+	Sfx.play("magic", -14.0, 0.8)
+	Fx.rune(fx, pos + Vector2(0, 150), s.color, 420.0 + 160.0 * p.power, 0.9 / k, s.rune)
+	Fx.gather(fx, pos, s.hot, 230.0, 0.3 / k, 20 + int(p.power * 16))
+	var glow := c.create_tween()
+	glow.tween_property(c, "modulate", Color(1.35, 1.3, 1.2), 0.22 / k)
+	glow.tween_property(c, "modulate", Color.WHITE, 0.25 / k)
+	var trail := _motes(view, pos, s, 10, 90.0, 9.0, 0.6, 180.0, -80.0 if s.rise else 60.0)
+	trail.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	trail.emission_rect_extents = Vector2(110, 150)
+	await view._wait(0.3)
+	# Release.
+	_paint(fx, s.impact, pos, 380.0 + 120.0 * p.power, 0.6, _mid(s))
+	Fx.flash(fx, "k_flare_01", pos, 420.0, 0.4, s.hot, 0.0)
+	_motes(view, pos, s, 26 + int(p.power * 20), 320.0, 12.0, 0.9, 180.0, -60.0 if s.rise else 200.0)
+	match p.cast:
+		"coins":
+			_coins(view, pos, 14)
+		"pages":
+			_pages(view, pos, s)
+		"stars":
+			_twinkle(view, pos, s, 230.0, 14)
+		"mana":
+			_mana_stream(view, pos, s, side)
+	if p.big:
+		view._screen_flash(s.color, 0.2)
+		view.shake(6.0)
+		Sfx.play("thunder", -14.0, 1.3)
+
+
+## A targeted effect flying from `a` to `b`; awaitable, returns after the impact. kind: damage, buff, freeze,
+## silence, destroy, bounce.
+static func travel(view, a: Node2D, b: Node2D, id: String, kind: String) -> void:
+	var p := VfxData.profile(id)
+	var s := VfxData.school(p)
+	var hit: String = p.hit
+	if kind in ["buff"] and hit in VfxData.HARSH:
+		hit = "wisp"
+	elif kind == "destroy" and not VfxData.has_own(id, "hit"):
+		hit = "smite"
+	elif kind == "silence" and not VfxData.has_own(id, "hit"):
+		hit = "seal"
+	elif kind == "bounce" and not VfxData.has_own(id, "hit"):
+		hit = "gust"
+	Sfx.play("swish_long", -8.0, 0.8)
+	await _hit(view, hit, a.position, b.position, s, p)
+	if is_instance_valid(b):
+		impact(view, b, s, kind, p)
+
+
+## A board-wide effect. `follow` is true when the same card already swept the board this play (Medusa's Gaze
+## damages, then freezes): the follow-up is a quick per-target touch instead of a second sweep.
+static func mass(view, ev: Dictionary, follow: bool) -> void:
+	var p := VfxData.profile(ev.id)
+	var s := VfxData.school(p)
+	var kind: String = ev.get("kind", "damage")
+	var targets: Array[Node2D] = []
+	for uid in ev.uids:
+		var n = view.unit_views.get(uid)
+		if n != null:
+			targets.append(n)
+	if targets.is_empty():
+		return
+	var origin: Node2D = _origin(view, ev)
+	if follow:
+		for i in targets.size():
+			_after(view, 0.05 * i, Vfx._touch.bind(view, targets[i], s, kind, p))
+		await view._wait(0.25 + 0.05 * targets.size())
+		return
+	var pattern: String = p.mass
+	match pattern:
+		"rain":
+			await _rain(view, targets, s, kind, p)
+		"nova":
+			Fx.shockwave(view.fx_layer, origin.position, s.color, 1100.0, 0.6)
+			_paint(view.fx_layer, s.impact, origin.position, 300.0, 0.5, s.hot)
+			Sfx.play(s.cast_sfx, -6.0, 0.8)
+			var last := 0.0
+			for t in targets:
+				var d: float = origin.position.distance_to(t.position) / 2400.0
+				last = maxf(last, d)
+				_after(view, d, Vfx.impact.bind(view, t, s, kind, p))
+			await view._wait(last + 0.25)
+		"gale", "wave":
+			await _gale(view, targets, s, kind, p, origin)
+		"blizzard":
+			await _blizzard(view, targets, s, kind, p)
+		"quake":
+			await _quake(view, targets, s, kind, p)
+		"radiance":
+			view._screen_flash(s.hot, 0.35)
+			await _each(view, targets, 0.08, "beam", s, kind, p)
+		"seal", "spikes":
+			await _each(view, targets, 0.07, pattern, s, kind, p)
+		"claws":
+			await _each(view, targets, 0.07, "claw", s, kind, p)
+		"frost":
+			await _frost(view, targets, s, kind, p)
+		"wail":
+			Sfx.play("wail", -8.0, 1.1)
+			Fx.shockwave(view.fx_layer, origin.position, s.color, 900.0, 0.7)
+			await _fan(view, origin.position, targets, "wisp", s, kind, p)
+		"gaze":
+			Sfx.play("wail", -10.0, 0.7)
+			view._screen_flash(s.color, 0.45)
+			Fx.shockwave(view.fx_layer, origin.position, s.color, 1200.0, 0.8)
+			await _fan(view, origin.position, targets, "tether", s, kind, p)
+		_:
+			# Any single-target pattern, fired at every target at once.
+			await _fan(view, origin.position, targets, pattern if pattern in VfxData.HITS else "orb", s, kind, p)
+
+
+## Healing light in the healer's colours: a rune under the target and motes rising. Returns false for an unknown
+## source, so the caller keeps its default look.
+static func heal(view, v: Node2D, src: String) -> bool:
+	if src == "":
+		return false
+	var p := VfxData.profile(src)
+	var s := VfxData.school(p)
+	var fx: Node2D = view.fx_layer
+	Fx.rune(fx, v.position + Vector2(0, 60), s.color, 300.0, 0.9 / view._speed(), s.rune)
+	var m := _motes(view, v.position + Vector2(0, 40), s, 22, 150.0, 18.0, 1.0, 50.0, -140.0, "k_star_06")
+	m.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	m.emission_rect_extents = Vector2(70, 20)
+	if p.school == "holy":
+		Fx.flash(fx, "holy_light", v.position, 300.0, 0.7, Color.WHITE, 0.2)
+	else:
+		Fx.flash(fx, "k_light_01", v.position, 280.0, 0.6, s.hot, 0.3)
+	Fx.burst(fx, v.position, Color(0.4, 1.0, 0.4), 12, 140.0, 0.8, 18.0, -60.0, 180.0, "k_star_01")
+	return true
+
+
+static func armor(view, h: Node2D, src: String) -> bool:
+	if src == "":
+		return false
+	var p := VfxData.profile(src)
+	var s := VfxData.school(p)
+	var fx: Node2D = view.fx_layer
+	var at := h.position + Vector2(HeroView.W / 2, -60) if h is HeroView else h.position
+	match p.school:
+		"stone":
+			Fx.smoke(fx, at, Color(0.35, 0.3, 0.25, 0.6), 200.0, 6)
+			Fx._debris(fx, at + Vector2(0, 40), 60.0, 14)
+			Sfx.play("rubble", -8.0)
+		"holy", "soul", "word":
+			Fx.flash(fx, "ward_bubble", h.position, 320.0, 0.6, s.hot, 0.0)
+		"gold":
+			_coins(view, at, 10)
+	Fx.flash(fx, "k_light_03", at, 220.0, 0.5, s.hot, 0.0)
+	_motes(view, at, s, 18, 200.0, 10.0, 0.6, 180.0, 0.0)
+	return true
+
+
+static func buff(view, m: Node2D, src: String) -> bool:
+	if src == "":
+		return false
+	var p := VfxData.profile(src)
+	var s := VfxData.school(p)
+	var fx: Node2D = view.fx_layer
+	Fx.rune(fx, m.position + Vector2(0, 70), s.color, 300.0, 0.9 / view._speed(), s.rune)
+	Fx.flash(fx, "k_twirl_01", m.position, 300.0, 0.6, s.hot, 1.5)
+	_paint(fx, s.impact, m.position, 240.0, 0.5, s.hot)
+	var up := _motes(view, m.position + Vector2(0, 50), s, 26, 200.0, 14.0, 0.9, 40.0, -120.0)
+	up.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	up.emission_rect_extents = Vector2(70, 20)
+	if p.school == "holy":
+		Fx.flash(fx, "holy_light", m.position, 320.0, 0.7, Color.WHITE, 0.3)
+	return true
+
+
+## Effect damage landing in the source's colours (frost, scorch, venom...) instead of the default blood splat.
+static func hurt(view, v: Node2D, src: String, amount: int) -> bool:
+	if src == "":
+		return false
+	var s := VfxData.school(VfxData.profile(src))
+	var fx: Node2D = view.fx_layer
+	_paint(fx, s.impact, v.position, 150.0 + amount * 22.0, 0.45, _mid(s))
+	_motes(view, v.position, s, 8 + amount * 3, 260.0, 10.0, 0.6, 180.0, 300.0)
+	return true
+
+
+## The hit itself: flash, sparks, motes and shake scaled with the card's power, plus the kind's aftermath.
+static func impact(view, target, s: Dictionary, kind: String, p: Dictionary) -> void:
+	if not is_instance_valid(target):
+		return
+	var fx: Node2D = view.fx_layer
+	var pos: Vector2 = target.position
+	var friendly := kind == "buff"
+	Fx.flash(fx, "k_flare_01", pos, 320.0, 0.35, s.hot, 0.0)
+	_paint(fx, s.impact, pos, 200.0 + 100.0 * p.power, 0.45, _mid(s))
+	_motes(view, pos, s, 20 + int(p.power * 20), 300.0, 11.0, 0.6, 180.0, -100.0 if s.rise else 260.0)
+	Sfx.play(s.hit_sfx, -6.0, randf_range(0.9, 1.1))
+	if not friendly:
+		_sparks(view, pos, s, 14 + int(p.power * 12))
+		view.shake(3.0 + 7.0 * p.power)
+		if "home" in target:
+			view._push(target, Vector2(0, -14.0 if target.position.y < view.V.y / 2 else 14.0))
+	match kind:
+		"freeze":
+			_freeze(view, target)
+		"silence":
+			_seal_stamp(view, target, s, 0.6)
+		"destroy":
+			Fx.shockwave(fx, pos, s.color, 420.0, 0.5)
+			Fx.smoke(fx, pos, Color(s.color.r * 0.3, s.color.g * 0.3, s.color.b * 0.3, 0.6), 220.0, 6)
+			view.shake(12.0)
+			view._hit_stop(0.08)
+			Sfx.play("thunder", -10.0, 1.2)
+		"bounce":
+			Fx.flash(fx, "k_twirl_02", pos, 320.0, 0.5, s.hot, 3.0)
+			Sfx.play("gust", -8.0)
+	if p.big and not friendly and kind != "destroy":
+		view._hit_stop(0.06)
+
+
+# ================================================================ single-target patterns
+
+static func _hit(view, hit: String, from: Vector2, to: Vector2, s: Dictionary, p: Dictionary) -> void:
+	var k: float = view._speed()
+	var dur := 0.38 / k
+	match hit:
+		"shard":
+			await _missile(view, from, to, s, dur * 0.7, 0.08, 0.0, 120.0, true)
+		"serpent":
+			await _missile(view, from, to, s, dur * 1.15, 0.2, 55.0, 90.0, true)
+		"wisp":
+			await _missile(view, from, to, s, dur * 1.2, 0.5, 30.0, 150.0, false, 0.0)
+		"gust":
+			Sfx.play("gust", -8.0, 1.2)
+			await _missile(view, from, to, s, dur * 0.8, 0.05, 0.0, 190.0, false, 9.0)
+		"volley":
+			for i in 3:
+				var off := Vector2(randf_range(-30, 30), randf_range(-20, 20))
+				if i < 2:
+					_missile(view, from + off, to + off, s, dur * 0.55, 0.15, 0.0, 70.0, true, 0.0, ["k_trace_05"])
+					_after(view, 0.12 * (i + 1), func(): Sfx.play("swish", -10.0, 1.3))
+					await view._wait(0.09)
+				else:
+					await _missile(view, from + off, to, s, dur * 0.55, 0.15, 0.0, 70.0, true, 0.0, ["k_trace_05"])
+		"fall":
+			var top := to + Vector2(randf_range(-140, 140), -760)
+			await _missile(view, top, to, s, dur * 0.9, 0.0, 0.0, 120.0, true)
+		"beam":
+			await _beam(view, to, s, 1.0)
+		"bolt":
+			await _bolt(view, from, to, s)
+		"lash":
+			await _line(view, from, to, s, "k_trace_03", 0.12, 0.15, 26.0)
+			Fx.slash(view.fx_layer, to, (to - from).normalized(), 340.0, s.hot)
+			Sfx.play("blade", -6.0, 1.2)
+		"tether":
+			Sfx.play("chain", -8.0)
+			await _line(view, from, to, s, "k_trace_01", 0.2, 0.35, 34.0)
+		"seal":
+			await _seal_stamp(view, null, s, 1.0, to)
+		"crack":
+			await _crack(view, to, s, p)
+		"spikes":
+			await _spikes(view, to, s)
+		"geyser":
+			await _geyser(view, to, s)
+		"smite":
+			Fx.rune(view.fx_layer, to + Vector2(0, 60), s.color, 420.0, 1.1 / k, s.rune)
+			await view._wait(0.15)
+			await _beam(view, to, s, 2.0)
+		"slash":
+			await view._wait(0.05)
+			var d := (to - from).normalized()
+			Fx.slash(view.fx_layer, to, d, 420.0, s.hot)
+			Fx.slash(view.fx_layer, to, d.rotated(1.3), 360.0, s.color)
+			Sfx.play("blade", -4.0, 0.9)
+		"claw":
+			_paint(view.fx_layer, ["vfx_claw_rake", "claw_slash"], to, 300.0, 0.4, Color.WHITE)
+			for i in 3:
+				Fx.flash(view.fx_layer, "k_scratch_01", to + Vector2(-30 + 30 * i, 0), 230.0, 0.35, s.hot, 0.0)
+			Sfx.play("growl", -10.0, 1.1)
+			await view._wait(0.08)
+		_:
+			await _missile(view, from, to, s, dur, 0.35, 0.0, 120.0, false)
+
+
+## A glowing head with a particle trail along an arc (`arc`: how high it bows, as a fraction of the distance),
+## optionally weaving (`wobble` px) and stretched along its path. Awaitable; returns on arrival.
+static func _missile(view, from: Vector2, to: Vector2, s: Dictionary, dur: float, arc: float, wobble: float,
+		size: float, stretch: bool, spin: float = 1.5, core: Array = []) -> void:
+	var fx: Node2D = view.fx_layer
+	var orb := Node2D.new()
+	orb.z_index = 70
+	orb.position = from
+	fx.add_child(orb)
+	var head := _sprite(orb, core if not core.is_empty() else s.core, Vector2.ZERO, size, s.hot)
+	if head != null and stretch:
+		var base := head.scale.x
+		head.scale = Vector2(base * 1.7, base * 0.6)
+		if (core if not core.is_empty() else s.core)[0].begins_with("k_trace"):
+			head.rotation = PI / 2
+			head.scale = Vector2(base * 0.9, base * 1.9)
+	var glow := _sprite(orb, ["k_light_01"], Vector2.ZERO, size * 1.6, Color(s.color.r, s.color.g, s.color.b, 0.6))
+	var trail := CPUParticles2D.new()
+	trail.texture = Fx._tex(s.trail)
+	trail.amount = 50
+	trail.lifetime = 0.45
+	trail.local_coords = false
+	trail.initial_velocity_min = 10.0
+	trail.initial_velocity_max = 50.0
+	trail.spread = 180.0
+	trail.gravity = Vector2(0, -40 if s.rise else 60)
+	var dot := trail.texture == UI.dot_texture()
+	trail.scale_amount_min = 0.25 if dot else 0.06 * size / 110.0
+	trail.scale_amount_max = 0.6 if dot else 0.18 * size / 110.0
+	trail.angle_min = -180.0
+	trail.angle_max = 180.0
+	trail.color_ramp = _ramp(s)
+	trail.material = _add()
+	orb.add_child(trail)
+	var mid := (from + to) / 2 + Vector2(0, -minf(260.0, from.distance_to(to) * arc))
+	var t := orb.create_tween()
+	t.tween_method(Vfx._fly.bind(orb, from, mid, to, wobble, stretch), 0.0, 1.0, dur) \
+		.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+	if head != null and spin != 0.0 and not stretch:
+		head.create_tween().tween_property(head, "rotation", TAU * spin, dur)
+	await t.finished
+	if head != null:
+		head.visible = false
+	if glow != null:
+		glow.visible = false
+	trail.emitting = false
+	view.get_tree().create_timer(0.6).timeout.connect(orb.queue_free)
+
+
+static func _fly(k: float, node: Node2D, a: Vector2, m: Vector2, b: Vector2, wobble: float, stretch: bool) -> void:
+	var pos := a.lerp(m, k).lerp(m.lerp(b, k), k)
+	var tangent := (2.0 * (1.0 - k) * (m - a) + 2.0 * k * (b - m)).normalized()
+	if wobble != 0.0:
+		pos += tangent.orthogonal() * sin(k * TAU * 2.0) * wobble * (1.0 - k)
+	node.position = pos
+	if stretch:
+		node.rotation = tangent.angle()
+
+
+## A column of light coming down onto `to` from above the screen. Awaitable (returns when it strikes).
+static func _beam(view, to: Vector2, s: Dictionary, weight: float) -> void:
+	var fx: Node2D = view.fx_layer
+	var k: float = view._speed()
+	var golden: bool = s == VfxData.SCHOOLS.holy or s == VfxData.SCHOOLS.judgment or s == VfxData.SCHOOLS.gold
+	var col := _sprite(fx, ["vfx_light_beam", "k_trace_06"] if golden else ["k_trace_06", "k_trace_07"],
+		Vector2.ZERO, 64.0, s.hot, 68)
+	if col == null:
+		return
+	var h := col.texture.get_size().y
+	var height := to.y + 120.0
+	col.position = Vector2(to.x, to.y - height / 2)
+	var w := col.texture.get_size().x
+	col.scale = Vector2(0.0, height / h * 1.1)
+	var halo := _sprite(fx, ["k_light_01"], to, 260.0 * weight, s.color, 67)
+	if halo != null:
+		halo.modulate.a = 0.0
+	Sfx.play("magic", -8.0, 1.2)
+	var t := col.create_tween()
+	t.tween_property(col, "scale:x", 300.0 * weight / w, 0.14 / k).set_ease(Tween.EASE_OUT)
+	if halo != null:
+		t.parallel().tween_property(halo, "modulate:a", 0.9, 0.14 / k)
+	await t.finished
+	_motes(view, to + Vector2(0, -200), s, 14, 80.0, 10.0, 0.6, 30.0, 500.0)
+	var out := col.create_tween().set_parallel(true)
+	out.tween_property(col, "scale:x", 0.0, 0.35 / k).set_delay(0.08)
+	out.tween_property(col, "modulate:a", 0.0, 0.35 / k).set_delay(0.08)
+	if halo != null:
+		out.tween_property(halo, "modulate:a", 0.0, 0.4 / k)
+		out.chain().tween_callback(halo.queue_free)
+	out.chain().tween_callback(col.queue_free)
+
+
+## A forked lightning bolt flickering between two points.
+static func _bolt(view, from: Vector2, to: Vector2, s: Dictionary) -> void:
+	var fx: Node2D = view.fx_layer
+	Sfx.play("thunder", -10.0, 1.5)
+	for i in 3:
+		var b := _sprite(fx, ["k_spark_05", "k_spark_06"], (from + to) / 2, 64.0, s.hot, 69)
+		if b == null:
+			return
+		var sz := b.texture.get_size()
+		b.rotation = (to - from).angle() - PI / 2
+		b.scale = Vector2(120.0 / sz.x * randf_range(0.8, 1.2), from.distance_to(to) / sz.y * 1.05)
+		b.flip_h = randf() < 0.5
+		view.get_tree().create_timer(0.06).timeout.connect(b.queue_free)
+		await view._wait(0.05)
+	view._screen_flash(s.hot, 0.15)
+
+
+## A line drawn out from `from` to `to` (a whip, a rope, a gaze), held for `hold` seconds, then faded.
+static func _line(view, from: Vector2, to: Vector2, s: Dictionary, tex: String, grow: float, hold: float,
+		width: float) -> void:
+	if not UiSkin.has(tex):
+		return
+	var k: float = view._speed()
+	var holder := Node2D.new()
+	holder.position = from
+	holder.rotation = (to - from).angle() - PI / 2
+	holder.z_index = 68
+	view.fx_layer.add_child(holder)
+	var l := Sprite2D.new()
+	l.texture = UiSkin.tex(tex)
+	l.material = _add()
+	l.modulate = s.hot
+	l.centered = false
+	var sz := l.texture.get_size()
+	l.offset = Vector2(-sz.x / 2, 0)
+	l.scale = Vector2(width * 8.0 / sz.x, 0.0)
+	holder.add_child(l)
+	var t := l.create_tween()
+	t.tween_property(l, "scale:y", from.distance_to(to) / sz.y, grow / k).set_ease(Tween.EASE_OUT)
+	await t.finished
+	var out := l.create_tween()
+	out.tween_property(l, "modulate", s.color, hold / k)
+	out.tween_property(l, "modulate:a", 0.0, 0.2 / k)
+	out.tween_callback(holder.queue_free)
+
+
+## A glyph that appears large over the target, spins and stamps down onto it. With `at` and no target it only
+## plays at that point. Awaitable.
+static func _seal_stamp(view, target: Node2D, s: Dictionary, size: float, at: Vector2 = Vector2.ZERO) -> void:
+	var pos := target.position if target != null else at
+	var k: float = view._speed()
+	var g := _sprite(view.fx_layer, ["vfx_glyph_ring", s.rune, "k_magic_01"], pos, 520.0 * size, s.hot, 72)
+	if g == null:
+		return
+	var end := g.scale * 0.45
+	g.modulate.a = 0.0
+	var t := g.create_tween().set_parallel(true)
+	t.tween_property(g, "modulate:a", 1.0, 0.1 / k)
+	t.tween_property(g, "rotation", PI * 0.9, 0.3 / k)
+	t.tween_property(g, "scale", end, 0.28 / k).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
+	await t.finished
+	Sfx.play("lock", -6.0)
+	Fx.flash(view.fx_layer, "k_flare_01", pos, 280.0 * size, 0.3, s.hot, 0.0)
+	var out := g.create_tween()
+	out.tween_property(g, "modulate:a", 0.0, 0.3 / k)
+	out.tween_callback(g.queue_free)
+
+
+## The earth opening under the target: glowing cracks on the table, stone chips and dust.
+static func _crack(view, to: Vector2, s: Dictionary, p: Dictionary) -> void:
+	Sfx.play("quake_rumble", -8.0, 1.3, 0.0)
+	Sfx.play("rubble", -6.0)
+	Fx.landing(view.bg_layer, to + Vector2(0, 40), s.color, 420.0 + 120.0 * p.power, 0.6 + 0.4 * p.power)
+	Fx.dust(view.fx_layer, to + Vector2(0, 70), 200.0, 30)
+	view.shake(8.0)
+	await view._wait(0.12)
+
+
+## Thorns (or blood-red spikes) shooting up under the target and pulling back.
+static func _spikes(view, to: Vector2, s: Dictionary) -> void:
+	var k: float = view._speed()
+	Sfx.play("blade", -6.0, 0.8)
+	for i in 5:
+		var sp := _sprite(view.fx_layer, ["k_flame_06", "k_muzzle_05"], Vector2.ZERO, 120.0, s.color, 66)
+		if sp == null:
+			break
+		var x := -80.0 + 40.0 * i + randf_range(-10, 10)
+		sp.rotation = x / 300.0 + randf_range(-0.15, 0.15)
+		sp.centered = false
+		var sz := sp.texture.get_size()
+		sp.offset = Vector2(-sz.x / 2, -sz.y)
+		sp.position = to + Vector2(x, 70)
+		var full := sp.scale
+		sp.scale = Vector2(full.x, 0.0)
+		var t := sp.create_tween()
+		t.tween_interval(0.03 * i / k)
+		t.tween_property(sp, "scale", full * Vector2(1.0, randf_range(1.1, 1.6)), 0.08 / k).set_ease(Tween.EASE_OUT)
+		t.tween_interval(0.12 / k)
+		t.tween_property(sp, "scale:y", 0.0, 0.2 / k).set_ease(Tween.EASE_IN)
+		t.tween_callback(sp.queue_free)
+	await view._wait(0.14)
+
+
+## A column of liquid or fire bursting up from under the target.
+static func _geyser(view, to: Vector2, s: Dictionary) -> void:
+	var k: float = view._speed()
+	Sfx.play(s.hit_sfx, -4.0, 0.8)
+	var g := _sprite(view.fx_layer, ["k_muzzle_01", "k_muzzle_03"], Vector2.ZERO, 260.0, s.hot, 66)
+	if g != null:
+		g.centered = false
+		var sz := g.texture.get_size()
+		g.offset = Vector2(-sz.x / 2, -sz.y)
+		g.position = to + Vector2(0, 90)
+		var full := g.scale
+		g.scale = Vector2(full.x * 0.6, 0.0)
+		var t := g.create_tween()
+		t.tween_property(g, "scale", full * Vector2(1.0, 1.5), 0.12 / k).set_ease(Tween.EASE_OUT)
+		t.tween_property(g, "modulate:a", 0.0, 0.35 / k)
+		t.tween_callback(g.queue_free)
+	var up := _motes(view, to + Vector2(0, 80), s, 30, 620.0, 14.0, 0.9, 25.0, 900.0)
+	up.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	up.emission_rect_extents = Vector2(50, 10)
+	await view._wait(0.12)
+
+
+# ================================================================ board-wide patterns
+
+## Fire, coins or pitch falling over the targets' row: a few strays miss, one drop lands on every target.
+static func _rain(view, targets: Array[Node2D], s: Dictionary, kind: String, p: Dictionary) -> void:
+	Sfx.play(s.cast_sfx, -6.0, 0.8)
+	Sfx.play("swish_long", -10.0, 0.6)
+	var row := 0.0
+	for t in targets:
+		row += t.position.y
+	row /= targets.size()
+	for i in 10:
+		var x: float = view.V.x * randf_range(0.18, 0.82)
+		var at := Vector2(x, row + randf_range(-40, 60))
+		_after(view, randf_range(0.0, 0.35), Vfx._drop.bind(view, at, s, p, null, kind))
+	var last := 0.0
+	for i in targets.size():
+		var d := 0.1 + 0.07 * i
+		last = d
+		_after(view, d, Vfx._drop.bind(view, targets[i].position, s, p, targets[i], kind))
+	await view._wait(last + 0.45)
+
+
+static func _drop(view, at: Vector2, s: Dictionary, p: Dictionary, target, kind: String) -> void:
+	var top := at + Vector2(randf_range(-160, 60), -800)
+	await _missile(view, top, at, s, 0.34 / view._speed(), 0.0, 0.0, 90.0, true)
+	if target != null and is_instance_valid(target):
+		impact(view, target, s, kind, p)
+	else:
+		_motes(view, at, s, 8, 200.0, 8.0, 0.5, 120.0, 400.0)
+		Fx.flash(view.fx_layer, "k_flare_01", at, 160.0, 0.25, s.hot, 0.0)
+
+
+## A gust (or wave) sweeping across the board from the caster's side, hitting each target as it passes.
+static func _gale(view, targets: Array[Node2D], s: Dictionary, kind: String, p: Dictionary, origin: Node2D) -> void:
+	var k: float = view._speed()
+	var width: float = view.V.x
+	var row := 0.0
+	for t in targets:
+		row += t.position.y
+	row /= targets.size()
+	var ltr := origin.position.x <= width / 2
+	var x0 := -150.0 if ltr else width + 150.0
+	var x1 := width + 150.0 if ltr else -150.0
+	var sweep := 0.55 / k
+	Sfx.play("gust", -4.0, 0.8)
+	Sfx.play(s.cast_sfx, -8.0)
+	for i in 9:
+		var names: Array = s.core if i % 3 == 0 else [s.trail, "k_trace_02"]
+		var sp := _sprite(view.fx_layer, names, Vector2(x0, row + randf_range(-110, 110)),
+			randf_range(140.0, 260.0), s.hot if i % 2 == 0 else s.color, 69)
+		if sp == null:
+			continue
+		if i % 3 != 0:
+			sp.rotation = PI / 2
+			sp.scale.y *= 2.5
+		var t := sp.create_tween().set_parallel(true)
+		t.tween_property(sp, "position:x", x1, sweep * randf_range(0.85, 1.1)).set_delay(randf_range(0.0, 0.1))
+		if i % 3 == 0:
+			t.tween_property(sp, "rotation", TAU * 3.0 * (1.0 if ltr else -1.0), sweep)
+		t.tween_property(sp, "modulate:a", 0.0, 0.15).set_delay(sweep * 0.85)
+		t.chain().tween_callback(sp.queue_free)
+	var band := _motes(view, Vector2(x0, row), s, 40, 120.0, 12.0, 0.8, 60.0, 0.0)
+	band.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	band.emission_rect_extents = Vector2(20, 120)
+	band.create_tween().tween_property(band, "position:x", x1, sweep)
+	var last := 0.0
+	for t in targets:
+		var d: float = absf(t.position.x - x0) / absf(x1 - x0) * 0.55
+		last = maxf(last, d)
+		_after(view, d, Vfx.impact.bind(view, t, s, kind, p))
+	await view._wait(last + 0.2)
+
+
+## Snow driven across the targets' half of the board, then frost on each target.
+static func _blizzard(view, targets: Array[Node2D], s: Dictionary, kind: String, p: Dictionary) -> void:
+	Sfx.play("gust", -4.0, 0.7)
+	Sfx.play("ice", -6.0, 0.8)
+	var row := 0.0
+	for t in targets:
+		row += t.position.y
+	row /= targets.size()
+	var w: float = view.V.x
+	var snow := CPUParticles2D.new()
+	snow.position = Vector2(w / 2, row - 320.0)
+	snow.texture = Fx._tex("k_star_06")
+	snow.amount = 160
+	snow.lifetime = 0.9
+	snow.explosiveness = 0.4
+	snow.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	snow.emission_rect_extents = Vector2(w * 0.55, 40)
+	snow.direction = Vector2(0.5, 1.0)
+	snow.spread = 12.0
+	snow.gravity = Vector2(0, 300)
+	snow.initial_velocity_min = 500.0
+	snow.initial_velocity_max = 800.0
+	snow.scale_amount_min = 0.04
+	snow.scale_amount_max = 0.14
+	snow.angle_min = -180.0
+	snow.angle_max = 180.0
+	snow.color_ramp = _ramp(s)
+	snow.material = _add()
+	snow.z_index = 64
+	view.fx_layer.add_child(snow)
+	snow.emitting = true
+	view._screen_flash(s.hot, 0.3)
+	view.get_tree().create_timer(0.55 / view._speed()).timeout.connect(func(): snow.emitting = false)
+	view.get_tree().create_timer(1.8).timeout.connect(snow.queue_free)
+	for i in targets.size():
+		_after(view, 0.3 + 0.05 * i, Vfx.impact.bind(view, targets[i], s, kind, p))
+	await view._wait(0.45 + 0.05 * targets.size())
+
+
+## The ground heaving: a heavy shake, glowing cracks under every target, dust rolling along the rows.
+static func _quake(view, targets: Array[Node2D], s: Dictionary, kind: String, p: Dictionary) -> void:
+	Sfx.play("quake_rumble", -2.0, 1.0, 0.0)
+	Sfx.play("thunder", -6.0, 0.8)
+	view._screen_flash(s.color, 0.5)
+	view.shake(22.0 + 6.0 * p.power)
+	for t in targets:
+		Fx.landing(view.bg_layer, t.position + Vector2(0, 40), s.color, 460.0, 0.8)
+		Fx.dust(view.fx_layer, t.position + Vector2(0, 70), 260.0, 30)
+	await view._wait(0.35)
+	view.shake(16.0)
+	for i in targets.size():
+		_after(view, 0.04 * i, Vfx.impact.bind(view, targets[i], s, kind, p))
+	await view._wait(0.15 + 0.04 * targets.size())
+
+
+## Ice spreading over the table under every target.
+static func _frost(view, targets: Array[Node2D], s: Dictionary, kind: String, p: Dictionary) -> void:
+	Sfx.play("ice", -4.0, 0.9)
+	Sfx.play("glass", -8.0, 0.7)
+	for i in targets.size():
+		var t := targets[i]
+		Fx.landing(view.bg_layer, t.position + Vector2(0, 40), s.color, 420.0, 0.5)
+		_after(view, 0.06 * i + 0.1, Vfx.impact.bind(view, t, s, kind, p))
+	await view._wait(0.3 + 0.06 * targets.size())
+
+
+## One single-target pattern per target, started `gap` seconds apart. Awaits the last impact.
+static func _each(view, targets: Array[Node2D], gap: float, hit: String, s: Dictionary, kind: String,
+		p: Dictionary) -> void:
+	for i in targets.size():
+		var t := targets[i]
+		_after(view, gap * i, Vfx._hit_then_impact.bind(view, hit, t.position, t, s, kind, p))
+	await view._wait(gap * targets.size() + 0.35)
+
+
+## The same pattern fired from one point at every target at once.
+static func _fan(view, from: Vector2, targets: Array[Node2D], hit: String, s: Dictionary, kind: String,
+		p: Dictionary) -> void:
+	for i in targets.size():
+		var t := targets[i]
+		_after(view, 0.03 * i, Vfx._hit_then_impact.bind(view, hit, from, t, s, kind, p))
+	await view._wait(0.03 * targets.size() + 0.5)
+
+
+static func _hit_then_impact(view, hit: String, from: Vector2, t, s: Dictionary, kind: String,
+		p: Dictionary) -> void:
+	if not is_instance_valid(t):
+		return
+	await _hit(view, hit, from, t.position, s, p)
+	impact(view, t, s, kind, p)
+
+
+## The quick per-target follow-up of a second sweep (Medusa's freeze after her damage).
+static func _touch(view, t, s: Dictionary, kind: String, p: Dictionary) -> void:
+	if not is_instance_valid(t):
+		return
+	match kind:
+		"freeze":
+			_freeze(view, t)
+		"silence":
+			_seal_stamp(view, t, s, 0.6)
+		_:
+			impact(view, t, s, kind, p)
+
+
+# ================================================================ aftermath and helpers
+
+## Ice closing over a target: a frost star, glass shards and a cold blue flash.
+static func _freeze(view, t: Node2D) -> void:
+	var fx: Node2D = view.fx_layer
+	var ice: Dictionary = VfxData.SCHOOLS.ice
+	_paint(fx, ice.impact, t.position, 260.0, 0.6, _mid(ice))
+	Fx.flash(fx, "k_star_07", t.position, 300.0, 0.6, Color(0.6, 0.85, 1.0), 0.6)
+	_sparks(view, t.position, ice, 10)
+	Sfx.play("glass", -8.0, 0.8)
+	Sfx.play("ice", -8.0)
+	if t.has_method("flash"):
+		t.flash(Color(0.55, 0.85, 1.0))
+
+
+static func _coins(view, pos: Vector2, amount: int) -> void:
+	var c := Fx.burst(view.fx_layer, pos, Color(1.0, 0.8, 0.3), amount, 380.0, 1.1, 34.0, 900.0, 60.0,
+		"vfx_gold_coin" if UiSkin.has("vfx_gold_coin") else "k_star_07")
+	c.color_ramp = _ramp(VfxData.SCHOOLS.gold)
+	Sfx.play("coins", -8.0)
+
+
+static func _pages(view, pos: Vector2, s: Dictionary) -> void:
+	for i in 4:
+		var pg := _sprite(view.fx_layer, ["vfx_page_glow", "k_window_03"], pos, 90.0, s.hot, 66)
+		if pg == null:
+			return
+		var t := pg.create_tween().set_parallel(true)
+		t.tween_property(pg, "position", pos + Vector2(randf_range(-200, 200), randf_range(-260, -120)), 0.9)
+		t.tween_property(pg, "rotation", randf_range(-1.5, 1.5), 0.9)
+		t.tween_property(pg, "modulate:a", 0.0, 0.5).set_delay(0.4)
+		t.chain().tween_callback(pg.queue_free)
+	Sfx.play("page", -6.0)
+
+
+static func _twinkle(view, pos: Vector2, s: Dictionary, radius: float, amount: int) -> void:
+	for i in amount:
+		var at := pos + Vector2(randf_range(-radius, radius), randf_range(-radius, radius) * 0.8)
+		_after(view, randf_range(0.0, 0.5), func(): Fx.flash(view.fx_layer, "k_star_06", at, randf_range(60, 120),
+			0.5, s.hot, 0.6))
+
+
+## Motes streaming from the card to its owner's mana tray (ramp spells).
+static func _mana_stream(view, pos: Vector2, s: Dictionary, side: int) -> void:
+	var tray = view.mana_views[side]
+	var to: Vector2 = tray.position if tray != null else pos + Vector2(0, 300)
+	for i in 3:
+		_after(view, 0.08 * i, func(): _missile(view, pos, to, s, 0.4 / view._speed(), 0.3, 20.0, 60.0, false))
+
+
+## The view's origin for a sweep: the source minion when it is still on the board, else its hero.
+static func _origin(view, ev: Dictionary) -> Node2D:
+	var side: int = ev.side
+	if ev.id == "furies" and not view.board_views[side].is_empty():
+		return view.board_views[side].back()
+	return view.heroes[side]
+
+
+static func _sparks(view, pos: Vector2, s: Dictionary, amount: int) -> void:
+	var p := Fx.burst(view.fx_layer, pos, s.color, amount, 520.0, 0.45, 26.0, 700.0, 180.0, "k_spark_04")
+	p.particle_flag_align_y = true
+	p.angle_min = 0.0
+	p.angle_max = 0.0
+	p.damping_min = 10.0
+	p.damping_max = 40.0
+	p.color_ramp = _ramp(s)
+
+
+static func _motes(view, pos: Vector2, s: Dictionary, amount: int, speed: float, size: float, life: float = 0.8,
+		spread: float = 180.0, gravity: float = 0.0, tex: String = "") -> CPUParticles2D:
+	var p := Fx.burst(view.fx_layer, pos, s.color, amount, speed, life, size, gravity, spread,
+		tex if tex != "" else s.mote)
+	p.color_ramp = _ramp(s)
+	return p
+
+
+static func _ramp(s: Dictionary) -> Gradient:
+	var g := Gradient.new()
+	var hot: Color = s.hot
+	var col: Color = s.color
+	g.set_color(0, Color(hot.r * 1.2, hot.g * 1.2, hot.b * 1.2, 1.0))
+	g.set_color(1, Color(col.r, col.g, col.b, 0.0))
+	g.add_point(0.35, col)
+	return g
+
+
+## Between the colour and its white-hot core: tints big Kenney glows without washing them out to white.
+static func _mid(s: Dictionary) -> Color:
+	return (s.color as Color).lerp(s.hot, 0.35)
+
+
+static func _add() -> CanvasItemMaterial:
+	var m := CanvasItemMaterial.new()
+	m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	return m
+
+
+## The first texture of `names` that exists, or "".
+static func _pick(names: Array) -> String:
+	for n in names:
+		if n != "" and UiSkin.has(n):
+			return n
+	return ""
+
+
+## An additive sprite `size` px wide. Grey Kenney textures are tinted; painted ones keep their own colours.
+static func _sprite(parent: Node, names: Array, pos: Vector2, size: float, tint: Color, z: int = 66) -> Sprite2D:
+	var n := _pick(names)
+	if n == "":
+		return null
+	var s := Sprite2D.new()
+	s.texture = UiSkin.tex(n)
+	s.material = _add()
+	s.modulate = Color(tint.r * 1.3, tint.g * 1.3, tint.b * 1.3, tint.a) if n.begins_with("k_") \
+		else Color(1, 1, 1, tint.a)
+	s.position = pos
+	s.scale = Vector2.ONE * size / s.texture.get_size().x
+	s.z_index = z
+	parent.add_child(s)
+	return s
+
+
+## A popping flash of the first available texture (painted sprites untinted, Kenney ones tinted).
+static func _paint(fx: Node, names: Array, pos: Vector2, size: float, duration: float, tint: Color) -> void:
+	var n := _pick(names)
+	if n != "":
+		Fx.flash(fx, n, pos, size, duration, tint * 1.3 if n.begins_with("k_") else Color.WHITE, 0.4)
+
+
+## Calls `f` after `delay` seconds of animation time.
+static func _after(view, delay: float, f: Callable) -> void:
+	if delay <= 0.0:
+		f.call()
+		return
+	view.get_tree().create_timer(delay / view._speed()).timeout.connect(f)

@@ -471,22 +471,23 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 	var origin := source.uid if source != null else sides[side].hero.uid
 	match e.do:
 		"damage":
-			if ttype.begins_with("choose_") or ttype.begins_with("random_"):
+			if ttype.begins_with("choose_") or ttype.begins_with("random_") or ttype == "enemy_hero":
 				for t in targets:
 					_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "damage"})
 			elif not targets.is_empty():
-				_emit({"t": "aoe", "side": side, "id": from_id, "uids": targets.map(func(t): return t.uid)})
+				_emit({"t": "aoe", "side": side, "id": from_id, "kind": "damage",
+					"uids": targets.map(func(t): return t.uid)})
 			for t in targets:
-				_damage(t, int(e.amount), null)
+				_damage(t, int(e.amount), null, from_id)
 		"heal":
 			for t in targets:
-				_heal(t, int(e.amount))
+				_heal(t, int(e.amount), from_id)
 		"draw":
 			draw(side, int(e.get("amount", 1)))
 		"armor":
 			for t in targets:
 				t.armor += int(e.amount)
-				_emit({"t": "armor", "uid": t.uid, "armor": t.armor})
+				_emit({"t": "armor", "uid": t.uid, "armor": t.armor, "src": from_id})
 		"buff":
 			if ttype.begins_with("choose_"):
 				for t in targets:
@@ -498,7 +499,7 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 				for k in e.get("keywords", []):
 					t.keywords[k] = true
 				_emit({"t": "buff", "uid": t.uid, "attack": t.attack, "health": t.health,
-					"max_health": t.max_health, "keywords": t.keywords.keys()})
+					"max_health": t.max_health, "keywords": t.keywords.keys(), "src": from_id})
 		"summon":
 			var at := -1
 			if source != null and sides[side].board.has(source):
@@ -509,18 +510,22 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 					at += 1
 		"bounce":
 			for t in targets:
+				if ttype.begins_with("choose_") and not t.is_hero:
+					_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "bounce"})
 				_bounce(t)
 		"freeze":
+			_emit_spread(ttype, side, targets, from_id, "freeze")
 			for t in targets:
-				if ttype.begins_with("choose_"):
+				if ttype.begins_with("choose_") or ttype.begins_with("random_"):
 					_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "freeze"})
 				t.frozen = true
 				_emit_status(t)
 		"silence":
+			_emit_spread(ttype, side, targets, from_id, "silence")
 			for t in targets:
 				if t.is_hero:
 					continue
-				if ttype.begins_with("choose_"):
+				if ttype.begins_with("choose_") or ttype.begins_with("random_"):
 					_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "silence"})
 				t.keywords.clear()
 				t.silenced = true
@@ -545,6 +550,14 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 			for t in targets:
 				_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "destroy"})
 				t.dead = true
+
+
+## A board-wide freeze or silence: one "aoe" event so the view can show it sweeping over every target (only a
+## view hint; the units' new state follows in their "status" events).
+func _emit_spread(ttype: String, side: int, targets: Array[Unit], from_id: String, kind: String) -> void:
+	if targets.is_empty() or ttype.begins_with("choose_") or ttype.begins_with("random_"):
+		return
+	_emit({"t": "aoe", "side": side, "id": from_id, "kind": kind, "uids": targets.map(func(t): return t.uid)})
 
 
 func _targets(ttype: String, side: int, source: Unit, chosen: int) -> Array[Unit]:
@@ -589,7 +602,8 @@ func _targets(ttype: String, side: int, source: Unit, chosen: int) -> Array[Unit
 	return out
 
 
-func _damage(t: Unit, amount: int, source: Unit) -> int:
+## `src` is the card or power behind effect damage (view only: it picks the hit's look).
+func _damage(t: Unit, amount: int, source: Unit, src: String = "") -> int:
 	if amount <= 0 or t == null:
 		return 0
 	if t.has("ward"):
@@ -603,7 +617,7 @@ func _damage(t: Unit, amount: int, source: Unit) -> int:
 		to_hp -= soak
 	t.health -= to_hp
 	_emit({"t": "damage", "uid": t.uid, "amount": amount, "hp": t.health, "armor": t.armor,
-		"source": source.uid if source != null else -1})
+		"source": source.uid if source != null else -1, "src": src})
 	if source != null:
 		if source.has("venom") and not t.is_hero and t.health > 0:
 			t.dead = true
@@ -613,12 +627,12 @@ func _damage(t: Unit, amount: int, source: Unit) -> int:
 	return amount
 
 
-func _heal(t: Unit, amount: int) -> void:
+func _heal(t: Unit, amount: int, src: String = "") -> void:
 	var real := mini(amount, t.max_health - t.health)
 	if real <= 0:
 		return
 	t.health += real
-	_emit({"t": "heal", "uid": t.uid, "amount": real, "hp": t.health})
+	_emit({"t": "heal", "uid": t.uid, "amount": real, "hp": t.health, "src": src})
 
 
 func _bounce(t: Unit) -> void:
