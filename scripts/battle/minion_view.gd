@@ -93,6 +93,7 @@ func _build() -> void:
 		g.gradient = gr
 		art.texture = g
 	add_child(art)
+	ArtLoop.attach(self, self, art, _art_mat, card_id, W / H, 0.34)
 	var legendary: bool = CardDB.card(card_id).get("rarity", "") == "legendary"
 	_ring = UI.portrait_frame(Vector2(W, H), legendary)
 	if _ring == null:

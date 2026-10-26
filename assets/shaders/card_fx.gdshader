@@ -7,6 +7,9 @@ shader_type canvas_item;
 
 uniform int mask_mode = 0; // 0 none, 1 oval, 2 rounded rectangle
 uniform float corner = 0.08;
+// Sub-rectangle (x, y, w, h in 0..1) of the texture to show across the rect, for a video that is cropped to the card's
+// art framing on the GPU. The default shows the whole texture; the masks below still see UV 0..1 across the rect.
+uniform vec4 crop = vec4(0.0, 0.0, 1.0, 1.0);
 uniform float burn : hint_range(0.0, 1.0) = 0.0;
 uniform vec4 burn_edge : source_color = vec4(0.9, 0.3, 0.05, 1.0); // the dissolve's glowing rim: outer colour
 uniform vec4 burn_hot : source_color = vec4(1.0, 0.9, 0.55, 1.0); // ... and its white-hot inner line
@@ -74,6 +77,9 @@ void fragment() {
 	if (tilt != vec2(0.0) && resample) {
 		uv = puv.xy / puv.z;
 		c = texture(TEXTURE, uv) * vcol;
+	}
+	if (crop.zw != vec2(1.0)) {
+		c = texture(TEXTURE, crop.xy + uv * crop.zw) * vcol;
 	}
 	if (mask_mode == 1) {
 		float d = length((uv - 0.5) * 2.0);

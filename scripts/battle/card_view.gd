@@ -147,6 +147,8 @@ func _build_face() -> void:
 	if art.texture == null:
 		art.texture = _placeholder()
 	_face.add_child(art)
+	if not is_spell:
+		ArtLoop.attach(_face, _face, art, _art_mat, card_id, art.size.x / art.size.y, 0.36)
 	if not is_spell and UiSkin.has("oval_ring"):
 		_face.add_child(UiSkin.rect("oval_ring", art.size * Vector2(1.13, 1.1), art.position - art.size * Vector2(0.065, 0.05)))
 	elif not is_spell:
@@ -266,6 +268,7 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	_art_mat.set_shader_parameter("corner", 0.07)
 	art.material = _art_mat
 	_face.add_child(art)
+	ArtLoop.attach(_face, _face, art, _art_mat, card_id, art.size.x / art.size.y, 0.42)
 
 	# Dark fade under the text so light ink stays readable on any painting.
 	var fade := TextureRect.new()
