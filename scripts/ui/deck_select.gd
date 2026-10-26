@@ -1,5 +1,13 @@
 extends Control
 ## Choose a preconstructed deck (or one of your own); a random deck of the other class becomes the opponent.
+##
+## Every piece is painted: the class panels are bronze frames, the deck name sits on the red ribbon, the hero and
+## the plan on a framed plaque, the switcher arrows on bronze discs, and every text is fitted to the room inside
+## its frame. Sizes follow the screen width, so the panels never spill off a narrow (4:3) screen.
+
+const PANEL_W := 700.0 ## widest a class panel gets
+const PANEL_GAP := 50.0
+const PANEL_PAD := 64.0 ## room the bronze frame's ornament takes on each side of the panel
 
 
 func _ready() -> void:
@@ -9,58 +17,86 @@ func _ready() -> void:
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.alignment = BoxContainer.ALIGNMENT_CENTER
-	root.add_theme_constant_override("separation", 14)
+	root.add_theme_constant_override("separation", 8)
 	add_child(root)
-	var title := UI.label("Choose your path", 70, "title", UI.GOLD, 10, Color.BLACK)
+	var title := UI.label("Choose your path", 58, "title", UI.GOLD, 10, Color.BLACK)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(title)
-	# The arena is drawn now (a different one from last match), so the player knows where the fight will be.
-	var arena := CardDB.arena(Game.pick_arena())
-	var where := str(arena.get("name", ""))
-	if str(arena.get("circle", "")) != "":
-		where += "  ·  " + str(arena.circle)
-	var sub := UI.label("Next arena: " + where, 30, "italic", UI.BONE, 5, Color.BLACK)
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	# The opponent's strength sits beside the arena line; a click steps Easy > Medium > Hard (saved at once).
-	var head := HBoxContainer.new()
-	head.alignment = BoxContainer.ALIGNMENT_CENTER
-	head.add_theme_constant_override("separation", 36)
-	head.add_child(sub)
-	var diff := UI.button("Opponent: " + Settings.DIFFICULTY_NAMES[Settings.difficulty], 440, 60)
-	diff.pressed.connect(func():
-		Settings.difficulty = (Settings.difficulty + 1) % Settings.DIFFICULTY_NAMES.size()
-		Settings.save()
-		diff.text = "Opponent: " + Settings.DIFFICULTY_NAMES[Settings.difficulty]
-		diff.add_theme_font_size_override("font_size", 34)
-		UI.fit_text(diff))
-	head.add_child(diff)
-	root.add_child(head)
+	root.add_child(_header())
+	var pw := _panel_width()
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 60)
+	row.add_theme_constant_override("separation", int(PANEL_GAP))
 	root.add_child(row)
 	for d in _panel_decks():
-		row.add_child(_deck_panel(d))
+		row.add_child(_deck_panel(d, pw))
 	root.add_child(_my_decks())
-	var back := UI.button("Back", 300, 64)
+	var back := UI.button("Back", 280, 62)
 	back.pressed.connect(func(): Game.go(Game.MENU))
 	var bc := CenterContainer.new()
 	bc.add_child(back)
 	root.add_child(bc)
 
 
+## The width of one class panel: as wide as PANEL_W, narrower on screens that cannot fit two of them.
+func _panel_width() -> float:
+	var w := get_viewport_rect().size.x
+	return clampf((w - 100.0 - PANEL_GAP) / 2.0, 540.0, PANEL_W)
+
+
+## The next arena on an engraved plaque, beside the opponent's strength (a click steps Easy > Medium > Hard, saved
+## at once). The arena is drawn now (a different one from last match), so the player knows where the fight will be.
+func _header() -> Control:
+	var arena := CardDB.arena(Game.pick_arena())
+	var where := str(arena.get("name", ""))
+	if str(arena.get("circle", "")) != "":
+		where += "  ·  " + str(arena.circle)
+	var head := HBoxContainer.new()
+	head.alignment = BoxContainer.ALIGNMENT_CENTER
+	head.add_theme_constant_override("separation", 24)
+	var plaque := PanelContainer.new()
+	plaque.add_theme_stylebox_override("panel", UI.frame_box("deck_row", 10, 0,
+		UI.box(Color(0.08, 0.04, 0.035, 0.9), UI.GOLD_DARK, 2, 8)))
+	var sb: StyleBox = plaque.get_theme_stylebox("panel")
+	sb.content_margin_left = 30
+	sb.content_margin_right = 30
+	sb.content_margin_top = 10
+	sb.content_margin_bottom = 12
+	var sub := UI.label("Next arena:  " + where, 26, "italic", UI.BONE, 4, Color.BLACK)
+	sub.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_fit_label(sub, minf(760.0, get_viewport_rect().size.x - 620.0), 18)
+	plaque.add_child(sub)
+	head.add_child(plaque)
+	var diff := UI.button("Opponent: " + Settings.DIFFICULTY_NAMES[Settings.difficulty], 400, 60)
+	diff.add_theme_font_size_override("font_size", 30)
+	diff.pressed.connect(func():
+		Settings.difficulty = (Settings.difficulty + 1) % Settings.DIFFICULTY_NAMES.size()
+		Settings.save()
+		diff.text = "Opponent: " + Settings.DIFFICULTY_NAMES[Settings.difficulty]
+		diff.add_theme_font_size_override("font_size", 30)
+		UI.fit_text(diff))
+	head.add_child(diff)
+	return head
+
+
 ## One panel per class: the hero, and the preconstructed deck picked with the arrows (name, plan, three featured
 ## cards). Clicking the panel plays that deck; the opponent plays a random deck of the other class.
-func _deck_panel(first: Dictionary) -> Control:
+func _deck_panel(first: Dictionary, pw: float) -> Control:
 	var cls := CardDB.deck_class(first)
 	var list := CardDB.class_decks(cls)
 	var hero := CardDB.hero(first.hero)
+	var inner := pw - 2.0 * PANEL_PAD ## the room inside the frame's ornament
 	var p := PanelContainer.new()
-	p.custom_minimum_size = Vector2(700, 0)
-	var normal := UI.frame_box("panel_frame_filled", 96, 44,
+	p.custom_minimum_size = Vector2(pw, 0)
+	var normal := UI.frame_box("panel_frame_filled", 96, 0,
 		UI.box(Color(0.08, 0.04, 0.035, 0.9), UI.GOLD_DARK, 3, 18, Color(0, 0, 0, 0.6), 24))
-	var hover := UI.frame_box("panel_frame_filled", 96, 44,
+	var hover := UI.frame_box("panel_frame_filled", 96, 0,
 		UI.box(Color(0.2, 0.06, 0.04, 0.95), UI.GOLD, 4, 18, Color(1.0, 0.45, 0.1, 0.5), 34), Color(1.3, 1.1, 0.9))
+	for s in [normal, hover]:
+		s.content_margin_left = PANEL_PAD
+		s.content_margin_right = PANEL_PAD
+		s.content_margin_top = 36
+		s.content_margin_bottom = 40
 	p.add_theme_stylebox_override("panel", normal)
 	p.mouse_filter = Control.MOUSE_FILTER_STOP
 	p.mouse_entered.connect(func():
@@ -73,39 +109,67 @@ func _deck_panel(first: Dictionary) -> Control:
 			Game.start_battle(str(p.get_meta("deck"))))
 	var v := VBoxContainer.new()
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
-	v.add_theme_constant_override("separation", 8)
+	v.add_theme_constant_override("separation", 6)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(v)
+	# The hero, centred in the panel (scaled down a little so the panel stays short).
 	var portrait := Control.new()
-	portrait.custom_minimum_size = Vector2(0, 210)
+	portrait.custom_minimum_size = Vector2(inner, 176)
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(portrait)
 	var hv := HeroView.new().setup({"uid": -1, "side": 0, "id": first.hero, "health": hero.get("health", 30)})
-	hv.position = Vector2(350, 105)
+	hv.position = Vector2(inner / 2, 90)
+	hv.scale = Vector2(0.9, 0.9)
 	hv.power.visible = false
 	portrait.add_child(hv)
-	var name := UI.label("", 46, "title", UI.GOLD, 8, Color.BLACK)
+	# The deck's name on the painted ribbon; the text stays inside the ribbon's flat middle.
+	var ribbon := Control.new()
+	ribbon.custom_minimum_size = Vector2(inner, 78)
+	ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(ribbon)
+	var rw := minf(inner + 40.0, 600.0)
+	if UiSkin.has("name_ribbon"):
+		ribbon.add_child(UiSkin.rect("name_ribbon", Vector2(rw, rw * 144.0 / 768.0), Vector2((inner - rw) / 2, -2)))
+	var name := UI.label("", 36, "title", UI.BONE, 6, Color(0.12, 0.02, 0.02))
 	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(name)
-	for line in [str(hero.get("name", "")), "Power: %s - %s" % [hero.power.name, hero.power.text]]:
-		var hn := UI.label(line, 23, "italic", Color(0.85, 0.78, 0.65))
-		hn.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		v.add_child(hn)
-	var txt := UI.label("", 26, "body", UI.BONE)
+	name.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name.size = Vector2(inner, rw * 144.0 / 768.0 * 0.78)
+	name.position = Vector2(0, -2)
+	name.set_meta("room", rw * 0.66) ## the ribbon's flat middle, between its folded tails
+	ribbon.add_child(name)
+	# The hero and the plan on a framed plaque.
+	var plaque := PanelContainer.new()
+	plaque.add_theme_stylebox_override("panel", UI.tip_box())
+	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(plaque)
+	var pv := VBoxContainer.new()
+	pv.add_theme_constant_override("separation", 4)
+	plaque.add_child(pv)
+	var room := inner - 100.0 ## the plaque's margins
+	var who := UI.label("%s  ·  %s: %s" % [hero.get("name", ""), hero.power.name, hero.power.text], 21, "italic",
+		Color(0.92, 0.78, 0.5))
+	who.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	who.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	who.custom_minimum_size = Vector2(room, 0)
+	_fit_wrapped(who, room, 2, 16)
+	pv.add_child(who)
+	var txt := UI.label("", 24, "body", UI.BONE)
 	txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	txt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	txt.custom_minimum_size = Vector2(620, 0)
-	v.add_child(txt)
+	txt.custom_minimum_size = Vector2(room, 0)
+	txt.set_meta("room", room)
+	pv.add_child(txt)
 	var cards := Control.new()
-	cards.custom_minimum_size = Vector2(0, 160)
+	cards.custom_minimum_size = Vector2(inner, 136)
 	cards.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(cards)
 	if list.size() > 1:
-		# The deck switcher: arrows beside the portrait, so the panel keeps its size. A click on an arrow stays on
-		# the arrow (it does not start the battle).
+		# The deck switcher: bronze discs beside the portrait, so the panel keeps its size. A click on an arrow stays
+		# on the arrow (it does not start the battle).
 		for dir in [-1, 1]:
 			var arrow := _arrow_button(dir)
-			arrow.position = Vector2(350 + dir * ARROW_DX - ARROW_SIZE / 2, 105 - ARROW_SIZE / 2)
+			arrow.position = Vector2(inner / 2 + dir * minf(ARROW_DX, inner / 2 - ARROW_SIZE / 2) - ARROW_SIZE / 2,
+				90 - ARROW_SIZE / 2)
 			arrow.pressed.connect(func():
 				var i := wrapi(list.find(CardDB.deck(str(p.get_meta("deck")))) + dir, 0, list.size())
 				_show_deck(p, list[i], dir, name, txt, cards)
@@ -115,28 +179,30 @@ func _deck_panel(first: Dictionary) -> Control:
 	return p
 
 
-const ARROW_SIZE := 64.0
-const ARROW_DX := 240.0 ## arrow centres from the panel's middle, clear of the hero portrait
+const ARROW_SIZE := 70.0
+const ARROW_DX := 230.0 ## arrow centres from the panel's middle, clear of the hero portrait
 
 
-## A round arrow button for the deck switcher (-1 = previous, 1 = next).
+## A round switcher button: the painted bronze disc with an engraved arrow (-1 = previous, 1 = next).
 func _arrow_button(dir: int) -> Button:
 	var b := Button.new()
-	b.text = "<" if dir < 0 else ">"
+	b.text = "‹" if dir < 0 else "›"
 	b.tooltip_text = "Previous deck" if dir < 0 else "Next deck"
 	b.size = Vector2(ARROW_SIZE, ARROW_SIZE)
 	b.custom_minimum_size = b.size
 	b.pivot_offset = b.size / 2
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_font_override("font", UI.font("title"))
-	b.add_theme_font_size_override("font_size", 40)
-	b.add_theme_color_override("font_color", UI.GOLD)
-	b.add_theme_color_override("font_hover_color", Color(1.0, 0.92, 0.7))
-	b.add_theme_color_override("font_pressed_color", Color(1.0, 0.75, 0.4))
-	var r := int(ARROW_SIZE / 2)
-	b.add_theme_stylebox_override("normal", UI.box(Color(0.1, 0.04, 0.03, 0.88), UI.GOLD_DARK, 3, r, Color(0, 0, 0, 0.6), 8))
-	b.add_theme_stylebox_override("hover", UI.box(Color(0.32, 0.08, 0.05, 0.95), UI.GOLD, 3, r, Color(1.0, 0.45, 0.1, 0.5), 16))
-	b.add_theme_stylebox_override("pressed", UI.box(Color(0.45, 0.1, 0.05, 1.0), UI.GOLD, 4, r, Color(1.0, 0.5, 0.1, 0.6), 20))
+	b.add_theme_font_size_override("font_size", 52)
+	b.add_theme_color_override("font_color", Color(0.22, 0.09, 0.03))
+	b.add_theme_color_override("font_hover_color", Color(0.35, 0.05, 0.02))
+	b.add_theme_color_override("font_pressed_color", Color(0.12, 0.04, 0.02))
+	b.add_theme_color_override("font_shadow_color", Color(1.0, 0.9, 0.62, 0.35))
+	b.add_theme_constant_override("shadow_offset_y", 2)
+	for st in [["normal", Color(0.95, 0.9, 0.82)], ["hover", Color(1.2, 1.08, 0.9)], ["pressed", Color(0.75, 0.62, 0.5)]]:
+		var r := int(ARROW_SIZE / 2)
+		b.add_theme_stylebox_override(st[0], UI.frame_box("power_disc", 0, 0,
+			UI.box(Color(0.1, 0.04, 0.03, 0.88), UI.GOLD_DARK, 3, r), st[1]))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	b.mouse_entered.connect(func():
 		Sfx.play("ui_hover", -10.0)
@@ -146,24 +212,25 @@ func _arrow_button(dir: int) -> Button:
 	return b
 
 
-## Puts deck `d` on its class panel: the name (shrunk to fit), the plan, the featured cards (they slide in from the
-## side the player cycled toward).
+## Puts deck `d` on its class panel: the name (shrunk to fit the ribbon), the plan (shrunk to fit three lines), the
+## featured cards (they slide in from the side the player cycled toward).
 func _show_deck(p: Control, d: Dictionary, step: int, title: Label, txt: Label, cards: Control) -> void:
 	p.set_meta("deck", str(d.id))
 	title.text = d.name
-	var px := 46
-	var font := title.get_theme_font("font")
-	while px > 30 and font.get_string_size(d.name, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x > 600.0:
-		px -= 2
-	title.add_theme_font_size_override("font_size", px)
+	title.add_theme_font_size_override("font_size", 36)
+	_fit_label(title, float(title.get_meta("room")), 22)
 	txt.text = d.text
+	txt.add_theme_font_size_override("font_size", 24)
+	_fit_wrapped(txt, float(txt.get_meta("room")), 3, 17)
 	for c in cards.get_children():
 		c.queue_free()
 	var ids: Array = d.get("featured", [])
+	var mid := cards.custom_minimum_size.x / 2
+	var spread := minf(120.0, cards.custom_minimum_size.x / 4)
 	for i in ids.size():
 		var c := CardView.new().setup(ids[i], -1, true)
-		c.scale = Vector2(0.44, 0.44)
-		var at := Vector2(350 + (i - 1) * 125, 80 + absf(i - 1) * 8)
+		c.scale = Vector2(0.37, 0.37)
+		var at := Vector2(mid + (i - 1) * spread, 70 + absf(i - 1) * 7)
 		c.position = at
 		c.rotation = (i - 1) * 0.12
 		cards.add_child(c)
@@ -173,6 +240,27 @@ func _show_deck(p: Control, d: Dictionary, step: int, title: Label, txt: Label, 
 			var t := c.create_tween().set_parallel().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 			t.tween_property(c, "position", at, 0.28).set_delay(0.04 * i)
 			t.tween_property(c, "modulate:a", 1.0, 0.18).set_delay(0.04 * i)
+
+
+## Shrinks a one-line label until its text fits `room` px.
+func _fit_label(l: Label, room: float, min_size: int) -> void:
+	var f := l.get_theme_font("font")
+	var px := l.get_theme_font_size("font_size")
+	while px > min_size and f.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x > room:
+		px -= 1
+	l.add_theme_font_size_override("font_size", px)
+
+
+## Shrinks a wrapping label until its text takes at most `lines` lines of `room` px.
+func _fit_wrapped(l: Label, room: float, lines: int, min_size: int) -> void:
+	var f := l.get_theme_font("font")
+	var px := l.get_theme_font_size("font_size")
+	while px > min_size:
+		var h := f.get_multiline_string_size(l.text, HORIZONTAL_ALIGNMENT_CENTER, room, px).y
+		if h <= f.get_height(px) * lines + 2.0:
+			break
+		px -= 1
+	l.add_theme_font_size_override("font_size", px)
 
 
 ## The deck each class panel shows first: the one the player last picked, else the class's starter.
@@ -193,18 +281,17 @@ func _remember_deck(cls: String, id: String) -> void:
 		Settings.save()
 
 
-## "Your decks": the saved decks in a strip that scrolls sideways once they no longer fit (drag, or the mouse
-## wheel), each with its pen button; the two new-deck buttons stay fixed on the right.
-const DECKS_MAX_W := 1240.0 ## widest the saved-deck strip gets before it scrolls
-const CHIP_W := 300.0
+## "Your decks": the saved decks in a strip that scrolls sideways once they no longer fit (bronze arrow discs, a
+## drag, or the mouse wheel), each with its Edit plate; the two new-deck buttons stay fixed on the right.
+const CHIP_W := 280.0
 const EDIT_W := 124.0 ## wide enough for the painted plate
-const CHIP_GAP := 22.0
+const CHIP_GAP := 18.0
 
 
 func _my_decks() -> Control:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 28)
+	row.add_theme_constant_override("separation", 16)
 	if not Collection.decks.is_empty():
 		var strip := HBoxContainer.new()
 		strip.add_theme_constant_override("separation", int(CHIP_GAP))
@@ -212,22 +299,29 @@ func _my_decks() -> Control:
 			strip.add_child(_deck_chip(i))
 		var scroll := ScrollContainer.new()
 		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-		var full := Collection.decks.size() * (CHIP_W + EDIT_W + 4.0 + CHIP_GAP) - CHIP_GAP
-		scroll.custom_minimum_size = Vector2(minf(full, DECKS_MAX_W), 80)
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER # the arrows scroll it
+		var step := CHIP_W + EDIT_W + 4.0 + CHIP_GAP
+		var full := Collection.decks.size() * step - CHIP_GAP
+		var room := get_viewport_rect().size.x - 2 * 520.0 - 2 * ARROW_SIZE
+		# Whole chips only: the strip is as wide as the chips that fit, never cutting one in half.
+		var fit := maxi(1, int((room + CHIP_GAP) / step))
+		scroll.custom_minimum_size = Vector2(minf(full, fit * step - CHIP_GAP), 66)
 		scroll.add_child(strip)
-		var bar := scroll.get_h_scroll_bar()
-		bar.custom_minimum_size.y = 8
-		bar.add_theme_stylebox_override("scroll", UI.box(Color(0, 0, 0, 0.45), Color.TRANSPARENT, 0, 4))
-		bar.add_theme_stylebox_override("grabber", UI.box(UI.GOLD_DARK, Color.TRANSPARENT, 0, 4))
-		bar.add_theme_stylebox_override("grabber_highlight", UI.box(UI.GOLD, Color.TRANSPARENT, 0, 4))
-		bar.add_theme_stylebox_override("grabber_pressed", UI.box(UI.GOLD, Color.TRANSPARENT, 0, 4))
 		# The vertical mouse wheel scrolls the strip sideways.
 		scroll.gui_input.connect(func(e):
 			if e is InputEventMouseButton and e.pressed and e.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
 				scroll.scroll_horizontal += 120 * (1 if e.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1)
 				scroll.accept_event())
+		var overflow := full > scroll.custom_minimum_size.x + 1.0
+		if overflow:
+			var l := _arrow_button(-1)
+			l.pressed.connect(func(): scroll.scroll_horizontal -= int(step))
+			row.add_child(l)
 		row.add_child(scroll)
+		if overflow:
+			var r := _arrow_button(1)
+			r.pressed.connect(func(): scroll.scroll_horizontal += int(step))
+			row.add_child(r)
 	var news := HBoxContainer.new()
 	news.add_theme_constant_override("separation", 14)
 	for c in [["pilgrim", "+ Pilgrim"], ["ferry", "+ Ferryman"]]:
@@ -240,7 +334,7 @@ func _my_decks() -> Control:
 	return row
 
 
-## One saved deck: its name (play it; an incomplete deck opens the editor instead) and a pen button to edit it.
+## One saved deck: its name (play it; an incomplete deck opens the editor instead) and an Edit plate.
 func _deck_chip(i: int) -> Control:
 	var d: Dictionary = Collection.decks[i]
 	var chip := HBoxContainer.new()
