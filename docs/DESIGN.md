@@ -6,7 +6,7 @@
 |---|---|
 | `data/cards.json` | every card and hero: stats, keywords, effects, rules text, flavour, art prompt |
 | `data/sets/*.json` | expansion sets (loaded automatically); schema and balance guide in `docs/CARD_SCHEMA.md`, check with `python tools/cards/validate.py` |
-| `data/decks.json` | the two starter decks (30 cards each) |
+| `data/decks.json` | the preconstructed decks (30 cards each, three per class; the first of each class is its starter): class, hero, name, plan text, 3 featured cards |
 | `data/arenas.json` | arenas: name, circle, intro text, music, ambience, painted board / mist, divider kind, ambient particles, tints, tappable corner props (shown only with `"corner_props": true`; off everywhere since 2026-10-26: the board plus the middle animations is enough). Each match draws a random arena whose board is installed (never the previous one) |
 | `scripts/battle/arena_props.gd` | `ArenaProps`: an arena's living layer built from its data (divider VFX, ambient, toys); `arena_acheron.gd` subclasses it for Charon's boat (the bell, brazier and skulls are corner props). Sockets: `scenes/arenas/standard.tscn` |
 | `scripts/core/` | `CardDB` (static data access), autoloads `Settings`, `Sfx`, `Game` (scene flow + stats), `Collection` (owned cards, Obols, packs, custom decks in `user://collection.cfg`) |
@@ -63,7 +63,8 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
 ## Collection and packs (v0.2)
 - 202 cards: core 27 + Pilgrim's Journey 35 + Infernal Host 35 + Upper Hell, City of Dis, Malebolge and Cocytus
   (35 neutral each).
-- First run: you own the two starter decks and get 3 packs. Battles pay Obols (win 100, loss 25); a pack costs 100.
+- First run: you own the cards of the two starter decks and get 3 packs (the other preconstructed decks are played
+  from Choose your path without owning their cards). Battles pay Obols (win 100, loss 25); a pack costs 100.
 - A pack holds 5 cards: per slot legendary 1.5%, epic 5.5%, rare 21%; at least one rare; a legendary within
   20 packs. Copies beyond the deck limit refund Obols (5 / 20 / 100 / 400).
 - Deck builder: owned cards only; Auto-fill completes a deck along a mana curve.

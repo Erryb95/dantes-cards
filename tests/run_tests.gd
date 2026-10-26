@@ -24,14 +24,27 @@ func ok(cond: bool, what: String) -> void:
 
 
 func _test_data() -> void:
+	var deck_ids := {}
 	for d in CardDB.decks():
 		var list := CardDB.deck_list(d.id)
+		var cls := CardDB.deck_class(d)
+		ok(not deck_ids.has(d.id), "deck id %s is unique" % d.id)
+		deck_ids[d.id] = true
+		ok(cls in ["pilgrim", "ferry"], "deck %s class %s" % [d.id, cls])
 		ok(list.size() == 30, "deck %s has 30 cards (%d)" % [d.id, list.size()])
 		ok(not CardDB.hero(d.hero).is_empty(), "deck %s hero exists" % d.id)
+		ok(d.hero == {"pilgrim": "dante", "ferry": "charon"}.get(cls, ""), "deck %s hero matches its class" % d.id)
+		ok(str(d.get("name", "")) != "" and str(d.get("text", "")) != "", "deck %s has a name and a plan" % d.id)
+		ok(d.get("featured", []).size() == 3, "deck %s features 3 cards" % d.id)
+		for id in d.get("featured", []):
+			ok(id in list, "deck %s features its own card %s" % [d.id, id])
 		for id in list:
 			ok(not CardDB.card(id).is_empty(), "card %s exists" % id)
 			ok(list.count(id) <= (1 if CardDB.card(id).get("rarity") == "legendary" else 2), "deck %s copies of %s" % [d.id, id])
-			ok(CardDB.card(id).get("set") in [d.id, "neutral"], "deck %s class of %s" % [d.id, id])
+			ok(CardDB.card(id).get("set") in [cls, "neutral"], "deck %s class of %s" % [d.id, id])
+	for cls in ["pilgrim", "ferry"]:
+		ok(not CardDB.class_decks(cls).is_empty() and CardDB.class_decks(cls)[0].get("starter", false),
+			"the first %s deck is the starter" % cls)
 	for c in CardDB.all_cards():
 		for e in c.get("effects", []):
 			ok(e.do in ["damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card", "mana"], "%s effect %s" % [c.id, e.do])

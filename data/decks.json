@@ -1,11 +1,18 @@
 {
- "_doc": "Starter decks: 30 cards each (class + neutral, max 2 copies, 1 per legendary). hero is a heroes[].id from cards.json.",
+ "_doc": "Preconstructed decks: 30 cards each (class + neutral, max 2 copies, 1 per legendary). cls is the class (pilgrim / ferry), hero a heroes[].id from cards.json, featured the 3 cards shown on Choose your path. The decks marked starter are owned from the first run; the others can be played from Choose your path.",
  "decks": [
   {
    "id": "pilgrim",
+   "cls": "pilgrim",
+   "starter": true,
    "name": "The Pilgrim's Way",
    "hero": "dante",
    "text": "Dante, Virgil and the souls met on the way down. Sturdy guards, card draw and a strong late game.",
+   "featured": [
+    "francesca",
+    "geryon",
+    "virgils_counsel"
+   ],
    "cards": {
     "limbo_philosophers": 1,
     "farinata": 2,
@@ -33,9 +40,16 @@
   },
   {
    "id": "ferry",
+   "cls": "ferry",
+   "starter": true,
    "name": "The Ferryman's Host",
    "hero": "charon",
    "text": "Charon and the guardians of Hell. Cheap souls, venom, beasts and board clears.",
+   "featured": [
+    "minos",
+    "harpies_flock",
+    "cerberus"
+   ],
    "cards": {
     "banner_chaser": 2,
     "stung_neutral": 2,
@@ -58,6 +72,137 @@
     "ih_rain_of_sand": 1,
     "ih_boiling_tide": 1,
     "ih_ephialtes": 1
+   }
+  },
+  {
+   "id": "pilgrim_vigil",
+   "cls": "pilgrim",
+   "name": "Cato's Vigil",
+   "hero": "dante",
+   "text": "Guards and Armor hold the line while freezes and board clears grind the enemy down.",
+   "featured": [
+    "pj_cato",
+    "geryon",
+    "pj_lion_of_violence"
+   ],
+   "cards": {
+    "uh_undecided_soul": 2,
+    "cd_pholus": 1,
+    "uh_caesar": 1,
+    "uh_avaricious_hoarder": 1,
+    "pj_statius": 1,
+    "uh_cut_the_thread": 1,
+    "pj_saint_lucy": 2,
+    "limbo_philosophers": 2,
+    "cd_nameless_bush": 2,
+    "uh_sullen_one": 1,
+    "farinata_tomb": 1,
+    "pj_dantes_courage": 2,
+    "pj_lion_of_violence": 2,
+    "geryon": 2,
+    "virgil_guide": 2,
+    "pj_three_beasts": 2,
+    "pj_virgins_mercy": 1,
+    "pj_cato": 1,
+    "pj_dantes_resolve": 2,
+    "mc_caiaphas": 1
+   }
+  },
+  {
+   "id": "pilgrim_poets",
+   "cls": "pilgrim",
+   "name": "The Noble School",
+   "hero": "dante",
+   "text": "Homer, Ovid and the poets of Limbo. Draw deep, answer threats with spells, win the long game.",
+   "featured": [
+    "pj_homer",
+    "pj_ovid",
+    "pj_stars_again"
+   ],
+   "cards": {
+    "virgils_counsel": 2,
+    "pj_saint_lucy": 2,
+    "pj_horace": 2,
+    "pj_reed_of_humility": 2,
+    "limbo_philosophers": 2,
+    "uh_socrates": 1,
+    "cd_pholus": 1,
+    "virgil_guide": 2,
+    "pj_ovid": 2,
+    "centaur_arrows": 2,
+    "pj_dantes_courage": 2,
+    "pj_lucan": 1,
+    "pj_statius": 2,
+    "pj_stars_again": 1,
+    "cd_rusticucci": 1,
+    "pj_dantes_resolve": 1,
+    "pj_homer": 1,
+    "pj_beatrice": 1,
+    "pj_brunetto_latini": 2
+   }
+  },
+  {
+   "id": "ferry_serpents",
+   "cls": "ferry",
+   "name": "The Serpent Pit",
+   "hero": "charon",
+   "text": "Thieves and their serpents. Flood the board with cheap souls and Venom, so every trade goes your way.",
+   "featured": [
+    "ih_malacoda",
+    "harpies_flock",
+    "ih_libicocco"
+   ],
+   "cards": {
+    "ih_thief_serpent": 2,
+    "ih_blood_swimmer": 2,
+    "ih_whip_demon": 2,
+    "banner_chaser": 2,
+    "ih_barbed_imp": 2,
+    "ih_thieves_bargain": 2,
+    "furies": 2,
+    "stung_neutral": 2,
+    "harpies_flock": 2,
+    "ih_barbariccia": 2,
+    "cd_hounds_of_lano": 1,
+    "cd_dionysius": 1,
+    "uh_electra": 2,
+    "ih_libicocco": 1,
+    "mc_agnello": 1,
+    "souls_of_the_styx": 2,
+    "ih_malacoda": 1,
+    "oar_strike": 1
+   }
+  },
+  {
+   "id": "ferry_raid",
+   "cls": "ferry",
+   "name": "The Malebranche Raid",
+   "hero": "charon",
+   "text": "Malacoda's demons. Swift attackers, burn and Charon's power to the face. Win fast.",
+   "featured": [
+    "ih_graffiacane",
+    "ih_farfarello",
+    "uh_achilles"
+   ],
+   "cards": {
+    "banner_chaser": 2,
+    "ih_barbed_imp": 2,
+    "ih_burning_rain": 2,
+    "uh_greyhound": 2,
+    "mc_boiling_pitch": 2,
+    "ih_calcabrina": 2,
+    "ih_thief_serpent": 1,
+    "she_wolf": 1,
+    "ih_pitch_sinner": 2,
+    "ih_cacus_stolen_herd": 2,
+    "oar_strike": 1,
+    "ih_farfarello": 2,
+    "uh_silencing_word": 1,
+    "ih_barbariccia": 1,
+    "ih_graffiacane": 2,
+    "ih_serpents_kiss": 2,
+    "mc_brutus": 2,
+    "uh_achilles": 1
    }
   }
  ]
