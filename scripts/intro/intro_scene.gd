@@ -15,6 +15,7 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		var kv := a.trim_prefix("--").split("=", true, 1)
 		args[kv[0]] = kv[1] if kv.size() > 1 else ""
+	Sfx.pause_music(true)  # "Watch intro" from the menu: its piece waits and resumes afterwards
 	var layer := CanvasLayer.new()
 	layer.layer = 50  # under the scene fade of Game (layer 100)
 	add_child(layer)
@@ -45,4 +46,5 @@ func _on_finished(_skipped: bool) -> void:
 	Settings.intro_seen = true
 	Game.intro_played = true
 	Settings.save()
+	Sfx.pause_music(false)
 	Game.go(Game.MENU)

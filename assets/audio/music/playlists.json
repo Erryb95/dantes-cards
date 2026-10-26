@@ -1,0 +1,90 @@
+{
+ "intro/c1_0.ogg": {
+  "piece": "brahms-requiem-2-denn-alles",
+  "composer": "Brahms",
+  "title": "Ein deutsches Requiem - II. Denn alles Fleisch, es ist wie Gras",
+  "performer": "St Matthews Choir (SMCE, www.smce.org.uk), live concert recording",
+  "licence": "CC0 1.0 / public domain dedication as set on the archive.org item by the uploader (member of the choir; the performing choir's own recording)",
+  "source": "https://archive.org/details/BrahmsRequiem"
+ },
+ "intro/c2_0.ogg": {
+  "piece": "cherubini-introitus",
+  "composer": "Cherubini",
+  "title": "Requiem in C minor - Introitus (Requiem aeternam)",
+  "performer": "St Matthews Choir (SMCE, www.smce.org.uk), live concert recording",
+  "licence": "CC0 1.0 / public domain dedication as set on the archive.org item by the uploader (member of the choir; the performing choir's own recording)",
+  "source": "https://archive.org/details/CherubiniRequiemInCMinor2011"
+ },
+ "intro/c3_0.ogg": {
+  "piece": "tchaikovsky6-iv-finale",
+  "composer": "Tchaikovsky",
+  "title": "Symphony No. 6 'Pathetique' - IV. Finale: Adagio lamentoso",
+  "performer": "Musopen Kickstarter orchestra recordings (2011-2012)",
+  "licence": "Public Domain Mark 1.0 (dedicated to the public domain by Musopen)",
+  "source": "https://archive.org/details/musopen-dvd"
+ },
+ "intro/c4_0.ogg": {
+  "piece": "suk-meditation",
+  "composer": "Josef Suk",
+  "title": "Meditation on the Old Czech Chorale 'St Wenceslas' (string quartet)",
+  "performer": "Musopen Kickstarter orchestra recordings (2011-2012)",
+  "licence": "Public Domain Mark 1.0 (dedicated to the public domain by Musopen)",
+  "source": "https://archive.org/details/musopen-dvd"
+ },
+ "music_combat/c1_0.ogg": {
+  "piece": "cherubini-dies-irae",
+  "composer": "Cherubini",
+  "title": "Requiem in C minor - Dies irae",
+  "performer": "St Matthews Choir (SMCE, www.smce.org.uk), live concert recording",
+  "licence": "CC0 1.0 / public domain dedication as set on the archive.org item by the uploader (member of the choir; the performing choir's own recording)",
+  "source": "https://archive.org/details/CherubiniRequiemInCMinor2011"
+ },
+ "music_combat/c2_0.ogg": {
+  "piece": "beethoven-coriolan",
+  "composer": "Beethoven",
+  "title": "Coriolan Overture, Op. 62",
+  "performer": "Musopen Kickstarter orchestra recordings (2011-2012)",
+  "licence": "Public Domain Mark 1.0 (dedicated to the public domain by Musopen)",
+  "source": "https://archive.org/details/musopen-dvd"
+ },
+ "music_combat/c3_0.ogg": {
+  "piece": "mozart40-i",
+  "composer": "Mozart",
+  "title": "Symphony No. 40 in G minor, K. 550 - I. Molto allegro",
+  "performer": "Musopen Kickstarter orchestra recordings (2011-2012)",
+  "licence": "Public Domain Mark 1.0 (dedicated to the public domain by Musopen)",
+  "source": "https://archive.org/details/musopen-dvd"
+ },
+ "music_combat/c4_0.ogg": {
+  "piece": "tchaikovsky6-iii",
+  "composer": "Tchaikovsky",
+  "title": "Symphony No. 6 'Pathetique' - III. Allegro molto vivace",
+  "performer": "Musopen Kickstarter orchestra recordings (2011-2012)",
+  "licence": "Public Domain Mark 1.0 (dedicated to the public domain by Musopen)",
+  "source": "https://archive.org/details/musopen-dvd"
+ },
+ "music_boss/c1_0.ogg": {
+  "piece": "brahms4-iv",
+  "composer": "Brahms",
+  "title": "Symphony No. 4 - IV. Allegro energico e passionato",
+  "performer": "Musopen Kickstarter orchestra recordings (2011-2012)",
+  "licence": "Public Domain Mark 1.0 (dedicated to the public domain by Musopen)",
+  "source": "https://archive.org/details/musopen-dvd"
+ },
+ "music_boss/c2_0.ogg": {
+  "piece": "beethoven-egmont",
+  "composer": "Beethoven",
+  "title": "Egmont Overture, Op. 84",
+  "performer": "Musopen Kickstarter orchestra recordings (2011-2012)",
+  "licence": "Public Domain Mark 1.0 (dedicated to the public domain by Musopen)",
+  "source": "https://archive.org/details/musopen-dvd"
+ },
+ "music_boss/c3_0.ogg": {
+  "piece": "brahms-tragic-overture",
+  "composer": "Brahms",
+  "title": "Tragic Overture, Op. 81",
+  "performer": "Musopen Kickstarter orchestra recordings (2011-2012)",
+  "licence": "Public Domain Mark 1.0 (dedicated to the public domain by Musopen)",
+  "source": "https://archive.org/details/musopen-dvd"
+ }
+}

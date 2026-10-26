@@ -41,7 +41,7 @@ him, card by card. / At the river Acheron, Charon is waiting."
 - **Aspect:** the picture always covers the screen (no bars); on narrower screens the window slides to keep the subjects
   (`keep`); cards, inscription and title are sized on a 2.39:1 reference height. Checked at 16:9, 16:10, 20:9, 4:3.
 - **Assets:** `assets/intro/` (video 1600x880 Theora, plates, voice, audio). The sounds the game already has (funeral bell,
-  thunder, title sting, water) are used from `assets/audio/sfx/`; the score is `assets/audio/music/intro/c1_0` + `c5_0`.
+  thunder, title sting, water) are used from `assets/audio/sfx/`; the score is `assets/intro/music/score_a` + `score_b` (cut to fit; the menu plays whole pieces).
 
 ## Rules (v0.2)
 - 30 health heroes; mana 1 to 10, refilled each turn; hand limit 10 (overdraw burns); board limit 7; fatigue.

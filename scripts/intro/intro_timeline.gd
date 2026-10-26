@@ -11,11 +11,11 @@ extends RefCounted
 ## The cameras were composed for a 2.39:1 frame, where zoom = window width; at 16:9 the same zoom shows the same
 ## width and more height, at 4:3 the sides are cropped.
 
-## Music: public-domain recordings (assets/audio/music/intro/). MUSIC_FILE carries the quiet first half (forest, beasts,
+## Music: public-domain recordings, cut to fit the cinematic (assets/intro/music/; the menu plays the whole pieces). MUSIC_FILE carries the quiet first half (forest, beasts,
 ## Virgil), MUSIC_FILE_2 takes over under the gate and swells through Charon into the title. Paths starting with res://
 ## are absolute, others are relative to res://assets/intro/.
-const MUSIC_FILE := "res://assets/audio/music/intro/c1_0.ogg"
-const MUSIC_FILE_2 := "res://assets/audio/music/intro/c5_0.ogg"
+const MUSIC_FILE := "res://assets/intro/music/score_a.ogg"
+const MUSIC_FILE_2 := "res://assets/intro/music/score_b.ogg"
 ## Sounds that the game already ships in assets/audio/sfx/ are used from there.
 const SFX_DIR := "res://assets/audio/sfx/"
 ## Music bed level (dB on the Music bus; the recordings are mastered to -16 LUFS) and how far it sinks under narration.

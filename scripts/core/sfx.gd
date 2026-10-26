@@ -13,6 +13,7 @@ var _next := 0
 var _music: AudioStreamPlayer
 var _music_list: Array[String] = []
 var _music_i := 0
+var _switch_pending := false ## another playlist was asked for while a piece was playing
 var _ambience: AudioStreamPlayer
 
 
@@ -70,6 +71,8 @@ func play(name: String, volume_db: float = 0.0, pitch: float = 1.0, pitch_var: f
 	p.play()
 
 
+## Plays the playlist in assets/audio/music/<folder>/ (whole pieces, cN_0.ogg). A piece is never cut: when the
+## screen asks for another playlist, the current piece plays to its end and the next one comes from the new list.
 func play_music(folder: String) -> void:
 	var list: Array[String] = []
 	var i := 1
@@ -80,22 +83,32 @@ func play_music(folder: String) -> void:
 		return
 	_music_list = list
 	_music_i = randi() % list.size()
+	if _music.playing:
+		_switch_pending = true
+		return
 	_start_track()
 
 
 func _start_track() -> void:
 	var s: AudioStream = load(_music_list[_music_i])
 	_music.stream = s
-	_music.volume_db = -40.0
+	_music.volume_db = -6.0
 	_music.play()
-	create_tween().tween_property(_music, "volume_db", -6.0, 2.5)
 
 
 func _next_track() -> void:
 	if _music_list.is_empty():
 		return
-	_music_i = (_music_i + 1) % _music_list.size()
+	if _switch_pending:
+		_switch_pending = false # start the new playlist where play_music() put it
+	else:
+		_music_i = (_music_i + 1) % _music_list.size()
 	_start_track()
+
+
+## Holds the current piece (the intro has its own score) and resumes it from the same point.
+func pause_music(paused: bool) -> void:
+	_music.stream_paused = paused
 
 
 func stop_music(fade: float = 1.0) -> void:
