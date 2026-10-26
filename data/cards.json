@@ -431,9 +431,14 @@
      "do": "damage",
      "target": "all_enemy_minions",
      "amount": 2
+    },
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "all_enemy_minions"
     }
    ],
-   "text": "Deal 2 damage to all enemy minions.",
+   "text": "Deal 2 damage to all enemy minions and Freeze them.",
    "flavor": "\"Let Medusa come, and we will turn him to stone.\"",
    "image": "furies_s777"
   },

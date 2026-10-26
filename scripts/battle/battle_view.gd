@@ -85,6 +85,8 @@ var _sticky := false
 var _gap_index := -1
 var _shake := 0.0
 var _ai_delay := 0.0
+var _ai_task := -1 ## WorkerThreadPool task of the AI thinking, -1 when idle
+var _ai_move: Dictionary = {}
 var _highlight_dirty := true
 var _hover_unit_t := 0.0
 var _hover_unit: Node2D
@@ -628,18 +630,19 @@ func _play_next() -> void:
 	_ai_delay = 0.45 / Settings.anim_speed()
 
 
+## The AI searches on a worker thread (it only reads the battle and plays on copies), so the board keeps animating
+## while it thinks; the chosen move is applied here on the main thread once the search is done.
 func _ai_step() -> void:
-	var brain := ai if st.current == 1 else ai_self
-	var act := brain.next_action(st)
-	var done := false
-	match act.do:
-		"play":
-			done = st.play_card(st.current, act.uid, act.target, act.index)
-		"attack":
-			done = st.attack(st.current, act.attacker, act.target)
-		"power":
-			done = st.use_power(st.current, act.target)
-	if not done:
+	if _ai_task == -1:
+		var brain := ai if st.current == 1 else ai_self
+		_ai_task = WorkerThreadPool.add_task(func(): _ai_move = brain.next_action(st))
+		return
+	if not WorkerThreadPool.is_task_completed(_ai_task):
+		return
+	WorkerThreadPool.wait_for_task_completion(_ai_task)
+	_ai_task = -1
+	var act := _ai_move
+	if act.do == "end" or not BattleAI.apply(st, st.current, act):
 		st.end_turn()
 	_ai_delay = 0.6
 
@@ -1161,6 +1164,9 @@ func _hit_stop(seconds: float) -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0 # never leave a hit-stop behind when the scene changes
+	if _ai_task != -1:
+		WorkerThreadPool.wait_for_task_completion(_ai_task)
+		_ai_task = -1
 
 
 func _land(a: Node2D) -> void:

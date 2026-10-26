@@ -30,6 +30,8 @@ func _initialize() -> void:
 						seen[st.current][c.id] = true
 			if act.do == "end" or not BattleAI.apply(st, st.current, act):
 				st.end_turn()
+		if g % 100 == 99:
+			print("  ... %d games" % (g + 1))
 		if st.winner < 2:
 			class_wins["pilgrim" if st.winner == 0 else "ferry"] += 1
 		for side in 2:

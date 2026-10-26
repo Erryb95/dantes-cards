@@ -79,7 +79,8 @@ static func arena(id: String) -> Dictionary:
 ## True when the arena exists and its painted board is installed (arenas without a board are skipped by the draw).
 static func arena_ready(id: String) -> bool:
 	var a := arena(id)
-	return not a.is_empty() and a.has("board") and ResourceLoader.exists("res://assets/arenas/" + str(a.board))
+	# "draft": true keeps a painted board out of the draw until its art passes review (still forceable with --arena).
+	return not a.is_empty() and a.has("board") and not a.get("draft", false) 		and ResourceLoader.exists("res://assets/arenas/" + str(a.board))
 
 
 ## Expands a deck's {id: count} map into a flat list of card ids.

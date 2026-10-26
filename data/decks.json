@@ -7,9 +7,7 @@
    "hero": "dante",
    "text": "Dante, Virgil and the souls met on the way down. Sturdy guards, card draw and a strong late game.",
    "cards": {
-    "lost_pilgrim": 2,
     "limbo_philosophers": 1,
-    "virtuous_pagans": 1,
     "farinata": 2,
     "virgils_counsel": 2,
     "virgil_guide": 2,
@@ -21,14 +19,16 @@
     "paolo": 1,
     "francesca": 1,
     "ugolino": 1,
-    "pj_wanderer_dark_wood": 1,
     "pj_horace": 2,
     "pj_dantes_courage": 2,
-    "pj_hungry_wolf": 1,
     "pj_saint_lucy": 1,
-    "pj_serpent_of_the_pit": 1,
-    "pj_ciacco": 1,
-    "pj_trembling_pilgrim": 1
+    "pj_trembling_pilgrim": 1,
+    "pj_lion_of_violence": 1,
+    "pj_brunetto_latini": 1,
+    "pj_cleopatra": 1,
+    "pj_cato": 1,
+    "lost_pilgrim": 2,
+    "pj_ciacco": 1
    }
   },
   {

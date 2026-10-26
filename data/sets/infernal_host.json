@@ -682,7 +682,7 @@
    "set": "ferry",
    "type": "spell",
    "rarity": "rare",
-   "cost": 3,
+   "cost": 4,
    "effects": [
     {
      "on": "play",
