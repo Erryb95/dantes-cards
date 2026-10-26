@@ -29,8 +29,7 @@ func _ready() -> void:
 	_forced = "--coach" in OS.get_cmdline_user_args()
 	_enabled = _forced or not Game.debug_run()
 	_bubble = PanelContainer.new()
-	_bubble.add_theme_stylebox_override("panel", UI.frame_box("tooltip_frame_filled", 40, 26,
-		UI.box(Color(0.08, 0.05, 0.04, 0.94), UI.GOLD_DARK, 2, 8)))
+	_bubble.add_theme_stylebox_override("panel", UI.tip_box())
 	_bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label = UI.label("", 26, "body", UI.BONE)
 	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

@@ -129,11 +129,11 @@ static func button(text: String, width: float = 420.0, height: float = 84.0) -> 
 		b.add_theme_stylebox_override("normal", plate(Color(0.92, 0.88, 0.82), 0, small))
 		b.add_theme_stylebox_override("hover", plate(Color(1.15, 1.05, 0.9), -2, small))
 		b.add_theme_stylebox_override("pressed", plate(Color(0.75, 0.62, 0.5), 4, small))
-		b.add_theme_stylebox_override("disabled", plate(Color(0.4, 0.38, 0.36), 0, small))
+		b.add_theme_stylebox_override("disabled", plate(Color(0.6, 0.56, 0.52), 0, small)) # greyed, label still legible
 		b.add_theme_color_override("font_color", Color(0.2, 0.08, 0.03))
 		b.add_theme_color_override("font_hover_color", Color(0.3, 0.04, 0.02))
 		b.add_theme_color_override("font_pressed_color", Color(0.12, 0.04, 0.02))
-		b.add_theme_color_override("font_disabled_color", Color(0.22, 0.2, 0.18))
+		b.add_theme_color_override("font_disabled_color", Color(0.17, 0.13, 0.1, 0.9))
 	b.ready.connect(fit_text.bind(b))
 	b.mouse_entered.connect(func(): Sfx.play("ui_hover", -10.0))
 	b.pressed.connect(func(): Sfx.play("ui_confirm", -6.0))
@@ -220,6 +220,18 @@ static func frame_box(name: String, tex_margin: float, content_margin: float, fa
 	s.set_texture_margin_all(tex_margin)
 	s.set_content_margin_all(content_margin)
 	s.modulate_color = tint
+	return s
+
+
+## The painted tooltip plate (dark field inside a bronze frame). Its content margins clear the frame's scrollwork
+## (about 40 px of ornament per side), so text always sits on the dark field, never on the border.
+static func tip_box() -> StyleBox:
+	var s := frame_box("tooltip_frame_filled", 40, 0, box(Color(0.08, 0.05, 0.04, 0.94), GOLD_DARK, 2, 8))
+	if s is StyleBoxTexture:
+		s.content_margin_left = 50
+		s.content_margin_right = 50
+		s.content_margin_top = 38
+		s.content_margin_bottom = 40
 	return s
 
 

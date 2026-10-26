@@ -1972,9 +1972,10 @@ func _show_inspect(u) -> void:
 	inspect.scale = Vector2(0.6, 0.6)
 	fx_layer.add_child(inspect)
 	inspect.create_tween().tween_property(inspect, "scale", Vector2(0.95, 0.95), 0.12)
-	var kws: Array = CardDB.card(id).get("keywords", [])
+	var kws: Array = CardDB.card(id).get("keywords", []).duplicate() # a copy: appending must not touch the card data
 	for e in CardDB.card(id).get("effects", []):
-		if e.get("on", "") in ["death", "play"] and CardDB.card(id).get("type") == "minion":
+		if e.get("on", "") in ["death", "play", "turn_end", "turn_start"] and not kws.has(e.on) \
+				and CardDB.card(id).get("type") == "minion":
 			kws.append(e.on)
 	for k in kws:
 		if UI.KEYWORD_HELP.has(k):
@@ -1990,8 +1991,7 @@ func _show_hero_tip(h: HeroView) -> void:
 
 func _add_tip(title: String, text: String) -> void:
 	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", UI.frame_box("tooltip_frame_filled", 40, 22,
-		UI.box(Color(0.08, 0.05, 0.04, 0.94), UI.GOLD_DARK, 2, 8)))
+	p.add_theme_stylebox_override("panel", UI.tip_box())
 	p.custom_minimum_size = Vector2(320, 0)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var v := VBoxContainer.new()
