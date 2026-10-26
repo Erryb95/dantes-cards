@@ -125,7 +125,7 @@ func _ready() -> void:
 	Sfx.play_ambience(arena.get("ambience", ""), -16.0)
 	st = BattleState.new()
 	st.event.connect(func(ev): queue.append(ev))
-	ai = BattleAI.new(1, BattleAI.Level.EASY if Settings.easy_opponent and not autoplay else BattleAI.Level.NORMAL)
+	ai = BattleAI.new(1, BattleAI.Level.HARD if autoplay else Settings.difficulty as BattleAI.Level)
 	ai_self = BattleAI.new(0)
 	_intro(arena)
 	st.start(Game.player_cards, Game.player_hero, Game.enemy_cards, Game.enemy_hero, 0, true, -1)

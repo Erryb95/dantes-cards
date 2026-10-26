@@ -11,7 +11,7 @@
 | `scripts/battle/arena_props.gd` | `ArenaProps`: an arena's living layer built from its data (divider VFX, ambient, toys); `arena_acheron.gd` subclasses it for Charon's boat (the bell, brazier and skulls are corner props). Sockets: `scenes/arenas/standard.tscn` |
 | `scripts/core/` | `CardDB` (static data access), autoloads `Settings`, `Sfx`, `Game` (scene flow + stats), `Collection` (owned cards, Obols, packs, custom decks in `user://collection.cfg`) |
 | `scripts/battle/battle_state.gd` | **the rules**: pure logic, no nodes; every change goes out as an event |
-| `scripts/battle/ai.gd` | greedy AI that returns one action at a time |
+| `scripts/battle/ai.gd` | the AI, one action at a time; three levels (Easy rules, Medium and Hard search) picked with `Settings.difficulty` in Options or on the deck screen; strength check `tests/ai_duel.gd`, card balance `tests/card_stats.gd` and `docs/BALANCE.md` |
 | `scripts/battle/battle_view.gd` | the board: replays events as animations, handles input |
 | `scripts/battle/{card,minion,hero}_view.gd` | the pieces; `fx.gd`, `shapes.gd`, `target_arrow.gd` for the juice |
 | `scripts/battle/vfx.gd`, `vfx_data.gd`, `data/vfx.json` | per-card spell looks: 15 schools (colours, textures, sounds; default from the card's circle) x single-target "hit" patterns x board-wide "mass" patterns; every spell has a profile (tested). Staged as anticipation, travel, impact (shake, hit-stop), aftermath. Painted sprites `assets/vfx/vfx_*.png` via `tools/vfx/import_vfx.py`; review with `tests/vfx_preview.tscn -- --out=<dir> --spells` + `tools/vfx/contact_sheet.py` |
