@@ -25,10 +25,10 @@ var busy := false ## set while it lunges, so layout does not fight the animation
 
 var _mat: ShaderMaterial
 var _art_mat: ShaderMaterial
-var _ring: Shapes
+var _ring: Node2D
 var _glow: Aura
 var _guard: Shapes
-var _ward: Shapes
+var _ward: Node2D
 var _atk_l: Label
 var _hp_l: Label
 var _zzz: Label
@@ -88,11 +88,21 @@ func _build() -> void:
 		art.texture = g
 	add_child(art)
 	var legendary: bool = CardDB.card(card_id).get("rarity", "") == "legendary"
-	_ring = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(W + 2, H + 2), Color.TRANSPARENT,
-		UI.RARITY.legendary if legendary else UI.GOLD, 6.0 if legendary else 5.0)
+	_ring = UI.portrait_frame(Vector2(W, H), legendary)
+	if _ring == null:
+		_ring = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(W + 2, H + 2), Color.TRANSPARENT,
+			UI.RARITY.legendary if legendary else UI.GOLD, 6.0 if legendary else 5.0)
 	add_child(_ring)
-	_ward = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(W + 22, H + 22), Color(1.0, 0.85, 0.35, 0.18), Color(1.0, 0.9, 0.5, 0.9), 3.0)
-	_ward.shade = false
+	if UiSkin.has("ward_bubble"):
+		# The painted bubble (black background) drawn additively, so only its light shows.
+		_ward = UiSkin.sprite("ward_bubble", Vector2(W + 70, H + 70))
+		_ward.use_parent_material = false
+		var add := CanvasItemMaterial.new()
+		add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		_ward.material = add
+	else:
+		_ward = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(W + 22, H + 22), Color(1.0, 0.85, 0.35, 0.18), Color(1.0, 0.9, 0.5, 0.9), 3.0)
+		_ward.shade = false
 	add_child(_ward)
 
 	_icons = Node2D.new()

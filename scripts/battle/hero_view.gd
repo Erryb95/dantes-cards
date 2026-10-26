@@ -70,7 +70,15 @@ func _build() -> void:
 	_art_mat.set_shader_parameter("mask_mode", 1)
 	art.material = _art_mat
 	add_child(art)
-	var ring := Shapes.make(Shapes.Kind.ELLIPSE, Vector2(W + 4, H + 4), Color.TRANSPARENT, UI.GOLD, 6.0)
+	var ring: Node2D
+	if UiSkin.has("hero_frame_oval"):
+		ring = UiSkin.sprite("hero_frame_oval", Vector2(W, H) * Vector2(1.34, 1.3))
+	else:
+		ring = UI.portrait_frame(Vector2(W, H))
+	if ring == null:
+		ring = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(W + 4, H + 4), Color.TRANSPARENT, UI.GOLD, 6.0)
+	else:
+		plate.visible = false
 	add_child(ring)
 
 	var hp: Node2D = UiSkin.sprite("gem_health", Vector2(78, 78)) if UiSkin.has("gem_health") else 		Shapes.make(Shapes.Kind.DROP, Vector2(62, 76), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)

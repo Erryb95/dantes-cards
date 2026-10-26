@@ -161,6 +161,23 @@ static func plate(tint: Color, sink: int = 0, small: bool = false) -> StyleBoxTe
 	return s
 
 
+## The painted frame around an oval portrait of `size` (minions, heroes): the dedicated minion frames when they
+## exist, else the ornate oval ring. The art keeps its own oval mask; the frame overlaps its outer edge. Null when
+## no painted frame exists.
+static func portrait_frame(size: Vector2, legendary: bool = false) -> Sprite2D:
+	var name := "minion_frame_legendary" if legendary and UiSkin.has("minion_frame_legendary") else "minion_frame"
+	var k := Vector2(1.22, 1.2)
+	if not UiSkin.has(name):
+		name = "oval_ring"
+		k = Vector2(1.3, 1.28)
+	if not UiSkin.has(name):
+		return null
+	var s := UiSkin.sprite(name, size * k)
+	if legendary and name == "oval_ring":
+		s.modulate = Color(1.2, 0.95, 0.65)
+	return s
+
+
 ## Soft round particle sprite (generated once).
 static var _dot: Texture2D
 static func dot_texture() -> Texture2D:
