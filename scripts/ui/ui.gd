@@ -166,7 +166,7 @@ static func plate(tint: Color, sink: int = 0, small: bool = false) -> StyleBoxTe
 ## no painted frame exists.
 static func portrait_frame(size: Vector2, legendary: bool = false) -> Sprite2D:
 	var name := "minion_frame_legendary" if legendary and UiSkin.has("minion_frame_legendary") else "minion_frame"
-	var k := Vector2(1.22, 1.2)
+	var k := Vector2(1.24, 1.22)
 	if not UiSkin.has(name):
 		name = "oval_ring"
 		k = Vector2(1.3, 1.28)
@@ -176,6 +176,32 @@ static func portrait_frame(size: Vector2, legendary: bool = false) -> Sprite2D:
 	if legendary and name == "oval_ring":
 		s.modulate = Color(1.2, 0.95, 0.65)
 	return s
+
+
+## A painted frame (assets/ui/<name>.png) as a 9-slice style; `fallback` is used when the painting is missing.
+static func frame_box(name: String, tex_margin: float, content_margin: float, fallback: StyleBox,
+		tint: Color = Color.WHITE) -> StyleBox:
+	if not UiSkin.has(name):
+		return fallback
+	var s := StyleBoxTexture.new()
+	s.texture = UiSkin.tex(name)
+	s.set_texture_margin_all(tex_margin)
+	s.set_content_margin_all(content_margin)
+	s.modulate_color = tint
+	return s
+
+
+## A copy of a painted texture scaled to `px` (for theme icons, which Godot never scales).
+static var _scaled := {}
+static func scaled_tex(name: String, px: int) -> Texture2D:
+	var key := "%s@%d" % [name, px]
+	if not _scaled.has(key):
+		var img := UiSkin.tex(name).get_image()
+		if img.is_compressed():
+			img.decompress()
+		img.resize(px, px, Image.INTERPOLATE_LANCZOS)
+		_scaled[key] = ImageTexture.create_from_image(img)
+	return _scaled[key]
 
 
 ## Soft round particle sprite (generated once).

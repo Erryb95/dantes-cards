@@ -17,7 +17,7 @@ Only CC0 / OFL / MIT / Apache material (or verified commercial licences) ships w
 | assets/audio/sfx/{clash}_* | [Fantasy Weapons and Apparel SFX Library](https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library) | Vehicle (OpenGameArt) | CC0 1.0 |
 | assets/audio/sfx/{coin_spin,coin_pouch,vial}_* | [Fantasy Accessory SFX Library](https://opengameart.org/content/fantasy-accessory-sfx-library) | Vehicle (OpenGameArt) | CC0 1.0 |
 | assets/audio/sfx/ice_* | [Ice spells](https://opengameart.org/content/ice-spells) | bart (OpenGameArt) | CC0 1.0 |
-| assets/audio/sfx/magic_*, assets/audio/sfx/dungeon_drone.ogg | [Magic spell SFX](https://opengameart.org/content/magic-spell-sfx), [Loopable dungeon ambience](https://opengameart.org/content/loopable-dungeon-ambience) | JaggedStone (OpenGameArt) | CC0 1.0 |
+| assets/audio/sfx/magic_* | [Magic spell SFX](https://opengameart.org/content/magic-spell-sfx) | JaggedStone (OpenGameArt) | CC0 1.0 |
 | assets/audio/sfx/moan_* | [Ghost/monster voice moaning, growling](https://opengameart.org/content/ghost-monster-voice-moaning-growling) | qubodup (OpenGameArt) | CC0 1.0 |
 | assets/audio/sfx/growl_* | [Monster sound effects pack](https://opengameart.org/content/monster-sound-effects-pack) | Ogrebane (OpenGameArt) | CC0 1.0 |
 | assets/audio/sfx/whoosh_* | [Swishes sound pack](https://opengameart.org/content/swishes-sound-pack) | artisticdude (OpenGameArt) | CC0 1.0 |

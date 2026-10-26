@@ -21,6 +21,7 @@ var _flash: ColorRect
 
 
 func _ready() -> void:
+	Sfx.play_ambience("") # menus play the music alone (an ambience loop would leak in from the battle)
 	V = get_viewport_rect().size
 	cam = Camera2D.new()
 	cam.position = V / 2

@@ -24,7 +24,7 @@ var _views := {} ## id -> CardView
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(MenuBackdrop.new())
-	Sfx.play_ambience("dungeon_drone.ogg", -22.0)
+	Sfx.play_ambience("") # menus play the music alone (an ambience loop would leak in from the battle)
 	_index = Game.edit_deck
 	if _index >= 0 and _index < Collection.decks.size():
 		deck = Collection.decks[_index].duplicate(true)
@@ -89,8 +89,8 @@ func _ready() -> void:
 	# Right: the deck.
 	var right := PanelContainer.new()
 	right.custom_minimum_size = Vector2(460, 0)
-	right.add_theme_stylebox_override("panel", UI.box(Color(0.07, 0.035, 0.03, 0.92), UI.GOLD_DARK, 3, 16,
-		Color(0, 0, 0, 0.6), 20))
+	right.add_theme_stylebox_override("panel", UI.frame_box("panel_frame_filled", 96, 34,
+		UI.box(Color(0.07, 0.035, 0.03, 0.92), UI.GOLD_DARK, 3, 16, Color(0, 0, 0, 0.6), 20)))
 	root.add_child(right)
 	var rv := VBoxContainer.new()
 	rv.add_theme_constant_override("separation", 10)
@@ -284,9 +284,24 @@ func _refresh() -> void:
 			"legendary": Color(1.0, 0.7, 0.3)}.get(c.rarity, UI.BONE)
 		row.add_theme_color_override("font_color", rc)
 		row.add_theme_color_override("font_hover_color", Color.WHITE)
-		row.add_theme_stylebox_override("normal", UI.box(Color(0.16, 0.06, 0.05, 0.85), UI.GOLD_DARK, 1, 6))
-		row.add_theme_stylebox_override("hover", UI.box(Color(0.3, 0.08, 0.05, 0.95), UI.GOLD, 2, 6))
-		row.add_theme_stylebox_override("pressed", UI.box(Color(0.1, 0.03, 0.02, 0.95), UI.GOLD, 2, 6))
+		row.add_theme_stylebox_override("normal", UI.frame_box("deck_row", 10, 8, UI.box(Color(0.16, 0.06, 0.05, 0.85), UI.GOLD_DARK, 1, 6)))
+		row.add_theme_stylebox_override("hover", UI.frame_box("deck_row", 10, 8, UI.box(Color(0.3, 0.08, 0.05, 0.95), UI.GOLD, 2, 6), Color(1.4, 1.2, 0.9)))
+		row.add_theme_stylebox_override("pressed", UI.frame_box("deck_row", 10, 8, UI.box(Color(0.1, 0.03, 0.02, 0.95), UI.GOLD, 2, 6), Color(0.8, 0.7, 0.6)))
+		if UiSkin.has("deck_row"):
+			# Hearthstone-style tile: a strip of the card's painting behind the name, darkened on the left for the text.
+			var strip := TextureRect.new()
+			strip.texture = CardDB.art_framed(id, 4.5, 0.4)
+			strip.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			strip.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+			strip.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			strip.offset_left = 4
+			strip.offset_right = -4
+			strip.offset_top = 4
+			strip.offset_bottom = -4
+			strip.modulate = Color(0.55, 0.5, 0.48)
+			strip.show_behind_parent = true
+			strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			row.add_child(strip)
 		row.pressed.connect(_remove.bind(id))
 		_list.add_child(row)
 	var n := Collection.deck_count(deck.cards)

@@ -5,6 +5,7 @@ const FEATURED := {"pilgrim": ["francesca", "geryon", "virgils_counsel"], "ferry
 
 
 func _ready() -> void:
+	Sfx.play_ambience("") # menus play the music alone (an ambience loop would leak in from the battle)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(MenuBackdrop.new())
 	var root := VBoxContainer.new()
@@ -37,8 +38,10 @@ func _deck_panel(d: Dictionary) -> Control:
 	var hero := CardDB.hero(d.hero)
 	var p := PanelContainer.new()
 	p.custom_minimum_size = Vector2(700, 560)
-	var normal := UI.box(Color(0.08, 0.04, 0.035, 0.9), UI.GOLD_DARK, 3, 18, Color(0, 0, 0, 0.6), 24)
-	var hover := UI.box(Color(0.2, 0.06, 0.04, 0.95), UI.GOLD, 4, 18, Color(1.0, 0.45, 0.1, 0.5), 34)
+	var normal := UI.frame_box("panel_frame_filled", 96, 44,
+		UI.box(Color(0.08, 0.04, 0.035, 0.9), UI.GOLD_DARK, 3, 18, Color(0, 0, 0, 0.6), 24))
+	var hover := UI.frame_box("panel_frame_filled", 96, 44,
+		UI.box(Color(0.2, 0.06, 0.04, 0.95), UI.GOLD, 4, 18, Color(1.0, 0.45, 0.1, 0.5), 34), Color(1.3, 1.1, 0.9))
 	p.add_theme_stylebox_override("panel", normal)
 	p.mouse_filter = Control.MOUSE_FILTER_STOP
 	p.mouse_entered.connect(func():

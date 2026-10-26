@@ -286,6 +286,20 @@ func _build_scene() -> void:
 	banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	banner.modulate.a = 0.0
 	ui.add_child(banner)
+	if UiSkin.has("turn_banner"):
+		# The painted ribbon behind the banner text.
+		var ribbon := TextureRect.new()
+		ribbon.texture = UiSkin.tex("turn_banner")
+		ribbon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ribbon.stretch_mode = TextureRect.STRETCH_SCALE
+		ribbon.set_anchors_preset(Control.PRESET_CENTER)
+		ribbon.offset_left = -560
+		ribbon.offset_right = 560
+		ribbon.offset_top = -104
+		ribbon.offset_bottom = 104
+		ribbon.show_behind_parent = true
+		ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		banner.add_child(ribbon)
 	_flash_rect = ColorRect.new()
 	_flash_rect.color = Color(1, 0.2, 0.05, 0.0)
 	_flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -823,7 +837,7 @@ func _on_draw(ev: Dictionary) -> void:
 
 
 func _mull_slot(i: int) -> Vector2:
-	var n: int = hand_views[0].size()
+	var n: int = st.sides[0].hand.size() # the whole opening hand, even while it is still being dealt
 	return Vector2(V.x / 2 + (i - (n - 1) / 2.0) * 300.0, V.y * 0.47)
 
 
@@ -1849,7 +1863,8 @@ func _show_hero_tip(h: HeroView) -> void:
 
 func _add_tip(title: String, text: String) -> void:
 	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", UI.box(Color(0.08, 0.05, 0.04, 0.94), UI.GOLD_DARK, 2, 8))
+	p.add_theme_stylebox_override("panel", UI.frame_box("tooltip_frame_filled", 40, 22,
+		UI.box(Color(0.08, 0.05, 0.04, 0.94), UI.GOLD_DARK, 2, 8)))
 	p.custom_minimum_size = Vector2(320, 0)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var v := VBoxContainer.new()

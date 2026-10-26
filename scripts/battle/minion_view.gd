@@ -27,7 +27,8 @@ var _mat: ShaderMaterial
 var _art_mat: ShaderMaterial
 var _ring: Node2D
 var _glow: Aura
-var _guard: Shapes
+var _guard: Node2D
+var _frost: Sprite2D
 var _ward: Node2D
 var _atk_l: Label
 var _hp_l: Label
@@ -59,8 +60,13 @@ func _build() -> void:
 	shadow.position = Vector2(6, 10)
 	add_child(shadow)
 	_shadow = shadow
-	_guard = Shapes.make(Shapes.Kind.SHIELD, Vector2(W + 34, H + 30), Color(0.32, 0.28, 0.25), Color(0.75, 0.62, 0.4), 4.0)
-	_guard.position = Vector2(0, 6)
+	if UiSkin.has("guard_frame"):
+		# The painted shield behind the portrait; its hole (66% x 64%) sits at 45% of its height.
+		_guard = UiSkin.sprite("guard_frame", Vector2(W / 0.66, H / 0.64) * 0.98)
+		_guard.position = Vector2(0, H / 0.64 * 0.98 * 0.05)
+	else:
+		_guard = Shapes.make(Shapes.Kind.SHIELD, Vector2(W + 34, H + 30), Color(0.32, 0.28, 0.25), Color(0.75, 0.62, 0.4), 4.0)
+		_guard.position = Vector2(0, 6)
 	add_child(_guard)
 	_glow = Aura.make(Vector2(W + 4, H + 4), true, 36.0)
 	add_child(_glow)
@@ -163,18 +169,22 @@ func _refresh() -> void:
 	_zzz.visible = sleeping and not keywords.has("swift")
 	for c in _icons.get_children():
 		c.queue_free()
-	var icons := []
+	# Painted keyword medallions along the bottom of the frame.
+	var icons: Array[String] = []
 	if keywords.has("venom"):
-		icons.append([Shapes.Kind.DROP, Color(0.3, 0.85, 0.2)])
+		icons.append("icon_venom")
 	if keywords.has("drain"):
-		icons.append([Shapes.Kind.DROP, Color(0.85, 0.1, 0.25)])
-	for e in CardDB.card(card_id).get("effects", []):
-		if e.get("on", "") == "death":
-			icons.append([Shapes.Kind.DIAMOND, Color(0.45, 0.4, 0.5)])
-			break
+		icons.append("icon_drain")
+	if keywords.has("rebirth"):
+		icons.append("icon_rebirth")
+	var ons: Array = CardDB.card(card_id).get("effects", []).map(func(e): return e.get("on", ""))
+	if "death" in ons:
+		icons.append("icon_deathrattle")
+	if "turn_end" in ons or "turn_start" in ons:
+		icons.append("icon_trigger")
 	for i in icons.size():
-		var s := Shapes.make(icons[i][0], Vector2(22, 28), icons[i][1], Color(0.1, 0.05, 0.02), 2.0)
-		s.position = Vector2((i - (icons.size() - 1) / 2.0) * 28, 0)
+		var s: Node2D = UiSkin.sprite(icons[i], Vector2(40, 40)) if UiSkin.has(icons[i]) else 			Shapes.make(Shapes.Kind.DIAMOND, Vector2(22, 28), Color(0.45, 0.4, 0.5), Color(0.1, 0.05, 0.02), 2.0)
+		s.position = Vector2((i - (icons.size() - 1) / 2.0) * 36, 0)
 		_icons.add_child(s)
 	_refresh_glow()
 
@@ -197,6 +207,16 @@ func set_frozen(v: bool) -> void:
 	frozen = v
 	_art_mat.set_shader_parameter("desat", 0.6 if v else 0.0)
 	modulate = Color(0.75, 0.88, 1.15) if v else Color.WHITE
+	if UiSkin.has("frozen_overlay"):
+		if _frost == null:
+			_frost = UiSkin.sprite("frozen_overlay", Vector2(W, H) * 1.18)
+			_frost.use_parent_material = false
+			add_child(_frost)
+			_frost.set_meta("base", _frost.scale)
+		_frost.visible = v
+		if v:
+			_frost.scale = Vector2.ZERO
+			_frost.create_tween().tween_property(_frost, "scale", _frost.get_meta("base"), 0.25) 				.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if v:
 		flash(Color(0.6, 0.85, 1.0), 0.5)
 

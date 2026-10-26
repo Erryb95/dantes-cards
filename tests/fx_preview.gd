@@ -21,6 +21,10 @@ func _ready() -> void:
 	battle.heroes[0].power_ready = true
 	battle.heroes[0]._refresh_power()
 	battle._end_glow.set_on(true)
+	battle.arrow.from = battle.heroes[0].position + Vector2(0, -60)
+	battle.arrow.to = battle.heroes[1].position
+	battle.arrow.valid = true
+	battle.arrow.visible = true
 	await get_tree().create_timer(at).timeout
 	get_viewport().get_texture().get_image().save_png(out)
 	get_tree().quit()

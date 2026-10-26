@@ -14,7 +14,8 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UI.box(Color(0.09, 0.05, 0.04, 0.97), UI.GOLD, 3, 14, Color(0, 0, 0, 0.7), 30))
+	panel.add_theme_stylebox_override("panel", UI.frame_box("panel_frame_filled", 96, 56,
+		UI.box(Color(0.09, 0.05, 0.04, 0.97), UI.GOLD, 3, 14, Color(0, 0, 0, 0.7), 30)))
 	center.add_child(panel)
 	var m := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
@@ -67,7 +68,10 @@ func _slider(text: String, value: float, on_change: Callable) -> HBoxContainer:
 	s.step = 0.05
 	s.value = value
 	s.custom_minimum_size = Vector2(420, 48)
-	s.add_theme_stylebox_override("slider", UI.box(Color(0.2, 0.1, 0.08), UI.GOLD_DARK, 2, 8))
+	s.add_theme_stylebox_override("slider", UI.frame_box("slider_track", 14, 6, UI.box(Color(0.2, 0.1, 0.08), UI.GOLD_DARK, 2, 8)))
+	if UiSkin.has("slider_grabber"):
+		s.add_theme_icon_override("grabber", UI.scaled_tex("slider_grabber", 46))
+		s.add_theme_icon_override("grabber_highlight", UI.scaled_tex("slider_grabber", 52))
 	s.add_theme_stylebox_override("grabber_area", UI.box(UI.CRIMSON, UI.GOLD_DARK, 2, 8))
 	s.add_theme_stylebox_override("grabber_area_highlight", UI.box(UI.CRIMSON.lightened(0.2), UI.GOLD, 2, 8))
 	s.value_changed.connect(on_change)
