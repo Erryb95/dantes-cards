@@ -58,6 +58,19 @@ code adds its life: Limbo's stream (water shader), Lust's wind (`wind.gdshader` 
 edges), Dis's ember crack (`crack.gdshader` + heat haze + sparks) and Cocytus's frost crack (rime, glints, cold mist).
 Flames on props (the tomb, the torch) are code VFX: paint them unlit.
 
+Each board has its own 3D blockout (same camera, same sockets and socket ID colours, flat minion zones, detail on
+the frame) in `art_src/arena/blockout_<id>/`, made by `tools/blender/board_blockout.py --arena=<id>` +
+`tools/arena/passes.py`; `tools/arena/upload_blockout.py <id>` sends the passes to the ComfyUI PC as
+`<id>_bo_board_<pass>.png` (id, clay, depth, lineart, normal). The Acheron's stays in `art_src/arena/blockout/`.
+- Limbo: flat meadow, a thin stream sunk along the middle (no banks), the stepped walls and towers of the Noble
+  Castle only along the top edge (the enemy hero stands in the gate), soft grassy hillocks at the sides.
+- Lust: flat rock plateau, a slightly lower smooth wind channel across the middle, jagged cliffs and spires only
+  on the left, right and top frame.
+- Dis: flat paving, one straight ember crack (shallow groove), iron walls on the top and side edges, open tombs on
+  the side frames.
+- Cocytus: flat ice, one thin straight crack, sinners in ice blocks on the side frames, Lucifer's wings fanning
+  out along the top edge.
+
 ## Phones (20:9)
 - **Wider screens:** they show extra width at the sides. Either paint the board 3200x1440 with the 2560 centre as
   the safe area, or keep 2560 wide, and the game will extend the edges with a dark vignette.

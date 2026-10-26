@@ -1,0 +1,102 @@
+{
+ "grass_frame": [
+  230,
+  26,
+  26
+ ],
+ "near_meadow": [
+  26,
+  230,
+  26
+ ],
+ "streambed": [
+  26,
+  26,
+  230
+ ],
+ "far_meadow": [
+  230,
+  230,
+  26
+ ],
+ "stream": [
+  230,
+  26,
+  230
+ ],
+ "hero_plinth_enemy": [
+  26,
+  230,
+  230
+ ],
+ "hero_plinth_player": [
+  230,
+  128,
+  26
+ ],
+ "power_socket_enemy": [
+  128,
+  26,
+  230
+ ],
+ "power_socket_player": [
+  26,
+  128,
+  51
+ ],
+ "end_turn_socket": [
+  153,
+  153,
+  153
+ ],
+ "deck_niche_enemy": [
+  128,
+  76,
+  26
+ ],
+ "deck_niche_player": [
+  51,
+  51,
+  128
+ ],
+ "mana_tray_enemy": [
+  230,
+  153,
+  178
+ ],
+ "mana_tray_player": [
+  102,
+  204,
+  102
+ ],
+ "castle_walls": [
+  76,
+  153,
+  230
+ ],
+ "castle_towers": [
+  204,
+  204,
+  128
+ ],
+ "shrubs": [
+  230,
+  76,
+  128
+ ],
+ "prop_limbo_lantern": [
+  230,
+  26,
+  26
+ ],
+ "prop_limbo_column": [
+  26,
+  230,
+  26
+ ],
+ "prop_limbo_laurel": [
+  26,
+  26,
+  230
+ ]
+}
