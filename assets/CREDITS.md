@@ -57,6 +57,9 @@ icons) and the painted VFX sprites in assets/vfx/ (every file not named k_*) com
 same ComfyUI setup (Qwen-Image 2512, alpha cut with BiRefNet, MIT); sources in art_src/ui/. The vfx_*.png spell sprites
 are emissive paintings on black, drawn with additive blending (no alpha cut); sources in art_src/vfx/,
 imported by tools/vfx/import_vfx.py.
+The looping animations of some legendary cards (assets/cards/loops/*.ogv, 3 s, silent) are AI-generated: Wan 2.2
+image-to-video (Apache-2.0) on the owner's ComfyUI, made from the card's own AI art above. A card animates when its
+loop file exists; tools/cards/make_loops.py converts the Wan mp4 clips to Ogg Theora.
 The opening cinematic (assets/intro/) is made of Gustave Dore's public-domain plates. Four of its clips (forest, panther,
 lion, gate) were animated with the AI video model Wan 2.2 (Apache-2.0) on the owner's PC; the other two clips, the
 plates and the narration are not AI (the narration is a human LibriVox recording). Cards without a painting yet
