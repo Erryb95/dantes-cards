@@ -1,0 +1,107 @@
+{
+ "frame_rubble": [
+  230,
+  26,
+  26
+ ],
+ "near_paving": [
+  26,
+  230,
+  26
+ ],
+ "crack": [
+  26,
+  26,
+  230
+ ],
+ "far_paving": [
+  230,
+  230,
+  26
+ ],
+ "embers": [
+  230,
+  26,
+  230
+ ],
+ "hero_plinth_enemy": [
+  26,
+  230,
+  230
+ ],
+ "hero_plinth_player": [
+  230,
+  128,
+  26
+ ],
+ "power_socket_enemy": [
+  128,
+  26,
+  230
+ ],
+ "power_socket_player": [
+  26,
+  128,
+  51
+ ],
+ "end_turn_socket": [
+  153,
+  153,
+  153
+ ],
+ "deck_niche_enemy": [
+  128,
+  76,
+  26
+ ],
+ "deck_niche_player": [
+  51,
+  51,
+  128
+ ],
+ "mana_tray_enemy": [
+  230,
+  153,
+  178
+ ],
+ "mana_tray_player": [
+  102,
+  204,
+  102
+ ],
+ "iron_walls": [
+  76,
+  153,
+  230
+ ],
+ "iron_towers": [
+  204,
+  204,
+  128
+ ],
+ "tombs": [
+  230,
+  76,
+  128
+ ],
+ "tomb_lids": [
+  128,
+  230,
+  230
+ ],
+ "prop_dis_chains": [
+  230,
+  26,
+  26
+ ],
+ "prop_dis_tomb": [
+  26,
+  230,
+  26
+ ],
+ "prop_dis_fury": [
+  26,
+  26,
+  230
+ ]
+}

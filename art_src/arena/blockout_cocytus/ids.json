@@ -1,0 +1,97 @@
+{
+ "ice_frame": [
+  230,
+  26,
+  26
+ ],
+ "near_ice": [
+  26,
+  230,
+  26
+ ],
+ "crack": [
+  26,
+  26,
+  230
+ ],
+ "far_ice": [
+  230,
+  230,
+  26
+ ],
+ "hero_plinth_enemy": [
+  26,
+  230,
+  230
+ ],
+ "hero_plinth_player": [
+  230,
+  128,
+  26
+ ],
+ "power_socket_enemy": [
+  128,
+  26,
+  230
+ ],
+ "power_socket_player": [
+  26,
+  128,
+  51
+ ],
+ "end_turn_socket": [
+  153,
+  153,
+  153
+ ],
+ "deck_niche_enemy": [
+  128,
+  76,
+  26
+ ],
+ "deck_niche_player": [
+  51,
+  51,
+  128
+ ],
+ "mana_tray_enemy": [
+  230,
+  153,
+  178
+ ],
+ "mana_tray_player": [
+  102,
+  204,
+  102
+ ],
+ "ice_blocks": [
+  230,
+  26,
+  230
+ ],
+ "sinners": [
+  76,
+  153,
+  230
+ ],
+ "lucifer_wings": [
+  204,
+  204,
+  128
+ ],
+ "prop_cocytus_wing": [
+  230,
+  26,
+  26
+ ],
+ "prop_cocytus_head": [
+  26,
+  230,
+  26
+ ],
+ "prop_cocytus_stalagmite": [
+  26,
+  26,
+  230
+ ]
+}

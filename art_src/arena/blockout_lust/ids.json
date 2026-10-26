@@ -1,0 +1,82 @@
+{
+ "cliffs": [
+  230,
+  26,
+  26
+ ],
+ "near_plateau": [
+  26,
+  230,
+  26
+ ],
+ "far_plateau": [
+  26,
+  26,
+  230
+ ],
+ "hero_plinth_enemy": [
+  26,
+  230,
+  230
+ ],
+ "hero_plinth_player": [
+  230,
+  128,
+  26
+ ],
+ "power_socket_enemy": [
+  128,
+  26,
+  230
+ ],
+ "power_socket_player": [
+  26,
+  128,
+  51
+ ],
+ "end_turn_socket": [
+  153,
+  153,
+  153
+ ],
+ "deck_niche_enemy": [
+  128,
+  76,
+  26
+ ],
+ "deck_niche_player": [
+  51,
+  51,
+  128
+ ],
+ "mana_tray_enemy": [
+  230,
+  153,
+  178
+ ],
+ "mana_tray_player": [
+  102,
+  204,
+  102
+ ],
+ "rock_spires": [
+  230,
+  230,
+  26
+ ],
+ "prop_lust_banner": [
+  230,
+  26,
+  26
+ ],
+ "prop_lust_rock": [
+  26,
+  230,
+  26
+ ],
+ "prop_lust_torch": [
+  26,
+  26,
+  230
+ ]
+}
