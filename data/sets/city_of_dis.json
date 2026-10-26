@@ -65,7 +65,7 @@
    "rarity": "rare",
    "cost": 2,
    "attack": 2,
-   "health": 4,
+   "health": 3,
    "keywords": [
     "guard",
     "rebirth"
@@ -82,7 +82,7 @@
    "type": "minion",
    "rarity": "common",
    "cost": 2,
-   "attack": 3,
+   "attack": 2,
    "health": 2,
    "keywords": [
     "swift"
@@ -404,7 +404,7 @@
    "type": "minion",
    "rarity": "rare",
    "cost": 5,
-   "attack": 5,
+   "attack": 4,
    "health": 5,
    "keywords": [
     "ward"
@@ -451,8 +451,8 @@
    "set": "neutral",
    "type": "minion",
    "rarity": "epic",
-   "cost": 5,
-   "attack": 5,
+   "cost": 6,
+   "attack": 4,
    "health": 4,
    "keywords": [
     "swift"
@@ -477,8 +477,8 @@
    "type": "minion",
    "rarity": "legendary",
    "cost": 6,
-   "attack": 5,
-   "health": 6,
+   "attack": 4,
+   "health": 5,
    "keywords": [
     "ward"
    ],
@@ -502,7 +502,7 @@
    "type": "minion",
    "rarity": "epic",
    "cost": 6,
-   "attack": 6,
+   "attack": 5,
    "health": 5,
    "keywords": [
     "swift"
@@ -621,7 +621,7 @@
    "set": "neutral",
    "type": "spell",
    "rarity": "common",
-   "cost": 2,
+   "cost": 1,
    "effects": [
     {
      "on": "play",

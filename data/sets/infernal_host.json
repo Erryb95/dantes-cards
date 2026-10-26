@@ -370,7 +370,7 @@
    "type": "minion",
    "rarity": "rare",
    "cost": 5,
-   "attack": 4,
+   "attack": 3,
    "health": 5,
    "keywords": [
     "ward"
@@ -487,8 +487,8 @@
    "set": "ferry",
    "type": "minion",
    "rarity": "epic",
-   "cost": 6,
-   "attack": 4,
+   "cost": 7,
+   "attack": 3,
    "health": 5,
    "keywords": [
     "ward"

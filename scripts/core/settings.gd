@@ -2,6 +2,7 @@ extends Node
 ## Player options, saved to user://settings.cfg. Creates the Music / SFX buses at startup.
 
 const PATH := "user://settings.cfg"
+const DIFFICULTY_NAMES := ["Easy", "Medium", "Hard"]
 
 var music_volume := 0.7
 var sfx_volume := 0.9
@@ -9,7 +10,7 @@ var fullscreen := false
 var fast_animations := false
 var subtitles := true ## subtitles of the intro narration
 var intro_seen := false ## the opening cinematic has been played (or skipped) once
-var easy_opponent := false ## the AI plays by simple rules instead of searching for the best line
+var difficulty := 0 ## the opponent's BattleAI.Level: 0 Easy, 1 Medium, 2 Hard (new players start on Easy)
 var coach_seen: Array = [] ## ids of the first-game tips already shown (scripts/battle/coach.gd)
 var deck_choice := {} ## class -> id of the preconstructed deck last picked on Choose your path
 
@@ -34,7 +35,10 @@ func load_settings() -> void:
 	fast_animations = cfg.get_value("game", "fast_animations", fast_animations)
 	subtitles = cfg.get_value("game", "subtitles", subtitles)
 	intro_seen = cfg.get_value("game", "intro_seen", intro_seen)
-	easy_opponent = cfg.get_value("game", "easy_opponent", easy_opponent)
+	# Before three levels there was an on/off "easy opponent": off meant the search AI, now Hard.
+	if cfg.has_section_key("game", "easy_opponent"):
+		difficulty = 0 if cfg.get_value("game", "easy_opponent") else 2
+	difficulty = clampi(int(cfg.get_value("game", "difficulty", difficulty)), 0, DIFFICULTY_NAMES.size() - 1)
 	coach_seen = cfg.get_value("game", "coach_seen", coach_seen)
 	deck_choice = cfg.get_value("game", "deck_choice", deck_choice)
 
@@ -47,7 +51,7 @@ func save() -> void:
 	cfg.set_value("game", "fast_animations", fast_animations)
 	cfg.set_value("game", "subtitles", subtitles)
 	cfg.set_value("game", "intro_seen", intro_seen)
-	cfg.set_value("game", "easy_opponent", easy_opponent)
+	cfg.set_value("game", "difficulty", difficulty)
 	cfg.set_value("game", "coach_seen", coach_seen)
 	cfg.set_value("game", "deck_choice", deck_choice)
 	cfg.save(PATH)

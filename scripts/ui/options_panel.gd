@@ -39,7 +39,7 @@ func _ready() -> void:
 			Settings.fullscreen = on
 			Settings.apply()))
 	v.add_child(_toggle("Fast animations", Settings.fast_animations, func(on): Settings.fast_animations = on))
-	v.add_child(_toggle("Easy opponent", Settings.easy_opponent, func(on): Settings.easy_opponent = on))
+	v.add_child(_cycle("Opponent", Settings.DIFFICULTY_NAMES, Settings.difficulty, func(i): Settings.difficulty = i))
 	v.add_child(_toggle("Intro subtitles", Settings.subtitles, func(on): Settings.subtitles = on))
 	if get_tree().current_scene and get_tree().current_scene.scene_file_path == Game.MENU:  # not mid-battle
 		var intro := UI.button("Watch intro", 420)
@@ -86,6 +86,20 @@ func _slider(text: String, value: float, on_change: Callable) -> HBoxContainer:
 	s.add_theme_stylebox_override("grabber_area_highlight", UI.box(UI.CRIMSON.lightened(0.2), UI.GOLD, 2, 8))
 	s.value_changed.connect(on_change)
 	h.add_child(s)
+	return h
+
+
+## A plate button that steps through `names` on each click and reports the new index.
+func _cycle(text: String, names: Array, value: int, on_change: Callable) -> HBoxContainer:
+	var h := _row(text)
+	var b := UI.button(names[value], 300, 64)
+	b.pressed.connect(func():
+		var i := (names.find(b.text) + 1) % names.size()
+		b.text = names[i]
+		b.add_theme_font_size_override("font_size", 34)
+		UI.fit_text(b)
+		on_change.call(i))
+	h.add_child(b)
 	return h
 
 

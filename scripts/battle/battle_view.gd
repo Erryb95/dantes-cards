@@ -125,7 +125,7 @@ func _ready() -> void:
 	Sfx.play_ambience(arena.get("ambience", ""), -16.0)
 	st = BattleState.new()
 	st.event.connect(func(ev): queue.append(ev))
-	ai = BattleAI.new(1, BattleAI.Level.EASY if Settings.easy_opponent and not autoplay else BattleAI.Level.NORMAL)
+	ai = BattleAI.new(1, BattleAI.Level.HARD if autoplay else Settings.difficulty as BattleAI.Level)
 	ai_self = BattleAI.new(0)
 	_intro(arena)
 	st.start(Game.player_cards, Game.player_hero, Game.enemy_cards, Game.enemy_hero, 0, true, -1)
@@ -721,6 +721,7 @@ func _present(ev: Dictionary) -> void:
 				t.tween_property(h, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 				t.tween_property(h, "modulate:a", 1.0, 0.4)
 		"turn":
+			_last_aoe = ""
 			_set_end_button(ev.side)
 			if ev.side == 0:
 				_show_banner("YOUR TURN", UI.GOLD)
@@ -756,10 +757,12 @@ func _present(ev: Dictionary) -> void:
 			Fx.number(fx_layer, h.position + Vector2(0, -130), "Fatigue %d" % ev.amount, Color(0.8, 0.7, 1.0), false)
 			await _wait(0.4)
 		"play":
+			_last_aoe = ""
 			await _on_play(ev)
 		"summon":
 			await _on_summon(ev)
 		"attack":
+			_last_aoe = ""
 			await _on_attack(ev)
 		"damage":
 			_on_damage(ev)
@@ -768,14 +771,16 @@ func _present(ev: Dictionary) -> void:
 			var v = unit_views.get(ev.uid)
 			if v != null:
 				Fx.number(fx_layer, v.position, "+%d" % ev.amount, UI.HEAL, false)
-				Fx.burst(fx_layer, v.position, Color(0.4, 1.0, 0.4), 20, 160.0, 0.8, 22.0, -60.0, 180.0, "k_star_01")
+				if not Vfx.heal(self, v, ev.get("src", "")):
+					Fx.burst(fx_layer, v.position, Color(0.4, 1.0, 0.4), 20, 160.0, 0.8, 22.0, -60.0, 180.0, "k_star_01")
 				_set_unit_hp(v, ev.hp)
 				Sfx.play("chime", -12.0, 1.3)
 			await _wait(0.2)
 		"armor":
 			var h: HeroView = unit_views.get(ev.uid)
 			h.set_armor(ev.armor)
-			Fx.burst(fx_layer, h.position + Vector2(h.W / 2, -60), Color(0.75, 0.8, 0.9), 24, 200.0, 0.6, 10.0)
+			if not Vfx.armor(self, h, ev.get("src", "")):
+				Fx.burst(fx_layer, h.position + Vector2(h.W / 2, -60), Color(0.75, 0.8, 0.9), 24, 200.0, 0.6, 10.0)
 			Sfx.play("slam", -12.0, 1.5)
 			Sfx.play("metal", -6.0)
 			await _wait(0.25)
@@ -783,9 +788,10 @@ func _present(ev: Dictionary) -> void:
 			var m = unit_views.get(ev.uid)
 			if m is MinionView:
 				m.apply({"attack": ev.attack, "health": ev.health, "max_health": ev.max_health, "keywords": ev.keywords})
-				Fx.flash(fx_layer, "holy_light", m.position, 320.0, 0.7, Color.WHITE, 0.3)
-				Fx.burst(fx_layer, m.position, UI.GOLD, 30, 220.0, 0.8, 24.0, -100.0, 180.0, "k_star_04")
-				Fx.flash(fx_layer, "k_twirl_01", m.position, 300.0, 0.6, UI.GOLD, 1.5)
+				if not Vfx.buff(self, m, ev.get("src", "")):
+					Fx.flash(fx_layer, "holy_light", m.position, 320.0, 0.7, Color.WHITE, 0.3)
+					Fx.burst(fx_layer, m.position, UI.GOLD, 30, 220.0, 0.8, 24.0, -100.0, 180.0, "k_star_04")
+					Fx.flash(fx_layer, "k_twirl_01", m.position, 300.0, 0.6, UI.GOLD, 1.5)
 				_pop(m, 1.18)
 				Sfx.play("chime", -10.0, 1.15)
 			await _wait(0.2)
@@ -814,30 +820,11 @@ func _present(ev: Dictionary) -> void:
 			var a = unit_views.get(ev.from)
 			var b = unit_views.get(ev.to)
 			if a != null and b != null:
-				var col := UI.EMBER
-				if ev.kind == "buff":
-					col = UI.GOLD
-				elif ev.kind == "freeze":
-					col = Color(0.5, 0.8, 1.0)
-				elif ev.kind == "silence":
-					col = Color(0.8, 0.8, 0.9)
-				elif ev.kind == "destroy":
-					col = Color(0.6, 0.2, 1.0)
-				Sfx.play("swish_long", -6.0, 0.8)
-				Sfx.play({"freeze": "chain", "silence": "lock", "destroy": "spell", "buff": "gem"}.get(ev.kind, "spell_fire"), -8.0)
-				if ev.kind in ["buff", "silence"]:
-					Sfx.play("magic", -10.0)
-				await Fx.projectile(fx_layer, a.position, b.position, col, 0.38 / _speed())
-				Sfx.play("thud", -6.0)
-				if ev.kind == "freeze":
-					Sfx.play("glass", -6.0, 0.8)
-					Sfx.play("ice", -6.0)
-					Fx.flash(fx_layer, "k_star_07", b.position, 300.0, 0.6, Color(0.6, 0.85, 1.0), 0.6)
-				if ev.kind == "destroy":
-					shake(10.0)
+				await Vfx.travel(self, a, b, ev.id, ev.kind)
 		"aoe":
 			await _on_aoe(ev)
 		"power":
+			_last_aoe = ""
 			heroes[ev.side].flip_power(true)
 			Sfx.play("swish", -6.0, 0.7)
 			await _wait(0.25)
@@ -853,6 +840,7 @@ func _present(ev: Dictionary) -> void:
 			await _wait(0.12)
 		"trigger":
 			var tm = unit_views.get(ev.uid)
+			_last_aoe = ""
 			if tm != null:
 				_pop(tm, 1.15)
 				Fx.burst(fx_layer, tm.position, UI.GOLD, 16, 160.0, 0.5, 8.0, 0.0)
@@ -1075,8 +1063,7 @@ func _on_play(ev: Dictionary) -> void:
 		t.tween_property(c, "scale", Vector2(0.85, 0.85), 0.2 / _speed())
 		t.tween_property(c, "rotation", 0.0, 0.2 / _speed())
 		await t.finished
-		Fx.flash(fx_layer, "fire_burst", c.position, 380.0, 0.8)
-		Fx.burst(fx_layer, c.position, UI.EMBER, 40, 300.0, 0.9, 12.0, -50.0)
+		await Vfx.cast(self, c, ev.id, side)
 		c.burn_away(0.9 / _speed())
 		await _wait(0.25)
 
@@ -1108,7 +1095,7 @@ func _on_summon(ev: Dictionary) -> void:
 	m.z_index = 10
 	var cost := int(CardDB.card(m.card_id).get("cost", 0))
 	var tint: Color = UI.RARITY.get(rarity, UI.EMBER) if rarity != "common" else UI.EMBER
-	Fx.gather(fx_layer, m.home, tint, 150.0 + cost * 8.0, 0.22 / _speed(), 16 + cost * 2)
+	Fx.gather(fx_layer, m.home, Vfx.summon_tint(m.card_id), 150.0 + cost * 8.0, 0.22 / _speed(), 16 + cost * 2)
 	var drop := m.create_tween().set_parallel(true)
 	drop.tween_property(m, "position", m.home, 0.2 / _speed()).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	drop.tween_property(m, "scale", Vector2.ONE, 0.2 / _speed()).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
@@ -1160,10 +1147,7 @@ func _on_attack(ev: Dictionary) -> void:
 	shake(9.0 if b is HeroView else 6.0)
 	if int(a.attack if a is MinionView else 0) >= 5 or b is HeroView:
 		_hit_stop(0.07 if b is HeroView else 0.09)
-	Fx.flash(fx_layer, "claw_slash", b.position, 260.0, 0.35, Color.WHITE, 0.0)
-	Fx.slash(fx_layer, b.position, dir, 320.0, Color(1.0, 0.85, 0.6))
-	Fx.sparks(fx_layer, b.position - dir * 40.0, Color(1.0, 0.7, 0.3), 22)
-	Fx.burst(fx_layer, (a.position + b.position) / 2, Color(1.0, 0.75, 0.4), 22, 300.0, 0.4, 8.0, 200.0)
+	Vfx.strike(self, a, b, dir, int(a.attack) if a is MinionView else 2)
 	_push(b, dir * 18.0)
 	var back: Tween = a.create_tween().set_parallel(true)
 	back.tween_property(a, "position", a.home, 0.28 / _speed()).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
@@ -1218,8 +1202,9 @@ func _on_damage(ev: Dictionary) -> void:
 	else:
 		_set_unit_hp(v, ev.hp)
 		shake(2.0 + ev.amount)
-	Fx.flash(fx_layer, "blood_splat", v.position, 150.0 + ev.amount * 20.0, 0.5)
-	Fx.burst(fx_layer, v.position, Color(0.8, 0.1, 0.05), 10 + ev.amount * 3, 240.0, 0.6, 9.0, 400.0)
+	if not Vfx.hurt(self, v, ev.get("src", ""), ev.amount):
+		Fx.flash(fx_layer, "blood_splat", v.position, 150.0 + ev.amount * 20.0, 0.5)
+		Fx.burst(fx_layer, v.position, Color(0.8, 0.1, 0.05), 10 + ev.amount * 3, 240.0, 0.6, 9.0, 400.0)
 
 
 func _set_unit_hp(v, hp: int) -> void:
@@ -1237,10 +1222,7 @@ func _on_death(ev: Dictionary) -> void:
 	board_views[ev.side].erase(m)
 	Sfx.play("moan", -14.0, 1.0, 0.12)
 	Sfx.play("creature_die", -12.0, 1.1)
-	Fx.flash(fx_layer, "fire_burst", m.position, 300.0, 0.7)
-	Fx.flash(fx_layer, "smoke_puff", m.position + Vector2(0, -30), 340.0, 1.2, Color(1, 1, 1, 0.7), 0.2)
-	Fx.burst(fx_layer, m.position, UI.EMBER, 40, 180.0, 1.4, 10.0, -140.0, 120.0)
-	Fx.smoke(fx_layer, m.position, Color(0.2, 0.17, 0.15, 0.75), 220.0)
+	Vfx.death(self, m, m.card_id)
 	m.burn_away(0.85 / _speed())
 	get_tree().create_timer(0.85 / _speed()).timeout.connect(_remove_dead.bind(m, ev.side))
 	await _wait(0.22)
@@ -1274,31 +1256,13 @@ func _on_bounce(ev: Dictionary) -> void:
 	await _wait(0.25)
 
 
+## Board-wide effects are staged by Vfx from the card's profile (data/vfx.json). A second sweep by the same card in
+## one play (Medusa's Gaze damages, then freezes) is shown as a quick follow-up instead of a second sweep.
+var _last_aoe := ""
 func _on_aoe(ev: Dictionary) -> void:
-	var origin: Vector2 = heroes[ev.side].position
-	match ev.id:
-		"minotaur_rampage":
-			Sfx.play("quake_rumble", -2.0, 1.0, 0.0)
-			Sfx.play("thunder", -6.0, 0.8)
-			_screen_flash(Color(0.9, 0.1, 0.05), 0.6)
-			shake(26.0)
-			for i in 6:
-				Fx.dust(fx_layer, Vector2(V.x * (0.2 + i * 0.12), _board_y(i % 2) + 70), 260.0, 40)
-			await _wait(0.5)
-			shake(18.0)
-		"medusa_gaze":
-			Sfx.play("wail", -10.0, 0.7)
-			_screen_flash(Color(1.0, 0.25, 0.0), 0.45)
-			Fx.shockwave(fx_layer, origin, Color(1.0, 0.3, 0.05), 1200.0, 0.8)
-			await _wait(0.35)
-		"furies":
-			Sfx.play("wail", -8.0, 1.1)
-			var src = board_views[ev.side].back() if not board_views[ev.side].is_empty() else heroes[ev.side]
-			Fx.shockwave(fx_layer, src.position, Color(0.7, 0.55, 1.0), 900.0, 0.7)
-			await _wait(0.3)
-		_:
-			Fx.shockwave(fx_layer, origin, UI.EMBER, 900.0, 0.6)
-			await _wait(0.3)
+	var follow: bool = _last_aoe == ev.id
+	_last_aoe = ev.id
+	await Vfx.mass(self, ev, follow)
 
 
 func _on_game_over(ev: Dictionary) -> void:

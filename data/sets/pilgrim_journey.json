@@ -183,7 +183,7 @@
    "rarity": "rare",
    "cost": 4,
    "attack": 3,
-   "health": 4,
+   "health": 5,
    "keywords": [
     "rebirth"
    ],
@@ -571,7 +571,7 @@
    "set": "pilgrim",
    "type": "spell",
    "rarity": "rare",
-   "cost": 3,
+   "cost": 2,
    "effects": [
     {
      "on": "play",
@@ -596,7 +596,7 @@
    "set": "pilgrim",
    "type": "spell",
    "rarity": "common",
-   "cost": 2,
+   "cost": 1,
    "effects": [
     {
      "on": "play",
@@ -659,7 +659,7 @@
    "set": "pilgrim",
    "type": "spell",
    "rarity": "rare",
-   "cost": 2,
+   "cost": 1,
    "effects": [
     {
      "on": "play",

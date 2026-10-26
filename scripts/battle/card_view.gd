@@ -482,6 +482,12 @@ func _set_burn(v: float) -> void:
 	_param("burn", v)
 
 
+## The colours of the dissolve's glowing rim (a spell burns away in its school's colours).
+func set_burn_colors(edge: Color, hot: Color) -> void:
+	_param("burn_edge", edge)
+	_param("burn_hot", hot)
+
+
 func contains_point(global_point: Vector2) -> bool:
 	var p := to_local(global_point)
 	return absf(p.x) <= W / 2 and absf(p.y) <= H / 2

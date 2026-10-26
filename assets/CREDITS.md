@@ -53,8 +53,10 @@ with **Qwen-Image 2512** (Apache-2.0) + the Lightning 4-step LoRA (Apache-2.0). 
 the ComfyUI session's notes (status/cards_style.md). House style: hand-tinted Gustave Dore-style engraving, chosen by the
 owner on 2026-10-25. Source files: art_src/dore_cards/; card -> image map: the "image" field in data/cards.json.
 The painted UI parts in assets/ui/ (card borders, ribbon, gems, rarity cabochons, button plate, end-turn seal, power disc,
-icons) and the VFX sprites in assets/vfx/ come from the
-same ComfyUI setup (Qwen-Image 2512, alpha cut with BiRefNet, MIT); sources in art_src/ui/.
+icons) and the painted VFX sprites in assets/vfx/ (every file not named k_*) come from the
+same ComfyUI setup (Qwen-Image 2512, alpha cut with BiRefNet, MIT); sources in art_src/ui/. The vfx_*.png spell sprites
+are emissive paintings on black, drawn with additive blending (no alpha cut); sources in art_src/vfx/,
+imported by tools/vfx/import_vfx.py.
 The opening cinematic (assets/intro/) is made of Gustave Dore's public-domain plates. Four of its clips (forest, panther,
 lion, gate) were animated with the AI video model Wan 2.2 (Apache-2.0) on the owner's PC; the other two clips, the
 plates and the narration are not AI (the narration is a human LibriVox recording). Cards without a painting yet
