@@ -28,9 +28,9 @@ var _art_mat: ShaderMaterial
 var _hp_l: Label
 var _armor: Node2D
 var _armor_l: Label
-var _power_glow: Shapes
+var _power_glow: Aura
 var _power_face: Node2D
-var _target_glow: Shapes
+var _target_glow: Aura
 var _t := 0.0
 
 
@@ -53,8 +53,8 @@ func _build() -> void:
 	shadow.shade = false
 	shadow.position = Vector2(6, 10)
 	add_child(shadow)
-	_target_glow = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(W + 30, H + 30), Color.TRANSPARENT, Color(1, 0.3, 0.2), 8.0)
-	_target_glow.visible = false
+	_target_glow = Aura.make(Vector2(W + 22, H + 22), true, 44.0)
+	_target_glow.colors(Aura.TARGET)
 	add_child(_target_glow)
 	var plate := Shapes.make(Shapes.Kind.ELLIPSE, Vector2(W + 22, H + 22), Color(0.2, 0.12, 0.06), UI.GOLD_DARK, 4.0)
 	add_child(plate)
@@ -109,7 +109,7 @@ func _build_power(def: Dictionary) -> void:
 	power = Node2D.new()
 	power.position = Vector2(W / 2 + 92, 14)
 	add_child(power)
-	_power_glow = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(112, 112), Color.TRANSPARENT, UI.PLAYABLE, 8.0)
+	_power_glow = Aura.make(Vector2(104, 104), true, 30.0)
 	power.add_child(_power_glow)
 	_power_face = Node2D.new()
 	power.add_child(_power_face)
@@ -142,7 +142,7 @@ func _build_power(def: Dictionary) -> void:
 func _refresh_power() -> void:
 	if _power_glow == null:
 		return
-	_power_glow.visible = power_ready and not power_used
+	_power_glow.set_on(power_ready and not power_used)
 	_power_face.modulate = Color(0.45, 0.42, 0.4) if power_used else Color.WHITE
 
 
@@ -184,15 +184,11 @@ func set_armor(a: int) -> void:
 
 
 func set_targeted(v: bool) -> void:
-	_target_glow.visible = v
+	_target_glow.set_on(v)
 
 
 func _process(delta: float) -> void:
 	_t += delta
-	if _power_glow.visible:
-		_power_glow.modulate.a = 0.55 + 0.45 * sin(_t * 4.0)
-	if _target_glow.visible:
-		_target_glow.modulate.a = 0.6 + 0.4 * sin(_t * 8.0)
 
 
 func flash(color: Color = Color(1, 0.2, 0.1), duration: float = 0.4) -> void:

@@ -56,7 +56,7 @@ var _painted_board := false
 var _parallax := Vector2.ZERO ## the table (board, units, fx) drifts against the pointer; the hand stays put
 var _parallax_t := 0.0
 var _end_label: Label
-var _end_glow: Shapes
+var _end_glow: Aura
 var _end_disc: Shapes
 var banner: Label
 var inspect: CardView
@@ -305,9 +305,9 @@ func _build_scene() -> void:
 func _build_end_button() -> void:
 	end_btn = Node2D.new()
 	board_layer.add_child(end_btn)
-	_end_glow = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(236, 104), Color.TRANSPARENT, UI.PLAYABLE, 9.0)
-	_end_glow.use_parent_material = false
-	_end_glow.visible = false
+	# Lights up (gold fire) when nothing is left to play.
+	_end_glow = Aura.make(Vector2(232, 100), true, 34.0)
+	_end_glow.colors(Aura.SELECTED)
 	end_btn.add_child(_end_glow)
 	_end_disc = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(220, 88), Color(0.38, 0.1, 0.05), UI.GOLD, 5.0)
 	_end_disc.use_parent_material = false
@@ -1013,10 +1013,11 @@ func _on_summon(ev: Dictionary) -> void:
 	await drop.finished
 	m.z_index = 0
 	Fx.dust(fx_layer, m.position + Vector2(0, MinionView.H * 0.42), MinionView.W * 1.2)
-	Fx.rune(fx_layer, m.position + Vector2(0, MinionView.H * 0.3), UI.RARITY.get(rarity, UI.EMBER), 300.0, 0.8, "k_circle_03")
+	var cost := int(CardDB.card(m.card_id).get("cost", 0))
+	Fx.summon(fx_layer, m.position + Vector2(0, MinionView.H * 0.32), UI.RARITY.get(rarity, UI.EMBER) if rarity != "common" else UI.EMBER,
+		300.0 + cost * 14.0, 1.0 + cost * 0.05, clampf((cost - 3) / 5.0, 0.0, 1.0))
 	Sfx.play("slam", -4.0)
 	Sfx.play("card_place", -6.0)
-	var cost := int(CardDB.card(m.card_id).get("cost", 0))
 	if cost >= 6:
 		Sfx.play("roar", -8.0, 0.9)
 	elif cost >= 4:
@@ -1024,7 +1025,7 @@ func _on_summon(ev: Dictionary) -> void:
 	if rarity == "legendary":
 		shake(18.0)
 		Fx.shockwave(fx_layer, m.position, UI.GOLD, 520.0, 0.7)
-		Fx.rune(fx_layer, m.position + Vector2(0, MinionView.H * 0.3), UI.GOLD, 620.0, 1.6)
+		Fx.summon(fx_layer, m.position + Vector2(0, MinionView.H * 0.32), UI.GOLD, 680.0, 1.8, 1.0)
 		Fx.flash(fx_layer, "holy_light", m.position, 700.0, 1.0, Color(1, 0.85, 0.6), 0.2)
 		Fx.burst(fx_layer, m.position, UI.GOLD, 70, 520.0, 1.2, 14.0, 120.0)
 		_screen_flash(Color(1.0, 0.75, 0.3), 0.35)
@@ -1359,7 +1360,7 @@ func _set_end_button(side: int) -> void:
 	_end_disc.set_fill(Color(0.38, 0.1, 0.05) if mine else Color(0.15, 0.12, 0.1))
 	if _end_seal != null:
 		_end_seal.modulate = Color.WHITE if mine else Color(0.45, 0.42, 0.4)
-	_end_glow.visible = false
+	_end_glow.set_on(false)
 	var t := end_btn.create_tween()
 	t.tween_property(end_btn, "scale:y", 0.0, 0.1)
 	t.tween_property(end_btn, "scale:y", 1.0, 0.15).set_trans(Tween.TRANS_BACK)
@@ -1469,7 +1470,7 @@ func _refresh_highlights() -> void:
 	if heroes[0]:
 		heroes[0].power_ready = mine and st.can_use_power(0)
 		any = any or heroes[0].power_ready
-	_end_glow.visible = mine and not any
+	_end_glow.set_on(mine and not any)
 	if mine:
 		_set_mana(0, st.sides[0].mana, st.sides[0].max_mana)
 

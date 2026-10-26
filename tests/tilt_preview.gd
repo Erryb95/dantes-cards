@@ -25,11 +25,13 @@ func _ready() -> void:
 		c.position = Vector2(220 + i * 370, 540)
 		c.scale = Vector2(1.2, 1.2)
 		add_child(c)
+		c.playable = i % 2 == 0
+		c.selected = i == 1
 		_cards.append(c)
 
 
 func _process(_delta: float) -> void:
 	_frames += 1
-	if _frames == 30:
+	if _frames == 50:
 		get_viewport().get_texture().get_image().save_png(_out)
 		get_tree().quit()

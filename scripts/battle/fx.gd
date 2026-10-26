@@ -1,6 +1,8 @@
 class_name Fx
 ## One-shot visual effects: particle bursts, damage splats, shockwaves, projectiles.
 
+const SUMMON_SHADER := preload("res://assets/shaders/summon_circle.gdshader")
+
 
 static func burst(parent: Node, pos: Vector2, color: Color, amount: int = 24, speed: float = 260.0,
 		life: float = 0.7, size: float = 10.0, gravity: float = 300.0, spread: float = 180.0,
@@ -305,3 +307,48 @@ static func rune(parent: Node, pos: Vector2, color: Color, size: float = 360.0, 
 	t.tween_property(s, "modulate:a", 1.0, duration * 0.2)
 	t.tween_property(s, "modulate:a", 0.0, duration * 0.5).set_delay(duration * 0.5)
 	t.chain().tween_callback(holder.queue_free)
+
+
+## A summoning circle on the board under a landing minion (assets/shaders/summon_circle.gdshader): rune rings,
+## a star and a shock ring lying flat on the table, a pillar of light and rising embers. `power` 0..1 scales it up
+## for expensive and legendary minions.
+static func summon(parent: Node, pos: Vector2, color: Color, size: float = 340.0, duration: float = 1.1,
+		power: float = 0.0) -> void:
+	var holder := Node2D.new()
+	holder.position = pos
+	holder.scale = Vector2(1.0, 0.42)
+	holder.z_index = 4
+	parent.add_child(holder)
+	var circle := ColorRect.new()
+	var mat := ShaderMaterial.new()
+	mat.shader = SUMMON_SHADER
+	mat.set_shader_parameter("color", color)
+	mat.set_shader_parameter("hot", color.lerp(Color(1, 0.97, 0.85), 0.75))
+	mat.set_shader_parameter("seed", randf() * 10.0)
+	circle.material = mat
+	circle.size = Vector2(size, size)
+	circle.position = -circle.size / 2
+	circle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(circle)
+	var t := holder.create_tween()
+	t.tween_method(func(v: float): mat.set_shader_parameter("t", v), 0.0, 1.0, duration)
+	t.tween_callback(holder.queue_free)
+	# Pillar of light: a tall soft beam that shoots up and thins out.
+	var beam := Sprite2D.new()
+	beam.texture = UI.dot_texture()
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	beam.material = add
+	beam.modulate = Color(color.r * 1.2, color.g * 1.2, color.b * 1.2, 0.0)
+	beam.position = pos + Vector2(0, -size * 0.25)
+	beam.scale = Vector2(size / 64.0 * 0.35, size / 64.0 * (1.2 + power))
+	beam.z_index = 6
+	parent.add_child(beam)
+	var b := beam.create_tween().set_parallel(true)
+	b.tween_property(beam, "modulate:a", 0.55 + 0.3 * power, duration * 0.12)
+	b.tween_property(beam, "scale:x", size / 64.0 * 0.05, duration * 0.6).set_delay(duration * 0.1)
+	b.tween_property(beam, "modulate:a", 0.0, duration * 0.45).set_delay(duration * 0.2)
+	b.chain().tween_callback(beam.queue_free)
+	var e := burst(parent, pos, color, 24 + int(power * 40), 240.0 + power * 260.0, 1.2, 9.0, -160.0, 70.0)
+	e.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	e.emission_rect_extents = Vector2(size * 0.35, 10)

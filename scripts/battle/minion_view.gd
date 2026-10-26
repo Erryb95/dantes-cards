@@ -26,7 +26,7 @@ var busy := false ## set while it lunges, so layout does not fight the animation
 var _mat: ShaderMaterial
 var _art_mat: ShaderMaterial
 var _ring: Shapes
-var _glow: Shapes
+var _glow: Aura
 var _guard: Shapes
 var _ward: Shapes
 var _atk_l: Label
@@ -62,7 +62,7 @@ func _build() -> void:
 	_guard = Shapes.make(Shapes.Kind.SHIELD, Vector2(W + 34, H + 30), Color(0.32, 0.28, 0.25), Color(0.75, 0.62, 0.4), 4.0)
 	_guard.position = Vector2(0, 6)
 	add_child(_guard)
-	_glow = Shapes.make(Shapes.Kind.ELLIPSE, Vector2(W + 14, H + 14), Color.TRANSPARENT, UI.PLAYABLE, 9.0)
+	_glow = Aura.make(Vector2(W + 4, H + 4), true, 36.0)
 	add_child(_glow)
 
 	var art := TextureRect.new()
@@ -177,8 +177,7 @@ var targetable := false:
 
 func _refresh_glow() -> void:
 	if _glow:
-		_glow.visible = can_attack or targetable
-		_glow.set_line(Color(1.0, 0.3, 0.15) if targetable else UI.PLAYABLE)
+		_glow.set_on(can_attack or targetable, Aura.TARGET if targetable else Aura.PLAYABLE)
 
 
 var frozen := false
@@ -203,8 +202,6 @@ func _process(delta: float) -> void:
 	var lift := clampf((scale.x - 1.0) / 0.5, 0.0, 1.0)
 	_shadow.position = Vector2(6, 10).lerp(Vector2(30, 56), lift)
 	_shadow.modulate.a = 1.0 - 0.45 * lift
-	if _glow.visible:
-		_glow.modulate.a = 0.55 + 0.45 * sin(_t * 4.5)
 	if _ward.visible:
 		_ward.scale = Vector2.ONE * (1.0 + 0.025 * sin(_t * 3.0))
 		_ward.modulate.a = 0.75 + 0.25 * sin(_t * 2.1)
@@ -226,7 +223,7 @@ func _set_flash(v: float) -> void:
 
 
 func burn_away(duration: float = 0.8) -> void:
-	_glow.visible = false
+	_glow.set_on(false)
 	var t := create_tween()
 	t.tween_method(_set_burn, 0.0, 1.0, duration)
 	await t.finished

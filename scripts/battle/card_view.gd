@@ -41,8 +41,7 @@ var _mats: Array[ShaderMaterial] = [] ## every card_fx material on the card (the
 var _art_mat: ShaderMaterial
 var _face: Control
 var _back: Control
-var _glow: Panel
-var _glow_t := 0.0
+var _glow: Aura
 var _cost_label: Label
 var _foil := -1.0
 
@@ -65,9 +64,7 @@ func _build() -> void:
 		Color(0, 0, 0, 0.55), 18), Vector2(-W / 2 + 6, -H / 2 + 12))
 	_shadow.use_parent_material = true
 	add_child(_shadow)
-	_glow = UI.panel(Vector2(W + 8, H + 8), UI.box(Color(0, 0, 0, 0), UI.PLAYABLE, 4, 22, UI.PLAYABLE, 26),
-		Vector2(-W / 2 - 4, -H / 2 - 4))
-	_glow.visible = false
+	_glow = Aura.make(Vector2(W, H), false, 46.0, 20.0)
 	add_child(_glow)
 
 	_face = Control.new()
@@ -89,7 +86,7 @@ func _build() -> void:
 	var text_mat := ShaderMaterial.new()
 	text_mat.shader = CARD_FX
 	text_mat.set_shader_parameter("resample", false)
-	_mats = [_mat, text_mat]
+	_mats = [_mat, text_mat, _glow.material]
 	_collect_mats(self, text_mat)
 	_param("half_h", H / 2)
 
@@ -431,17 +428,10 @@ func set_cost(cost: int) -> void:
 func _update_glow() -> void:
 	if _glow == null:
 		return
-	_glow.visible = face_up and (playable or selected)
-	var c := UI.GOLD if selected else UI.PLAYABLE
-	var sb: StyleBoxFlat = _glow.get_theme_stylebox("panel")
-	sb.border_color = c
-	sb.shadow_color = c
+	_glow.set_on(face_up and (playable or selected), Aura.SELECTED if selected else Aura.PLAYABLE)
 
 
 func _process(delta: float) -> void:
-	if _glow.visible:
-		_glow_t += delta
-		_glow.modulate.a = 0.65 + 0.35 * sin(_glow_t * 4.0)
 	# Velocity tilt while dragged: lean into the motion like a real card.
 	_vel = _vel.lerp((position - _last_pos) / maxf(delta, 0.001), 0.25)
 	_last_pos = position
