@@ -19,4 +19,9 @@ Android toolchain (installed 2026-10-25, portable, no admin):
 Other presets (Linux, Web, macOS) are defined in `export_presets.cfg`. macOS / iOS need signing on a Mac.
 
 Debug flags (after `--`): `--autoplay` (AI plays both sides), `--shots=<dir>` (battle screenshots every 3 s),
-`--snap=<file.png> [--snap-delay=s]` (one screenshot of any scene).
+`--snap=<file.png> [--snap-delay=s]` (one screenshot of any scene). Battle only: `--arena=<id>` forces an arena (without
+its painted board it is shown on the Acheron board), `--shot-every=s`, `--shot-count=N`, `--poke-toys=s` (taps every
+arena toy and the divider after s seconds).
+
+Arena art: `python tools/arena/import_arena.py` fetches new boards / mists / props from the ComfyUI PC and lists what
+is still missing (`--force` re-imports).

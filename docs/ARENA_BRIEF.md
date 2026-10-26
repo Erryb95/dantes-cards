@@ -51,6 +51,13 @@ in-game coordinates; the 1920x1080 layout is scaled x1.333.
 | D `prop_brazier` | 384x512 | alpha | An iron brazier with coals (its flame is code VFX). |
 | D `prop_skulls` | 512x384 | alpha | A pile of skulls and bones. |
 
+## The other boards (same sockets, same layers)
+Limbo, Lust, Dis and Cocytus reuse this layout exactly: `arena_<id>_board` (2560x1440), `arena_<id>_mist`
+(2560x512 alpha) and `prop_<id>_<name>` (alpha) per `data/arenas.json`. The middle divider is painted calm and the
+code adds its life: Limbo's stream (water shader), Lust's wind (`wind.gdshader` + streaks + whirling souls at the
+edges), Dis's ember crack (`crack.gdshader` + heat haze + sparks) and Cocytus's frost crack (rime, glints, cold mist).
+Flames on props (the tomb, the torch) are code VFX: paint them unlit.
+
 ## Phones (20:9)
 - **Wider screens:** they show extra width at the sides. Either paint the board 3200x1440 with the 2560 centre as
   the safe area, or keep 2560 wide, and the game will extend the edges with a dark vignette.

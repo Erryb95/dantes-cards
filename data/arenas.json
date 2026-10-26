@@ -1,5 +1,5 @@
 {
-  "_doc": "Arenas (one per stop of the run). backdrop is under assets/arenas/.",
+  "_doc": "Arenas: each match draws one whose painted board is installed (never the previous one). All boards share the socket layout of scenes/arenas/standard.tscn (docs/ARENA_BRIEF.md). board/mist/frame are under assets/arenas/, props under assets/arenas/props/<id>_<name>.png; tools/arena/import_arena.py fetches them. divider.kind: river | stream | wind | embers | frost. ambient: embers | embers_hot | motes | dust | snow. Prop fields are documented in scripts/battle/arena_props.gd.",
   "arenas": [
     {
       "id": "acheron",
@@ -12,7 +12,106 @@
       "art": "wide panoramic view of the dark shore of the river Acheron in Hell, endless crowd of pale naked souls waiting on the rocky bank on the left and right, a wide calm black river across the middle of the image, the ancient ferryman Charon in a small boat with a glowing lantern far away on the water, distant cliffs under a starless sky with a faint red glow",
       "scene": "res://scenes/arenas/acheron.tscn",
       "board": "acheron_board.jpg",
-      "normal": "acheron_normal.png"
+      "normal": "acheron_normal.png",
+      "props_script": "res://scripts/battle/arena_acheron.gd",
+      "divider": {"kind": "river"}
+    },
+    {
+      "id": "limbo",
+      "name": "The Noble Castle",
+      "circle": "First Circle: Limbo",
+      "intro": "The good who never knew faith walk this green meadow forever. Nothing hurts here; they only long.",
+      "music": "music_combat",
+      "ambience": "limbo_drone.ogg",
+      "art": "game board seen from above: grey-green meadow of Limbo, the seven walls of the Noble Castle at the top edge, a thin clear stream across the middle, carved stone frame and sockets as in the Acheron layout",
+      "scene": "res://scenes/arenas/standard.tscn",
+      "board": "limbo_board.jpg",
+      "mist": "limbo_mist.png",
+      "divider": {"kind": "stream", "height": 64, "alpha": 0.55, "deep": [0.04, 0.07, 0.06, 0.45], "glint": [0.75, 0.95, 0.85]},
+      "ambient": "motes",
+      "tint": {"fog": [0.3, 0.34, 0.3], "fog_density": 0.28, "wisps": [0.85, 0.95, 0.8], "standin": [0.62, 0.74, 0.62]},
+      "props": [
+        {"name": "lantern", "pos": [165, 300], "width": 130, "aspect": 1.33, "pivot": "top", "motion": "swing", "idle": 0.03,
+          "glow": {"at": [-0.1, 0.12], "color": [1.0, 0.8, 0.45], "size": 0.9, "idle": 0.55, "light": true},
+          "burst": "motes", "sfx": ["metal", -16, 1.5], "sfx2": ["glass", -14, 0.8]},
+        {"name": "column", "pos": [150, 945], "width": 150, "aspect": 1.4, "motion": "pulse",
+          "burst": "pages", "sfx": ["page", -4, 1.0]},
+        {"name": "laurel", "pos": [1830, 860], "width": 150, "aspect": 1.2, "pivot": "bottom", "motion": "sway", "idle": 0.04,
+          "burst": "leaves", "sfx": ["whoosh", -14, 0.6]}
+      ]
+    },
+    {
+      "id": "lust",
+      "name": "The Cliffs of the Whirlwind",
+      "circle": "Second Circle: Lust",
+      "intro": "A storm that never rests drives the lovers round and round. Keep your footing.",
+      "music": "music_combat",
+      "ambience": "wind_ghost_loop.ogg",
+      "art": "game board seen from above: wind-beaten cliffs of the second circle, pale souls whirling in the storm at the left and right edges, a current of wind and mist across the middle, carved stone frame and sockets as in the Acheron layout",
+      "scene": "res://scenes/arenas/standard.tscn",
+      "board": "lust_board.jpg",
+      "mist": "lust_mist.png",
+      "divider": {"kind": "wind", "height": 160, "span": [40, 1880]},
+      "ambient": "dust",
+      "tint": {"fog": [0.32, 0.26, 0.38], "fog_density": 0.32, "wisps": [0.8, 0.7, 1.0], "standin": [0.68, 0.62, 0.8]},
+      "props": [
+        {"name": "banner", "pos": [165, 300], "width": 150, "aspect": 1.5, "pivot": "top", "motion": "swing", "idle": 0.08,
+          "burst": "dust", "sfx": ["gust", -10, 1.2]},
+        {"name": "rock", "pos": [150, 950], "width": 220, "aspect": 0.75, "motion": "rattle",
+          "burst": "souls", "sfx": ["sigh", -6, 1.0], "sfx2": ["wail", -18, 1.3]},
+        {"name": "torch", "pos": [1830, 860], "width": 110, "aspect": 2.2, "pivot": "bottom", "motion": "sway", "idle": 0.05,
+          "flame": {"at": [0.1, -0.42], "color": "fire", "size": 0.8, "wind": 90, "spread": 0.12},
+          "burst": "embers", "sfx": ["spell_fire", -12, 1.0]}
+      ]
+    },
+    {
+      "id": "dis",
+      "name": "The City of Dis",
+      "circle": "Sixth Circle: Heresy",
+      "intro": "Behind red-hot iron walls, the heretics lie in open tombs of fire. The Furies are watching.",
+      "music": "music_boss",
+      "ambience": "fire_loop.ogg",
+      "art": "game board seen from above: inside the City of Dis, open burning tombs along the left and right edges, red-hot iron walls at the top, a glowing crack full of embers across the middle, carved stone frame and sockets as in the Acheron layout",
+      "scene": "res://scenes/arenas/standard.tscn",
+      "board": "dis_board.jpg",
+      "mist": "dis_mist.png",
+      "divider": {"kind": "embers", "height": 150, "span": [150, 1650]},
+      "ambient": "embers_hot",
+      "tint": {"fog": [0.42, 0.12, 0.06], "fog_density": 0.36, "wisps": [1.0, 0.55, 0.3], "standin": [0.85, 0.55, 0.45]},
+      "props": [
+        {"name": "chains", "pos": [165, 300], "width": 140, "aspect": 1.6, "pivot": "top", "motion": "swing", "idle": 0.01,
+          "sfx": ["chain", -4, 1.0]},
+        {"name": "tomb", "pos": [150, 950], "width": 260, "aspect": 0.7, "motion": "rattle",
+          "flame": {"at": [0.0, -0.22], "color": "fire", "size": 1.1, "spread": 0.3},
+          "burst": "embers", "sfx": ["moan", -8, 0.9], "sfx2": ["spell_fire", -12, 0.7], "shake": 3},
+        {"name": "fury", "pos": [1830, 860], "width": 150, "aspect": 1.6, "motion": "pulse",
+          "glow": {"at": [0.0, -0.33], "pair": 0.07, "color": [1.0, 0.15, 0.05], "size": 0.22, "idle": 0.12},
+          "ring": [1.0, 0.3, 0.1], "sfx": ["wail", -8, 1.4]}
+      ]
+    },
+    {
+      "id": "cocytus",
+      "name": "The Frozen Lake",
+      "circle": "Ninth Circle: Cocytus",
+      "intro": "At the bottom of Hell nothing burns. Traitors lie locked in the ice, and the wind of Lucifer's wings never stops.",
+      "music": "music_boss",
+      "ambience": "cold_wind_loop.ogg",
+      "art": "game board seen from above: the frozen lake of Cocytus, sinners locked in the ice at the left and right edges, Lucifer's huge bat wings far away at the top, a crack in the ice across the middle, carved stone frame and sockets as in the Acheron layout",
+      "scene": "res://scenes/arenas/standard.tscn",
+      "board": "cocytus_board.jpg",
+      "mist": "cocytus_mist.png",
+      "divider": {"kind": "frost", "height": 150, "span": [150, 1650]},
+      "ambient": "snow",
+      "tint": {"fog": [0.2, 0.27, 0.36], "fog_density": 0.34, "wisps": [0.7, 0.85, 1.0], "standin": [0.55, 0.68, 0.88]},
+      "props": [
+        {"name": "wing", "pos": [175, 290], "width": 230, "aspect": 1.0, "pivot": "top", "motion": "flap", "idle": 0.02,
+          "burst": "snow", "sfx": ["gust", -4, 0.6], "shake": 4, "flare_divider": true},
+        {"name": "head", "pos": [150, 955], "width": 170, "aspect": 0.85, "motion": "pulse",
+          "glow": {"at": [0.0, -0.05], "pair": 0.09, "color": [0.6, 0.85, 1.0], "size": 0.16, "idle": 0.0},
+          "burst": "frost", "sfx": ["moan", -8, 0.75]},
+        {"name": "stalagmite", "pos": [1830, 860], "width": 120, "aspect": 1.8, "pivot": "bottom", "motion": "rattle",
+          "burst": "frost", "sfx": ["ice", -6, 1.2], "sfx2": ["glass", -12, 1.6]}
+      ]
     }
   ]
 }

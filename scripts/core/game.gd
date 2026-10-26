@@ -17,6 +17,10 @@ var enemy_hero := "charon"
 var new_deck_cls := "pilgrim"
 var edit_deck := -1 ## index into Collection.decks for the deck builder, -1 = new
 var arena_id := "acheron"
+var arena_picked := false ## the deck screen already drew this match's arena (and showed its name)
+var last_arena := "" ## the previous match's arena, so the draw avoids repeating it
+var force_arena := "" ## debug / tests: always open this arena, even before its board is painted
+var arena_forced := false ## the current battle's arena was forced (it may be shown on the Acheron stand-in)
 var last_winner := -1
 var stats := {"wins": 0, "losses": 0}
 
@@ -39,6 +43,42 @@ func _ready() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load("user://progress.cfg") == OK:
 		stats = cfg.get_value("run", "stats", stats)
+		last_arena = str(cfg.get_value("run", "last_arena", ""))
+
+
+## Draws the arena for the next match: a random one whose painted board is installed, never the previous
+## match's when there is a choice. Arenas still waiting for their art are left out (the Acheron always qualifies).
+func pick_arena() -> String:
+	var pool: Array[String] = []
+	for a in CardDB.arenas():
+		if CardDB.arena_ready(a.id) and a.id != last_arena:
+			pool.append(a.id)
+	if pool.is_empty():
+		pool.append(last_arena if CardDB.arena_ready(last_arena) else "acheron")
+	arena_id = pool[randi() % pool.size()]
+	arena_picked = true
+	return arena_id
+
+
+## Called by the battle as it opens: settles which arena it shows (a forced one wins: `force_arena`, or the
+## `-- --arena=<id>` debug flag) and remembers it, so the next draw picks another one.
+func begin_arena() -> String:
+	var forced := force_arena
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--arena="):
+			forced = a.substr(8)
+	arena_forced = forced != "" and not CardDB.arena(forced).is_empty()
+	if arena_forced:
+		arena_id = forced
+	elif not arena_picked:
+		pick_arena()
+	arena_picked = false
+	last_arena = arena_id
+	var cfg := ConfigFile.new()
+	cfg.load("user://progress.cfg")
+	cfg.set_value("run", "last_arena", last_arena)
+	cfg.save("user://progress.cfg")
+	return arena_id
 
 
 ## Debug: `-- --snap=file.png` saves one screenshot of the opening scene and quits.
@@ -76,6 +116,7 @@ func record_result(winner: int) -> void:
 	elif winner == 1:
 		stats.losses += 1
 	var cfg := ConfigFile.new()
+	cfg.load("user://progress.cfg")
 	cfg.set_value("run", "stats", stats)
 	cfg.save("user://progress.cfg")
 

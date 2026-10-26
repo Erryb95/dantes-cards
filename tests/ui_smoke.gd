@@ -64,6 +64,28 @@ func _drag(a: Vector2, b: Vector2) -> void:
 	_mouse(b, false)
 
 
+## Opens the battle in every arena (one without its painted board on the Acheron stand-in) and taps each of its
+## toys and its divider, so every arena's VFX and reactions run at least once.
+func _arenas() -> void:
+	for a in CardDB.arenas():
+		battle.queue_free()
+		Game.force_arena = a.id
+		battle = load("res://scenes/battle.tscn").instantiate()
+		add_child(battle)
+		await get_tree().process_frame
+		if battle.arena.get("id", "") != a.id:
+			_fail("arena %s did not open" % a.id)
+			continue
+		var pts: Array[Vector2] = battle.props.toy_points()
+		for p in pts:
+			battle._board_touch(p)
+		for i in 30:
+			await get_tree().process_frame
+		print("UI SMOKE: arena %s ok (%d touch points%s)" % [a.id, pts.size(),
+			", stand-in board" if battle._arena_standin else ""])
+	Game.force_arena = ""
+
+
 func _run() -> void:
 	var played := 0
 	for turn in 4:
@@ -107,5 +129,6 @@ func _run() -> void:
 		_mouse(p, true)
 		_mouse(p, false)
 		await get_tree().create_timer(0.3).timeout
+	await _arenas()
 	print("UI SMOKE: played %d minions, %d failures" % [played, fails])
 	get_tree().quit(1 if fails > 0 or played == 0 else 0)

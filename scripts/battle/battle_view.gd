@@ -2,7 +2,8 @@ extends Node2D
 ## The battle screen: builds the arena, replays BattleState events as animations, and turns pointer / touch
 ## input into actions. The rules live in BattleState; this script never changes game values itself.
 ##
-## Debug: `-- --autoplay` lets the AI play both sides, `-- --shots=<dir>` saves screenshots and quits.
+## Debug: `-- --autoplay` lets the AI play both sides, `-- --shots=<dir>` saves screenshots and quits,
+## `-- --arena=<id>` forces an arena (one whose board isn't painted yet shows on the Acheron board as a stand-in).
 
 const HAND_SCALE := 0.62
 const ENEMY_HAND_SCALE := 0.42
@@ -22,6 +23,8 @@ var shots_dir := ""
 var _shot_i := 0
 var _shot_t := 0.0
 var _shot_every := 3.0
+var _shot_max := 40 ## `--shot-count=N`
+var _poke_at := -1.0 ## `--poke-toys=<s>`: tap every arena toy and the divider after s seconds (to see the reactions)
 var _shots_after_over := 0
 
 var queue: Array[Dictionary] = []
@@ -48,8 +51,11 @@ var _river_mat: ShaderMaterial
 var _ripple_i := 0
 var _ripples: Array[Vector4] = [Vector4.ZERO, Vector4.ZERO, Vector4.ZERO, Vector4.ZERO]
 var _wisps: Array[Sprite2D] = []
-var props: ArenaAcheron
+var props: ArenaProps ## the arena's living layer: divider VFX, ambient particles, tappable toys
 var arena_scene: ArenaScene ## editor-placed sockets (scenes/arenas/*.tscn)
+var arena: Dictionary ## this match's data/arenas.json entry
+var _arena_standin := false ## forced arena without its board: shown on the Acheron board
+var _river_h := 104.0 ## height of the water band (the Acheron river, or Limbo's thin stream)
 var mana_views: Array = [null, null]
 var deck_views: Array = [null, null]
 var end_btn: Node2D
@@ -101,11 +107,15 @@ func _ready() -> void:
 			Settings.fast_animations = true
 		elif a.begins_with("--shot-every="):
 			_shot_every = float(a.substr(13))
+		elif a.begins_with("--shot-count="):
+			_shot_max = int(a.substr(13))
+		elif a.begins_with("--poke-toys="):
+			_poke_at = float(a.substr(12))
 	V = get_viewport_rect().size
 	ky = minf(V.y / 1080.0, V.x / 1920.0) # the 16:9 layout fits inside any screen (letterboxed on 16:10)
+	_resolve_arena()
 	_build_scene()
 	get_viewport().size_changed.connect(_on_resize)
-	var arena := CardDB.arena(Game.arena_id)
 	Sfx.play_music(arena.get("music", "music_combat"))
 	Sfx.play_ambience(arena.get("ambience", ""), -16.0)
 	st = BattleState.new()
@@ -129,6 +139,25 @@ func _on_resize() -> void:
 
 # ================================================================ scene
 
+## Settles this match's arena. One whose painted board is missing never breaks the board: the draw skips it, and
+## when it is forced (debug) it borrows the Acheron's board and sockets, tinted, with its own living details.
+func _resolve_arena() -> void:
+	var id := Game.begin_arena()
+	arena = CardDB.arena(id).duplicate(true)
+	if CardDB.arena_ready(id):
+		return
+	if arena.is_empty() or not Game.arena_forced:
+		Game.arena_id = "acheron"
+		arena = CardDB.arena("acheron").duplicate(true)
+		return
+	push_warning("Arena '%s' has no painted board yet: showing it on the Acheron board." % id)
+	_arena_standin = true
+	arena["board"] = CardDB.arena("acheron").get("board", "")
+	arena["scene"] = "res://scenes/arenas/standard.tscn"
+	arena.erase("mist")
+	arena.erase("frame")
+
+
 func _build_scene() -> void:
 	cam = Camera2D.new()
 	cam.position = V / 2
@@ -151,12 +180,16 @@ func _build_scene() -> void:
 	ui.layer = 10
 	add_child(ui)
 
-	var arena := CardDB.arena(Game.arena_id)
 	var back := Sprite2D.new()
 	back.name = "Backdrop"
 	var path := "res://assets/arenas/" + str(arena.get("backdrop", ""))
-	if ResourceLoader.exists(path):
+	var board_path := "res://assets/arenas/" + str(arena.get("board", ""))
+	_painted_board = arena.has("board") and ResourceLoader.exists(board_path)
+	if arena.has("backdrop") and ResourceLoader.exists(path):
 		back.texture = load(path)
+	elif _painted_board:
+		# No landscape: the board itself, scaled to cover and darkened, fills the side bands of wide screens.
+		back.texture = load(board_path)
 	else:
 		var g := GradientTexture2D.new()
 		g.width = 256
@@ -170,10 +203,8 @@ func _build_scene() -> void:
 		g.gradient = gr
 		back.texture = g
 	back.modulate = Color(0.78, 0.74, 0.72)
-	back.light_mask = ArenaAcheron.LIGHT_MASK
+	back.light_mask = ArenaProps.LIGHT_MASK
 	# A painted board (ARENA_BRIEF.md) replaces the landscape: same coordinates as the layout, 2560x1440.
-	var board_path := "res://assets/arenas/" + str(arena.get("board", ""))
-	_painted_board = arena.has("board") and ResourceLoader.exists(board_path)
 	bg_layer.add_child(back)
 	if _painted_board:
 		# The landscape stays underneath, darkened, for the side bands of screens wider than the board.
@@ -188,7 +219,10 @@ func _build_scene() -> void:
 			ct.diffuse_texture = board.texture
 			ct.normal_texture = load(normal_path)
 			board.texture = ct
-		board.light_mask = ArenaAcheron.LIGHT_MASK
+		board.light_mask = ArenaProps.LIGHT_MASK
+		if _arena_standin:
+			var c: Array = arena.get("tint", {}).get("standin", [0.7, 0.7, 0.75])
+			board.modulate = Color(c[0], c[1], c[2])
 		bg_layer.add_child(board)
 
 	# Two shore beds where the minions stand, the river between them.
@@ -204,11 +238,21 @@ func _build_scene() -> void:
 	_river_mat = ShaderMaterial.new()
 	_river_mat.shader = preload("res://assets/shaders/river.gdshader")
 	river.material = _river_mat
-	river.light_mask = ArenaAcheron.LIGHT_MASK
+	river.light_mask = ArenaProps.LIGHT_MASK
 	bg_layer.add_child(river)
+	# The divider between the two halves: the Acheron's water (also Limbo's thin stream, retinted), or a VFX band
+	# drawn by the arena's props (wind, ember crack, frost crack).
+	var div: Dictionary = arena.get("divider", {})
+	var div_kind := str(div.get("kind", "river"))
+	river.visible = div_kind == "river" or div_kind == "stream"
+	_river_h = float(div.get("height", 104.0)) if river.visible else 104.0
+	if div.has("deep"):
+		_river_mat.set_shader_parameter("deep", Color(div.deep[0], div.deep[1], div.deep[2], div.deep[3]))
+	if div.has("glint"):
+		_river_mat.set_shader_parameter("glint", Color(div.glint[0], div.glint[1], div.glint[2]))
 
 	if _painted_board:
-		river.modulate.a = 0.45
+		river.modulate.a = float(div.get("alpha", 0.45))
 		for i in 2:
 			bg_layer.get_node("Bed%d" % i).visible = false
 		for layer in ["mist", "frame"]:
@@ -223,13 +267,14 @@ func _build_scene() -> void:
 					s.modulate = Color(1, 1, 1, 0.35)
 				bg_layer.add_child(s)
 
-	var scene_path := str(arena.get("scene", ""))
+	var scene_path := str(arena.get("scene", "res://scenes/arenas/standard.tscn"))
 	if scene_path != "" and ResourceLoader.exists(scene_path):
 		arena_scene = load(scene_path).instantiate()
 		bg_layer.add_child(arena_scene)
-	if Game.arena_id == "acheron":
-		props = ArenaAcheron.new().setup(self)
-		bg_layer.add_child(props)
+	props = ArenaProps.make(arena)
+	props.placeholders = _arena_standin
+	props.setup(self, arena)
+	bg_layer.add_child(props)
 
 	var embers := CPUParticles2D.new()
 	embers.name = "Embers"
@@ -275,6 +320,8 @@ func _build_scene() -> void:
 	fm.shader = preload("res://assets/shaders/fog.gdshader")
 	fog.material = fm
 	bg_layer.add_child(fog)
+
+	props.dress()
 
 	_build_end_button()
 	for i in 2:
@@ -451,9 +498,9 @@ func _layout_static() -> void:
 		var bed: Panel = bg_layer.get_node("Bed%d" % i)
 		bed.size = Vector2(bed_w, 196 * ky)
 		bed.position = Vector2(V.x / 2 - bed_w / 2, _board_y(1 - i) - 98 * ky)
-	river.position = Vector2(0, _river_y() - 52 * ky)
-	river.size = Vector2(V.x, 104 * ky)
-	_river_mat.set_shader_parameter("aspect", V.x / (104.0 * ky))
+	river.position = Vector2(0, _river_y() - _river_h / 2 * ky)
+	river.size = Vector2(V.x, _river_h * ky)
+	_river_mat.set_shader_parameter("aspect", V.x / (_river_h * ky))
 	var fog: ColorRect = bg_layer.get_node("Fog")
 	fog.size = V + Vector2(40, 40)
 	fog.position = Vector2(-20, -20)
@@ -464,9 +511,9 @@ func _layout_static() -> void:
 	if props != null:
 		var anchors := {}
 		if _painted_board and arena_scene != null:
-			for n in ["PropBell", "PropBrazier", "PropSkulls"]:
-				if arena_scene.has_socket(n):
-					anchors[n] = _sock(n, Vector2.ZERO)
+			for m in arena_scene.get_node("Sockets").get_children():
+				if str(m.name).begins_with("Prop"):
+					anchors[str(m.name)] = _sock(str(m.name), Vector2.ZERO)
 		props.layout(V, _river_y(), ky, anchors)
 	mana_views[0].position = _sock("ManaPlayer", Vector2(V.x - 330, V.y - 54))
 	mana_views[1].position = _sock("ManaEnemy", Vector2(V.x - 330, 54))
@@ -508,18 +555,20 @@ func _oy() -> float:
 	return (V.y - 1080.0 * ky) / 2.0
 
 
-func _intro(arena: Dictionary) -> void:
-	var title := UI.label(arena.get("name", ""), 64, "title", UI.GOLD, 12, Color(0.1, 0.0, 0.0))
-	var sub := UI.label(arena.get("intro", ""), 30, "italic", UI.BONE, 6, Color.BLACK)
-	for l in [title, sub]:
+func _intro(p_arena: Dictionary) -> void:
+	var circle := UI.label(str(p_arena.get("circle", "")).to_upper(), 26, "title", Color(0.85, 0.7, 0.5), 6, Color.BLACK)
+	var title := UI.label(p_arena.get("name", ""), 64, "title", UI.GOLD, 12, Color(0.1, 0.0, 0.0))
+	var sub := UI.label(p_arena.get("intro", ""), 30, "italic", UI.BONE, 6, Color.BLACK)
+	for l in [circle, title, sub]:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.size = Vector2(V.x, 100)
 		l.modulate.a = 0.0
 		ui.add_child(l)
+	circle.position = Vector2(0, V.y * 0.36 - 44)
 	title.position = Vector2(0, V.y * 0.36)
 	sub.position = Vector2(0, V.y * 0.36 + 90)
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	for l in [title, sub]:
+	for l in [circle, title, sub]:
 		var t: Tween = l.create_tween()
 		t.tween_property(l, "modulate:a", 1.0, 0.6)
 		t.tween_interval(1.8)
@@ -540,6 +589,11 @@ func _process(delta: float) -> void:
 			var t := Time.get_ticks_msec() / 1000.0
 			mist.position.x = V.x / 2 + sin(t * 0.07) * 120.0
 			mist.modulate.a = 0.3 + 0.08 * sin(t * 0.31)
+	if _poke_at >= 0.0:
+		_poke_at -= delta
+		if _poke_at < 0.0:
+			for p in props.toy_points():
+				_board_touch(p)
 	if shots_dir != "":
 		_shot_t += delta
 		if _shot_t > _shot_every:
@@ -1821,7 +1875,7 @@ func _board_touch(p: Vector2) -> void:
 			w.set_meta("flee", w.get_meta("flee") + d.normalized() * (260.0 - d.length()) * 1.4)
 	if props != null and props.touch(p):
 		return
-	if absf(p.y - _river_y()) < 60.0 * ky:
+	if river.visible and absf(p.y - _river_y()) < maxf(60.0, _river_h * 0.58) * ky:
 		add_ripple(p, 1.0)
 		Sfx.play("splash", -12.0)
 	else:
@@ -1936,5 +1990,5 @@ func _take_shot() -> void:
 	if over:
 		_shots_after_over += 1
 	_shot_i += 1
-	if _shot_i >= 40 or (over and _shots_after_over >= 2):
+	if _shot_i >= _shot_max or (over and _shots_after_over >= 2):
 		get_tree().quit()

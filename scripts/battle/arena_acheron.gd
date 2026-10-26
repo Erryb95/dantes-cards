@@ -1,18 +1,11 @@
 class_name ArenaAcheron
-extends Node2D
+extends ArenaProps
 ## Living props of the Acheron arena: Charon's boat crossing the river, the bell of the Gate,
 ## and the carved inscription. Drawn in code (silhouettes + additive light) so they sit on any backdrop; when the
 ## painted props exist (assets/arenas/props/*.png, ARENA_BRIEF.md) they replace the silhouettes, and a brazier and a
-## skull pile join in.
-const PROPS := "res://assets/arenas/props/"
-## Arena lights only reach canvas items on this layer: the backdrop, board and river (not cards or UI).
-const LIGHT_MASK := 2
+## skull pile join in. The river itself is the battle view's water shader (divider kind "river").
 
 var _boat_faces_right := false
-var view: Node2D ## the battle view (for ripples and sounds)
-var V := Vector2(1920, 1080)
-var river_y := 472.0
-var ky := 1.0
 
 var boat: Node2D
 var _lantern: Sprite2D
@@ -27,8 +20,6 @@ var _bell_body: Node2D
 var _bell_swing := 0.0
 var _bell_vel := 0.0
 
-var _t := 0.0
-
 var brazier: Node2D
 var _flame: CPUParticles2D
 var _flare := 0.0
@@ -37,8 +28,9 @@ var skulls: Node2D
 var _rattle := 0.0
 
 
-func setup(p_view: Node2D) -> ArenaAcheron:
+func setup(p_view: Node2D, p_arena: Dictionary = {}) -> ArenaProps:
 	view = p_view
+	arena = p_arena
 	_build_boat()
 	_build_bell()
 	if ResourceLoader.exists(PROPS + "brazier.png"):
@@ -65,12 +57,6 @@ func _hide_silhouette(node: Node, keep: Array) -> void:
 	for c in node.get_children():
 		if c is CanvasItem and not keep.has(c):
 			(c as CanvasItem).visible = false
-
-
-func _add_mat() -> CanvasItemMaterial:
-	var m := CanvasItemMaterial.new()
-	m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	return m
 
 
 # ---------------------------------------------------------------- boat
@@ -218,19 +204,6 @@ func _build_brazier() -> void:
 	brazier.add_child(_brazier_light)
 
 
-## A warm 2D light. It only touches the arena layer (cards and UI live on other canvas layers), and it reads the
-## board's normal map when one is set.
-func _light(pos: Vector2, color: Color, energy: float, size: float) -> PointLight2D:
-	var l := PointLight2D.new()
-	l.texture = UI.dot_texture()
-	l.texture_scale = size * 4.0
-	l.color = color
-	l.energy = energy
-	l.height = 60.0
-	l.position = pos
-	l.range_item_cull_mask = LIGHT_MASK
-	return l
-
 # ---------------------------------------------------------------- layout / update
 
 ## `anchors` (screen positions from the arena scene's sockets) override the edge-anchored defaults.
@@ -316,3 +289,13 @@ func touch(p: Vector2) -> bool:
 		view.shake(4.0)
 		return true
 	return false
+
+
+func toy_points() -> Array[Vector2]:
+	var out: Array[Vector2] = [bell.position + Vector2(-10, 0)]
+	if brazier != null:
+		out.append(brazier.position)
+	if skulls != null:
+		out.append(skulls.position)
+	out.append(boat.position + Vector2(0, -20))
+	return out
