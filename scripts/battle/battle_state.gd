@@ -623,7 +623,7 @@ func _damage(t: Unit, amount: int, source: Unit, src: String = "") -> int:
 			t.dead = true
 			_emit({"t": "venom", "uid": t.uid, "source": source.uid})
 		if source.has("drain"):
-			_heal(sides[source.side].hero, amount)
+			_heal(sides[source.side].hero, amount, "drain")
 	return amount
 
 
@@ -676,6 +676,7 @@ func _cleanup() -> void:
 					r.keywords.erase("rebirth")
 					r.health = 1
 					_emit_status(r)
+					_emit({"t": "rebirth", "uid": r.uid}) # view only: the rising flame
 			if u.silenced:
 				continue
 			for e in CardDB.card(u.id).get("effects", []):

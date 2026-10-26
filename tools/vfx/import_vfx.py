@@ -26,7 +26,13 @@ NAMES = ["flame_tongue", "fireball", "lava_crack", "ice_shard", "frost_star", "v
          "rune_fire", "rune_ice", "rune_holy", "rune_shadow", "rune_venom", "rune_soul",
          "lightning", "thorn_vines", "thorn_spike", "pitch_splash", "flaming_arrow", "ground_fissure",
          "blood_column", "water_column", "sunburst", "shadow_burst", "fire_explosion",
-         "heal_swirl", "holy_shield", "buff_aura", "snowflake", "wind_ribbon"]
+         "heal_swirl", "holy_shield", "buff_aura", "snowflake", "wind_ribbon",
+         # third batch: legendary signatures and keyword / action moments
+         "leg_nicholas", "leg_capaneus", "leg_old_man_crete", "leg_malacoda", "leg_nimrod", "leg_typhon",
+         "leg_ruggieri", "leg_alberigo", "leg_lucifer", "leg_homer", "leg_cato", "leg_beatrice", "leg_achilles",
+         "leg_semiramis", "leg_caesar", "leg_francesca", "leg_ugolino", "leg_minos",
+         "drain_siphon", "rebirth_flare", "venom_fangs", "ward_shatter", "ice_encase", "silence_lock",
+         "trigger_spark", "draw_glow", "mana_burst", "hero_death", "card_burn", "summon_pillar"]
 
 
 def fetch(name: str) -> bytes | None:

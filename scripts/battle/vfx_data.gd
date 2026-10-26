@@ -71,6 +71,17 @@ const RUNE_ART := {
 	"soul": "vfx_rune_soul", "word": "vfx_rune_soul", "water": "vfx_rune_soul",
 }
 
+## Each legendary's signature sprite for its entrance (assets/vfx/vfx_leg_*.png).
+const LEGEND_ART := {
+	"cd_nicholas_iii": "vfx_leg_nicholas", "cd_capaneus": "vfx_leg_capaneus",
+	"cd_old_man_crete": "vfx_leg_old_man_crete", "ih_malacoda": "vfx_leg_malacoda", "ih_nimrod": "vfx_leg_nimrod",
+	"ih_typhon": "vfx_leg_typhon", "mc_ruggieri": "vfx_leg_ruggieri", "mc_alberigo": "vfx_leg_alberigo",
+	"mc_lucifer": "vfx_leg_lucifer", "pj_homer": "vfx_leg_homer", "pj_cato": "vfx_leg_cato",
+	"pj_beatrice": "vfx_leg_beatrice", "uh_achilles": "vfx_leg_achilles", "uh_semiramis": "vfx_leg_semiramis",
+	"uh_caesar": "vfx_leg_caesar", "francesca": "vfx_leg_francesca", "ugolino": "vfx_leg_ugolino",
+	"minos": "vfx_leg_minos",
+}
+
 ## A card's school when data/vfx.json does not name one.
 const CIRCLE_SCHOOL := {
 	"dark_wood": "thorn", "ante_inferno": "holy", "limbo": "soul", "lust": "wind", "gluttony": "water",

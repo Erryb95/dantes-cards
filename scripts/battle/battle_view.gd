@@ -751,6 +751,7 @@ func _present(ev: Dictionary) -> void:
 			t.parallel().tween_property(c, "scale", Vector2(0.8, 0.8), 0.4)
 			await t.finished
 			Sfx.play("thunder", -16.0, 1.4)
+			Vfx.keyword(self, c, "burn")
 			await c.burn_away(0.8)
 		"fatigue":
 			var h: HeroView = heroes[ev.side]
@@ -799,6 +800,7 @@ func _present(ev: Dictionary) -> void:
 			var m = unit_views.get(ev.uid)
 			if m is MinionView:
 				m.break_ward()
+				Vfx.keyword(self, m, "ward")
 				Fx.flash(fx_layer, "ward_bubble", m.position, 260.0, 0.4, Color.WHITE, 0.0)
 				Fx.burst(fx_layer, m.position, Color(1.0, 0.9, 0.5), 36, 340.0, 0.5, 9.0, 0.0)
 				Fx.sparks(fx_layer, m.position, Color(1.0, 0.9, 0.5), 16)
@@ -810,10 +812,14 @@ func _present(ev: Dictionary) -> void:
 			var m = unit_views.get(ev.uid)
 			if m != null:
 				Fx.flash(fx_layer, "venom_drops", m.position, 240.0, 0.6)
+				Vfx.keyword(self, m, "venom")
 				Fx.burst(fx_layer, m.position, Color(0.35, 1.0, 0.25), 30, 200.0, 0.7, 11.0, 100.0)
 				m.flash(Color(0.3, 1.0, 0.2))
 		"death":
 			await _on_death(ev)
+		"rebirth":
+			Vfx.keyword(self, unit_views.get(ev.uid), "rebirth")
+			await _wait(0.2)
 		"bounce":
 			await _on_bounce(ev)
 		"projectile":
@@ -843,6 +849,7 @@ func _present(ev: Dictionary) -> void:
 			_last_aoe = ""
 			if tm != null:
 				_pop(tm, 1.15)
+				Vfx.keyword(self, tm, "trigger")
 				Fx.burst(fx_layer, tm.position, UI.GOLD, 16, 160.0, 0.5, 8.0, 0.0)
 				Sfx.play("tick", -8.0, 0.8)
 			await _wait(0.25)
@@ -899,6 +906,7 @@ func _on_draw(ev: Dictionary) -> void:
 		var f := c.create_tween()
 		f.tween_property(c, "scale:x", 0.0, 0.08 / _speed())
 		f.tween_callback(c.set_face_up.bind(true))
+		f.tween_callback(Vfx.draw_glow.bind(self, mid))
 		f.tween_property(c, "scale:x", 0.75, 0.08 / _speed())
 		await f.finished
 		await _wait(0.1)
@@ -1119,6 +1127,7 @@ func _on_summon(ev: Dictionary) -> void:
 		Fx.summon(fx_layer, m.position + Vector2(0, MinionView.H * 0.32), UI.GOLD, 680.0, 1.8, 1.0)
 		Fx.flash(fx_layer, "holy_light", m.position, 700.0, 1.0, Color(1, 0.85, 0.6), 0.2)
 		Fx.burst(fx_layer, m.position, UI.GOLD, 70, 520.0, 1.2, 14.0, 120.0)
+		Vfx.legendary(self, m, snap.id)
 		_screen_flash(Color(1.0, 0.75, 0.3), 0.35)
 		Sfx.play("thunder", -8.0, 0.9)
 		await _legendary_cutin(snap.id)
@@ -1280,6 +1289,7 @@ func _on_game_over(ev: Dictionary) -> void:
 		Sfx.play("thunder", 0.0, 0.7)
 		Fx.burst(fx_layer, h.position, UI.EMBER, 120, 700.0, 1.6, 16.0, 200.0)
 		Fx.shockwave(fx_layer, h.position, UI.EMBER, 1400.0, 1.0)
+		Vfx.hero_death(self, h)
 		_screen_flash(Color(1, 0.5, 0.2), 0.6)
 		await h.burn_away(1.4)
 	Game.record_result(ev.winner)

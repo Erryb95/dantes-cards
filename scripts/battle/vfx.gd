@@ -141,6 +141,11 @@ static func mass(view, ev: Dictionary, follow: bool) -> void:
 static func heal(view, v: Node2D, src: String) -> bool:
 	if src == "":
 		return false
+	if src == "drain":
+		# Life siphoned back to the hero: a red ribbon twisting up and blood-red motes drawn in.
+		_rise(view, v.position + Vector2(0, 40), VfxData.SCHOOLS.blood, ["vfx_drain_siphon", "k_trace_03"], 240.0)
+		Fx.gather(view.fx_layer, v.position, Color(1.0, 0.25, 0.2), 180.0, 0.3 / view._speed(), 18)
+		return true
 	var p := VfxData.profile(src)
 	var s := VfxData.school(p)
 	var fx: Node2D = view.fx_layer
@@ -250,6 +255,77 @@ static func death(view, m: Node2D, id: String) -> void:
 	if p.big:
 		Fx.shockwave(fx, pos, s.color, 360.0 * big, 0.6)
 		view.shake(6.0)
+
+
+## A legendary's own entrance on top of the shared one (cut-in, golden circle): its signature sprite blooms
+## behind it in its school's colours, with a shockwave, a screen tint and a school flourish.
+static func legendary(view, m: Node2D, id: String) -> void:
+	var p := VfxData.profile(id)
+	var s := VfxData.school(p)
+	var fx: Node2D = view.fx_layer
+	var k: float = view._speed()
+	var art: String = VfxData.LEGEND_ART.get(id, "")
+	var sig := _sprite(fx, [art, "vfx_summon_pillar", s.impact[0]], m.position, 620.0, Color.WHITE, 3)
+	if sig != null:
+		var full := sig.scale
+		sig.scale = full * 0.3
+		sig.modulate.a = 0.0
+		var t := sig.create_tween().set_parallel(true)
+		t.tween_property(sig, "scale", full, 0.5 / k).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+		t.tween_property(sig, "modulate:a", 1.0, 0.2 / k)
+		t.tween_property(sig, "rotation", 0.25, 1.6 / k)
+		t.tween_property(sig, "modulate:a", 0.0, 0.7 / k).set_delay(0.9 / k)
+		t.chain().tween_callback(sig.queue_free)
+	Fx.shockwave(fx, m.position, s.color, 700.0, 0.8)
+	view._screen_flash(s.color, 0.3)
+	_motes(view, m.position, s, 60, 520.0, 14.0, 1.3, 180.0, -120.0 if s.rise else 300.0)
+	match p.school:
+		"ice":
+			_sparks(view, m.position, s, 30)
+			Sfx.play("ice", -6.0, 0.7)
+		"fire", "pitch":
+			for i in 6:
+				_after(view, 0.06 * i, Vfx._drop.bind(view, m.position + Vector2(randf_range(-260, 260),
+					randf_range(-40, 60)), s, p, null, "damage"))
+		"wind":
+			Fx.flash(fx, "k_twirl_02", m.position, 520.0, 0.9, s.hot, 4.0)
+			Sfx.play("gust", -4.0, 0.8)
+		"holy", "word", "gold":
+			_beam(view, m.position, s, 2.2)
+		"stone", "blood":
+			Fx.landing(view.bg_layer, m.position + Vector2(0, 40), s.color, 620.0, 1.0)
+			view.shake(10.0)
+
+
+## Keyword and trigger moments: a ward shattering, venom biting, a minion reborn, a turn effect waking, a card
+## burned from a full hand.
+static func keyword(view, n: Node2D, kind: String) -> void:
+	if not is_instance_valid(n):
+		return
+	var fx: Node2D = view.fx_layer
+	match kind:
+		"ward":
+			_paint(fx, ["vfx_ward_shatter"], n.position, 300.0, 0.5, Color.WHITE)
+		"venom":
+			_paint(fx, ["vfx_venom_fangs"], n.position, 220.0, 0.5, Color.WHITE)
+		"rebirth":
+			_rise(view, n.position + Vector2(0, 50), VfxData.SCHOOLS.holy, ["vfx_rebirth_flare", "k_flame_05"], 260.0)
+			_motes(view, n.position + Vector2(0, 50), VfxData.SCHOOLS.holy, 30, 260.0, 12.0, 1.0, 50.0, -200.0)
+			Sfx.play("magic", -8.0, 1.2)
+		"trigger":
+			_paint(fx, ["vfx_trigger_spark", "k_star_07"], n.position, 200.0, 0.4, UI.GOLD)
+		"burn":
+			_paint(fx, ["vfx_card_burn", "fire_burst"], n.position, 340.0, 0.7, Color.WHITE)
+
+
+## A drawn card catching the light as it turns face up.
+static func draw_glow(view, pos: Vector2) -> void:
+	_paint(view.fx_layer, ["vfx_draw_glow"], pos, 340.0, 0.45, Color.WHITE)
+
+
+## The losing hero bursting apart at the end of the match.
+static func hero_death(view, h: Node2D) -> void:
+	_paint(view.fx_layer, ["vfx_hero_death", "vfx_fire_explosion", "fire_burst"], h.position, 760.0, 1.2, Color.WHITE)
 
 
 ## The motes a minion's school throws while it drops onto the board (the landing itself keeps the rarity colour).
@@ -878,6 +954,7 @@ static func _twinkle(view, pos: Vector2, s: Dictionary, radius: float, amount: i
 static func _mana_stream(view, pos: Vector2, s: Dictionary, side: int) -> void:
 	var tray = view.mana_views[side]
 	var to: Vector2 = tray.position if tray != null else pos + Vector2(0, 300)
+	_after(view, 0.4, func(): _paint(view.fx_layer, ["vfx_mana_burst"], to, 260.0, 0.6, Color.WHITE))
 	for i in 3:
 		_after(view, 0.08 * i, func(): _missile(view, pos, to, s, 0.4 / view._speed(), 0.3, 20.0, 60.0, false))
 
