@@ -46,8 +46,11 @@ func _load() -> void:
 		packs_since_legendary = cfg.get_value("collection", "pity", 0)
 		opened_total = cfg.get_value("collection", "opened", 0)
 		decks = cfg.get_value("collection", "decks", [])
-	# The starter decks are always owned (they can grow between versions).
+	# The starter decks are always owned (they can grow between versions). The other preconstructed decks are
+	# played from Choose your path without owning their cards.
 	for d in CardDB.decks():
+		if not d.get("starter", false):
+			continue
 		for id in d.cards:
 			owned[id] = maxi(int(owned.get(id, 0)), int(d.cards[id]))
 	save()

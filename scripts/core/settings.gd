@@ -12,6 +12,7 @@ var subtitles := true ## subtitles of the intro narration
 var intro_seen := false ## the opening cinematic has been played (or skipped) once
 var difficulty := 0 ## the opponent's BattleAI.Level: 0 Easy, 1 Medium, 2 Hard (new players start on Easy)
 var coach_seen: Array = [] ## ids of the first-game tips already shown (scripts/battle/coach.gd)
+var deck_choice := {} ## class -> id of the preconstructed deck last picked on Choose your path
 
 
 func _ready() -> void:
@@ -39,6 +40,7 @@ func load_settings() -> void:
 		difficulty = 0 if cfg.get_value("game", "easy_opponent") else 2
 	difficulty = clampi(int(cfg.get_value("game", "difficulty", difficulty)), 0, DIFFICULTY_NAMES.size() - 1)
 	coach_seen = cfg.get_value("game", "coach_seen", coach_seen)
+	deck_choice = cfg.get_value("game", "deck_choice", deck_choice)
 
 
 func save() -> void:
@@ -51,6 +53,7 @@ func save() -> void:
 	cfg.set_value("game", "intro_seen", intro_seen)
 	cfg.set_value("game", "difficulty", difficulty)
 	cfg.set_value("game", "coach_seen", coach_seen)
+	cfg.set_value("game", "deck_choice", deck_choice)
 	cfg.save(PATH)
 
 

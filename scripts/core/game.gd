@@ -9,8 +9,9 @@ const PACKS := "res://scenes/pack_opening.tscn"
 const DECK_BUILDER := "res://scenes/deck_builder.tscn"
 const INTRO := "res://scenes/intro.tscn"
 
-var player_deck := "pilgrim"
-var enemy_deck := "ferry"
+var player_deck := "pilgrim" ## the player's class
+var enemy_deck := "ferry" ## the opponent's class
+var enemy_deck_id := "" ## the preconstructed deck (data/decks.json id) the opponent plays
 var player_cards: Array[String] = CardDB.deck_list("pilgrim")
 var player_hero := "dante"
 var enemy_cards: Array[String] = CardDB.deck_list("ferry")
@@ -99,21 +100,31 @@ func _snap(path: String) -> void:
 	get_tree().quit()
 
 
-## Starts a battle with a starter deck (by id) against the other class's starter deck.
+## Starts a battle with a preconstructed deck (by id) against a random preconstructed deck of the other class.
 func start_battle(deck_id: String) -> void:
 	var d := CardDB.deck(deck_id)
-	start_with(CardDB.deck_list(deck_id), d.hero, "ferry" if d.hero == "dante" else "pilgrim")
+	start_with(CardDB.deck_list(deck_id), d.hero, "ferry" if CardDB.deck_class(d) == "pilgrim" else "pilgrim")
 
 
-## Starts a battle with any card list; the opponent plays the starter deck `enemy_id`.
-func start_with(cards: Array, hero: String, enemy_id: String) -> void:
+## Starts a battle with any card list; the opponent plays a random preconstructed deck of class `enemy_cls`.
+func start_with(cards: Array, hero: String, enemy_cls: String) -> void:
 	player_cards.assign(cards)
 	player_hero = hero
 	player_deck = "pilgrim" if hero == "dante" else "ferry"
-	enemy_deck = enemy_id
-	enemy_cards = CardDB.deck_list(enemy_id)
-	enemy_hero = CardDB.deck(enemy_id).hero
+	enemy_deck = enemy_cls
+	enemy_deck_id = pick_enemy_deck(enemy_cls)
+	enemy_cards = CardDB.deck_list(enemy_deck_id)
+	enemy_hero = CardDB.deck(enemy_deck_id).hero
 	go(BATTLE)
+
+
+## A random preconstructed deck of class `cls`, never the one faced last time when there is a choice.
+func pick_enemy_deck(cls: String) -> String:
+	var pool: Array[String] = []
+	for d in CardDB.class_decks(cls):
+		if d.id != enemy_deck_id or CardDB.class_decks(cls).size() == 1:
+			pool.append(str(d.id))
+	return pool[randi() % pool.size()] if not pool.is_empty() else cls
 
 
 func record_result(winner: int) -> void:

@@ -63,6 +63,17 @@ static func deck(id: String) -> Dictionary:
 	return {}
 
 
+## A preconstructed deck's class ("pilgrim" or "ferry").
+static func deck_class(d: Dictionary) -> String:
+	return str(d.get("cls", d.get("id", "")))
+
+
+## The preconstructed decks of a class, in file order (the first one is the class's original starter).
+static func class_decks(cls: String) -> Array:
+	_ensure()
+	return _decks.filter(func(d): return deck_class(d) == cls)
+
+
 static func arenas() -> Array:
 	_ensure()
 	return _arenas
