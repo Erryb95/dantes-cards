@@ -3,32 +3,45 @@ extends RefCounted
 ## The opponent: returns one action at a time so the view can animate between steps.
 ## Action: {"do": "play", "uid", "target", "index"} | {"do": "attack", "attacker", "target"} |
 ##         {"do": "power", "target"} | {"do": "end"}
-## Levels: EASY follows fixed rules (the most expensive card first, simple trades); NORMAL tries every legal move
-## on a copy of the battle, then plays the best few out to the end of the turn and keeps the line that leaves the
-## best position (see `evaluate`). It reads only what a player could see: its own hand, the board, counts.
+## Levels (Settings.difficulty uses the same numbers):
+## - EASY follows fixed rules (the most expensive card first, simple trades).
+## - HARD tries every legal move on a copy of the battle, then plays the best few out to the end of the turn and
+##   keeps the line that leaves the best position (see `evaluate`).
+## - MEDIUM runs the same search shallower and noisier: fewer lines played out and a random error on how it scores
+##   them, so it misses some good turns. It never misses a win that a single move gives it.
+## It reads only what a player could see: its own hand, the board, counts.
 
-enum Level { EASY, NORMAL }
+enum Level { EASY, MEDIUM, HARD }
 
-const ROLLOUTS := 8 ## candidate first moves that get played out to the end of the turn
+const ROLLOUTS := 8 ## Hard: candidate first moves that get played out to the end of the turn
+const MEDIUM_ROLLOUTS := 2
+const MEDIUM_NOISE := 1.5 ## Medium: standard deviation of the error added to each line's score
 
 var side := 1
-var level := Level.NORMAL
+var level := Level.HARD
+var rollouts := ROLLOUTS ## 0: score each move one step ahead only
+var noise := 0.0
 var abort := false ## set from the main thread to stop a search early (the battle is closing)
 var _seed := 0 ## seeds each simulated copy, so the worker thread never touches the global RNG
+var _rng := RandomNumberGenerator.new() ## Medium's scoring error; reseeded from the battle on every decision
 
 
-func _init(p_side: int = 1, p_level: Level = Level.NORMAL) -> void:
+func _init(p_side: int = 1, p_level: Level = Level.HARD) -> void:
 	side = p_side
 	level = p_level
+	if level == Level.MEDIUM:
+		rollouts = MEDIUM_ROLLOUTS
+		noise = MEDIUM_NOISE
 
 
 func next_action(st: BattleState) -> Dictionary:
 	if st.winner != -1 or st.current != side:
 		return {"do": "end"}
-	if level == Level.NORMAL:
-		_seed = int(st.rng.state)
-		return _search(st)
-	return _rules(st)
+	if level == Level.EASY:
+		return _rules(st)
+	_seed = int(st.rng.state)
+	_rng.seed = _seed
+	return _search(st)
 
 
 # ---------------------------------------------------------------- search
@@ -91,8 +104,10 @@ func _search(st: BattleState) -> Dictionary:
 	scored.sort_custom(func(x, y): return x[0] > y[0])
 	var best: Dictionary = {}
 	var best_v := base + 0.25
-	for i in mini(ROLLOUTS, scored.size()):
-		var v := _rollout(scored[i][2])
+	for i in scored.size() if rollouts == 0 else mini(rollouts, scored.size()):
+		var v: float = scored[i][0] if rollouts == 0 else _rollout(scored[i][2])
+		if noise > 0.0:
+			v += _rng.randfn(0.0, noise)
 		if v > best_v:
 			best_v = v
 			best = scored[i][1]

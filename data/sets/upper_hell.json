@@ -567,7 +567,7 @@
    "set": "neutral",
    "type": "spell",
    "rarity": "common",
-   "cost": 2,
+   "cost": 1,
    "effects": [
     {
      "on": "play",
@@ -625,7 +625,7 @@
    "set": "neutral",
    "type": "spell",
    "rarity": "common",
-   "cost": 2,
+   "cost": 1,
    "effects": [
     {
      "on": "play",

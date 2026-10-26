@@ -23,7 +23,20 @@ func _ready() -> void:
 		where += "  ·  " + str(arena.circle)
 	var sub := UI.label("Next arena: " + where, 30, "italic", UI.BONE, 5, Color.BLACK)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(sub)
+	# The opponent's strength sits beside the arena line; a click steps Easy > Medium > Hard (saved at once).
+	var head := HBoxContainer.new()
+	head.alignment = BoxContainer.ALIGNMENT_CENTER
+	head.add_theme_constant_override("separation", 36)
+	head.add_child(sub)
+	var diff := UI.button("Opponent: " + Settings.DIFFICULTY_NAMES[Settings.difficulty], 440, 60)
+	diff.pressed.connect(func():
+		Settings.difficulty = (Settings.difficulty + 1) % Settings.DIFFICULTY_NAMES.size()
+		Settings.save()
+		diff.text = "Opponent: " + Settings.DIFFICULTY_NAMES[Settings.difficulty]
+		diff.add_theme_font_size_override("font_size", 34)
+		UI.fit_text(diff))
+	head.add_child(diff)
+	root.add_child(head)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 60)
