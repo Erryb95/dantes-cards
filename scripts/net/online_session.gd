@@ -54,6 +54,10 @@ func _ready() -> void:
 	client.match_data.connect(_on_match_data)
 	client.socket_closed.connect(_on_socket_closed)
 	client.channel_message.connect(_on_channel_message)
+	_load_sync_meta()
+	if cloud_on():
+		get_tree().auto_accept_quit = false # closing the window first saves to the account (_notification)
+		_sync_t = 2.0 # the first sync shortly after launch
 
 
 func configured() -> bool:
@@ -141,6 +145,10 @@ func sign_in_with(provider: String, token_value: String) -> String:
 		var a := await client.authenticate_provider(provider, token_value)
 		if a.has("error"):
 			return str(a.error)
+		# Another account (the provider's own): its save and this install's are merged at the next sync step.
+		_need_login_sync = true
+		_synced = ""
+		_sync_t = 0.5
 		var fresh := _new_device_id()
 		var l := await client.link_device(fresh)
 		if l.has("error"):
@@ -162,6 +170,8 @@ func play_as_guest() -> void:
 	_save_device_id(_new_device_id())
 	client.close_socket()
 	client.token = ""
+	_synced = ""
+	_sync_t = 0.5 # the new guest account gets this install's progress
 
 
 ## The name the opponent sees: the profile's name when there is one, else "Pilgrim" and four digits of the device.
@@ -183,6 +193,18 @@ func avatar_url() -> String:
 func ensure_connected() -> String:
 	if not configured():
 		return "Online play is not configured on this copy of the game."
+	while _connecting: # another caller is signing in already: share its result
+		await get_tree().process_frame
+	_connecting = true
+	var err := await _connect_now()
+	_connecting = false
+	return err
+
+
+var _connecting := false
+
+
+func _connect_now() -> String:
 	if not _endpoint_picked:
 		await _pick_endpoint()
 	if not client.session_fresh():
@@ -191,6 +213,7 @@ func ensure_connected() -> String:
 		if r.has("error"):
 			_endpoint_picked = false # the next try looks at both addresses again
 			return str(r.error)
+		_need_login_sync = true # a sign-in: merge with the account's save
 		await client.set_display_name(display_name(), avatar_url())
 	if not client.socket_open():
 		var s := await client.connect_socket()
@@ -443,6 +466,258 @@ func _on_channel_message(m: Dictionary) -> void:
 		"content": m.get("content", {})})
 
 
+# ---------------------------------------------------------------- cloud save (the progress follows the account)
+
+signal sync_status_changed(text: String)
+signal progress_applied ## the account's save replaced or completed this install's progress (menus refresh)
+
+const SAVE_COLLECTION := "dantes_save"
+const SAVE_KEY := "progress"
+const SYNC_EVERY := 10.0 ## seconds between checks for changes (so at most one write every 10 s)
+const RETRY_OFFLINE := 60.0
+
+var sync_state := "" ## "", "syncing", "saved", "offline"
+var _server_version := ""
+var _server_blob := {} ## the account's save as last read or written
+var _synced := "" ## ProgressMerge.canon of this install's data when it was last in step with the account
+var _last_local := "" ## canon of the local data at the last check
+var _local_changed_ms := 0 ## when the local progress last changed (saved_at_ms of the local blob)
+var _need_login_sync := false
+var _sync_t := 0.0
+var _syncing := false
+var _quitting := false
+var cloud_forced := false ## tests: sync even in a debug run (apply then writes no file)
+var last_applied := {} ## tests: the last blob apply() would have put into the game
+
+
+## The cloud save runs for real players with a configured server; tests and tooling never touch an account's save.
+func cloud_on() -> bool:
+	return configured() and (cloud_forced or not Game.debug_run())
+
+
+func sync_text() -> String:
+	match sync_state:
+		"saved":
+			return "Saved to your account"
+		"offline":
+			return "Offline: will sync later"
+		"syncing":
+			return "Saving to your account..."
+	return ""
+
+
+func _set_sync(s: String) -> void:
+	if s != sync_state:
+		sync_state = s
+		sync_status_changed.emit(sync_text())
+
+
+func _sync_meta_path() -> String:
+	return "user://cloud_sync%s.cfg" % _suffix()
+
+
+func _load_sync_meta() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(_sync_meta_path()) == OK:
+		_local_changed_ms = int(cfg.get_value("sync", "local_changed_ms", 0))
+		_last_local = str(cfg.get_value("sync", "last_local", ""))
+
+
+func _save_sync_meta() -> void:
+	if Game.debug_run():
+		return
+	var cfg := ConfigFile.new()
+	cfg.set_value("sync", "local_changed_ms", _local_changed_ms)
+	cfg.set_value("sync", "last_local", _last_local)
+	cfg.save(_sync_meta_path())
+
+
+static func _now_ms() -> int:
+	return int(Time.get_unix_time_from_system() * 1000.0)
+
+
+## This install's progress as the account's save blob.
+func gather() -> Dictionary:
+	var data := {
+		"collection": {"owned": Collection.owned.duplicate(), "obols": Collection.obols, "packs": Collection.packs,
+			"pity": Collection.packs_since_legendary, "opened": Collection.opened_total,
+			"decks": Collection.decks.duplicate(true)},
+		"record": {"wins": int(Game.stats.wins), "losses": int(Game.stats.losses),
+			"class_games": Game.class_games.duplicate()},
+		"online": record(),
+		"profile": {"name": Settings.player_name, "avatar": Settings.player_avatar},
+		"settings": {"lessons": Settings.lessons.duplicate(), "lessons_offered": Settings.lessons_offered,
+			"intro_seen": Settings.intro_seen, "coach_seen": Settings.coach_seen.duplicate(),
+			"difficulty": Settings.difficulty, "deck_choice": Settings.deck_choice.duplicate(true),
+			"fast_animations": Settings.fast_animations, "subtitles": Settings.subtitles}}
+	return ProgressMerge.blob(data, _local_changed_ms)
+
+
+## Puts a save blob's progress into the game and its files (a backup of each file is kept first: <file>.bak).
+## In a debug run (tests) nothing is written: the blob is only kept in `last_applied`.
+func apply(b: Dictionary) -> void:
+	if Game.debug_run():
+		last_applied = b.duplicate(true)
+		progress_applied.emit()
+		return
+	for f in ["user://collection.cfg", "user://settings.cfg", "user://progress.cfg", _record_path()]:
+		if FileAccess.file_exists(f):
+			DirAccess.copy_absolute(ProjectSettings.globalize_path(f), ProjectSettings.globalize_path(f + ".bak"))
+	var d: Dictionary = b.get("data", {})
+	var col: Dictionary = d.get("collection", {})
+	var owned := {}
+	for id in col.get("owned", {}):
+		if not CardDB.card(str(id)).is_empty():
+			owned[str(id)] = maxi(0, int(col.owned[id]))
+	Collection.owned = owned
+	Collection.obols = maxi(0, int(col.get("obols", Collection.obols)))
+	Collection.packs = maxi(0, int(col.get("packs", Collection.packs)))
+	Collection.packs_since_legendary = maxi(0, int(col.get("pity", 0)))
+	Collection.opened_total = maxi(0, int(col.get("opened", 0)))
+	var decks := []
+	for dk in col.get("decks", []):
+		var clean: Dictionary = Collection._clean_deck(dk)
+		if not clean.is_empty():
+			decks.append(clean)
+	Collection.decks = decks
+	Collection.save()
+	var rec: Dictionary = d.get("record", {})
+	Game.stats = {"wins": maxi(0, int(rec.get("wins", 0))), "losses": maxi(0, int(rec.get("losses", 0)))}
+	var cg := {}
+	for c in rec.get("class_games", {}):
+		cg[str(c)] = int(rec.class_games[c])
+	Game.class_games = cg
+	Game._save_progress("stats", Game.stats)
+	Game._save_progress("class_games", Game.class_games)
+	var onl: Dictionary = d.get("online", {})
+	var cfg := ConfigFile.new()
+	for k in ["wins", "losses", "draws"]:
+		cfg.set_value("record", k, maxi(0, int(onl.get(k, 0))))
+	cfg.save(_record_path())
+	var prof: Dictionary = d.get("profile", {})
+	Settings.player_name = str(prof.get("name", Settings.player_name))
+	Settings.player_avatar = str(prof.get("avatar", Settings.player_avatar))
+	var st: Dictionary = d.get("settings", {})
+	if st.get("lessons") is Dictionary:
+		Settings.lessons = st.lessons
+	Settings.lessons_offered = bool(st.get("lessons_offered", Settings.lessons_offered))
+	Settings.intro_seen = bool(st.get("intro_seen", Settings.intro_seen))
+	if st.get("coach_seen") is Array:
+		Settings.coach_seen = st.coach_seen
+	Settings.difficulty = clampi(int(st.get("difficulty", Settings.difficulty)), 0, Settings.DIFFICULTY_NAMES.size() - 1)
+	if st.get("deck_choice") is Dictionary:
+		Settings.deck_choice = st.deck_choice
+	Settings.fast_animations = bool(st.get("fast_animations", Settings.fast_animations))
+	Settings.subtitles = bool(st.get("subtitles", Settings.subtitles))
+	Settings.save()
+	progress_applied.emit()
+
+
+func _process(delta: float) -> void:
+	if not cloud_on() or _syncing:
+		return
+	_sync_t -= delta
+	if _sync_t > 0.0:
+		return
+	_sync_t = SYNC_EVERY
+	cloud_sync()
+
+
+## One sync step: notice local changes, sign in when needed, merge with the account's save after a sign-in, and
+## upload what the account does not have yet. Never blocks play: failures only set the status.
+func cloud_sync() -> void:
+	if _syncing or not cloud_on():
+		return
+	_syncing = true
+	var local := gather()
+	var now_canon := ProgressMerge.canon(local.data)
+	if now_canon != _last_local:
+		_last_local = now_canon
+		_local_changed_ms = _now_ms()
+		_save_sync_meta()
+		local.saved_at_ms = _local_changed_ms
+	if not client.session_fresh():
+		if await ensure_connected() != "":
+			_set_sync("offline")
+			_sync_t = RETRY_OFFLINE
+			_syncing = false
+			return
+	if _need_login_sync or _synced == "":
+		await _merge_with_account(local)
+	elif now_canon != _synced:
+		await _push(local)
+	_syncing = false
+
+
+## After a sign-in: read the account's save, merge it with this install's, apply what changed here, write what changed
+## there. A write refused because the save moved on meanwhile reads, merges and writes again (once).
+func _merge_with_account(local: Dictionary) -> void:
+	_set_sync("syncing")
+	for attempt in 2:
+		var got := await client.storage_read(SAVE_COLLECTION, SAVE_KEY)
+		if got.has("error"):
+			_set_sync("offline")
+			return
+		var server: Dictionary = got.get("value", {})
+		_server_version = str(got.get("version", ""))
+		_server_blob = server
+		var merged := ProgressMerge.merge(local, server)
+		if not ProgressMerge.same(merged, local):
+			apply(merged)
+			_last_local = ProgressMerge.canon(gather().data)
+			_local_changed_ms = int(merged.get("saved_at_ms", _now_ms()))
+			_save_sync_meta()
+		if not server.is_empty() and ProgressMerge.same(merged, server):
+			_synced = _last_local
+			_need_login_sync = false
+			_set_sync("saved")
+			return
+		var w := await client.storage_write(SAVE_COLLECTION, SAVE_KEY, merged, _server_version)
+		if not w.has("error"):
+			_server_version = str(w.version)
+			_server_blob = merged
+			_synced = _last_local
+			_need_login_sync = false
+			_set_sync("saved")
+			return
+		if not w.get("conflict", false):
+			_set_sync("offline")
+			return
+		local = gather() # someone else wrote meanwhile: read again and merge on top of it
+	_set_sync("offline")
+
+
+## Uploads this install's progress (it changed since the last sync), keeping what the account holds that this build
+## cannot show.
+func _push(local: Dictionary) -> void:
+	_set_sync("syncing")
+	var out := ProgressMerge.keep_foreign(local, _server_blob,
+		func(id: String) -> bool: return not CardDB.card(id).is_empty(),
+		func(cls: String) -> bool: return cls in CardDB.classes())
+	var w := await client.storage_write(SAVE_COLLECTION, SAVE_KEY, out, _server_version)
+	if w.has("error"):
+		if w.get("conflict", false):
+			await _merge_with_account(local)
+		else:
+			_set_sync("offline")
+		return
+	_server_version = str(w.version)
+	_server_blob = out
+	_synced = ProgressMerge.canon(local.data)
+	_set_sync("saved")
+
+
+## Quitting: one last upload when something changed (at most 3 s), then the game closes.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and cloud_on() and not _quitting:
+		_quitting = true
+		get_tree().create_timer(3.0).timeout.connect(func(): get_tree().quit())
+		if not _syncing and client.session_fresh():
+			_sync_t = SYNC_EVERY
+			await cloud_sync()
+		get_tree().quit()
+
+
 # ---------------------------------------------------------------- record (apart from the games against the AI)
 
 func _record_path() -> String:
@@ -460,6 +735,7 @@ func record() -> Dictionary:
 func record_result(outcome: String) -> void:
 	if Game.debug_run(): # screenshots and tests never touch the record
 		return
+	_sync_t = minf(_sync_t, 1.0) # a finished duel goes to the account soon
 	var cfg := ConfigFile.new()
 	cfg.load(_record_path())
 	var k := {"win": "wins", "loss": "losses"}.get(outcome, "draws") as String

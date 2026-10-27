@@ -266,6 +266,25 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
   provider plugs into the same hook: `OnlineSession.sign_in_with("steam", ticket)` links the identity to the guest
   account or moves the install onto that account (`NakamaClient.link_provider` / `authenticate_provider`); it only
   needs a Steam ticket source in place of `GoogleAuth`, plus the app id and publisher key on the server.
+- **Progress on the account (cloud save):** the account (guest or Google) keeps one storage object, collection
+  `dantes_save`, key `progress` (owner read/write only), value `{version, saved_at_ms, data}` with the collection
+  (owned copies, Obols, packs, pity, packs opened, custom decks), the AI record and games per class, the online
+  record, the profile name and avatar, and the settings that belong to the player (lessons, intro and coach tips seen,
+  difficulty, deck choice, fast animations, subtitles; never volumes, window, frame limit or vsync).
+  `OnlineSession.cloud_sync` runs 2 s after launch and then checks every 10 s (a finished duel within 1 s; at most one
+  write each 10 s), uploads only when the progress changed, and makes one last upload when the window closes
+  (at most 3 s). After every sign-in (launch, Google, a new guest) it reads the account's save and merges
+  (`scripts/net/progress_merge.gd`, `ProgressMerge.merge`, pure and unit-tested): an empty account takes this
+  install's; a fresh install takes the account's; otherwise the newer save wins field by field but nothing earned is
+  lost (cards united with the most copies, the larger packs / pity / opened / records, decks and lessons united).
+  Applying a merge first copies each save file to `<file>.bak`. Writes carry the version last read; a refused write
+  (someone else saved meanwhile) reads, merges and writes again. An upload keeps the account's cards and decks this
+  build does not know (`keep_foreign`), so an older build never erases a newer one's. Linking Google to the guest
+  keeps the same account, so the save goes with it; signing into a Google account that has its own save merges the
+  two. The status shows under the profile plaque ("Saved to your account" / "Offline: will sync later"); failures
+  never block play. Tests and debug runs never touch an account's save or the local files. **Limit:** the client
+  writes the save, so a cheater can edit it (Obols, cards); a server-authoritative economy (packs opened and Obols
+  granted by server RPCs) is the later fix, needed before any trading or ranked rewards.
 
 ## Adding content
 - **Card:** add an entry to `cards.json` and use it in a deck. Run `python tools/cards/art_jobs.py run`

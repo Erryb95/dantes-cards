@@ -151,6 +151,39 @@ func _take_session(body: Dictionary) -> void:
 	username = str(claims.get("usn", ""))
 
 
+## The signed-in user's storage object, {"value": Dictionary, "version": String}; {} when there is none; or {"error"}.
+func storage_read(collection: String, key: String) -> Dictionary:
+	var r := await http(HTTPClient.METHOD_POST, "/v2/storage",
+		{"object_ids": [{"collection": collection, "key": key, "user_id": user_id}]})
+	if r.has("error"):
+		return r
+	if int(r.code) != 200:
+		return {"error": "The account's save could not be read (%d)." % int(r.code)}
+	var objs: Array = r.body.get("objects", []) if r.body is Dictionary else []
+	if objs.is_empty():
+		return {}
+	var v: Variant = JSON.parse_string(str(objs[0].get("value", "{}")))
+	return {"value": v if v is Dictionary else {}, "version": str(objs[0].get("version", ""))}
+
+
+## Writes the signed-in user's storage object (owner read and write only). `version`: the one last read, so a write
+## over a newer save is refused ({"error", "conflict": true}); "" writes unconditionally. {"version"} on success.
+func storage_write(collection: String, key: String, value: Dictionary, version := "") -> Dictionary:
+	var obj := {"collection": collection, "key": key, "value": JSON.stringify(value), "permission_read": 1,
+		"permission_write": 1}
+	if version != "":
+		obj["version"] = version
+	var r := await http(HTTPClient.METHOD_PUT, "/v2/storage", {"objects": [obj]})
+	if r.has("error"):
+		return r
+	if int(r.code) != 200:
+		var msg := str(r.body.get("message", "")) if r.body is Dictionary else ""
+		return {"error": "The account's save could not be written (%d)." % int(r.code),
+			"conflict": int(r.code) in [400, 409, 412] and "version" in msg.to_lower()}
+	var acks: Array = r.body.get("acks", []) if r.body is Dictionary else []
+	return {"version": str(acks[0].get("version", "")) if not acks.is_empty() else ""}
+
+
 func set_display_name(display_name: String, avatar_url := "") -> Dictionary:
 	var body := {"display_name": display_name}
 	if avatar_url != "":

@@ -253,6 +253,23 @@ func _add_profile_plaque() -> void:
 		Sfx.play("ui_confirm", -6.0)
 		open_profile())
 	add_child(b)
+	# The cloud save's state in small letters under the plaque ("Saved to your account").
+	var sync := UI.label(Online.sync_text(), 18, "italic", Color(0.86, 0.8, 0.7), 3, ClassInfoPanel.SHADE)
+	sync.name = "SyncStatus"
+	sync.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	sync.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(sync) # goes with the plaque when it is rebuilt
+	sync.position = Vector2(0, b.custom_minimum_size.y + 2)
+	sync.size = Vector2(b.custom_minimum_size.x - 6, 26)
+	if not Online.sync_status_changed.is_connected(_on_sync_status):
+		Online.sync_status_changed.connect(_on_sync_status)
+		Online.progress_applied.connect(_add_profile_plaque)
+
+
+func _on_sync_status(text: String) -> void:
+	var l := get_node_or_null("ProfilePlaque/SyncStatus") as Label
+	if l != null:
+		l.text = text
 
 
 ## Opens the profile panel over the title screen (Esc, back and Back close it).

@@ -2016,10 +2016,55 @@ func _test_online_mirror(games: int) -> void:
 	ds.push(DuelSync.S_TURN, {"seq": 2})
 	ok(ds.pop().is_empty(), "online: an old seq is dropped")
 	ok(DuelSync.parse_deck("{\"cls\":\"nobody\",\"cards\":[]}").is_empty(), "online: an unknown class is refused")
+	_test_progress_merge()
 	# Chat text is plain: no control characters, no BBCode tags, at most 120 characters.
 	ok(ChatText.clean("hi\u0007 [b]there[/b]\n[color=red]x[/color]") == "hi there x", "chat: control chars and BBCode go")
 	ok(ChatText.clean("a".repeat(300)).length() == ChatText.MAX_LEN, "chat: 120 characters at most")
 	ok(ChatText.clean("  [3 cards] ok ") == "[3 cards] ok", "chat: brackets that are not tags stay")
+
+
+## The cloud save's merge rules (ProgressMerge): pure functions, no network.
+func _test_progress_merge() -> void:
+	var fresh := ProgressMerge.blob({"collection": {"owned": {"a": 2}, "obols": 0, "packs": 3, "pity": 0, "opened": 0,
+		"decks": []}, "record": {"wins": 0, "losses": 0}, "online": {}, "profile": {"name": ""}, "settings": {}}, 100)
+	var played := ProgressMerge.blob({"collection": {"owned": {"a": 2, "b": 1}, "obols": 300, "packs": 1, "pity": 7,
+		"opened": 5, "decks": [{"name": "Mine", "cls": "pilgrim", "cards": {"a": 2}}]},
+		"record": {"wins": 4, "losses": 2, "class_games": {"pilgrim": 6}}, "online": {"wins": 1, "losses": 0, "draws": 0},
+		"profile": {"name": "Enrico", "avatar": "dante"},
+		"settings": {"lessons": {"l1": "done", "l2": "skipped"}, "coach_seen": ["play"]}}, 5000)
+	ok(ProgressMerge.is_fresh(fresh) and not ProgressMerge.is_fresh(played), "save: fresh means the starter state")
+	ok(ProgressMerge.same(ProgressMerge.merge(played, {}), played), "save: an empty account takes this install's")
+	ok(ProgressMerge.same(ProgressMerge.merge(fresh, played), played), "save: a fresh install takes the account's")
+	ok(ProgressMerge.same(ProgressMerge.merge(played, fresh), played), "save: a fresh account never wipes progress")
+	# Both played: the newer wins field by field, nothing earned is lost.
+	var other := ProgressMerge.blob({"collection": {"owned": {"a": 1, "c": 2}, "obols": 40, "packs": 4, "pity": 2,
+		"opened": 9, "decks": [{"name": "Phone deck", "cls": "ferry", "cards": {"c": 2}}]},
+		"record": {"wins": 2, "losses": 5, "class_games": {"ferry": 7}}, "online": {"wins": 0, "losses": 3, "draws": 1},
+		"profile": {"name": "Enrico", "avatar": "charon"},
+		"settings": {"lessons": {"l2": "done", "l3": "skipped"}, "coach_seen": ["attack"]}}, 9000)
+	var m := ProgressMerge.merge(played, other)
+	var c: Dictionary = m.data.collection
+	ok(int(c.owned.a) == 2 and int(c.owned.b) == 1 and int(c.owned.c) == 2, "save: owned cards are united (most copies)")
+	ok(int(c.packs) == 4 and int(c.pity) == 7 and int(c.opened) == 9, "save: packs, pity and opened keep the larger")
+	ok(int(c.obols) == 40, "save: Obols follow the newer save")
+	ok(c.decks.size() == 2, "save: custom decks are united")
+	ok(int(m.data.record.wins) == 4 and int(m.data.record.losses) == 5 and int(m.data.record.class_games.pilgrim) == 6
+		and int(m.data.record.class_games.ferry) == 7, "save: the AI record only grows")
+	ok(int(m.data.online.wins) == 1 and int(m.data.online.losses) == 3, "save: the online record only grows")
+	ok(m.data.settings.lessons == {"l1": "done", "l2": "done", "l3": "skipped"}, "save: lessons are united, done wins")
+	ok(m.data.settings.coach_seen.size() == 2, "save: coach tips seen are united")
+	ok(str(m.data.profile.avatar) == "charon" and int(m.saved_at_ms) == 9000, "save: the newer profile and time")
+	ok(ProgressMerge.same(ProgressMerge.merge(other, played), m), "save: the merge does not depend on the side")
+	ok(ProgressMerge.same(JSON.parse_string(JSON.stringify(m)), m), "save: a server round trip reads the same")
+	# An older build uploading keeps what it cannot show (cards "c", the "ferry" class), and nothing else comes back.
+	var kept := ProgressMerge.keep_foreign(played, other, func(id: String) -> bool: return id != "c",
+		func(cls: String) -> bool: return cls != "ferry")
+	var kc: Dictionary = kept.data.collection
+	ok(int(kc.owned.get("c", 0)) == 2 and int(kc.owned.a) == 2 and kc.decks.size() == 2 and int(kc.obols) == 300,
+		"save: an upload keeps the account's cards and decks this build does not know")
+	var none := ProgressMerge.keep_foreign(played, other, func(_id: String) -> bool: return true,
+		func(_cls: String) -> bool: return true)
+	ok(ProgressMerge.same(none, played), "save: an upload with nothing unknown is this install's progress")
 
 
 ## The fake server: stamps the next seq and hands the message to both clients, which apply all they can; then the

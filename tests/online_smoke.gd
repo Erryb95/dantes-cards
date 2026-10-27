@@ -175,6 +175,8 @@ func _run() -> void:
 	await _wait_until(func(): return not chats[1].is_empty(), 10.0, "client 1 receives the chat message")
 	if not chats[1].is_empty():
 		print("chat received: ", chats[1][0].get("content"))
+	await _cloud_save_step(clients[0])
+	await _cloud_session_step(clients[1])
 	# The mulligan: both send theirs at once.
 	for k in 2:
 		var pick := BattleAI.new(0, BattleAI.Level.EASY).mulligan_choice(syncs[k].st)
@@ -325,6 +327,93 @@ func _drop_and_rejoin(k: int) -> void:
 		_fail("the game rebuilt from RESYNC differs from the live one")
 	else:
 		print("RESYNC rebuild matches the live game (seq %d)" % fresh.last_seq)
+
+
+## The cloud save on a test account: write a progress blob, read it back the same, and a write over a version that
+## moved on must be refused as a conflict (the client then re-reads and merges).
+func _cloud_save_step(s: OnlineSession) -> void:
+	var c := s.client
+	var data := {"collection": {"owned": {"virgil": 1}, "obols": 123, "packs": 2, "pity": 4, "opened": 6, "decks": []},
+		"record": {"wins": 1, "losses": 2}, "online": {"wins": 0, "losses": 0, "draws": 0},
+		"profile": {"name": "Smoke", "avatar": ""}, "settings": {"lessons": {"basics": "done"}, "coach_seen": ["mana"],
+			"lessons_offered": true, "intro_seen": true}}
+	var b := ProgressMerge.blob(data, int(Time.get_unix_time_from_system() * 1000.0))
+	var before := await c.storage_read(OnlineSession.SAVE_COLLECTION, OnlineSession.SAVE_KEY)
+	var w := await c.storage_write(OnlineSession.SAVE_COLLECTION, OnlineSession.SAVE_KEY, b,
+		str(before.get("version", "")))
+	if w.has("error"):
+		_fail("cloud save write: %s" % w.error)
+		return
+	var r := await c.storage_read(OnlineSession.SAVE_COLLECTION, OnlineSession.SAVE_KEY)
+	if r.has("error") or not ProgressMerge.same(r.get("value", {}), b):
+		_fail("cloud save read back differs")
+		return
+	var stale := await c.storage_write(OnlineSession.SAVE_COLLECTION, OnlineSession.SAVE_KEY, b,
+		str(before.version) if before.has("version") and str(before.version) != "" else "*")
+	if not stale.get("conflict", false):
+		_fail("a write over a newer save was not refused as a conflict (%s)" % stale)
+		return
+	var merged := ProgressMerge.merge(b, r.value)
+	if not ProgressMerge.same(merged, b):
+		_fail("merging a save with itself changed it")
+		return
+	print("cloud save: written, read back the same, stale write refused as a conflict")
+
+
+## The session's own sync (what a player's game does), on a test account. A debug run writes no file: apply() only
+## keeps the blob. 1) After a sign-in the account's older save is merged with this install's: the merged save is on
+## the server. 2) Nothing changed: no write. 3) Another device wrote meanwhile: our write is refused, the session
+## reads, merges and writes again, and both devices' cards are on the account.
+func _cloud_session_step(s: OnlineSession) -> void:
+	var c := s.client
+	var away := {"collection": {"owned": {"smoke_far_card": 2}, "obols": 50, "packs": 1, "pity": 3, "opened": 3,
+		"decks": [{"cls": "smoke", "name": "From the other device", "cards": []}]},
+		"record": {"wins": 4, "losses": 1}, "online": {"wins": 0, "losses": 0, "draws": 0},
+		"profile": {"name": "Far", "avatar": ""}, "settings": {"lessons": {}, "coach_seen": [],
+			"lessons_offered": true, "intro_seen": true}}
+	var before := await c.storage_read(OnlineSession.SAVE_COLLECTION, OnlineSession.SAVE_KEY)
+	var w := await c.storage_write(OnlineSession.SAVE_COLLECTION, OnlineSession.SAVE_KEY,
+		ProgressMerge.blob(away, 1000), "")
+	if w.has("error") or before.has("error"):
+		_fail("cloud session: could not seed the account's save")
+		return
+	s._sync_t = 1e9 # only the steps below sync, not the session's own timer
+	s.cloud_forced = true
+	s._need_login_sync = true
+	s.last_applied = {}
+	await s.cloud_sync()
+	var local := s.gather()
+	local.saved_at_ms = s._local_changed_ms
+	var expected := ProgressMerge.merge(local, ProgressMerge.blob(away, 1000))
+	var r := await c.storage_read(OnlineSession.SAVE_COLLECTION, OnlineSession.SAVE_KEY)
+	if s.sync_state != "saved" or r.has("error") or not ProgressMerge.same(r.get("value", {}), expected):
+		_fail("cloud session: the merged save is not on the account (%s)" % s.sync_state)
+		s.cloud_forced = false
+		return
+	if not (r.value.data.collection.owned as Dictionary).has("smoke_far_card"):
+		_fail("cloud session: the other device's card was lost")
+	if not ProgressMerge.same(expected, local) and s.last_applied.is_empty():
+		_fail("cloud session: the account had more than this install but nothing was applied")
+	# 2) No change: no write.
+	await s.cloud_sync()
+	var r2 := await c.storage_read(OnlineSession.SAVE_COLLECTION, OnlineSession.SAVE_KEY)
+	if str(r2.get("version", "")) != str(r.version):
+		_fail("cloud session: a sync without changes wrote the save again")
+	# 3) Another device writes; our next upload is refused, re-read, merged and written.
+	var other: Dictionary = (r.value as Dictionary).duplicate(true)
+	other.data.collection.owned["smoke_second_card"] = 1
+	other.saved_at_ms = int(r.value.saved_at_ms) + 1
+	var w2 := await c.storage_write(OnlineSession.SAVE_COLLECTION, OnlineSession.SAVE_KEY, other, str(r.version))
+	if w2.has("error"):
+		_fail("cloud session: the other device's write failed")
+	s._synced = "pretend this install changed" # forces an upload over the stale version
+	await s.cloud_sync()
+	var r3 := await c.storage_read(OnlineSession.SAVE_COLLECTION, OnlineSession.SAVE_KEY)
+	var owned3: Dictionary = r3.get("value", {}).get("data", {}).get("collection", {}).get("owned", {})
+	if s.sync_state != "saved" or not owned3.has("smoke_second_card") or not owned3.has("smoke_far_card"):
+		_fail("cloud session: the version conflict was not merged (%s)" % s.sync_state)
+	s.cloud_forced = false
+	print("cloud session: login merge, no-change skip and conflict re-merge OK")
 
 
 func _describe_resync(d: Dictionary) -> void:
