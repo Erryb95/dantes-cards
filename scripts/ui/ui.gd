@@ -513,9 +513,9 @@ const KEYWORD_HELP := {
 	"death": ["Last Breath", "Does something when it dies."],
 	"play": ["On Play", "Does something when you play it from your hand."],
 	"ruse": ["Ruse", "A bonus when you play it after another card this turn."],
-	"freeze": ["Freeze", "A frozen character can't attack during its owner's next turn."],
-	"silence": ["Silence", "Removes its card text and keywords. Stat changes stay."],
-	"frozen": ["Frozen", "It can't attack during its owner's next turn."],
+	"freeze": ["Freeze", "A frozen minion loses its next attack, then thaws."],
+	"silence": ["Silence", "Removes its card text and keywords. Stat changes and Freeze stay."],
+	"frozen": ["Frozen", "It loses its next attack, then thaws."],
 	"silenced": ["Silenced", "Its card text and keywords are gone. Stat changes stay."],
 }
 

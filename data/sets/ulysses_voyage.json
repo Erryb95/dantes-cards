@@ -1113,6 +1113,7 @@
   },
   {
    "id": "ul_achaean_raider",
+   "flavor": "Out of the belly of the horse, into the sleeping city.",
    "name": "Achaean Raider",
    "set": "token",
    "type": "minion",
@@ -1126,6 +1127,7 @@
   },
   {
    "id": "ul_swine",
+   "flavor": "Circe's guests always stay for good.",
    "name": "Swine of Circe",
    "set": "token",
    "type": "minion",
