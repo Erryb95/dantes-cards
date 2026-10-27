@@ -38,9 +38,12 @@ The server settings live in **`config/online.local.cfg`** (gitignored, never com
 ```ini
 [online]
 server_key = <Nakama server key>
-host = 100.80.41.96        ; the tailnet address, or the public Funnel host
-port = 7450
-scheme = http              ; https for the Funnel (then the socket is wss)
+host = complexserver.tail05d1ab.ts.net   ; the public Tailscale Funnel host
+port = 8443
+scheme = https             ; https -> the socket is wss (system CA certificates, TLSOptions.client())
+fallback_host = 100.80.41.96              ; optional: the tailnet address, tried when the first one
+fallback_port = 7450                      ;   does not answer its healthcheck within 4 s
+fallback_scheme = http
 google_client_id = ...     ; optional: Google sign-in (device-code flow); no id, no Google button
 google_client_secret = ...
 ```

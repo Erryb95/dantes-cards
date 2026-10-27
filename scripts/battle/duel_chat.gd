@@ -236,7 +236,15 @@ func _line(who: String, text: String, mine: bool) -> Label:
 
 ## Closed panel: the message shows on a parchment slip above the Chat plate, then fades.
 func _peek_line(who: String, text: String) -> void:
-	var p := UI.parchment_label("%s:  %s" % [who, text], 20, "italic", UI.INK, 430.0, 20, 8)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", UI.parchment_box(22, 10))
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var l := UI.label("%s:  %s" % [who, text], 22, "italic", UI.INK)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var w := UI.font("italic").get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x + 4.0
+	l.custom_minimum_size = Vector2(minf(w, 420.0), 0) # one line when it fits, else wrapped at 420 px
+	p.add_child(l)
 	_peek.add_child(p)
 	while _peek.get_child_count() > 3:
 		_peek.get_child(0).queue_free()

@@ -8,6 +8,9 @@ extends RefCounted
 ##     host = 100.80.41.96
 ##     port = 7450
 ##     scheme = http          ; http -> ws, https -> wss
+##     fallback_host = ...    ; optional: tried when the first address does not answer within 4 s
+##     fallback_port = ...
+##     fallback_scheme = ...
 ##     google_client_id = ... ; optional: Google sign-in (an OAuth client for TVs and Limited Input devices)
 ##     google_client_secret = ...
 ##
@@ -20,6 +23,10 @@ var server_key := ""
 var host := ""
 var port := 7350
 var scheme := "http"
+var fallback_host := "" ## a second address tried when the first does not answer (the tailnet one behind the Funnel)
+var fallback_port := 7350
+var fallback_scheme := "http"
+var use_fallback := false
 var google_client_id := "" ## Google sign-in (device code flow); never printed
 var google_client_secret := ""
 
@@ -38,12 +45,23 @@ func configured() -> bool:
 	return server_key != "" and host != ""
 
 
+func has_fallback() -> bool:
+	return fallback_host != "" and (fallback_host != host or fallback_port != port)
+
+
+## The address in use: the primary one, or the fallback after the primary did not answer (OnlineSession picks).
 func http_base() -> String:
+	if use_fallback and has_fallback():
+		return "%s://%s:%d" % [fallback_scheme, fallback_host, fallback_port]
 	return "%s://%s:%d" % [scheme, host, port]
 
 
 func ws_base() -> String:
-	return "%s://%s:%d" % ["wss" if scheme == "https" else "ws", host, port]
+	return http_base().replace("https://", "wss://").replace("http://", "ws://")
+
+
+func secure() -> bool:
+	return http_base().begins_with("https://")
 
 
 ## Reads one INI file over the current values (a missing file changes nothing).
@@ -81,6 +99,13 @@ func read(path: String) -> void:
 					port = int(v)
 			"scheme":
 				scheme = "https" if v.to_lower() in ["https", "wss"] else "http"
+			"fallback_host":
+				fallback_host = v
+			"fallback_port":
+				if v.is_valid_int():
+					fallback_port = int(v)
+			"fallback_scheme":
+				fallback_scheme = "https" if v.to_lower() in ["https", "wss"] else "http"
 			"google_client_id":
 				google_client_id = v
 			"google_client_secret":

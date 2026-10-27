@@ -183,17 +183,43 @@ func avatar_url() -> String:
 func ensure_connected() -> String:
 	if not configured():
 		return "Online play is not configured on this copy of the game."
+	if not _endpoint_picked:
+		await _pick_endpoint()
 	if not client.session_fresh():
 		client.close_socket()
 		var r := await client.authenticate_device(device_id())
 		if r.has("error"):
+			_endpoint_picked = false # the next try looks at both addresses again
 			return str(r.error)
 		await client.set_display_name(display_name(), avatar_url())
 	if not client.socket_open():
 		var s := await client.connect_socket()
 		if s.has("error"):
+			_endpoint_picked = false
 			return str(s.error)
 	return ""
+
+
+var _endpoint_picked := false
+
+
+## The primary address (the public Funnel host) when its healthcheck answers within 4 s, else the fallback (the
+## tailnet address) when that one does. With neither, the primary stays and its error is what the player sees.
+func _pick_endpoint() -> void:
+	var was := config.use_fallback
+	config.use_fallback = false
+	if await client.healthcheck(4.0):
+		_endpoint_picked = true
+	elif config.has_fallback():
+		config.use_fallback = true
+		if await client.healthcheck(4.0):
+			_endpoint_picked = true
+		else:
+			config.use_fallback = false
+	if config.use_fallback != was:
+		client.token = "" # a session is per server address: sign in again there
+		client.close_socket()
+	print("Online: using the %s server address" % ("fallback" if config.use_fallback else "primary"))
 
 
 # ---------------------------------------------------------------- matchmaking

@@ -49,11 +49,13 @@ func socket_open() -> bool:
 # ---------------------------------------------------------------- HTTP
 
 ## One HTTP call; returns {"code": int, "body": Variant} or {"error": message}.
-func http(method: int, path: String, body: Variant = null, basic := false) -> Dictionary:
+func http(method: int, path: String, body: Variant = null, basic := false, timeout := HTTP_TIMEOUT) -> Dictionary:
 	if config == null or not config.configured():
 		return {"error": "Online play is not configured."}
 	var req := HTTPRequest.new()
-	req.timeout = HTTP_TIMEOUT
+	req.timeout = timeout
+	if config.secure():
+		req.set_tls_options(TLSOptions.client()) # the system's trusted certificates
 	add_child(req)
 	var headers := PackedStringArray(["Content-Type: application/json", "Accept: application/json"])
 	if basic:
@@ -87,6 +89,12 @@ static func _http_result_name(r: int) -> String:
 		HTTPRequest.RESULT_TLS_HANDSHAKE_ERROR:
 			return "secure connection failed"
 	return "error %d" % r
+
+
+## True when the server's healthcheck answers within `timeout` seconds (at the address in use).
+func healthcheck(timeout := 4.0) -> bool:
+	var r := await http(HTTPClient.METHOD_GET, "/healthcheck", null, false, timeout)
+	return not r.has("error") and int(r.code) == 200
 
 
 ## Device authentication (the only kind the server accepts). True on success; else {"error"}.
@@ -177,7 +185,7 @@ func connect_socket() -> Dictionary:
 	_ws.inbound_buffer_size = 1 << 20
 	_ws.outbound_buffer_size = 1 << 20
 	var url := "%s/ws?lang=en&status=true&token=%s" % [config.ws_base(), token.uri_encode()]
-	if _ws.connect_to_url(url) != OK:
+	if _ws.connect_to_url(url, TLSOptions.client() if config.secure() else null) != OK:
 		_ws = null
 		return {"error": "Could not open the connection."}
 	var t := 0.0
