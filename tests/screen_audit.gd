@@ -8,7 +8,7 @@ extends Node
 ## collection_guide, collection_neutral, deck_peek (a key card shown big), deck_list (View cards), deck_list_zoom,
 ## deck_guide (the class guide), packs_reveal, packs_empty, packs_rates (the drop-rates sheet), collection_sort
 ## (`--sort=<id of the collection's SORTS>` on the `--filter=` set, default all, most cards owned), deck_tip,
-## battle (several shots), lessons (Virgil's lessons screen), howto (every How to Play chapter), offer (the
+## battle (several shots), lessons (Virgil's lessons screen), lesson_hero (the hero choice before The Trial; `--cls=`), names (painted card names at hand / collection / inspect / zoom size), howto (every How to Play chapter), offer (the
 ## first-launch question), lesson (`--lesson=<id> [--steps=0,3]`: every line of a lesson played through, and its
 ## result), lesson_pause.
 ## `--cls=` also picks the class of collection_class / collection_guide / deck_guide.
@@ -169,6 +169,15 @@ func _ready() -> void:
 			_open(Game.LESSONS)
 			await _wait(1.2)
 			await _snap("lessons")
+		"lesson_hero":
+			# The hero choice before The Trial (`--cls=<class>` picks that hero first).
+			Game.lesson_choice = "trial"
+			var s := _open(Game.LESSON_HERO)
+			await _wait(1.0)
+			if cls != "pilgrim":
+				s.choose(CardDB.class_hero(cls), false)
+				await _wait(0.4)
+			await _snap("lesson_hero")
 		"howto":
 			# Every chapter of How to Play, over the lessons screen it is opened from.
 			var s := _open(Game.LESSONS)
@@ -190,6 +199,8 @@ func _ready() -> void:
 			await _snap("offer")
 		"lesson", "lesson_pause":
 			await _lesson(what)
+		"names":
+			await _names()
 		"deck_tip":
 			# A library disc's tooltip (the discs only show when the library overflows, so one is forced on).
 			var s := _open("res://scenes/deck_select.tscn")
@@ -264,6 +275,51 @@ func _builder(mode: String) -> void:
 					break
 	await _wait(0.8)
 	await _snap(mode)
+
+
+## Painted card names (assets/cards/names) at the sizes a card is seen at: names_hand (hand 0.62 and the deck
+## showcase 0.34), names_collection (0.72), names_inspect (a minion inspected on the board, 0.95) and names_zoom (1.9),
+## on every card that has a painted name, with one that has none beside them for comparison.
+func _names() -> void:
+	var ids: Array = []
+	var dir := DirAccess.open("res://assets/cards/names")
+	if dir != null:
+		for f in dir.get_files():
+			if f.ends_with(".png"):
+				ids.append(f.get_basename())
+	ids.sort()
+	ids.append("pj_beatrice") # no painted name: the gilded label, for comparison
+	var shots := [["names_hand", [0.62, 0.34]], ["names_collection", [0.72]], ["names_inspect", [0.95]],
+		["names_zoom", [1.9]]]
+	for sh in shots:
+		var holder := Node2D.new()
+		add_child(holder)
+		var bg := ColorRect.new()
+		bg.color = Color(0.12, 0.1, 0.09)
+		bg.size = Vector2(1920, 1080)
+		holder.add_child(bg)
+		var y := 20.0
+		for kv in sh[1]:
+			var k: float = kv
+			var per := 1920.0 / (CardView.W * k + 26.0)
+			var list := ids.slice(0, mini(ids.size(), int(per)))
+			if k >= 1.9:
+				list = ["francesca", "minos", "pj_beatrice"]
+			var x := 30.0
+			var rowh := CardView.H * k
+			for id in list:
+				var c := CardView.new().setup(id, -1, true)
+				c.scale = Vector2(k, k)
+				c.position = Vector2(x + CardView.W * k / 2.0, y + rowh / 2.0)
+				holder.add_child(c)
+				var l := UI.label("%s x%.2f" % [id, k], 15, "body", Color(0.85, 0.8, 0.7), 0)
+				l.position = Vector2(x, y + rowh + 2.0)
+				holder.add_child(l)
+				x += CardView.W * k + 26.0
+			y += rowh + 40.0
+		await _wait(0.6)
+		await _snap(sh[0])
+		holder.queue_free()
 
 
 ## A lesson played through (tests/lesson_driver.gd), a shot of every line Virgil shows and of the result:

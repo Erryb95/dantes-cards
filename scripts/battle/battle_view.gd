@@ -1825,7 +1825,7 @@ func _show_lesson_result(winner: int) -> void:
 	elif won and Collection.packs > 0:
 		buttons.append(["Open Packs", Game.go.bind(Game.PACKS)])
 	if not won:
-		buttons.append(["Try Again", Game.start_lesson.bind(lesson.id)])
+		buttons.append(["Try Again", Game.start_lesson.bind(lesson.id, Game.player_hero)])
 	buttons.append(["Lessons", Game.go.bind(Game.LESSONS)])
 	if won and next == "":
 		buttons.append(["Main Menu", Game.go.bind(Game.MENU)])
@@ -2923,7 +2923,7 @@ func _open_pause() -> void:
 		entries.append(["Concede", _ask_concede.bind(dim, box)])
 	else:
 		# A lesson is left, restarted or skipped, never conceded (it does not count in the record).
-		entries.append(["Restart Lesson", func(): _leave_lesson(lesson.id)])
+		entries.append(["Restart Lesson", func(): _leave_lesson(lesson.id, Game.player_hero)])
 		entries.append(["Skip Lesson", func():
 			Lessons.skip(lesson.id)
 			_leave_lesson(Lessons.next_after(lesson.id))])
@@ -2981,11 +2981,12 @@ func _concede() -> void:
 	Game.go(Game.MENU)
 
 
-## Out of a lesson from its pause menu: into lesson `next` ("" for the lessons screen). Nothing is recorded.
-func _leave_lesson(next: String) -> void:
+## Out of a lesson from its pause menu: into lesson `next` ("" for the lessons screen). Nothing is recorded. A
+## restart keeps the hero the player chose (`hero`).
+func _leave_lesson(next: String, hero := "") -> void:
 	over = true
 	if next != "":
-		Game.start_lesson(next)
+		Game.start_lesson(next, hero)
 	else:
 		Game.go(Game.LESSONS)
 

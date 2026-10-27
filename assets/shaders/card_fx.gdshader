@@ -38,6 +38,7 @@ uniform float art_aspect = 1.0; // w / h of the art rect, so a turn shifts as ma
 uniform bool resample = true;
 // The card's name in engraved gold (as gilded_text.gdshader): the fill's light turns to gold metal from the
 // capitals' top (gild_top) to the baseline (gild_base), in the label's own pixels; the dark outline stays.
+uniform float name_gain = 1.0; // a painted card name: its light brightened, rolling off softly toward white (no blown-out gold)
 uniform bool gild = false;
 uniform float gild_top = 0.0;
 uniform float gild_base = 30.0;
@@ -141,6 +142,11 @@ void fragment() {
 		float t = clamp((local.y - gild_top) / max(1.0, gild_base - gild_top), 0.0, 1.0);
 		float hatch = 0.92 + 0.08 * sin(local.y * 2.4 + local.x * 0.35);
 		c.rgb = mix(c.rgb, gold_ramp(t) * hatch, smoothstep(0.3, 0.55, max(c.r, max(c.g, c.b))));
+	}
+	if (name_gain != 1.0) {
+		vec3 g = c.rgb * name_gain;
+		vec3 hi = max(g - 0.72, vec3(0.0));
+		c.rgb = min(g, vec3(0.72)) + 0.26 * (vec3(1.0) - exp(-hi / 0.26));
 	}
 	if (shine >= 0.0) {
 		float s = (uv.x + uv.y) * 0.5 - shine;

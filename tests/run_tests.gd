@@ -1836,7 +1836,42 @@ func _test_lessons() -> void:
 		if l.has("script"):
 			_play_lesson(l)
 			_soak_lesson(l, 12)
+		if Lessons.chooses_hero(l):
+			_test_lesson_hero_choice(l)
 	_test_lesson_progress()
+
+
+## A lesson that lets the player choose (The Trial): every hero of the class registry can be picked, deals its class's
+## starter deck against another class, and an Easy AI match of that hero finishes; a bad pick falls back to the default.
+func _test_lesson_hero_choice(l: Dictionary) -> void:
+	var heroes := Lessons.pickable_heroes()
+	ok(heroes.size() == CardDB.classes().filter(func(c): return not CardDB.class_decks(c).is_empty()).size(),
+		"every class with a deck has a hero to choose")
+	ok(str(l.player.hero) in heroes, "lesson %s: its default hero is one of the choices" % l.id)
+	for h in heroes:
+		var cls := CardDB.hero_class(h)
+		var lu := Lessons.line_up(l, h)
+		ok(lu.player_hero == h, "lesson %s: the pick %s is the player's hero" % [l.id, h])
+		ok(lu.player_cards == CardDB.deck_list(str(CardDB.class_decks(cls)[0].id)), "lesson %s: %s plays its starter deck" % [l.id, cls])
+		ok(CardDB.hero_class(lu.enemy_hero) != cls, "lesson %s: %s faces another class" % [l.id, cls])
+		var st := Lessons.start_state(l, 7, h)
+		var foe: BattleAI = Lessons.make_ai(l)
+		var me := BattleAI.new(0, BattleAI.Level.EASY)
+		var guard := 0
+		while st.winner == -1 and guard < 400:
+			guard += 1
+			if st.current == 1:
+				var m := foe.next_action(st)
+				if m.do == "end" or not BattleAI.apply(st, 1, m):
+					st.end_turn()
+			else:
+				var m := me.next_action(st)
+				if m.do == "end" or not BattleAI.apply(st, 0, m):
+					st.end_turn()
+		ok(st.winner != -1, "lesson %s as %s: the match ends" % [l.id, h])
+	ok(Lessons.line_up(l, "nobody").player_hero == str(l.player.hero), "lesson %s: an unknown hero falls back" % l.id)
+	var fixed := Lessons.get_lesson("ferryman")
+	ok(Lessons.line_up(fixed, heroes[-1]).player_hero == str(fixed.player.hero), "a fixed lesson ignores a hero pick")
 
 
 ## Plays lesson `l` the taught way: every step in order, free steps played out by the Hard AI for the player.
