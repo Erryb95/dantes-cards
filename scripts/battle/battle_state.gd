@@ -28,6 +28,9 @@ class Unit:
 	var dead := false
 	var frozen := false
 	var silenced := false
+	var wrath := 0 ## Wrath: the Attack it gains while damaged (0: none; Silence takes it away)
+	var rage := 0 ## the Wrath bonus included in `attack` right now (0 while undamaged)
+	var frenzied := false ## its Frenzy already went off (it fires once)
 
 	func has(k: String) -> bool:
 		return keywords.has(k)
@@ -35,7 +38,7 @@ class Unit:
 	func snapshot() -> Dictionary:
 		return {"uid": uid, "id": id, "side": side, "is_hero": is_hero, "attack": attack, "health": health,
 			"max_health": max_health, "armor": armor, "keywords": keywords.keys(), "sleeping": sleeping,
-			"frozen": frozen, "silenced": silenced}
+			"frozen": frozen, "silenced": silenced, "rage": rage}
 
 
 class SideState:
@@ -163,6 +166,9 @@ static func _copy_unit(u: Unit) -> Unit:
 	c.dead = u.dead
 	c.frozen = u.frozen
 	c.silenced = u.silenced
+	c.wrath = u.wrath
+	c.rage = u.rage
+	c.frenzied = u.frenzied
 	return c
 
 
@@ -493,6 +499,7 @@ func _summon(side: int, id: String, index: int = -1, from_card: int = -1) -> Uni
 	u.max_health = u.health
 	for k in card.get("keywords", []):
 		u.keywords[k] = true
+	u.wrath = int(card.get("wrath", 0))
 	u.sleeping = not u.has("swift")
 	if index < 0 or index > s.board.size():
 		index = s.board.size()
@@ -540,6 +547,7 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 					t.sleeping = false
 				_emit({"t": "buff", "uid": t.uid, "attack": t.attack, "health": t.health,
 					"max_health": t.max_health, "keywords": t.keywords.keys(), "src": from_id})
+				_update_wrath(t)
 		"summon":
 			var at := -1
 			if source != null and sides[side].board.has(source):
@@ -569,6 +577,8 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 					_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "silence"})
 				t.keywords.clear()
 				t.silenced = true
+				t.wrath = 0 # Silence takes the Wrath away, and the bonus with it
+				_update_wrath(t)
 				_emit_status(t)
 		"ramp":
 			var rs := sides[side]
@@ -600,6 +610,26 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 				if ttype.begins_with("choose_") or ttype.begins_with("random_"):
 					_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "silence"})
 				_transform(t, str(e.card), from_id)
+		"fight":
+			# A brawl in the mud (Wrath class): each target fights each of the minions named by "with" ("self", the
+			# minion that has the effect, by default), one pair at a time, until one of the pair is dead.
+			var fighters := _targets(str(e.get("with", "self")), side, source, chosen)
+			for t in targets:
+				for f in fighters:
+					_fight(f, t, from_id)
+
+
+## Two minions deal damage equal to their Attack to each other at once (a fight is not an attack: it uses no attack
+## and ignores Guard). Venom and Drain work as in combat; Ward blocks the hit. Heroes never fight.
+func _fight(a: Unit, b: Unit, from_id: String) -> void:
+	if a == null or b == null or a == b or a.is_hero or b.is_hero or a.dead or b.dead or a.health <= 0 \
+			or b.health <= 0 or not units.has(a.uid) or not units.has(b.uid):
+		return
+	_emit({"t": "fight", "a": a.uid, "b": b.uid, "src": from_id}) # view hint: the two clash in the mud
+	var to_b := a.attack # both blows land together: neither one's Wrath, set off by this fight, adds to it
+	var to_a := b.attack
+	_damage(b, to_b, a)
+	_damage(a, to_a, b)
 
 
 ## Copies cards into your hand (or onto your board with "to": "board"). Source: "from" = "enemy_hand" / "enemy_deck"
@@ -714,6 +744,8 @@ func _targets(ttype: String, side: int, source: Unit, chosen: int) -> Array[Unit
 			out.assign(foe.board.filter(func(u): return not u.dead))
 		"all_minions":
 			out.assign((me.board + foe.board).filter(func(u): return not u.dead))
+		"all_other_minions":
+			out.assign((me.board + foe.board).filter(func(u): return u != source and not u.dead))
 		"other_friendly_minions":
 			out.assign(me.board.filter(func(u): return u != source and not u.dead))
 		"random_enemy_minion":
@@ -761,6 +793,8 @@ func _damage(t: Unit, amount: int, source: Unit, src: String = "") -> int:
 			_emit({"t": "venom", "uid": t.uid, "source": source.uid})
 		if source.has("drain"):
 			_heal(sides[source.side].hero, amount, "drain")
+	if not t.is_hero:
+		_hurt(t)
 	return amount
 
 
@@ -770,6 +804,58 @@ func _heal(t: Unit, amount: int, src: String = "") -> void:
 		return
 	t.health += real
 	_emit({"t": "heal", "uid": t.uid, "amount": real, "hp": t.health, "src": src})
+	_update_wrath(t)
+
+
+# ---------------------------------------------------------------- Wrath and Frenzy (Filippo Argenti's class)
+
+var _frenzy_queue: Array[Unit] = [] ## minions whose Frenzy goes off at the next cleanup
+
+
+## A minion took damage and is still standing: its Wrath wakes, and its Frenzy (once) is queued for the cleanup,
+## so it fires after the blow that set it off has fully resolved.
+func _hurt(t: Unit) -> void:
+	if t.dead or t.health <= 0:
+		return
+	_update_wrath(t)
+	if t.frenzied or t.silenced:
+		return
+	if CardDB.card(t.id).get("effects", []).any(func(e): return e.get("on", "") == "frenzy"):
+		t.frenzied = true
+		_frenzy_queue.append(t)
+
+
+## Wrath: while a minion with Wrath is damaged (health below its max), its Attack includes the bonus; healed to full,
+## silenced or buffed back to full health, it loses it. A dying minion keeps what it has (it is leaving anyway).
+func _update_wrath(u: Unit) -> void:
+	if u == null or u.is_hero or u.dead or u.health <= 0:
+		return
+	var want := u.wrath if u.health < u.max_health else 0
+	if want == u.rage:
+		return
+	u.attack += want - u.rage
+	u.rage = want
+	_emit({"t": "wrath", "uid": u.uid, "on": want > 0, "attack": u.attack})
+
+
+## Every minion's Wrath brought up to date (a Rebirth returns with 1 Health and so may come back damaged).
+func _refresh_wrath() -> void:
+	for s in sides:
+		for u in s.board:
+			_update_wrath(u)
+
+
+## Resolves the queued Frenzies, oldest first. A minion that died, left the board or was silenced since does nothing.
+func _fire_frenzies() -> void:
+	while not _frenzy_queue.is_empty() and winner == -1:
+		var u: Unit = _frenzy_queue.pop_front()
+		if u.dead or u.silenced or u.health <= 0 or not sides[u.side].board.has(u):
+			continue
+		_emit({"t": "frenzy", "uid": u.uid}) # view hint: the minion flares up before its effect
+		for e in CardDB.card(u.id).get("effects", []):
+			if e.get("on", "") == "frenzy" and winner == -1:
+				_resolve(e, u.side, u, -1, u.id)
+		_cleanup()
 
 
 func _bounce(t: Unit) -> void:
@@ -827,6 +913,8 @@ func _cleanup() -> void:
 					else:
 						_resolve(e, u.side, null, -1, u.id)
 	_check_end()
+	_refresh_wrath()
+	_fire_frenzies()
 
 
 func _check_end() -> void:

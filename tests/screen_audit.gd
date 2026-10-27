@@ -4,9 +4,11 @@ extends Node
 ##   Godot --path . res://tests/screen_audit.tscn --resolution 1920x1080 -- --out=<dir> --what=<mode>
 ## Modes: menu_options, credits, builder, builder_name, builder_long, builder_empty, builder_leave, builder_edit,
 ## builder_delete, builder_tip, collection_zoom, packs_reveal, packs_empty, deck_tip, battle (several shots).
+## `--cls=<class>`: the class of the deck in the "builder" shot (default Pilgrim).
 
 var out := "user://audit"
 var what := "battle"
+var cls := "pilgrim"
 
 
 func _ready() -> void:
@@ -15,6 +17,8 @@ func _ready() -> void:
 			out = a.substr(6)
 		elif a.begins_with("--what="):
 			what = a.substr(7)
+		elif a.begins_with("--cls="):
+			cls = a.substr(6)
 	DirAccess.make_dir_recursive_absolute(out)
 	Settings.fast_animations = false
 	# `--out=` is not one of the flags that skip the first-launch cinematic: on a fresh profile the main menu would
@@ -42,7 +46,7 @@ func _ready() -> void:
 				await _snap("credits_end")
 		"builder":
 			Game.edit_deck = -1
-			Game.new_deck_cls = "pilgrim"
+			Game.new_deck_cls = cls
 			var s := _open("res://scenes/deck_builder.tscn")
 			await _wait(0.6)
 			Collection.autofill(s.deck)

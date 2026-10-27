@@ -15,6 +15,7 @@ func _initialize() -> void:
 	_test_silence_ai()
 	_test_first_match()
 	_test_ulysses()
+	_test_wrath()
 	_test_limits()
 	_test_transform_edges()
 	_test_ruse_edges()
@@ -29,6 +30,7 @@ func _initialize() -> void:
 	_soak_random_classes(120)
 	_test_replay(20)
 	_test_replay(8, "ulysses")
+	_test_replay(8, "wrath")
 	print("TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures > 0 else 0)
 
@@ -73,7 +75,7 @@ func _test_data() -> void:
 		ok(CardDB.class_decks(cls).size() == 3, "%s has three preconstructed decks" % cls)
 	for c in CardDB.all_cards():
 		for e in c.get("effects", []):
-			ok(e.do in ["damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card", "mana", "copy", "transform"], "%s effect %s" % [c.id, e.do])
+			ok(e.do in ["damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card", "mana", "copy", "transform", "fight"], "%s effect %s" % [c.id, e.do])
 			if e.do in ["summon", "give_card", "transform"]:
 				ok(not CardDB.card(e.card).is_empty(), "%s summons a known card" % c.id)
 		for k in c.get("keywords", []):
@@ -593,6 +595,7 @@ func _play_out(st: BattleState, ais: Array, what: String, played: Dictionary = {
 				and s.mana >= 0 and s.mana <= BattleState.MAX_MANA, what + " invariants")
 			for u in s.board:
 				ok(u.health > 0 and u.health <= u.max_health and st.units.get(u.uid) == u, what + " minion sane (%s)" % u.id)
+				ok(_wrath_sane(u), what + " Wrath matches the damage (%s)" % u.id)
 	ok(st.winner != -1, what + " game finished")
 
 
@@ -1196,3 +1199,272 @@ func _test_saves() -> void:
 	col.packs_since_legendary = keep_col[3]
 	col.opened_total = keep_col[4]
 	col.decks = keep_col[5]
+
+
+# ---------------------------------------------------------------- the Wrathful (Filippo Argenti)
+
+## Wrath is consistent: the bonus in a minion's Attack is its Wrath exactly while it is damaged.
+static func _wrath_sane(u: BattleState.Unit) -> bool:
+	return u.rage == (u.wrath if u.health < u.max_health else 0)
+
+
+## Filippo Argenti's mechanics: Wrath on and off with damage and healing; its interplay with Silence, transform,
+## copy, Rebirth, Freeze, Ward and Venom; Frenzy (once, after the blow, never when it dies or is silenced); fights;
+## the hero power; the class's legendaries; every card of the class plays.
+func _test_wrath() -> void:
+	# Damage turns Wrath on, a full heal turns it off; a partial heal or a health buff keeps it.
+	var st := _blank()
+	var evs := []
+	st.event.connect(func(ev): evs.append(ev))
+	var sh := _put(st, 0, "uh_wrathful_shade") # 2/3, Wrath: +3 Attack
+	ok(sh.wrath == 3 and sh.attack == 2 and sh.rage == 0, "Wrath is idle while undamaged")
+	st.play_card(0, _give(st, 0, "uh_thorn_jab"), sh.uid) # 2 damage
+	ok(sh.health == 1 and sh.attack == 5 and sh.rage == 3, "damage turns Wrath on (%d attack)" % sh.attack)
+	ok(evs.any(func(ev): return ev.t == "wrath" and ev.uid == sh.uid and ev.on and ev.attack == 5), "a wrath event")
+	st._heal(sh, 1, "test")
+	ok(sh.health == 2 and sh.attack == 5, "a partial heal keeps Wrath on")
+	st._resolve({"do": "buff", "target": "choose_minion", "attack": 1, "health": 2}, 0, null, sh.uid, "test")
+	ok(sh.health == 4 and sh.max_health == 5 and sh.attack == 6 and _wrath_sane(sh), "a buff keeps Wrath and adds to it")
+	st._heal(sh, 9, "test")
+	ok(sh.health == 5 and sh.attack == 3 and sh.rage == 0, "healed to full, Wrath goes off (buff kept)")
+	ok(evs.any(func(ev): return ev.t == "wrath" and ev.uid == sh.uid and not ev.on and ev.attack == 3), "wrath off event")
+
+	# Silence takes the Wrath away, raging or not; stat changes stay.
+	st = _blank()
+	sh = _put(st, 0, "uh_wrathful_shade")
+	st._resolve({"do": "buff", "target": "choose_minion", "attack": 2}, 0, null, sh.uid, "test")
+	st._damage(sh, 1, null)
+	ok(sh.attack == 7, "buffed and raging: 2 + 2 + 3")
+	st.play_card(0, _give(st, 0, "pj_veil_of_stillness"), sh.uid)
+	ok(sh.attack == 4 and sh.wrath == 0 and sh.rage == 0 and sh.silenced, "Silence removes the Wrath bonus only")
+	st._damage(sh, 1, null)
+	ok(sh.attack == 4, "a silenced minion has no Wrath any more")
+
+	# Transform: the new form is fresh (no Wrath of the old one); a copy into the hand is played fresh.
+	st = _blank()
+	var foe := _put(st, 1, "uh_wrathful_shade")
+	st._damage(foe, 1, null)
+	st.play_card(0, _give(st, 0, "ul_circes_draught"), foe.uid)
+	var swine: BattleState.Unit = st.sides[1].board[0]
+	ok(swine.id == "ul_swine" and swine.attack == 1 and swine.wrath == 0 and swine.rage == 0, "transform drops the Wrath")
+	st = _blank()
+	foe = _put(st, 1, "uh_wrathful_shade")
+	st._damage(foe, 2, null)
+	st.play_card(0, _give(st, 0, "ul_forged_will"), foe.uid)
+	st.play_card(0, st.sides[0].hand[0].uid)
+	var copy: BattleState.Unit = st.sides[0].board[0]
+	ok(copy.id == "uh_wrathful_shade" and copy.attack == 2 and copy.health == 3 and copy.rage == 0,
+		"a copy from the hand comes in fresh and calm")
+	# A copy summoned onto the board (Capocchio) has a consistent Wrath, whatever it keeps of the original.
+	st = _blank()
+	foe = _put(st, 1, "uh_wrathful_shade")
+	st._damage(foe, 2, null)
+	st.play_card(0, _give(st, 0, "ul_capocchio"), foe.uid)
+	ok(st.sides[0].board.size() == 2 and st.sides[0].board[1].id == "uh_wrathful_shade" and _wrath_sane(st.sides[0].board[1]),
+		"Capocchio's copy of a raging minion is consistent")
+
+	# Rebirth: it comes back with 1 Health; if that is below its max Health it is damaged and rages at once.
+	st = _blank()
+	var rs := _put(st, 0, "wr_rancorous_shade") # 3/4 Rebirth, Wrath: +3 Attack
+	st.play_card(0, _give(st, 0, "centaur_arrows"), rs.uid) # 3 damage: raging
+	ok(rs.attack == 6, "Rancorous Shade rages")
+	st.play_card(0, _give(st, 0, "centaur_arrows"), rs.uid)
+	var back: BattleState.Unit = st.sides[0].board[0]
+	ok(back.id == "wr_rancorous_shade" and back.health == 1 and not back.has("rebirth") and _wrath_sane(back),
+		"a reborn Wrath minion: Wrath matches its health (%d/%d, %d attack)" % [back.health, back.max_health, back.attack])
+	ok(back.health == back.max_health or back.attack == 6, "reborn damaged, it rages")
+	# Erichtho gives Rebirth.
+	st = _blank()
+	sh = _put(st, 0, "uh_wrathful_shade")
+	st.play_card(0, _give(st, 0, "wr_erichtho"), sh.uid)
+	ok(sh.has("rebirth"), "Erichtho gives a friendly minion Rebirth")
+
+	# Freeze: a raging minion keeps its Attack frozen, but cannot attack.
+	st = _blank()
+	sh = _put(st, 0, "uh_wrathful_shade")
+	_put(st, 1, "geryon")
+	st._damage(sh, 1, null)
+	sh.frozen = true
+	ok(sh.attack == 5 and not st.can_attack(sh), "a frozen raging minion keeps its Attack and cannot attack")
+
+	# Ward blocks the damage: no Wrath, no Frenzy.
+	st = _blank()
+	sh = _put(st, 0, "uh_wrathful_shade")
+	var mw := _put(st, 0, "wr_mud_wrestler") # 2/3, Frenzy: Gain +2/+2
+	sh.keywords["ward"] = true
+	mw.keywords["ward"] = true
+	st.play_card(0, _give(st, 0, "wr_stirring_the_mud"))
+	ok(sh.rage == 0 and sh.attack == 2 and not sh.has("ward"), "Ward blocks the damage, so no Wrath")
+	ok(mw.attack == 2 and not mw.frenzied, "Ward blocks the damage, so no Frenzy")
+
+	# Venom: the minion dies, so no Wrath and no Frenzy.
+	st = _blank()
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	var serpent := _put(st, 1, "ih_thief_serpent") # 1/2 Venom
+	mw = _put(st, 0, "wr_mud_wrestler")
+	sh = _put(st, 0, "uh_wrathful_shade")
+	st.attack(0, mw.uid, serpent.uid)
+	ok(not st.units.has(mw.uid) and not evs.any(func(ev): return ev.t == "frenzy"), "Venom kills: no Frenzy")
+	evs.clear()
+	serpent = _put(st, 1, "ih_thief_serpent")
+	st.attack(0, sh.uid, serpent.uid)
+	ok(not st.units.has(sh.uid) and not evs.any(func(ev): return ev.t == "wrath"), "Venom kills: no Wrath")
+
+	# Frenzy: once, after the damage has resolved; never when the blow kills or after a Silence.
+	st = _blank()
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	mw = _put(st, 0, "wr_mud_wrestler")
+	var choked := _put(st, 0, "wr_choked_soul") # 1/3, Frenzy: Draw a card
+	var lp := _put(st, 1, "lost_pilgrim")
+	st.play_card(0, _give(st, 0, "wr_stirring_the_mud"))
+	ok(mw.frenzied and mw.attack == 4 and mw.health == 4 and mw.max_health == 5, "Frenzy: +2/+2 after 1 damage")
+	ok(st.sides[0].hand.size() == 1, "Mud-Choked Soul's Frenzy draws")
+	var i_last_hit := _event_at(evs, func(ev): return ev.t == "damage" and ev.uid == lp.uid)
+	var i_frenzy := _event_at(evs, func(ev): return ev.t == "frenzy")
+	ok(i_last_hit != -1 and i_frenzy > i_last_hit, "Frenzy fires after the whole blow has resolved")
+	st.play_card(0, _give(st, 0, "wr_stirring_the_mud"))
+	ok(mw.attack == 4 and st.sides[0].hand.size() == 1, "Frenzy fires only once")
+	ok(choked.health == 1, "the soul took both hits")
+	st = _blank()
+	mw = _put(st, 0, "wr_mud_wrestler")
+	st.play_card(0, _give(st, 0, "centaur_arrows"), mw.uid)
+	ok(not st.units.has(mw.uid), "a lethal blow sets off no Frenzy")
+	st = _blank()
+	mw = _put(st, 0, "wr_mud_wrestler")
+	st.play_card(0, _give(st, 0, "pj_veil_of_stillness"), mw.uid)
+	st._damage(mw, 1, null)
+	st._cleanup()
+	ok(mw.attack == 2 and not mw.frenzied, "a silenced minion has no Frenzy")
+	# Frenzy summons next to the minion; Marsh Warden's Frenzy armors the hero.
+	st = _blank()
+	var md := _put(st, 0, "wr_mud_dweller")
+	var warden := _put(st, 0, "wr_marsh_warden")
+	st.play_card(0, _give(st, 0, "wr_stirring_the_mud"))
+	ok(st.sides[0].board.size() == 3 and st.sides[0].board[1].id == "wr_mud_soul" and st.sides[0].hero.armor == 3,
+		"Mud Dweller summons a Mud Soul beside it; Marsh Warden gives 3 Armor")
+	ok(md.health == 3 and warden.health == 3, "both took the blow")
+
+	# Fights: both strike at once (the Wrath set off by the fight adds nothing to it), Venom and Drain apply, no attack
+	# is used and Guard does not matter.
+	st = _blank()
+	var guard := _put(st, 1, "cerberus") # 3/5 Guard
+	var other := _put(st, 1, "lost_pilgrim")
+	st.play_card(0, _give(st, 0, "wr_marsh_champion"), other.uid) # 4/4 fights the 2/1 behind the Guard
+	var champ: BattleState.Unit = st.sides[0].board[0]
+	ok(not st.units.has(other.uid) and champ.health == 2 and guard.health == 5, "a fight ignores Guard")
+	ok(champ.sleeping and champ.attacks_made == 0, "a fight is not an attack")
+	st = _blank()
+	sh = _put(st, 0, "uh_wrathful_shade")
+	var pl := _put(st, 1, "plutus") # 2/4 Drain
+	st.sides[1].hero.health = 20
+	st.play_card(0, _give(st, 0, "wr_butting_heads"), sh.uid) # +1 Attack, then fights the only enemy
+	ok(pl.health == 1 and sh.health == 1 and sh.attack == 6, "both blows land together; Wrath rages after (%d, %d, %d)" % [
+		pl.health, sh.health, sh.attack])
+	ok(st.sides[1].hero.health == 22, "Drain works in a fight")
+	st = _blank()
+	serpent = _put(st, 1, "ih_thief_serpent")
+	st.play_card(0, _give(st, 0, "wr_marsh_champion"), serpent.uid)
+	ok(st.sides[0].board.is_empty() and st.sides[1].board.is_empty(), "Venom works in a fight")
+	st = _blank()
+	ok(st.play_card(0, _give(st, 0, "wr_black_guelph")), "a fighter can be played with no enemy to fight")
+	ok(st.play_card(0, _give(st, 0, "wr_butting_heads"), st.sides[0].board[0].uid), "Butting Heads with no enemy")
+	# The Mob Turns: one at a time, until the target is dead.
+	st = _blank()
+	var gy := _put(st, 1, "geryon") # 4/5
+	var mb := _put(st, 0, "wr_mud_brawler")
+	var brute := _put(st, 0, "wr_stygian_brute")
+	var knight := _put(st, 0, "wr_drowned_knight")
+	st.play_card(0, _give(st, 0, "wr_mob_turns"), gy.uid)
+	ok(not st.units.has(gy.uid), "the mob kills Geryon")
+	ok(not st.units.has(mb.uid) and not st.units.has(brute.uid) and st.units.has(knight.uid) and knight.health == 1
+		and knight.attack == 6, "one at a time: the knight finishes it and rages")
+	# Tydeus: his On Play fight sets off his Frenzy, a second fight.
+	st = _blank()
+	var p1 := _put(st, 1, "lost_pilgrim")
+	var p2 := _put(st, 1, "lost_pilgrim")
+	st.play_card(0, _give(st, 0, "wr_tydeus"), p1.uid)
+	var ty: BattleState.Unit = st.sides[0].board[0]
+	ok(not st.units.has(p1.uid) and not st.units.has(p2.uid) and ty.health == 2, "Tydeus fights twice")
+
+	# The hero power, Spite: 1 damage and +1 Attack; it kills a 1-Health enemy; no heroes.
+	st = _blank()
+	st.sides[0].hero_id = "filippo"
+	ok(not st.can_use_power(0), "Spite needs a minion")
+	sh = _put(st, 0, "uh_wrathful_shade")
+	ok(not st.use_power(0, st.sides[1].hero.uid), "Spite cannot target a hero")
+	ok(st.use_power(0, sh.uid) and sh.health == 2 and sh.attack == 6, "Spite on a Wrath minion: 2 + 1 + 3")
+	st = _blank()
+	st.sides[0].hero_id = "filippo"
+	lp = _put(st, 1, "lost_pilgrim")
+	ok(st.use_power(0, lp.uid) and not st.units.has(lp.uid), "Spite kills a 1-Health enemy")
+
+	# The legendaries.
+	st = _blank()
+	var fil := _put(st, 0, "uh_filippo_argenti") # 3/7, Wrath: +3, End of Turn: 1 damage to himself
+	st.end_turn()
+	ok(fil.health == 6 and fil.attack == 6, "Filippo bites himself at the end of the turn and rages")
+	st = _blank()
+	fil = _put(st, 0, "uh_filippo_argenti")
+	st._damage(fil, 9, null)
+	st._cleanup()
+	ok(st.sides[1].hero.health == 28, "Filippo's Last Breath hits the enemies")
+	st = _blank()
+	var towers := _put(st, 0, "wr_red_towers") # 0/6 Guard, Wrath: +4, End of Turn: 1 damage to all minions
+	var lp2 := _put(st, 1, "lost_pilgrim")
+	st.end_turn()
+	ok(towers.health == 5 and towers.attack == 4 and not st.units.has(lp2.uid), "the Red Towers burn everyone, themselves too")
+	st = _blank()
+	_put(st, 1, "she_wolf")
+	st.play_card(0, _give(st, 0, "wr_athamas"))
+	var ath: BattleState.Unit = st.sides[0].board[0]
+	ok(ath.health == 6 and ath.attack == 8 and st.sides[1].board.is_empty(), "Athamas hurts everyone, himself too")
+	st = _blank()
+	st.play_card(0, _give(st, 0, "wr_alberti_brothers"))
+	ok(st.sides[0].board.size() == 2 and st.sides[0].board.all(func(u): return u.id == "wr_alberti_brothers"),
+		"the Alberti Brothers come in pairs")
+	st = _blank()
+	st.play_card(0, _give(st, 0, "wr_self_gnawing_shade"))
+	ok(st.sides[0].board[0].health == 3 and st.sides[0].board[0].attack == 3, "Self-Gnawing Shade enters raging")
+	st = _blank()
+	_put(st, 0, "wr_mud_brawler")
+	_put(st, 0, "wr_stygian_brute")
+	st.play_card(0, _give(st, 0, "wr_boiling_spring"))
+	ok(st.sides[0].board.size() == 2 and st.sides[0].board[1].attack == 6, "the Boiling Spring: 1 damage, +1 Attack")
+
+	# The AI's look-ahead copy keeps every Wrath and Frenzy detail.
+	st = _blank()
+	sh = _put(st, 0, "uh_wrathful_shade")
+	mw = _put(st, 0, "wr_mud_wrestler")
+	st._damage(sh, 1, null)
+	st._damage(mw, 1, null)
+	st._cleanup()
+	var cl := st.clone(5)
+	var csh: BattleState.Unit = cl.units[sh.uid]
+	var cmw: BattleState.Unit = cl.units[mw.uid]
+	ok(csh.wrath == 3 and csh.rage == 3 and csh.attack == 5 and cmw.frenzied, "clone keeps Wrath and Frenzy state")
+
+	# Every card of the class resolves cleanly, with enemies on the board and without.
+	for c in CardDB.all_cards():
+		if c.get("set", "") != "wrath":
+			continue
+		for crowd in 2:
+			st = _blank()
+			_put(st, 0, "uh_wrathful_shade")
+			if crowd == 1:
+				_put(st, 1, "geryon")
+				_put(st, 1, "lost_pilgrim")
+				_put(st, 1, "ih_thief_serpent")
+			var uid := _give(st, 0, c.id)
+			var tt := BattleState.target_type(c)
+			var targets := st.valid_targets(0, tt) if tt != "" else ([] as Array[int])
+			if c.type == "spell" and tt != "" and targets.is_empty():
+				ok(not st.can_play(0, uid), "%s needs a target" % c.id)
+				continue
+			ok(st.play_card(0, uid, targets.back() if not targets.is_empty() else -1), "%s plays (%d)" % [c.id, crowd])
+			st.end_turn()
+			for s in st.sides:
+				ok(s.hand.size() <= BattleState.MAX_HAND and s.board.size() <= BattleState.MAX_BOARD, "%s keeps limits" % c.id)
+				for u in s.board:
+					ok(u.health > 0 and _wrath_sane(u), "%s leaves a sane board (%s)" % [c.id, u.id])

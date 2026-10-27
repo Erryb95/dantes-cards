@@ -9,7 +9,8 @@ var only := ""
 var done := 0
 var stalls := 0
 var desyncs := 0 ## the view's hands or boards disagreeing with the rules state while nothing is animating
-var seen := {"steal": 0, "copy": 0, "transform": 0, "ruse": 0} ## how often the rarer view hooks were exercised
+var seen := {"steal": 0, "copy": 0, "transform": 0, "ruse": 0, "wrath": 0, "frenzy": 0, "fight": 0} ## how often the
+## rarer view hooks were exercised
 
 
 func _ready() -> void:
@@ -82,3 +83,12 @@ func _check_sync(battle: Node, g: int) -> void:
 			desyncs += 1
 			printerr("SOAK DESYNC game %d side %d: hand %d/%d board %d/%d" % [g, i, battle.hand_views[i].size(), hand,
 				battle.board_views[i].size(), board])
+			continue
+		# Every minion shows the numbers and the Wrath glow the rules give it.
+		for k in board:
+			var u = battle.st.sides[i].board[k]
+			var m = battle.board_views[i][k]
+			if m.uid != u.uid or m.attack != u.attack or m.health != u.health or m.raging != (u.rage > 0):
+				desyncs += 1
+				printerr("SOAK DESYNC game %d side %d slot %d: %s view %d/%d rage %s, rules %s %d/%d rage %d" % [g, i, k,
+					m.card_id, m.attack, m.health, m.raging, u.id, u.attack, u.health, u.rage])

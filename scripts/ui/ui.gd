@@ -577,8 +577,8 @@ static func fit_rules_size(plain: String, width: float, height: float, max_size:
 
 static func rules_bbcode(text: String) -> String:
 	var t := text
-	for k in ["On Play:", "Last Breath:", "End of Turn:", "Start of Turn:", "Ruse:", "Guard", "Swift", "Ward", "Drain",
-			"Venom", "Rebirth", "Freeze", "Silence"]:
+	for k in ["On Play:", "Last Breath:", "End of Turn:", "Start of Turn:", "Ruse:", "Wrath:", "Frenzy:", "Guard", "Swift",
+			"Ward", "Drain", "Venom", "Rebirth", "Freeze", "Silence"]:
 		t = t.replace(k, "[b]" + k + "[/b]")
 	return "[center]" + t + "[/center]"
 
@@ -599,6 +599,9 @@ const KEYWORD_HELP := {
 	"silence": ["Silence", "Removes its card text and keywords. Stat changes and Freeze stay."],
 	"frozen": ["Frozen", "It loses its next attack, then thaws."],
 	"silenced": ["Silenced", "Its card text and keywords are gone. Stat changes stay."],
+	"wrath": ["Wrath", "While this minion is damaged, it has the extra Attack."],
+	"frenzy": ["Frenzy", "Does something the first time it takes damage and survives."],
+	"fight": ["Fight", "Two minions deal damage equal to their Attack to each other."],
 }
 
 ## Keyword words a rules text can mention (a token it summons, a keyword it gives), and the tip each one opens.
@@ -623,24 +626,28 @@ static func card_tips(card: Dictionary, on_board: bool = false) -> Array:
 	for k in card.get("keywords", []):
 		add.call(str(k))
 	if not silenced:
+		if int(card.get("wrath", 0)) > 0: # a live unit carries its current Wrath (0 once silenced)
+			add.call("wrath")
 		var minion: bool = card.get("type", "minion") == "minion"
 		for e in card.get("effects", []):
 			# A Ruse bonus is an On Play effect too, but its tip explains the Ruse.
 			var on: String = "ruse" if e.get("ruse", false) else str(e.get("on", ""))
 			# Triggers belong to minions; a spell's Ruse bonus gets its tip too.
-			if (minion or on == "ruse") and on in ["death", "play", "turn_end", "turn_start", "ruse"] \
+			if (minion or on == "ruse") and on in ["death", "play", "turn_end", "turn_start", "ruse", "frenzy"] \
 					and not (on_board and on == "play"):
 				add.call(on)
 			if on_board and str(e.get("on", "")) == "play":
 				continue # what it did when played is history: no Freeze / Silence / keyword tips for it
 			var does := str(e.get("do", ""))
-			if does == "freeze" or does == "silence":
+			if does == "freeze" or does == "silence" or does == "fight":
 				add.call(does)
 			for k in e.get("keywords", []):
 				add.call(str(k))
 			if e.has("card"): # a token it summons or a card it gives, with that card's keywords
 				for k in CardDB.card(str(e.card)).get("keywords", []):
 					add.call(str(k))
+				if int(CardDB.card(str(e.card)).get("wrath", 0)) > 0:
+					add.call("wrath")
 		if not on_board: # the text may name a keyword the effects only imply
 			if _text_kw == null:
 				_text_kw = RegEx.create_from_string("\\b(" + "|".join(_TEXT_KEYWORDS) + ")\\b")

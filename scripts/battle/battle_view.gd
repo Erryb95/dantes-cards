@@ -881,6 +881,30 @@ func _present(ev: Dictionary) -> void:
 		"rebirth":
 			Vfx.keyword(self, unit_views.get(ev.uid), "rebirth")
 			await _wait(0.2)
+		"wrath":
+			# Wrath wakes on a damaged minion (ember flare, "Wrath" plaque, its Attack jumps) or cools when it is healed
+			# to full or silenced.
+			var wm = unit_views.get(ev.uid)
+			if wm is MinionView:
+				wm.apply({"attack": ev.attack})
+				wm.set_raging(ev.on)
+				if ev.on:
+					Vfx.keyword(self, wm, "wrath")
+					_toast(wm.position + Vector2(0, -(MinionView.H / 2 + 24)), "Wrath", UI.EMBER)
+					_pop(wm, 1.14)
+				else:
+					Fx.smoke(fx_layer, wm.position, Color(0.3, 0.25, 0.22, 0.5), 160.0, 4)
+				await _wait(0.25 if ev.on else 0.1)
+		"frenzy":
+			var fm = unit_views.get(ev.uid)
+			if fm is MinionView:
+				Vfx.keyword(self, fm, "frenzy")
+				_toast(fm.position + Vector2(0, -(MinionView.H / 2 + 24)), "Frenzy", Color(1.0, 0.35, 0.25))
+				_pop(fm, 1.18)
+				shake(4.0)
+			await _wait(0.3)
+		"fight":
+			await _on_fight(ev)
 		"bounce":
 			await _on_bounce(ev)
 		"projectile":
@@ -1242,6 +1266,49 @@ func _on_attack(ev: Dictionary) -> void:
 	back.tween_property(a, "position", a.home, 0.28 / _speed()).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	back.tween_property(a, "scale", Vector2.ONE, 0.28 / _speed())
 	back.chain().tween_callback(_land.bind(a))
+
+
+## A fight (Wrath class): both minions wind back, rush to meet halfway and clash in a splash of mud; then each falls
+## back to its slot. The two "damage" events that follow show the blows.
+func _on_fight(ev: Dictionary) -> void:
+	var a = unit_views.get(ev.a)
+	var b = unit_views.get(ev.b)
+	if not (a is MinionView and b is MinionView):
+		return
+	var dir: Vector2 = (b.position - a.position).normalized()
+	var mid: Vector2 = (a.position + b.position) / 2.0
+	var k := _speed()
+	for m in [a, b]:
+		m.busy = true
+		m.z_index = 15
+	Sfx.play("growl", -10.0, 1.1)
+	var t: Tween = a.create_tween().set_parallel(true)
+	t.tween_property(a, "scale", Vector2(1.14, 1.14), 0.14 / k).set_trans(Tween.TRANS_QUAD)
+	t.tween_property(b, "scale", Vector2(1.14, 1.14), 0.14 / k).set_trans(Tween.TRANS_QUAD)
+	t.tween_property(a, "position", a.position - dir * 30.0, 0.14 / k)
+	t.tween_property(b, "position", b.position + dir * 30.0, 0.14 / k)
+	t.chain().tween_property(a, "position", mid - dir * 62.0, 0.14 / k).set_ease(Tween.EASE_IN) \
+		.set_trans(Tween.TRANS_QUAD)
+	t.parallel().tween_property(b, "position", mid + dir * 62.0, 0.14 / k).set_ease(Tween.EASE_IN) \
+		.set_trans(Tween.TRANS_QUAD)
+	Sfx.play("whoosh", -8.0, 0.8)
+	await t.finished
+	Sfx.play("thud", -2.0, 0.8)
+	Sfx.play("clash", -6.0)
+	Sfx.play("splash", -10.0, 0.8)
+	shake(8.0)
+	if maxi(int(a.attack), int(b.attack)) >= 5:
+		_hit_stop(0.08)
+	Vfx.strike(self, a, b, dir, int(a.attack))
+	Vfx.strike(self, b, a, -dir, int(b.attack))
+	# The mud flies: a dark spray and dust where they meet.
+	Fx.burst(fx_layer, mid, Color(0.32, 0.22, 0.12), 28, 360.0, 0.7, 12.0, 700.0, 70.0, "k_dirt_02")
+	Fx.dust(fx_layer, mid + Vector2(0, 40), 220.0, 22, Color(0.28, 0.22, 0.16, 0.5))
+	for m in [a, b]:
+		var back: Tween = m.create_tween().set_parallel(true)
+		back.tween_property(m, "position", m.home, 0.3 / k).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		back.tween_property(m, "scale", Vector2.ONE, 0.3 / k)
+		back.chain().tween_callback(_land.bind(m))
 
 
 ## A freeze-frame on heavy hits: the world stops for a few frames, which sells the weight of the blow.
@@ -2344,6 +2411,7 @@ func _show_inspect(u) -> void:
 		live["keywords"] = unit.keywords.keys()
 		live["frozen"] = unit.frozen
 		live["silenced"] = unit.silenced
+		live["wrath"] = unit.wrath
 	var tips := UI.card_tips(live, true)
 	for t in tips:
 		_add_tip(t[0], t[1])

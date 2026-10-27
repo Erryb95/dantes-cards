@@ -174,6 +174,27 @@
     "ul_circe": {"school": "venom", "mass": "nova"},
     "ul_distant_mountain": {"school": "wind", "mass": "gale"},
     "ul_swine": {"school": "venom"},
-    "ul_achaean_raider": {"school": "blood"}
+    "ul_achaean_raider": {"school": "blood"},
+    "power_filippo": {"school": "blood", "hit": "claw"},
+    "wr_gnawing_spite": {"school": "blood", "hit": "claw"},
+    "wr_tearing_teeth": {"school": "blood", "hit": "claw"},
+    "wr_stirring_the_mud": {"school": "stone", "mass": "quake"},
+    "wr_signal_fires": {"school": "fire", "cast": "stars"},
+    "wr_butting_heads": {"school": "blood", "hit": "slash"},
+    "wr_furies_nails": {"school": "blood", "hit": "claw"},
+    "wr_boiling_spring": {"school": "water", "mass": "wave"},
+    "wr_mob_turns": {"school": "blood", "hit": "claw"},
+    "wr_brawl_in_the_mud": {"school": "stone", "mass": "quake"},
+    "wr_other_dogs": {"school": "water", "hit": "geyser"},
+    "wr_boat_rides_low": {"school": "water", "mass": "wave"},
+    "wr_eternal_fire": {"school": "fire", "hit": "beam"},
+    "wr_storm_across_styx": {"school": "wind", "mass": "gale"},
+    "wr_gate_slams_shut": {"school": "shadow", "mass": "quake"},
+    "wr_red_towers": {"school": "fire", "mass": "rain"},
+    "wr_tower_watchman": {"school": "fire"},
+    "wr_athamas": {"school": "blood", "mass": "claws"},
+    "wr_tydeus": {"school": "blood"},
+    "wr_geri_del_bello": {"school": "blood", "hit": "orb"},
+    "wr_wrathful_throng": {"school": "blood", "mass": "claws"}
   }
 }

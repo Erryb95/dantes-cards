@@ -1,0 +1,1060 @@
+{
+ "set_name": "The Stygian Marsh",
+ "cards": [
+  {
+   "id": "wr_gnawing_spite",
+   "name": "Gnawing Spite",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 0,
+   "effects": [
+    {
+     "do": "damage",
+     "target": "choose_friendly_minion",
+     "amount": 1
+    },
+    {
+     "do": "draw",
+     "amount": 1
+    }
+   ],
+   "text": "Deal 1 damage to a friendly minion. Draw a card.",
+   "flavor": "With no one else to hurt, he sank his teeth into himself.",
+   "circle": "wrath",
+   "art": "A mud-smeared hand clenched so hard that the nails draw blood from the palm."
+  },
+  {
+   "id": "wr_mud_brawler",
+   "name": "Mud Brawler",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 1,
+   "health": 2,
+   "wrath": 2,
+   "text": "Wrath: +2 Attack.",
+   "flavor": "They struck each other with fists, with heads, with feet.",
+   "circle": "wrath",
+   "art": "A thin sinner waist-deep in black mud raises both fists, ready to swing at anyone."
+  },
+  {
+   "id": "wr_adimari_bravo",
+   "name": "Adimari Bravo",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 3,
+   "health": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "own_hero",
+     "amount": 2
+    }
+   ],
+   "text": "On Play: Deal 2 damage to your hero.",
+   "flavor": "The Adimari: a breed that bullies the meek and fawns on the strong.",
+   "circle": "wrath",
+   "art": "A swaggering young Florentine thug in a red hood draws a dagger in a narrow medieval street."
+  },
+  {
+   "id": "wr_choked_soul",
+   "name": "Mud-Choked Soul",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 1,
+   "attack": 1,
+   "health": 3,
+   "effects": [
+    {
+     "on": "frenzy",
+     "do": "draw",
+     "amount": 1
+    }
+   ],
+   "text": "Frenzy: Draw a card.",
+   "flavor": "Sullen in the sweet air, they now gurgle their words through the mud.",
+   "circle": "wrath",
+   "art": "A head barely above a black swamp, mud bubbling from its mouth as it tries to speak."
+  },
+  {
+   "id": "wr_tearing_teeth",
+   "name": "Tearing Teeth",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "do": "damage",
+     "target": "choose_minion",
+     "amount": 3
+    },
+    {
+     "do": "damage",
+     "target": "own_hero",
+     "amount": 2
+    }
+   ],
+   "text": "Deal 3 damage to a minion. Deal 2 damage to your hero.",
+   "flavor": "They tore at each other, piece by piece, with their teeth.",
+   "circle": "wrath",
+   "art": "Two muddy sinners locked together in the swamp, one biting into the other's shoulder."
+  },
+  {
+   "id": "wr_stirring_the_mud",
+   "name": "Stirring the Mud",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "do": "damage",
+     "target": "all_minions",
+     "amount": 1
+    }
+   ],
+   "text": "Deal 1 damage to all minions.",
+   "flavor": "Under the water, more of them, and the surface bubbles with their sighs.",
+   "circle": "wrath",
+   "art": "The surface of a black swamp churning and bubbling as hands and heads break through it."
+  },
+  {
+   "id": "wr_signal_fires",
+   "name": "Signal Fires",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "do": "draw",
+     "amount": 1
+    },
+    {
+     "do": "damage",
+     "target": "own_hero",
+     "amount": 2
+    }
+   ],
+   "text": "Draw a card. Deal 2 damage to your hero.",
+   "flavor": "Two small flames on the tower, and a third answering from far away.",
+   "circle": "dis",
+   "art": "Two small fires burning on top of a dark stone tower above a marsh, a third flame far off in the night."
+  },
+  {
+   "id": "uh_wrathful_shade",
+   "name": "Wrathful Shade",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 3,
+   "wrath": 3,
+   "text": "Wrath: +3 Attack.",
+   "flavor": "Angry for no reason, it strikes whoever is near.",
+   "circle": "wrath",
+   "art": "A figure with clenched fists rising out of dark water."
+  },
+  {
+   "id": "wr_mud_wrestler",
+   "name": "Mud Wrestler",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 3,
+   "effects": [
+    {
+     "on": "frenzy",
+     "do": "buff",
+     "target": "self",
+     "attack": 2,
+     "health": 2
+    }
+   ],
+   "text": "Frenzy: Gain +2/+2.",
+   "flavor": "Every blow he takes only makes him want the next one more.",
+   "circle": "wrath",
+   "art": "A broad-shouldered sinner wrestling another in knee-deep mud, his face twisted with fury."
+  },
+  {
+   "id": "wr_self_gnawing_shade",
+   "name": "Self-Gnawing Shade",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 1,
+   "health": 4,
+   "wrath": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "self",
+     "amount": 1
+    }
+   ],
+   "text": "Wrath: +2 Attack. On Play: Deal 1 damage to this minion.",
+   "flavor": "Finding no enemy close enough, it turned its teeth on itself.",
+   "circle": "wrath",
+   "art": "A hunched shade in the swamp biting its own wrist, eyes burning with rage."
+  },
+  {
+   "id": "wr_black_guelph",
+   "name": "Black Guelph Brawler",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 2,
+   "attack": 2,
+   "health": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "fight",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "On Play: Fight an enemy minion.",
+   "flavor": "In Florence a feud needed no reason, only a street and a knife.",
+   "circle": "wrath",
+   "art": "A Florentine soldier in a black tabard lunges with a short sword in a crowded street brawl."
+  },
+  {
+   "id": "wr_rabble_rouser",
+   "name": "Rabble-Rouser",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_minion",
+     "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "choose_minion",
+     "attack": 2
+    }
+   ],
+   "text": "On Play: Deal 1 damage to a minion and give it +2 Attack.",
+   "flavor": "A shove, a jeer, and the whole swamp is fighting again.",
+   "circle": "wrath",
+   "art": "A grinning sinner shoves another face-first into the mud while the crowd around them roars."
+  },
+  {
+   "id": "wr_florentine_hothead",
+   "name": "Florentine Hothead",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 2,
+   "attack": 2,
+   "health": 2,
+   "keywords": [
+    "swift"
+   ],
+   "wrath": 2,
+   "text": "Swift. Wrath: +2 Attack.",
+   "flavor": "He drew his sword before he knew what the quarrel was about.",
+   "circle": "wrath",
+   "art": "A young nobleman with a flushed face draws his sword in the middle of a crowded market."
+  },
+  {
+   "id": "wr_marsh_warden",
+   "name": "Marsh Warden",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 1,
+   "health": 4,
+   "keywords": [
+    "guard"
+   ],
+   "effects": [
+    {
+     "on": "frenzy",
+     "do": "armor",
+     "target": "own_hero",
+     "amount": 3
+    }
+   ],
+   "text": "Guard. Frenzy: Gain 3 Armor.",
+   "flavor": "It squats in the mud and lets them break their fists on it.",
+   "circle": "wrath",
+   "art": "A heavy, mud-caked figure crouched like a boulder in the swamp, arms folded over its head."
+  },
+  {
+   "id": "wr_mud_caked_sinner",
+   "name": "Mud-Caked Sinner",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 2,
+   "effects": [
+    {
+     "on": "death",
+     "do": "summon",
+     "card": "wr_mud_soul"
+    }
+   ],
+   "text": "Last Breath: Summon a 1/2 Mud Soul.",
+   "flavor": "Push one under, and another climbs out of the slime.",
+   "circle": "wrath",
+   "art": "A sinner sinking into the swamp while a second, smaller shape claws its way out beside him."
+  },
+  {
+   "id": "wr_scornful_soul",
+   "name": "Scornful Soul",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 2,
+   "attack": 2,
+   "health": 3,
+   "keywords": [
+    "drain"
+   ],
+   "wrath": 2,
+   "text": "Drain. Wrath: +2 Attack.",
+   "flavor": "Disdainful soul, blessed is she who carried you.",
+   "circle": "wrath",
+   "art": "A proud traveller in a red cloak glares down from a small boat at a sinner reaching out of the mud."
+  },
+  {
+   "id": "wr_butting_heads",
+   "name": "Butting Heads",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 2,
+   "effects": [
+    {
+     "do": "buff",
+     "target": "choose_friendly_minion",
+     "attack": 1
+    },
+    {
+     "do": "fight",
+     "target": "choose_friendly_minion",
+     "with": "random_enemy_minion"
+    }
+   ],
+   "text": "Give a friendly minion +1 Attack. It fights a random enemy minion.",
+   "flavor": "Two brothers so bound in hate that they butt heads like goats forever.",
+   "circle": "cocytus",
+   "art": "Two brothers frozen together in ice, slamming their foreheads against each other like rams."
+  },
+  {
+   "id": "wr_furies_nails",
+   "name": "The Furies' Nails",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "do": "damage",
+     "target": "choose_friendly_minion",
+     "amount": 2
+    },
+    {
+     "do": "draw",
+     "amount": 2
+    }
+   ],
+   "text": "Deal 2 damage to a friendly minion. Draw 2 cards.",
+   "flavor": "Each of them tore at her own breast with her nails.",
+   "circle": "dis",
+   "art": "Three wild-haired women with green serpents in their hair clawing at their own robes atop a burning tower."
+  },
+  {
+   "id": "wr_boiling_spring",
+   "name": "The Boiling Spring",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 2,
+   "effects": [
+    {
+     "do": "damage",
+     "target": "all_friendly_minions",
+     "amount": 1
+    },
+    {
+     "do": "buff",
+     "target": "all_friendly_minions",
+     "attack": 1
+    }
+   ],
+   "text": "Deal 1 damage to your minions. Give them +1 Attack.",
+   "flavor": "A dark spring boils over and runs down into the marsh called Styx.",
+   "circle": "wrath",
+   "art": "A spring of black boiling water spilling down a ravine of grey rock into a dark marsh."
+  },
+  {
+   "id": "wr_stygian_brute",
+   "name": "Stygian Brute",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 3,
+   "health": 4,
+   "wrath": 2,
+   "text": "Wrath: +2 Attack.",
+   "flavor": "Naked and angry, all of them, plastered with the swamp.",
+   "circle": "wrath",
+   "art": "A huge bald sinner covered in black mud stands up in the swamp, roaring."
+  },
+  {
+   "id": "wr_brawling_shade",
+   "name": "Brawling Shade",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "frenzy",
+     "do": "fight",
+     "target": "random_enemy_minion"
+    }
+   ],
+   "text": "Frenzy: Fight a random enemy minion.",
+   "flavor": "Hit it once and it will find someone to hit back.",
+   "circle": "wrath",
+   "art": "A shade with a broken nose throws a wild punch at a figure behind him in the mud."
+  },
+  {
+   "id": "wr_mud_dweller",
+   "name": "Mud Dweller",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 2,
+   "health": 4,
+   "effects": [
+    {
+     "on": "frenzy",
+     "do": "summon",
+     "card": "wr_mud_soul"
+    }
+   ],
+   "text": "Frenzy: Summon a 1/2 Mud Soul.",
+   "flavor": "Strike the mud and the mud strikes back.",
+   "circle": "wrath",
+   "art": "A lumpy figure half made of swamp mud, smaller muddy hands reaching up around it."
+  },
+  {
+   "id": "wr_rinier_pazzo",
+   "name": "Rinier Pazzo, the Mad",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 4,
+   "health": 3,
+   "keywords": [
+    "swift"
+   ],
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "own_hero",
+     "amount": 2
+    }
+   ],
+   "text": "Swift. On Play: Deal 2 damage to your hero.",
+   "flavor": "He made war on the roads, and the boiling river is his pay.",
+   "circle": "violence",
+   "art": "A wild-eyed highwayman on a rearing horse attacks travellers on a forest road."
+  },
+  {
+   "id": "wr_tower_watchman",
+   "name": "Tower Watchman",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 2,
+   "health": 5,
+   "keywords": [
+    "guard"
+   ],
+   "wrath": 2,
+   "text": "Guard. Wrath: +2 Attack.",
+   "flavor": "He lit the signal and waited for the boatman.",
+   "circle": "dis",
+   "art": "A grim watchman in a dark cloak standing on a battlement beside a small fire, spear in hand."
+  },
+  {
+   "id": "wr_erichtho",
+   "name": "Erichtho, the Witch",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "choose_friendly_minion",
+     "keywords": [
+      "rebirth"
+     ]
+    }
+   ],
+   "text": "On Play: Give a friendly minion Rebirth.",
+   "flavor": "The cruel witch who called the shades back into their bodies.",
+   "circle": "dis",
+   "art": "A gaunt sorceress in tattered black robes calls a pale shade up from a battlefield by moonlight."
+  },
+  {
+   "id": "wr_silver_shod_horse",
+   "name": "The Silver-Shod Horse",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "keywords": [
+    "swift"
+   ],
+   "effects": [
+    {
+     "on": "frenzy",
+     "do": "buff",
+     "target": "self",
+     "attack": 2
+    }
+   ],
+   "text": "Swift. Frenzy: Gain +2 Attack.",
+   "flavor": "Filippo shod his horse with silver, and rode it over anyone in the way.",
+   "circle": "wrath",
+   "art": "A proud warhorse with gleaming silver horseshoes rearing on a cobbled Florentine street."
+  },
+  {
+   "id": "wr_mob_turns",
+   "name": "The Mob Turns",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 3,
+   "effects": [
+    {
+     "do": "fight",
+     "target": "choose_enemy_minion",
+     "with": "all_friendly_minions"
+    }
+   ],
+   "text": "Choose an enemy minion. Your minions fight it, one at a time.",
+   "flavor": "\"Get Filippo Argenti!\" they all shouted.",
+   "circle": "wrath",
+   "art": "A crowd of muddy sinners swarming over one man in the swamp, dragging him down with their hands."
+  },
+  {
+   "id": "wr_brawl_in_the_mud",
+   "name": "Brawl in the Mud",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 3,
+   "effects": [
+    {
+     "do": "damage",
+     "target": "all_minions",
+     "amount": 2
+    }
+   ],
+   "text": "Deal 2 damage to all minions.",
+   "flavor": "Not with hands alone: with heads, with chests, with feet.",
+   "circle": "wrath",
+   "art": "A whole swamp of naked sinners fighting each other, mud and water flying everywhere."
+  },
+  {
+   "id": "wr_other_dogs",
+   "name": "Back With the Other Dogs",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 3,
+   "effects": [
+    {
+     "do": "destroy",
+     "target": "choose_enemy_minion"
+    },
+    {
+     "do": "damage",
+     "target": "own_hero",
+     "amount": 4
+    }
+   ],
+   "text": "Destroy an enemy minion. Deal 4 damage to your hero.",
+   "flavor": "\"Away with you, down there with the other dogs!\"",
+   "circle": "wrath",
+   "art": "A robed poet shoves a sinner's grasping hands off the side of a small boat, back into the black mud."
+  },
+  {
+   "id": "wr_boat_rides_low",
+   "name": "The Boat Rides Low",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 3,
+   "effects": [
+    {
+     "do": "draw",
+     "amount": 2
+    },
+    {
+     "do": "damage",
+     "target": "all_friendly_minions",
+     "amount": 1
+    }
+   ],
+   "text": "Draw 2 cards. Deal 1 damage to your minions.",
+   "flavor": "Only when I stepped in did the boat seem to carry any weight.",
+   "circle": "wrath",
+   "art": "An old wooden boat sitting low in black water, its prow cutting a deep wake through the swamp."
+  },
+  {
+   "id": "wr_drowned_knight",
+   "name": "Drowned Knight",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 4,
+   "attack": 4,
+   "health": 5,
+   "wrath": 2,
+   "text": "Wrath: +2 Attack.",
+   "flavor": "Proud on horseback in Florence, sunk to the chin down here.",
+   "circle": "wrath",
+   "art": "A knight in a rusted helmet rising from the swamp, mud pouring from his armour, sword raised."
+  },
+  {
+   "id": "wr_adimari_captain",
+   "name": "Adimari Captain",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 4,
+   "attack": 5,
+   "health": 5,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "own_hero",
+     "amount": 3
+    }
+   ],
+   "text": "On Play: Deal 3 damage to your hero.",
+   "flavor": "His kin grew rich on other people's ruin.",
+   "circle": "wrath",
+   "art": "A heavy-set Florentine captain in a fur-trimmed coat, sword at his hip, sneering from a palace doorway."
+  },
+  {
+   "id": "wr_marsh_champion",
+   "name": "Marsh Champion",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 4,
+   "health": 4,
+   "effects": [
+    {
+     "on": "play",
+     "do": "fight",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "On Play: Fight an enemy minion.",
+   "flavor": "Whoever was strongest above was strongest down here, for a while.",
+   "circle": "wrath",
+   "art": "A towering sinner wading through the swamp, dragging a smaller one by the hair."
+  },
+  {
+   "id": "wr_red_towers",
+   "name": "The Red Towers of Dis",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 4,
+   "attack": 0,
+   "health": 6,
+   "keywords": [
+    "guard"
+   ],
+   "wrath": 4,
+   "effects": [
+    {
+     "on": "turn_end",
+     "do": "damage",
+     "target": "all_minions",
+     "amount": 1
+    }
+   ],
+   "text": "Guard. Wrath: +4 Attack. End of Turn: Deal 1 damage to all minions.",
+   "flavor": "The eternal fire inside makes them glow red.",
+   "circle": "dis",
+   "art": "The towers of a dark iron city glowing red-hot from within, rising beyond a smoking marsh."
+  },
+  {
+   "id": "wr_rancorous_shade",
+   "name": "Rancorous Shade",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 4,
+   "attack": 3,
+   "health": 5,
+   "keywords": [
+    "rebirth"
+   ],
+   "wrath": 3,
+   "text": "Rebirth. Wrath: +3 Attack.",
+   "flavor": "Drown it and it comes back up angrier.",
+   "circle": "wrath",
+   "art": "A shade bursting back up out of black water, gasping, its face twisted with hatred."
+  },
+  {
+   "id": "wr_geri_del_bello",
+   "name": "Geri del Bello",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 4,
+   "health": 5,
+   "wrath": 2,
+   "effects": [
+    {
+     "on": "death",
+     "do": "damage",
+     "target": "random_enemy",
+     "amount": 2
+    }
+   ],
+   "text": "Wrath: +2 Attack. Last Breath: Deal 2 damage to a random enemy.",
+   "flavor": "My kinsman, whose violent death no one has avenged yet.",
+   "circle": "malebolge",
+   "art": "A scowling Florentine in torn clothes points an accusing finger from the shadows of a stone bridge."
+  },
+  {
+   "id": "wr_muddy_mob",
+   "name": "The Muddy Mob",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 4,
+   "attack": 2,
+   "health": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "summon",
+     "card": "wr_mud_soul",
+     "count": 2
+    }
+   ],
+   "text": "On Play: Summon two 1/2 Mud Souls.",
+   "flavor": "There are more of them than anyone could count.",
+   "circle": "wrath",
+   "art": "A crowd of mud-covered sinners rising together out of a swamp, fists raised."
+  },
+  {
+   "id": "wr_black_guelph_captain",
+   "name": "Black Guelph Captain",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 3,
+   "health": 5,
+   "effects": [
+    {
+     "on": "frenzy",
+     "do": "buff",
+     "target": "other_friendly_minions",
+     "attack": 1
+    }
+   ],
+   "text": "Frenzy: Give your other minions +1 Attack.",
+   "flavor": "When their captain bleeds, the whole faction comes running.",
+   "circle": "wrath",
+   "art": "A captain in a black surcoat with a bloody cheek raises his sword, calling his men to the fight."
+  },
+  {
+   "id": "wr_eternal_fire",
+   "name": "The Eternal Fire",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 4,
+   "effects": [
+    {
+     "do": "damage",
+     "target": "choose_any",
+     "amount": 5
+    },
+    {
+     "do": "damage",
+     "target": "own_hero",
+     "amount": 2
+    }
+   ],
+   "text": "Deal 5 damage. Deal 2 damage to your hero.",
+   "flavor": "The eternal fire that burns within them.",
+   "circle": "dis",
+   "art": "A jet of red fire bursting from a glowing iron tower toward a dark sky."
+  },
+  {
+   "id": "uh_filippo_argenti",
+   "name": "Filippo Argenti",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 5,
+   "attack": 3,
+   "health": 7,
+   "wrath": 3,
+   "effects": [
+    {
+     "on": "turn_end",
+     "do": "damage",
+     "target": "self",
+     "amount": 1
+    },
+    {
+     "on": "death",
+     "do": "damage",
+     "target": "all_enemies",
+     "amount": 2
+    }
+   ],
+   "text": "Wrath: +3 Attack. End of Turn: Deal 1 damage to this minion. Last Breath: Deal 2 damage to all enemies.",
+   "flavor": "He bit his own arm in the black water, and his rage never stopped.",
+   "circle": "wrath",
+   "art": "A furious man in dark water biting his own forearm."
+  },
+  {
+   "id": "wr_mire_hulk",
+   "name": "Mire Hulk",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 5,
+   "attack": 5,
+   "health": 6,
+   "wrath": 3,
+   "text": "Wrath: +3 Attack.",
+   "flavor": "Its rage grows heavier with every blow, like wet mud.",
+   "circle": "wrath",
+   "art": "An enormous hulking sinner coated in thick swamp mud, bellowing with rage."
+  },
+  {
+   "id": "wr_alberti_brothers",
+   "name": "The Alberti Brothers",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 5,
+   "attack": 3,
+   "health": 3,
+   "wrath": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "copy",
+     "target": "self",
+     "to": "board"
+    }
+   ],
+   "text": "Wrath: +2 Attack. On Play: Summon a copy of this minion.",
+   "flavor": "They came from one body, and they fought over one inheritance.",
+   "circle": "cocytus",
+   "art": "Two identical brothers glaring at each other, hands on their daggers, in a cold stone hall."
+  },
+  {
+   "id": "wr_wrathful_throng",
+   "name": "The Wrathful Throng",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 5,
+   "attack": 5,
+   "health": 5,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "all_other_minions",
+     "amount": 1
+    }
+   ],
+   "text": "On Play: Deal 1 damage to all other minions.",
+   "flavor": "The whole swamp rises at once and lashes out.",
+   "circle": "wrath",
+   "art": "A great surge of naked, mud-covered sinners rising from the swamp in a wave of fists and teeth."
+  },
+  {
+   "id": "wr_storm_across_styx",
+   "name": "Storm Across the Styx",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 5,
+   "effects": [
+    {
+     "do": "damage",
+     "target": "all_minions",
+     "amount": 3
+    },
+    {
+     "do": "buff",
+     "target": "all_friendly_minions",
+     "attack": 2
+    }
+   ],
+   "text": "Deal 3 damage to all minions. Give your minions +2 Attack.",
+   "flavor": "A crash like a wind that tears through a forest, breaking the branches.",
+   "circle": "wrath",
+   "art": "A violent storm wind sweeping across a black marsh, tearing up water and mud under a dark sky."
+  },
+  {
+   "id": "wr_tydeus",
+   "name": "Tydeus, the Spiteful",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 6,
+   "attack": 5,
+   "health": 6,
+   "effects": [
+    {
+     "on": "play",
+     "do": "fight",
+     "target": "choose_enemy_minion"
+    },
+    {
+     "on": "frenzy",
+     "do": "fight",
+     "target": "random_enemy_minion"
+    }
+   ],
+   "text": "On Play: Fight an enemy minion. Frenzy: Fight a random enemy minion.",
+   "flavor": "Even dying, he gnawed his enemy's skull out of spite.",
+   "circle": "cocytus",
+   "art": "A wounded ancient Greek warrior in a bronze helmet snarling over a fallen enemy on a dusty battlefield."
+  },
+  {
+   "id": "wr_gate_slams_shut",
+   "name": "The Gate Slams Shut",
+   "set": "wrath",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 6,
+   "effects": [
+    {
+     "do": "damage",
+     "target": "all_enemy_minions",
+     "amount": 4
+    },
+    {
+     "do": "damage",
+     "target": "own_hero",
+     "amount": 4
+    }
+   ],
+   "text": "Deal 4 damage to all enemy minions. Deal 4 damage to your hero.",
+   "flavor": "They slammed the gates in my master's face.",
+   "circle": "dis",
+   "art": "Huge iron gates of a burning city slamming shut, dark winged figures crowding the walls above."
+  },
+  {
+   "id": "wr_athamas",
+   "name": "Athamas, the Maddened",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 7,
+   "attack": 4,
+   "health": 8,
+   "wrath": 4,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "all_minions",
+     "amount": 2
+    }
+   ],
+   "text": "Wrath: +4 Attack. On Play: Deal 2 damage to all minions.",
+   "flavor": "Driven mad, he took his own son for a lion cub.",
+   "circle": "malebolge",
+   "art": "A crowned king with wild, maddened eyes stalking along a rocky shore, arms spread like a hunter's."
+  },
+  {
+   "id": "wr_mud_colossus",
+   "name": "Colossus of Mud",
+   "set": "wrath",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 7,
+   "attack": 5,
+   "health": 9,
+   "keywords": [
+    "guard"
+   ],
+   "wrath": 4,
+   "text": "Guard. Wrath: +4 Attack.",
+   "flavor": "The marsh piled itself into a giant, and the giant is furious.",
+   "circle": "wrath",
+   "art": "A colossal figure made of black swamp mud rising over the marsh, rage blazing in its eyes."
+  },
+  {
+   "id": "wr_mud_soul",
+   "name": "Mud Soul",
+   "set": "token",
+   "type": "minion",
+   "rarity": "token",
+   "cost": 1,
+   "attack": 1,
+   "health": 2,
+   "wrath": 2,
+   "text": "Wrath: +2 Attack.",
+   "flavor": "Small, filthy and spoiling for a fight.",
+   "circle": "wrath",
+   "art": "A small mud-covered soul climbing out of a black swamp, fists clenched."
+  }
+ ]
+}

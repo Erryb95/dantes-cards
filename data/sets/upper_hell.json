@@ -285,28 +285,6 @@
    "art": "A beautiful woman with long golden hair, seen from behind at a walled city gate."
   },
   {
-   "id": "uh_wrathful_shade",
-   "name": "Wrathful Shade",
-   "set": "neutral",
-   "type": "minion",
-   "rarity": "common",
-   "cost": 3,
-   "attack": 3,
-   "health": 2,
-   "effects": [
-    {
-     "on": "turn_end",
-     "do": "damage",
-     "target": "random_enemy_minion",
-     "amount": 1
-    }
-   ],
-   "text": "End of Turn: Deal 1 damage to a random enemy minion.",
-   "flavor": "Angry for no reason, it strikes whoever is near.",
-   "circle": "wrath",
-   "art": "A figure with clenched fists rising out of dark water."
-  },
-  {
    "id": "uh_prodigal_weight",
    "name": "Prodigal Weight",
    "set": "neutral",
@@ -379,28 +357,6 @@
    "flavor": "He drank the love potion once and is swept along by the wind forever.",
    "circle": "lust",
    "art": "A young knight in a torn tunic tossed by a howling wind in a dark sky."
-  },
-  {
-   "id": "uh_filippo_argenti",
-   "name": "Filippo Argenti",
-   "set": "neutral",
-   "type": "minion",
-   "rarity": "rare",
-   "cost": 4,
-   "attack": 3,
-   "health": 4,
-   "effects": [
-    {
-     "on": "death",
-     "do": "damage",
-     "target": "all_enemies",
-     "amount": 2
-    }
-   ],
-   "text": "Last Breath: Deal 2 damage to all enemies.",
-   "flavor": "He bit his own arm in the black water, and his rage never stopped.",
-   "circle": "wrath",
-   "art": "A furious man in dark water biting his own forearm."
   },
   {
    "id": "uh_orpheus",

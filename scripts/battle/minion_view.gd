@@ -27,6 +27,9 @@ var _mat: ShaderMaterial
 var _art_mat: ShaderMaterial
 var _ring: Node2D
 var _glow: Aura
+var _rage: Aura ## Wrath: the ember fire around a damaged Wrath minion
+var _embers: CPUParticles2D
+var raging := false
 var _guard: Node2D
 var _frost: Sprite2D
 var _ward: Node2D
@@ -70,6 +73,12 @@ func _build() -> void:
 		_guard = Shapes.make(Shapes.Kind.SHIELD, Vector2(W + 34, H + 30), Color(0.32, 0.28, 0.25), Color(0.75, 0.62, 0.4), 4.0)
 		_guard.position = Vector2(0, 6)
 	add_child(_guard)
+	# Wrath: while a Wrath minion is damaged, ember fire licks round its portrait with an angry pulse (under the
+	# playable / target aura, so that one still reads on top).
+	_rage = Aura.make(Vector2(W + 2, H + 2), true, 40.0)
+	_rage.colors(Aura.RAGE)
+	_rage.set_speed(1.8)
+	add_child(_rage)
 	_glow = Aura.make(Vector2(W + 4, H + 4), true, 36.0)
 	add_child(_glow)
 
@@ -97,6 +106,8 @@ func _build() -> void:
 		art.texture = g
 	add_child(art)
 	ArtLoop.attach(self, self, art, _art_mat, card_id, W / H, 0.34)
+	_embers = _make_embers()
+	add_child(_embers)
 	var legendary: bool = CardDB.card(card_id).get("rarity", "") == "legendary"
 	_ring = UI.portrait_frame(Vector2(W, H), legendary)
 	if _ring == null:
@@ -161,13 +172,68 @@ func apply(snap: Dictionary) -> void:
 		keywords = snap.keywords
 	if snap.has("sleeping"):
 		sleeping = snap.sleeping
+	if snap.has("rage"):
+		set_raging(int(snap.rage) > 0)
 	_refresh()
+
+
+## Wrath on or off: the ember aura and sparks, a warm tint, and the Attack number in ember orange.
+func set_raging(v: bool) -> void:
+	if v == raging:
+		return
+	raging = v
+	_rage.set_on(v)
+	_embers.emitting = v
+	_tint()
+	_refresh()
+
+
+## Rising sparks over a raging portrait (painted flame motes, additive), off until Wrath wakes.
+func _make_embers() -> CPUParticles2D:
+	var p := CPUParticles2D.new()
+	p.texture = Fx._tex("k_flame_05")
+	p.amount = 14
+	p.lifetime = 1.3
+	p.emitting = false
+	p.position = Vector2(0, H * 0.32)
+	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	p.emission_rect_extents = Vector2(W * 0.38, 10)
+	p.direction = Vector2.UP
+	p.spread = 18.0
+	p.initial_velocity_min = 40.0
+	p.initial_velocity_max = 90.0
+	p.gravity = Vector2(0, -30)
+	var px := 64.0 if p.texture == UI.dot_texture() else p.texture.get_width() * 0.25
+	p.scale_amount_min = 7.0 / px
+	p.scale_amount_max = 22.0 / px
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(1.0, 0.75, 0.35, 0.9))
+	ramp.add_point(0.5, Color(1.0, 0.3, 0.05, 0.7))
+	ramp.set_color(ramp.get_point_count() - 1, Color(0.5, 0.02, 0.0, 0.0))
+	p.color_ramp = ramp
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	p.material = mat
+	return p
+
+
+## Frozen wins over raging (blue cold); raging alone warms the whole piece a little.
+func _tint() -> void:
+	if frozen:
+		modulate = Color(0.75, 0.88, 1.15)
+	elif raging:
+		modulate = Color(1.12, 0.93, 0.88)
+	else:
+		modulate = Color.WHITE
 
 
 func _refresh() -> void:
 	_atk_l.text = str(attack)
 	_hp_l.text = str(health)
-	_atk_l.add_theme_color_override("font_color", UI.HEAL if attack > base_attack else UI.NUMBER)
+	var atk_col := UI.HEAL if attack > base_attack else UI.NUMBER
+	if raging:
+		atk_col = Color(1.0, 0.55, 0.22) # the Wrath bonus burns in ember orange
+	_atk_l.add_theme_color_override("font_color", atk_col)
 	var hp_col := UI.NUMBER
 	if health < max_health:
 		hp_col = Color(1.0, 0.35, 0.3)
@@ -190,8 +256,10 @@ func _refresh() -> void:
 	var ons: Array = CardDB.card(card_id).get("effects", []).map(func(e): return e.get("on", ""))
 	if "death" in ons:
 		icons.append("icon_deathrattle")
-	if "turn_end" in ons or "turn_start" in ons:
+	if "turn_end" in ons or "turn_start" in ons or "frenzy" in ons:
 		icons.append("icon_trigger")
+	if int(CardDB.card(card_id).get("wrath", 0)) > 0:
+		icons.append("icon_wrath" if UiSkin.has("icon_wrath") else "icon_ash") # Wrath: the smouldering coals
 	for i in icons.size():
 		var s: Node2D = UiSkin.sprite(icons[i], Vector2(40, 40)) if UiSkin.has(icons[i]) else 			Shapes.make(Shapes.Kind.DIAMOND, Vector2(22, 28), Color(0.45, 0.4, 0.5), Color(0.1, 0.05, 0.02), 2.0)
 		s.position = Vector2((i - (icons.size() - 1) / 2.0) * 36, 0)
@@ -216,7 +284,7 @@ var frozen := false
 func set_frozen(v: bool) -> void:
 	frozen = v
 	_art_mat.set_shader_parameter("desat", 0.6 if v else 0.0)
-	modulate = Color(0.75, 0.88, 1.15) if v else Color.WHITE
+	_tint()
 	if UiSkin.has("frozen_overlay"):
 		if _frost == null:
 			_frost = UiSkin.sprite("frozen_overlay", Vector2(W, H) * 1.18)
@@ -248,6 +316,8 @@ func _process(delta: float) -> void:
 	if _zzz.visible:
 		_zzz.position.y = -H / 2 - 30 + sin(_t * 1.6) * 6.0
 		_zzz.modulate.a = 0.6 + 0.4 * sin(_t * 1.6)
+	if raging:
+		_rage.breathe(_t, 0.45, 1.3)
 	if _depth:
 		_update_parallax(delta)
 
@@ -279,6 +349,8 @@ func _set_flash(v: float) -> void:
 
 func burn_away(duration: float = 0.8) -> void:
 	_glow.set_on(false)
+	_rage.set_on(false)
+	_embers.emitting = false
 	var t := create_tween()
 	t.tween_method(_set_burn, 0.0, 1.0, duration)
 	await t.finished

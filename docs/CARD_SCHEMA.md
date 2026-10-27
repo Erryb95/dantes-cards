@@ -8,12 +8,13 @@ Cards live in `data/cards.json` (core set) and `data/sets/*.json` (expansions). 
 |---|---|
 | `id` | unique snake_case, ascii, e.g. `brunetto_latini` |
 | `name` | modern English, max 28 chars (e.g. "Brunetto Latini", "Capaneus, the Defiant") |
-| `set` | class: `pilgrim` (Dante's class), `ferry` (Charon's class), `ulysses` (Ulysses' class), `neutral` (anyone), `token` (only summoned). A class is any hero's `class` in `data/cards.json` |
+| `set` | class: `pilgrim` (Dante's class), `ferry` (Charon's class), `ulysses` (Ulysses' class), `wrath` (Filippo Argenti's class), `neutral` (anyone), `token` (only summoned). A class is any hero's `class` in `data/cards.json` |
 | `type` | `minion` or `spell` |
 | `rarity` | `common`, `rare`, `epic`, `legendary` (`token` for tokens) |
 | `cost` | 0..10 |
 | `attack`, `health` | minions only; health >= 1 |
 | `keywords` | optional list: `guard`, `swift`, `ward`, `drain`, `venom`, `rebirth` |
+| `wrath` | optional, minions only: an int N, the Attack the minion gains while damaged. Text: `Wrath: +N Attack.` |
 | `effects` | optional list of effect objects (below) |
 | `text` | rules text shown on the card, **must match the effects exactly**, modern plain English |
 | `flavor` | one short line, modern English paraphrase of Dante (no archaic Longfellow) |
@@ -30,6 +31,7 @@ Cards live in `data/cards.json` (core set) and `data/sets/*.json` (expansions). 
 | `death` | `Last Breath:` |
 | `turn_end` | `End of Turn:` |
 | `turn_start` | `Start of Turn:` |
+| `frenzy` | `Frenzy:` (the first time the minion takes damage and survives; once) |
 
 **Ops (`do`) and their params**
 | op | params | meaning |
@@ -49,14 +51,20 @@ Cards live in `data/cards.json` (core set) and `data/sets/*.json` (expansions). 
 | `mana` | `amount` | gain mana this turn only, up to 10 (no target; Charon's Obol) |
 | `copy` | `from` (`enemy_hand` / `enemy_deck`, random cards, never the same card twice) or a minion target; `count`; `steal` (the cards leave the enemy: the top of the deck, or a random hand card); `to`: `hand` (default) or `board` (summon the copy) | add copies to your hand. Hand limit applies: a copy that does not fit burns, and nothing is stolen without room for it. Text: "Copy ... into your hand", "Steal ...", "Summon a copy of ..." |
 | `transform` | `card` (a minion id) | the target becomes a fresh copy of that card in the same place: no Last Breath, Ward does not stop it |
+| `fight` | `with`: `self` (default), `random_enemy_minion`, `random_friendly_minion` or `all_friendly_minions` | each target and each `with` minion deal damage equal to their Attack to each other at once, one pair at a time (skipped once either is dead). Not an attack: no attack is used, Guard does not matter, heroes never fight; Venom and Drain work. A spell names `with`. Text: `On Play: Fight an enemy minion.`, `It fights a random enemy minion.` |
 
 **Targets**
 - **Picked by the player:** `choose_any`, `choose_enemy` (enemy hero or minion), `choose_minion`,
   `choose_enemy_minion`, `choose_friendly_minion`.
-- **Automatic:** `own_hero`, `enemy_hero`, `self` (the minion itself), `all_minions`, `all_enemy_minions`,
+- **Automatic:** `own_hero`, `enemy_hero`, `self` (the minion itself), `all_minions`, `all_other_minions` (every minion but the source), `all_enemy_minions`,
   `all_friendly_minions`, `other_friendly_minions`, `all_enemies` (enemy hero + minions), `random_enemy`,
   `random_enemy_minion`, `random_friendly_minion`.
 - `draw`, `summon`, `ramp`, `give_card`, `mana` and `copy` with `from` take no target.
+
+**Wrath** (Filippo Argenti): a minion with `"wrath": N` has +N Attack while damaged (health below its max health). Damage
+turns it on at once, a heal to full turns it off, Silence removes it; Rebirth returns with 1 Health, damaged when that
+is below its max. **Frenzy** effects (`"on": "frenzy"`) fire once, after the blow that hurt the minion has resolved,
+only if it is still alive and not silenced; they use automatic targets. Ward-blocked hits are not damage.
 
 **Ruse** (Ulysses): an effect with `"ruse": true` (on `play` only) resolves only when its owner already played another
 card this turn (the hero power does not count; the Obol does). Text: `Ruse: Draw a card.` (minions too: no `On Play:`).
@@ -65,7 +73,7 @@ automatic target, so the player is never asked to aim at something that will not
 
 **Rules**
 - At most **one** `choose_*` target per card, and only on `play` effects.
-- `death`, `turn_end` and `turn_start` effects must use automatic targets.
+- `death`, `turn_end`, `turn_start` and `frenzy` effects must use automatic targets.
 
 ## Balance guide (stat budget)
 A vanilla minion has attack + health ≈ 2 x cost + 1 (1-mana 2/1, 2-mana 2/3 or 3/2, 3-mana 3/4, 4-mana 4/5,
@@ -84,7 +92,7 @@ A vanilla minion has attack + health ≈ 2 x cost + 1 (1-mana 2/1, 2-mana 2/3 or
   - rarity 15 common / 8 rare / 4 epic / 3 legendary.
 
 ## Text style
-- **Prefixes:** `On Play: Deal 2 damage.`, `Last Breath: Summon a 2/2 Shade.`, `End of Turn: Gain +1 Attack.`, `Ruse: Gain +1/+1.`
+- **Prefixes:** `On Play: Deal 2 damage.`, `Last Breath: Summon a 2/2 Shade.`, `End of Turn: Gain +1 Attack.`, `Ruse: Gain +1/+1.`, `Wrath: +2 Attack.`, `Frenzy: Draw a card.`
 - **Capitals:** keywords capitalised (Guard, Swift, Ward, Drain, Venom, Rebirth, Freeze, Silence).
 - **Keyword-only cards:** the text is just the keywords: `Guard. Drain.`
 - **Mana:** `mana` is "Gain 1 Mana this turn only."; `ramp` is "Gain an empty Mana Crystal." ("Gain 2 empty Mana Crystals.").

@@ -9,6 +9,7 @@ const SELECTED := [Color(1.0, 0.95, 0.7), Color(1.0, 0.5, 0.08)]
 const TARGET := [Color(1.0, 0.75, 0.55), Color(0.95, 0.12, 0.04)]
 const MAGIC := [Color(0.85, 0.9, 1.0), Color(0.35, 0.45, 1.0)]
 const RUSE := [Color(1.0, 0.97, 0.72), Color(0.95, 0.72, 0.12)] ## a playable card whose Ruse is live
+const RAGE := [Color(1.0, 0.68, 0.3), Color(0.8, 0.06, 0.02)] ## a damaged Wrath minion: ember fire, blood-red edge
 
 var on := false
 var _mat: ShaderMaterial
@@ -59,3 +60,14 @@ func set_on(v: bool, preset: Array = []) -> void:
 
 func _set_strength(s: float) -> void:
 	_mat.set_shader_parameter("strength", s)
+
+
+## How fast the flames lick (1 = the calm default).
+func set_speed(v: float) -> void:
+	_mat.set_shader_parameter("speed", v)
+
+
+## A held aura that breathes like an angry pulse (Wrath): call every frame with the owner's clock while it is on.
+func breathe(t: float, depth: float = 0.3, peak: float = 1.0) -> void:
+	if on and (_tween == null or not _tween.is_running()):
+		_set_strength(peak - depth + depth * (0.5 + 0.5 * sin(t * 4.4)) + 0.08 * sin(t * 11.0))

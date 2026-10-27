@@ -1,5 +1,5 @@
 {
- "_doc": "Preconstructed decks: 30 cards each (class + neutral, max 2 copies, 1 per legendary). cls is the class (pilgrim / ferry / ulysses), hero a heroes[].id from cards.json, featured the 3 cards shown on Choose your path. The decks marked starter are owned from the first run; the others can be played from Choose your path.",
+ "_doc": "Preconstructed decks: 30 cards each (class + neutral, max 2 copies, 1 per legendary). cls is the class (pilgrim / ferry / ulysses / wrath), hero a heroes[].id from cards.json, featured the 3 cards shown on Choose your path. The decks marked starter are owned from the first run; the others can be played from Choose your path.",
  "decks": [
   {
    "id": "pilgrim",
@@ -310,6 +310,107 @@
     "ul_eurypylus": 1,
     "ul_diomedes": 1,
     "ul_gilded_hypocrite": 2
+   }
+  },
+  {
+   "id": "wrath",
+   "cls": "wrath",
+   "starter": true,
+   "name": "The Wrath of the Styx",
+   "hero": "filippo",
+   "text": "Filippo Argenti and the wrathful of the swamp. Wound your own minions on purpose: with Wrath, a hurt minion hits much harder.",
+   "featured": [
+    "uh_filippo_argenti",
+    "wr_red_towers",
+    "wr_athamas"
+   ],
+   "cards": {
+    "wr_mud_brawler": 2,
+    "uh_wrathful_shade": 2,
+    "wr_self_gnawing_shade": 2,
+    "wr_rabble_rouser": 2,
+    "wr_gnawing_spite": 2,
+    "wr_stirring_the_mud": 1,
+    "wr_tearing_teeth": 2,
+    "wr_stygian_brute": 2,
+    "wr_tower_watchman": 2,
+    "wr_black_guelph": 1,
+    "wr_marsh_warden": 2,
+    "wr_drowned_knight": 2,
+    "wr_geri_del_bello": 1,
+    "wr_rancorous_shade": 1,
+    "wr_red_towers": 1,
+    "uh_filippo_argenti": 1,
+    "wr_mire_hulk": 2,
+    "wr_athamas": 1,
+    "wr_mud_colossus": 1
+   }
+  },
+  {
+   "id": "wrath_brawl",
+   "cls": "wrath",
+   "name": "The Mud Brawl",
+   "hero": "filippo",
+   "text": "A swamp-wide fight. Minions that Frenzy when hurt, fights that clear the enemy board, and Tydeus to finish it.",
+   "featured": [
+    "wr_tydeus",
+    "wr_mob_turns",
+    "wr_brawling_shade"
+   ],
+   "cards": {
+    "wr_choked_soul": 2,
+    "wr_mud_wrestler": 2,
+    "wr_marsh_warden": 2,
+    "wr_black_guelph": 2,
+    "wr_mud_caked_sinner": 2,
+    "wr_butting_heads": 1,
+    "wr_stirring_the_mud": 2,
+    "wr_brawling_shade": 2,
+    "wr_mud_dweller": 2,
+    "wr_mob_turns": 1,
+    "wr_brawl_in_the_mud": 1,
+    "wr_boat_rides_low": 1,
+    "wr_other_dogs": 1,
+    "wr_marsh_champion": 2,
+    "wr_black_guelph_captain": 1,
+    "wr_muddy_mob": 1,
+    "wr_red_towers": 1,
+    "wr_erichtho": 1,
+    "wr_wrathful_throng": 1,
+    "wr_storm_across_styx": 1,
+    "wr_tydeus": 1
+   }
+  },
+  {
+   "id": "wrath_pride",
+   "cls": "wrath",
+   "name": "Spite and Pride",
+   "hero": "filippo",
+   "text": "All-out attack. Cheap, hard-hitting Florentines that cost you health, Swift riders, and fire to finish the enemy hero.",
+   "featured": [
+    "wr_silver_shod_horse",
+    "wr_rinier_pazzo",
+    "wr_eternal_fire"
+   ],
+   "cards": {
+    "wr_adimari_bravo": 2,
+    "wr_mud_brawler": 2,
+    "wr_gnawing_spite": 2,
+    "wr_signal_fires": 2,
+    "wr_tearing_teeth": 2,
+    "wr_florentine_hothead": 2,
+    "uh_wrathful_shade": 2,
+    "wr_scornful_soul": 2,
+    "mc_jason": 2,
+    "wr_rabble_rouser": 1,
+    "wr_rinier_pazzo": 2,
+    "wr_silver_shod_horse": 1,
+    "wr_adimari_captain": 2,
+    "wr_other_dogs": 1,
+    "wr_eternal_fire": 2,
+    "uh_filippo_argenti": 1,
+    "wr_alberti_brothers": 1,
+    "mc_brutus": 1
    }
   }
  ]
