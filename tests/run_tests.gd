@@ -2016,6 +2016,10 @@ func _test_online_mirror(games: int) -> void:
 	ds.push(DuelSync.S_TURN, {"seq": 2})
 	ok(ds.pop().is_empty(), "online: an old seq is dropped")
 	ok(DuelSync.parse_deck("{\"cls\":\"nobody\",\"cards\":[]}").is_empty(), "online: an unknown class is refused")
+	# Chat text is plain: no control characters, no BBCode tags, at most 120 characters.
+	ok(ChatText.clean("hi\u0007 [b]there[/b]\n[color=red]x[/color]") == "hi there x", "chat: control chars and BBCode go")
+	ok(ChatText.clean("a".repeat(300)).length() == ChatText.MAX_LEN, "chat: 120 characters at most")
+	ok(ChatText.clean("  [3 cards] ok ") == "[3 cards] ok", "chat: brackets that are not tags stay")
 
 
 ## The fake server: stamps the next seq and hands the message to both clients, which apply all they can; then the

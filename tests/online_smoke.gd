@@ -57,8 +57,14 @@ func _run_bot() -> void:
 	syncs[0].setup(s.start, s.user_id())
 	syncs[0].build()
 	print("bot matched against ", syncs[0].opponent_name())
+	await s.open_chat()
 	await get_tree().create_timer(4.0).timeout
 	s.send(DuelSync.OP_MULLIGAN, {"replace": []})
+	await get_tree().create_timer(5.0).timeout # the other side's battle has joined the chat by now
+	await s.send_chat({"emote": "greetings"})
+	await get_tree().create_timer(1.5).timeout
+	await s.send_chat({"msg": "Good luck, pilgrim! [b]no bbcode[/b]"})
+	var chatted := false
 	var t := 0.0
 	var idle_turn_seen := -1
 	while ends[0].is_empty() and t < 900.0:
@@ -66,6 +72,9 @@ func _run_bot() -> void:
 		t += maxf(get_process_delta_time(), 0.001)
 		_pump_one(0)
 		var sy := syncs[0]
+		if not chatted and sy.st.turn >= 4:
+			chatted = true
+			s.send_chat({"emote": "well_played"})
 		if (sy.st.turn == bot_idle_turn or sy.st.turn == bot_idle_turn + 1) and sy.st.current == 0:
 			idle_turn_seen = sy.st.turn
 			continue

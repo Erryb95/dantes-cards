@@ -249,6 +249,22 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
   goes back into a running duel first. A dropped socket in a duel retries for 40 s and rejoins; the server's RESYNC
   (107) lists every event since the start, `DuelSync` drops what it already applied, and a fresh battle replays the
   missed moves at 6x speed.
+- **Mini chat** (`scripts/battle/duel_chat.gd`, `DuelChat`): Nakama's direct-message channel between the two players
+  (`channel_join` type 2, not persistent, hidden; content `{"msg"}` or `{"emote"}`; left with the match). A Chat plate
+  bottom left with an unread seal opens a parchment panel: the last messages with their senders, the gold-ink name
+  field (Enter or Send; the phone keyboard), quick emotes (Greetings, Well played, Thanks, Oops, Good game; also a
+  speech bubble by the hero) and Mute (hides the opponent's messages and emotes). Closed, new messages show on
+  parchment slips that fade. Plain text only (`ChatText.clean`: no control characters, BBCode stripped and never
+  parsed, 120 characters), 1 message a second and 5 per 10 s. No word filter (Enrico's call).
+- **Accounts:** a device account by default ("Playing as a guest"). **Sign in with Google** (Profile, when the config
+  has the Google client): Google's device-code flow (`scripts/net/google_auth.gd`, `GoogleAuth`; the client is a
+  "TVs and Limited Input devices" one, so it works on phones too) shows google.com/device and a code on parchment
+  (Copy code, Open the page; the code is also put on the clipboard on a desktop), polls for the id_token, then links
+  Google to the guest account (`/v2/account/link/google`, nothing lost); when that Google account already has its own
+  game account the install signs into it and gets a fresh device id linked there. "Play as guest" starts a new guest.
+  While the consent screen is in testing only its listed test users can sign in (the refusal says so). A future Steam
+  provider plugs into the same place (`OnlineSession.sign_in_google` is the model: get a provider token, link or
+  authenticate).
 
 ## Adding content
 - **Card:** add an entry to `cards.json` and use it in a deck. Run `python tools/cards/art_jobs.py run`

@@ -11,8 +11,9 @@ extends Control
 ## and 5 per 10 s from this player; Mute hides the opponent's messages and emotes.
 
 signal emote_shown(side: int, text: String) ## the battle draws the bubble by the hero of `side` (0 me, 1 opponent)
+signal send_requested(content: Dictionary) ## the battle sends it (OnlineSession.send_chat)
 
-const MAX_LEN := 120
+const MAX_LEN := ChatText.MAX_LEN
 const KEEP := 6 ## messages kept in the panel
 const FADE_AFTER := 6.0
 const EMOTES := [["greetings", "Greetings"], ["well_played", "Well played"], ["thanks", "Thanks"], ["oops", "Oops"],
@@ -80,7 +81,7 @@ func _build_panel(v: Vector2) -> void:
 	_panel.add_child(col)
 	_lines = VBoxContainer.new()
 	_lines.add_theme_constant_override("separation", 2)
-	_lines.custom_minimum_size = Vector2(0, 150)
+	_lines.custom_minimum_size = Vector2(0, 128)
 	col.add_child(_lines)
 	_note = UI.label("", 18, "italic", UI.INK_RED)
 	_note.visible = false
@@ -95,22 +96,27 @@ func _build_panel(v: Vector2) -> void:
 	_field.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_DEFAULT
 	_field.text_submitted.connect(func(_t: String): _send_text())
 	row.add_child(_field)
-	var send := UI.button("Send", 120, 56)
+	var send := UI.button("Send", 130, 56)
 	send.add_theme_font_size_override("font_size", 22)
 	send.pressed.connect(_send_text)
 	row.add_child(send)
 	var emotes := HFlowContainer.new()
 	emotes.add_theme_constant_override("h_separation", 6)
-	emotes.add_theme_constant_override("v_separation", 6)
+	emotes.add_theme_constant_override("v_separation", 4)
 	col.add_child(emotes)
+	var plates: Array[Button] = [send]
 	for e in EMOTES:
-		var b := UI.button(e[1], 140, 44)
-		b.add_theme_font_size_override("font_size", 18)
-		UI.fit_text(b)
+		var b := UI.button(e[1], 206, 52) # the painted plate (52 px and up)
+		b.add_theme_font_size_override("font_size", 20)
 		b.pressed.connect(_send_emote.bind(e[0]))
 		emotes.add_child(b)
-	_mute_b = UI.button("Mute", 140, 44)
-	_mute_b.add_theme_font_size_override("font_size", 18)
+		plates.append(b)
+	_mute_b = UI.button("Mute", 206, 52)
+	_mute_b.add_theme_font_size_override("font_size", 20)
+	plates.append(_mute_b)
+	plates.append(_toggle)
+	for b in plates:
+		b.focus_mode = Control.FOCUS_NONE # Enter and Space belong to the text field, never to a plate
 	_mute_b.pressed.connect(func():
 		muted = not muted
 		_mute_b.text = "Unmute" if muted else "Mute"
@@ -137,19 +143,9 @@ func is_open() -> bool:
 	return _open
 
 
-## Plain text only: no control characters, no BBCode tags, at most MAX_LEN characters, trimmed.
+## Plain text only (ChatText): no control characters, no BBCode tags, at most MAX_LEN characters, trimmed.
 static func clean(raw: String) -> String:
-	var out := ""
-	for i in raw.length():
-		var c := raw.unicode_at(i)
-		if c < 32 or c == 127 or (c >= 0x80 and c < 0xA0) or c in [0x200B, 0x200E, 0x200F, 0x202A, 0x202B, 0x202C,
-				0x202D, 0x202E, 0x2066, 0x2067, 0x2068, 0x2069]:
-			out += " " if c in [9, 10, 13] else ""
-			continue
-		out += char(c)
-	var tags := RegEx.create_from_string("\\[/?[A-Za-z][^\\[\\]]{0,40}\\]")
-	out = tags.sub(out, "", true)
-	return out.strip_edges().left(MAX_LEN)
+	return ChatText.clean(raw)
 
 
 ## True when this player may send now (1 a second, 5 in 10 s); else says why under the field.
@@ -170,13 +166,13 @@ func _send_text() -> void:
 	if text == "" or not _may_send():
 		return
 	_field.text = ""
-	Online.send_chat({"msg": text})
+	send_requested.emit({"msg": text})
 
 
 func _send_emote(id: String) -> void:
 	if not _may_send():
 		return
-	Online.send_chat({"emote": id})
+	send_requested.emit({"emote": id})
 
 
 static func emote_text(id: String) -> String:

@@ -3056,8 +3056,11 @@ func _build_online() -> void:
 		chat.names[str(net.players[c])] = str(net.names[c]) if str(net.names[c]) != "" else "Player %d" % (c + 1)
 	ui.add_child(chat)
 	chat.emote_shown.connect(_emote_bubble)
+	chat.send_requested.connect(func(c: Dictionary): Online.send_chat(c))
 	Online.chat.connect(chat.receive)
 	Online.open_chat()
+	if "--chat-open" in OS.get_cmdline_user_args(): # screenshots: the chat panel open from the start
+		chat.toggle.call_deferred()
 	var ms := int(Online.start.get("mulligan_ms", 30000))
 	_turn_end_ms = int(Online.start.get("_rx", Time.get_ticks_msec())) + ms
 	_layout_online()

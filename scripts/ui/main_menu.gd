@@ -118,6 +118,10 @@ func _ready() -> void:
 ## still holds the seat. Asked once per run; tests and tooling never go online.
 func _offer_rejoin() -> void:
 	for a in OS.get_cmdline_user_args():
+		if a == "--google-signin": # debug: the profile with Google's sign-in code on top (screenshots)
+			var p := ProfilePanel.open(self)
+			GoogleSignInPanel.open.call_deferred(p)
+			return
 		if a.begins_with("--online-quick="): # debug: straight into an online search with this premade deck
 			var deck := CardDB.deck(a.substr(15))
 			if not deck.is_empty():

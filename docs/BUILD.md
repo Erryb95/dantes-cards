@@ -41,6 +41,8 @@ server_key = <Nakama server key>
 host = 100.80.41.96        ; the tailnet address, or the public Funnel host
 port = 7450
 scheme = http              ; https for the Funnel (then the socket is wss)
+google_client_id = ...     ; optional: Google sign-in (device-code flow); no id, no Google button
+google_client_secret = ...
 ```
 
 Without a `server_key` (or host) the game runs offline and Play online says that online play is not set up. The key
@@ -59,7 +61,9 @@ Two players on one PC: every `-- --online-profile=N` has its own device id (`use
 account) and record; its name gets " N". Run two windows, e.g.
 `$G --path . -- --online-profile=1` and `$G --path . -- --online-profile=2`, and press Play online in both.
 Debug: `--online-quick=<deck id>` opens the search at once from the title screen, `--online-shots=<dir>` saves the
-search and versus screens; with `--shots=<dir>` (autoplay) an Easy AI plays the online battle through the server. A
+search and versus screens, `--chat-open` opens the battle's chat panel, `--google-signin` opens the profile with
+Google's sign-in code (it asks Google for a real code); with `--shots=<dir>` (autoplay) an Easy AI plays the online
+battle through the server. A
 bot opponent: `timeout 900 $G --headless --path . res://tests/online_smoke.tscn -- --bot [--idle-turn=4]` (it sits
 out turn 4 or 5, so the rope burns).
 
