@@ -171,10 +171,10 @@ static func number(parent: Node, pos: Vector2, text: String, color: Color, splat
 	t.tween_property(root, "scale", Vector2(1.15, 1.15), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	t.tween_property(root, "scale", Vector2.ONE, 0.08)
 	t.tween_interval(0.55)
-	t.set_parallel(true)
+	# The fade starts its own step after the hold, the rise runs beside it. (A set_parallel(true) here joined the fade
+	# to the hold's step, so the number began fading as soon as it popped and was never seen at full strength.)
 	t.tween_property(root, "modulate:a", 0.0, 0.35)
-	t.tween_property(root, "position:y", pos.y - 40.0, 0.35)
-	t.set_parallel(false)
+	t.parallel().tween_property(root, "position:y", pos.y - 40.0, 0.35)
 	t.tween_callback(root.queue_free)
 
 

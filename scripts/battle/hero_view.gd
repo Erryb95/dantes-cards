@@ -10,6 +10,7 @@ var uid := -1
 var side := 0
 var hero_id := ""
 var health := 30
+var max_health := 30 ## the hero's starting health (heroes need not all start at 30)
 var armor := 0
 var home := Vector2.ZERO
 var busy := false
@@ -26,6 +27,7 @@ var power_used := false:
 var _mat: ShaderMaterial
 var _art_mat: ShaderMaterial
 var _hp_l: Label
+var _roll: Tween ## the health number rolling to its new value
 var _armor: Node2D
 var _armor_l: Label
 var _power_glow: Aura
@@ -41,6 +43,7 @@ func setup(snap: Dictionary) -> HeroView:
 	side = snap.side
 	hero_id = snap.id
 	health = snap.health
+	max_health = int(snap.get("max_health", health))
 	_build()
 	return self
 
@@ -172,12 +175,16 @@ func flip_power(used: bool) -> void:
 func set_health(hp: int, p_armor: int = -1) -> void:
 	var old := health
 	health = hp
-	_hp_l.add_theme_color_override("font_color", UI.NUMBER if hp >= 30 else Color(1.0, 0.45, 0.4))
-	# The number rolls to its new value and the gem thumps, instead of jumping.
+	_hp_l.add_theme_color_override("font_color", UI.NUMBER if hp >= max_health else Color(1.0, 0.45, 0.4))
+	# The number rolls to its new value and the gem thumps, instead of jumping. A roll still running is stopped
+	# first: a long roll (a big hit) outliving a short later one (a heal) would leave its stale value on the gem.
+	if _roll != null and _roll.is_valid():
+		_roll.kill()
 	if old != hp and is_inside_tree():
-		var t := _hp_l.create_tween()
-		t.tween_method(func(v: float): _hp_l.text = str(roundi(v)), float(old), float(hp),
-			clampf(absf(hp - old) * 0.06, 0.15, 0.6))
+		var from := float(_hp_l.text) if _hp_l.text.is_valid_int() else float(old)
+		_roll = _hp_l.create_tween()
+		_roll.tween_method(func(v: float): _hp_l.text = str(roundi(v)), from, float(hp),
+			clampf(absf(hp - from) * 0.06, 0.15, 0.6))
 		_hp_l.pivot_offset = _hp_l.size / 2
 		var p := _hp_l.create_tween()
 		p.tween_property(_hp_l, "scale", Vector2(1.45, 1.45), 0.08)
