@@ -80,6 +80,10 @@ const LEGEND_ART := {
 	"pj_beatrice": "vfx_leg_beatrice", "uh_achilles": "vfx_leg_achilles", "uh_semiramis": "vfx_leg_semiramis",
 	"uh_caesar": "vfx_leg_caesar", "francesca": "vfx_leg_francesca", "ugolino": "vfx_leg_ugolino",
 	"minos": "vfx_leg_minos",
+	# The Wanderer's legendaries borrow the closest painted sigil: Diomedes the spear of Troy, the Horse the cracked
+	# statue plate, the Black Cherub the devil's forks, Circe the enchanting swirl, the Mountain the sinking whirlwind.
+	"ul_diomedes": "vfx_leg_achilles", "ul_trojan_horse": "vfx_leg_old_man_crete",
+	"ul_black_cherub": "vfx_leg_malacoda", "ul_circe": "vfx_leg_semiramis", "ul_distant_mountain": "vfx_leg_typhon",
 }
 
 ## A card's school when data/vfx.json does not name one.

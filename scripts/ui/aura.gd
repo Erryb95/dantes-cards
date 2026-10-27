@@ -8,6 +8,7 @@ const PLAYABLE := [Color(0.85, 1.0, 0.7), Color(0.1, 0.85, 0.3)]
 const SELECTED := [Color(1.0, 0.95, 0.7), Color(1.0, 0.5, 0.08)]
 const TARGET := [Color(1.0, 0.75, 0.55), Color(0.95, 0.12, 0.04)]
 const MAGIC := [Color(0.85, 0.9, 1.0), Color(0.35, 0.45, 1.0)]
+const RUSE := [Color(1.0, 0.97, 0.72), Color(0.95, 0.72, 0.12)] ## a playable card whose Ruse is live
 
 var on := false
 var _mat: ShaderMaterial

@@ -318,8 +318,40 @@ static func keyword(view, n: Node2D, kind: String) -> void:
 			Sfx.play("magic", -8.0, 1.2)
 		"trigger":
 			_paint(fx, ["vfx_trigger_spark", "k_star_07"], n.position, 200.0, 0.4, UI.GOLD)
+		"ruse":
+			# A Ruse going off: a sharp golden glint, a spark of the two-horned flame and a few rising embers.
+			_paint(fx, ["vfx_trigger_spark", "k_star_07"], n.position, 300.0, 0.5, UI.GOLD)
+			Fx.flash(fx, "k_flare_01", n.position, 360.0, 0.35, Color(1.0, 0.85, 0.45), 0.0)
+			Fx.flash(fx, "k_twirl_01", n.position, 280.0, 0.5, UI.GOLD, 2.0)
+			_motes(view, n.position, VfxData.SCHOOLS.holy, 18, 220.0, 10.0, 0.7, 180.0, -120.0)
+			Sfx.play("magic", -10.0, 1.35)
+			Sfx.play("tick", -8.0, 1.2)
 		"burn":
 			_paint(fx, ["vfx_card_burn", "fire_burst"], n.position, 340.0, 0.7, Color.WHITE)
+
+
+## A polymorph (Circe's swine): a swirl and a puff of smoke in the source card's colours, where the minion is
+## swapped for its new form. `src` is the card that cast it; the caller shrinks the old view and pops the new one.
+static func morph(view, pos: Vector2, src: String) -> void:
+	var s := VfxData.school(VfxData.profile(src))
+	var fx: Node2D = view.fx_layer
+	Fx.flash(fx, "k_twirl_02", pos, 380.0, 0.6, s.hot, 5.0)
+	Fx.flash(fx, "k_twirl_03", pos, 300.0, 0.5, _mid(s), -4.0)
+	_paint(fx, ["smoke_puff", "k_smoke_05"], pos, 230.0, 0.55, _mid(s))
+	Fx.smoke(fx, pos, Color(s.color.r * 0.35, s.color.g * 0.35, s.color.b * 0.35, 0.75), 240.0, 10)
+	_motes(view, pos, s, 26, 260.0, 12.0, 0.8, 180.0, -80.0 if s.rise else 160.0)
+	Sfx.play("magic", -8.0, 0.8)
+	Sfx.play(s.cast_sfx, -12.0, 1.2)
+
+
+## A card lifted from the enemy (a stolen or copied card): a wisp of shadow and a glint where it is taken.
+static func pilfer(view, pos: Vector2) -> void:
+	var s: Dictionary = VfxData.SCHOOLS.shadow
+	var fx: Node2D = view.fx_layer
+	Fx.flash(fx, "k_twirl_01", pos, 260.0, 0.45, _mid(s), 3.0)
+	_paint(fx, ["vfx_shadow_burst", "k_magic_05"], pos, 220.0, 0.45, _mid(s))
+	_motes(view, pos, s, 14, 160.0, 9.0, 0.6, 180.0, -60.0)
+	Sfx.play("swish_long", -8.0, 1.1)
 
 
 ## A drawn card catching the light as it turns face up.

@@ -93,6 +93,12 @@ souls and board clears; Ulysses wins with timing, stolen knowledge and false app
 - Engine: `BattleState.ruse_active(side)`; events `ruse` (a Ruse went off), `copy` (before the card's `draw` event:
   where it came from), `steal` (`zone` hand: the victim's hand card `uid` must leave their hand; `zone` deck: the victim's
   deck count), `transform` (before the `death` + `summon` pair that replaces the minion).
+- View (`battle_view.gd`): a stolen card leaves the victim's hand (or deck pile) and flies across the river, where the
+  thief's copy picks it up; other copies fly in from the enemy hand, the enemy deck or the copied minion. A Ruse flashes
+  gold with a "Ruse" plaque (on the minion, or on the spell as it is cast), and playable Ruse cards glow gold instead of
+  green while `ruse_active(0)`. A transform is a swirl and a puff of smoke, and the new form pops up in the same slot
+  (no death, no slam). Review: `tests/vfx_preview.tscn -- --cards=ul_black_cherub,ul_palladium,ul_circes_draught [--enemy]`,
+  `tests/play_shots.tscn -- --class=ulysses`; `view_soak.gd` reports hand / board desyncs.
 
 Balance check: `run_tests.gd` plays 300 starter-deck games with alternating seats. At v0.2 it reports
 Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman class pool needs more power.
