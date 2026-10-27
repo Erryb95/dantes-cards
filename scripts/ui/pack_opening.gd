@@ -177,7 +177,9 @@ func _spawn_pack() -> void:
 	seal.use_parent_material = false
 	pack.add_child(seal)
 	# The call to action on the red ribbon hung under the pack.
-	var hint := UI.ribbon("Tap to open", 540, 40)
+	# "Tap" on a phone or tablet, "Click" on desktop (the same test as SkipRing).
+	var touch := DisplayServer.is_touchscreen_available() and OS.has_feature("mobile")
+	var hint := UI.ribbon("Tap to open" if touch else "Click to open", 540, 40)
 	hint.position += Vector2(0, 300)
 	pack.add_child(hint)
 	pack.scale = Vector2(0.3, 0.3)
@@ -322,7 +324,7 @@ func _reveal(c: Dictionary) -> void:
 	if d.new:
 		_tag(v, "NEW", Color(0.5, 1.0, 0.5))
 	elif d.refund > 0:
-		_tag(v, "+%d obols" % d.refund, Color(1.0, 0.85, 0.5))
+		_tag(v, "+%d Obols" % d.refund, Color(1.0, 0.85, 0.5))
 		Sfx.play("coin_spin", -8.0)
 	if _cards.all(func(x): return x.revealed):
 		_state = "done"
