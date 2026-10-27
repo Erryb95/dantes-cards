@@ -175,10 +175,34 @@ func pop() -> Array:
 	return m
 
 
+## The running clock from a RESYNC (107) that arrived at `_rx` (Time.get_ticks_msec()): [ends_at_ms, roped], or
+## [0, false] when it has none. The server's `remaining_ms` runs to the very end of the turn, the rope included (in
+## the mulligan phase: to the end of the mulligan), so the rope is never added on top of it.
+static func resync_clock(resync: Dictionary) -> Array:
+	var rem := int(resync.get("remaining_ms", 0))
+	if rem <= 0 or bool(resync.get("over", false)):
+		return [0, false]
+	var rx := int(resync.get("_rx", Time.get_ticks_msec()))
+	return [rx + rem, bool(resync.get("roped", false)) and str(resync.get("phase", "")) == "play"]
+
+
+## The turn clock a TURN (103) starts when it is applied: [ends_at_ms, roped]. A live TURN counts turn_ms + rope_ms
+## from its arrival (`_rx`). A TURN replayed from a RESYNC began long ago: it carries the RESYNC's clock instead
+## (`_end_ms`, `_roped`, see resync_events), else a rejoin showed a full 90 s turn and a late rope.
+static func turn_clock(turn: Dictionary, def_turn_ms := 75000, def_rope_ms := 15000) -> Array:
+	if turn.has("_end_ms"):
+		return [int(turn._end_ms), bool(turn.get("_roped", false))]
+	var rx := int(turn.get("_rx", Time.get_ticks_msec()))
+	return [rx + int(turn.get("turn_ms", def_turn_ms)) + int(turn.get("rope_ms", def_rope_ms)), false]
+
+
 ## The sequenced messages inside a RESYNC (107) as [op, payload] pairs, oldest first. An event is the payload the
 ## server broadcast, tagged with its op ("op" or "op_code"; a payload under "data"/"payload" is accepted too).
 ## Without a tag, its fields tell: `active` + `reason` is a TURN, `data.replace` a MULLIGAN, else an ACTION.
+## Each TURN carries the RESYNC's clock (`_end_ms`, `_roped`; see turn_clock): only the last one matters, the earlier
+## ones are replaced by the next TURN at once.
 static func resync_events(resync: Dictionary) -> Array:
+	var clock := resync_clock(resync)
 	var out := []
 	for e in resync.get("events", []):
 		if not (e is Dictionary):
@@ -200,8 +224,38 @@ static func resync_events(resync: Dictionary) -> Array:
 			var p := body.duplicate()
 			if not p.has("seq") and e.has("seq"):
 				p["seq"] = e.seq
+			if op == S_TURN and int(clock[0]) > 0:
+				p["_end_ms"] = clock[0]
+				p["_roped"] = clock[1]
 			out.append([op, p])
 	return out
+
+
+## A server ERROR (199) said plainly for the player, or "" when it needs no word (a mulligan the server had already
+## decided, on a timeout).
+static func error_text(code: String) -> String:
+	match code:
+		"already_sent", "not_in_mulligan":
+			return ""
+		"not_your_turn":
+			return "Too late: the turn has passed."
+		"not_started":
+			return "The duel has not started yet."
+		"too_many_actions":
+			return "Too many moves this turn."
+		"bad_payload":
+			return "The server could not read that move."
+	return "The server refused that (%s)." % code.replace("_", " ")
+
+
+## Who won by the server's END (106), as a local side: 0 me, 1 the opponent, 2 nobody (a draw, a desync, a lost
+## connection). The server's word is final: a desync ends without a winner even when this client's rules found one.
+func end_side(end: Dictionary) -> int:
+	var w := str(end.get("winner", ""))
+	if w == "":
+		return 2
+	var s := side_of(w)
+	return s if s != -1 else 2
 
 
 ## The next message in order without taking it ([] when none is ready).

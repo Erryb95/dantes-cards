@@ -8,7 +8,7 @@ extends Node
 ## show them. The server key and the session token never go into the log.
 
 signal matched(data: Dictionary) ## matchmaker_matched: {match_id, ticket, users, self}
-signal match_data(op: int, data: Dictionary) ## realtime match data, already decoded from base64 JSON
+signal match_data(op: int, data: Dictionary) ## realtime match data, already decoded from base64 JSON (+ "_mid")
 signal channel_message(msg: Dictionary) ## a chat message (content already parsed when it is JSON)
 signal socket_closed(reason: String)
 signal notice(envelope: Dictionary) ## any other unsolicited envelope (presence events, ...)
@@ -221,15 +221,30 @@ func connect_socket() -> Dictionary:
 	if _ws.connect_to_url(url, TLSOptions.client() if config.secure() else null) != OK:
 		_ws = null
 		return {"error": "Could not open the connection."}
-	var t := 0.0
-	while _ws != null and _ws.get_ready_state() == WebSocketPeer.STATE_CONNECTING and t < HTTP_TIMEOUT:
+	var t0 := Time.get_ticks_msec() # wall-clock, as in request()
+	while _ws != null and _ws.get_ready_state() == WebSocketPeer.STATE_CONNECTING \
+			and Time.get_ticks_msec() - t0 < int(HTTP_TIMEOUT * 1000.0):
 		await get_tree().process_frame
-		t += get_process_delta_time()
 	if _ws == null or _ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		close_socket()
 		return {"error": "The live connection failed."}
 	_ws_open = true
 	return {}
+
+
+## Closes the socket as if the connection had been lost: `socket_closed` fires (when it was open), so a duel rejoins.
+## For a socket that still looks open but no longer answers (a phone back from the background, a changed network).
+func drop_socket(reason: String) -> void:
+	var was := socket_open()
+	close_socket()
+	if was:
+		socket_closed.emit(reason)
+
+
+## True when the server answers a ping within `timeout` seconds (Nakama's application-level heartbeat).
+func ping(timeout := 5.0) -> bool:
+	var r := await request({"ping": {}}, timeout)
+	return not r.has("error")
 
 
 func close_socket() -> void:
@@ -241,6 +256,11 @@ func close_socket() -> void:
 
 
 func _process(_delta: float) -> void:
+	_poll()
+
+
+## Reads the socket: dispatches what arrived, notices a close.
+func _poll() -> void:
 	if _ws == null:
 		return
 	_ws.poll()
@@ -268,7 +288,9 @@ func _dispatch(env: Dictionary) -> void:
 		var md: Dictionary = env.match_data
 		var raw := str(md.get("data", ""))
 		var parsed: Variant = JSON.parse_string(Marshalls.base64_to_utf8(raw)) if raw != "" else {}
-		match_data.emit(int(md.get("op_code", 0)), parsed if parsed is Dictionary else {})
+		var data: Dictionary = parsed if parsed is Dictionary else {}
+		data["_mid"] = str(md.get("match_id", "")) # which match sent it (a stale match's messages are dropped)
+		match_data.emit(int(md.get("op_code", 0)), data)
 	elif env.has("matchmaker_matched"):
 		matched.emit(env.matchmaker_matched)
 	elif env.has("channel_message"):
@@ -292,10 +314,13 @@ func request(env: Dictionary, timeout := REPLY_TIMEOUT) -> Dictionary:
 	var cid := str(_cid)
 	env["cid"] = cid
 	_ws.send_text(JSON.stringify(env))
-	var t := 0.0
-	while not _replies.has(cid) and t < timeout and socket_open():
+	# Wall-clock time, not frame deltas: the first frame after a phone resumes can carry a delta of minutes, which
+	# timed a request out before its reply could arrive.
+	var t0 := Time.get_ticks_msec()
+	while not _replies.has(cid) and Time.get_ticks_msec() - t0 < int(timeout * 1000.0) and socket_open():
 		await get_tree().process_frame
-		t += maxf(get_process_delta_time(), 0.001)
+	if not _replies.has(cid):
+		_poll() # after a long frame (a scene loading) the reply may be waiting unread: never time out over that
 	if not _replies.has(cid):
 		return {"error": "The server did not answer in time." if socket_open() else "Connection lost."}
 	var reply: Dictionary = _replies[cid]

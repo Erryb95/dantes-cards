@@ -168,6 +168,9 @@ func _on_failed(message: String) -> void:
 	_status.add_theme_color_override("font_color", INK_RED)
 	_clock.text = ""
 	Sfx.play("ui_back", -6.0)
+	if rejoin_id != "" and message == "That duel has already ended.":
+		_buttons([["Close", _cancel]]) # going back again cannot help
+		return
 	_buttons([["Try again", _retry], ["Close", _cancel]])
 
 

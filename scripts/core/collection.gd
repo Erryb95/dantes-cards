@@ -25,7 +25,8 @@ var obols := 0
 var packs := 0
 var packs_since_legendary := 0
 var opened_total := 0
-var decks := [] ## custom decks: {name, cls, cards: {id: n}}
+var decks := [] ## custom decks: {name, cls, cards: {id: n}, saved_ms}
+var deck_tombs := {} ## decks deleted (or renamed away) here: "cls|name" -> unix ms, so a cloud sync cannot revive them
 var rng := RandomNumberGenerator.new()
 
 
@@ -59,6 +60,7 @@ func load_from(path: String) -> void:
 		var clean := _clean_deck(d)
 		if not clean.is_empty():
 			decks.append(clean)
+	deck_tombs = ProgressMerge.merge_tombs(SaveFile.value(cfg, "collection", "deck_tombs", {}), {})
 	# The starter decks are always owned (they can grow between versions). The other preconstructed decks are
 	# played from Choose your path without owning their cards.
 	for d in CardDB.decks():
@@ -99,7 +101,25 @@ func save_to(path: String) -> void:
 	cfg.set_value("collection", "pity", packs_since_legendary)
 	cfg.set_value("collection", "opened", opened_total)
 	cfg.set_value("collection", "decks", decks)
+	cfg.set_value("collection", "deck_tombs", deck_tombs)
 	cfg.save(path)
+
+
+## A custom deck is being saved over `before` ({} for a new one): it gets the time of this edit, and when it was
+## renamed or changed class its old name gets a tombstone (see `deck_tombs`).
+func stamp_deck(deck: Dictionary, before: Dictionary = {}) -> void:
+	var now := int(Time.get_unix_time_from_system() * 1000.0)
+	deck["saved_ms"] = now
+	if not before.is_empty() and ProgressMerge.deck_key(before) != ProgressMerge.deck_key(deck):
+		deck_tombs[ProgressMerge.deck_key(before)] = now
+
+
+## Custom deck `index` is deleted: it leaves a tombstone, so another device's save does not bring it back.
+func delete_deck(index: int) -> void:
+	if index < 0 or index >= decks.size():
+		return
+	deck_tombs[ProgressMerge.deck_key(decks[index])] = int(Time.get_unix_time_from_system() * 1000.0)
+	decks.remove_at(index)
 
 
 func copies(id: String) -> int:

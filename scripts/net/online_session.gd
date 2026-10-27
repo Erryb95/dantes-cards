@@ -19,6 +19,9 @@ signal chat(msg: Dictionary) ## a chat message in this duel's channel: {user_id,
 enum State { IDLE, CONNECTING, SEARCHING, JOINING, IN_MATCH }
 
 const RECONNECT_FOR := 40.0 ## seconds of trying to come back after the socket drops in a duel (grace is 30 s)
+const JOIN_WAIT := 35.0 ## seconds to wait for START after joining (the server gives both players 30 s to join)
+const HEARTBEAT_EVERY := 15.0 ## seconds between pings while searching or in a duel (a dead socket is noticed)
+const PING_TIMEOUT := 5.0
 
 var profile := 0
 var config: OnlineConfig
@@ -141,6 +144,10 @@ func sign_in_with(provider: String, token_value: String) -> String:
 	if err != "":
 		return err
 	var linked := await client.link_provider(provider, token_value)
+	if linked.has("error") and not link_taken(linked):
+		# A network failure or a refused token: say so. Signing into the provider's account now would create a new,
+		# empty account for it and leave this guest account (and its cloud save) behind.
+		return "Could not link the %s account: %s" % [provider.capitalize(), str(linked.error)]
 	if linked.has("error"):
 		var a := await client.authenticate_provider(provider, token_value)
 		if a.has("error"):
@@ -160,6 +167,12 @@ func sign_in_with(provider: String, token_value: String) -> String:
 		if s.has("error"):
 			return str(s.error)
 	return ""
+
+
+## True when a link was refused because the identity already belongs to another game account (Nakama answers 409
+## AlreadyExists, "... ID is already in use"): then the install moves onto that account.
+static func link_taken(r: Dictionary) -> bool:
+	return int(r.get("code", 0)) == 409 or str(r.get("error", "")).to_lower().contains("already in use")
 
 
 ## Back to a guest: a fresh device account (the Google one stays on the server, for the next sign-in).
@@ -205,15 +218,24 @@ var _connecting := false
 
 
 func _connect_now() -> String:
-	if not _endpoint_picked:
+	# An open socket works on the address in use: never switch addresses under it (that would close it).
+	if not _endpoint_picked and not client.socket_open():
 		await _pick_endpoint()
 	if not client.session_fresh():
-		client.close_socket()
+		# A new token over HTTP (the 2 h session is renewed after 100 min). An open socket keeps working with the one
+		# it was opened with, so it is not closed while a search or a duel runs on it (that silently lost the duel's
+		# seat, or left the search waiting on a dead ticket); idle, it reconnects with the new token below.
+		var was := client.user_id
 		var r := await client.authenticate_device(device_id())
 		if r.has("error"):
 			_endpoint_picked = false # the next try looks at both addresses again
 			return str(r.error)
-		_need_login_sync = true # a sign-in: merge with the account's save
+		if state == State.IDLE or client.user_id != was:
+			client.close_socket()
+		if client.user_id != was:
+			# A sign-in (not the same account's renewal): merge with the account's save. A renewal needs no merge (a
+			# refused upload merges anyway), and a merge every 100 min could reorder the decks under the deck builder.
+			_need_login_sync = true
 		await client.set_display_name(display_name(), avatar_url())
 	if not client.socket_open():
 		var s := await client.connect_socket()
@@ -253,6 +275,7 @@ func search(cls: String, cards: Array) -> void:
 	var my_search := _search_id
 	_deck_meta = DuelSync.deck_metadata(cls, cards, display_name())
 	_reset_match()
+	ticket = ""
 	state = State.CONNECTING
 	status.emit("Connecting to the server...")
 	var err := await ensure_connected()
@@ -272,11 +295,14 @@ func search(cls: String, cards: Array) -> void:
 		return
 	state = State.SEARCHING
 	status.emit("Searching for an opponent...")
-	ticket = await client.matchmaker_add()
+	var got := await client.matchmaker_add()
 	if my_search != _search_id:
-		if ticket != "":
-			client.matchmaker_remove(ticket)
+		if got != "":
+			client.matchmaker_remove(got)
 		return
+	if state != State.SEARCHING: # matched in the same moment the ticket came back: it is used up
+		return
+	ticket = got
 	if ticket == "":
 		state = State.IDLE
 		failed.emit("The server would not queue you: %s" % client.last_error)
@@ -294,6 +320,9 @@ func cancel_search() -> void:
 func _on_matched(m: Dictionary) -> void:
 	if state != State.SEARCHING:
 		return
+	var mt := str(m.get("ticket", ""))
+	if ticket != "" and mt != "" and mt != ticket:
+		return # a cancelled search's ticket the server paired just before its removal: not this search
 	ticket = ""
 	var id := str(m.get("match_id", ""))
 	if id == "":
@@ -308,24 +337,45 @@ func _join(id: String, meta: Dictionary, my_search: int) -> void:
 	state = State.JOINING
 	match_id = id
 	var r := await client.match_join(id, meta)
-	if my_search != _search_id:
+	if my_search != _search_id: # cancelled meanwhile
 		client.match_leave(id)
+		if match_id == id and state != State.IN_MATCH:
+			match_id = ""
 		return
 	if r.has("error"):
 		state = State.IDLE
 		match_id = ""
-		failed.emit("Could not join the duel: %s" % str(r.error))
+		failed.emit(join_error_text(r))
 		return
-	# START (or RESYNC on a rejoin) follows; wait for it a little.
+	# START (or RESYNC on a rejoin) follows when both players are in: the server waits JOIN_WAIT for the other one
+	# (then sends END "no_show", which `_on_match_data` turns into a failure at once).
 	var t := 0.0
-	while state == State.JOINING and t < 10.0 and my_search == _search_id:
+	var told := false
+	while state == State.JOINING and t < JOIN_WAIT and my_search == _search_id:
 		await get_tree().process_frame
 		t += maxf(get_process_delta_time(), 0.001)
-	if state == State.JOINING and my_search == _search_id:
-		state = State.IDLE
+		if t > 3.0 and not told:
+			told = true
+			status.emit("Waiting for your opponent to arrive...")
+	if state == State.IN_MATCH:
+		return
+	if match_id == id: # cancelled, or no START in time: never stay in a match nobody plays
 		client.match_leave(id)
 		match_id = ""
-		failed.emit("The duel did not start.")
+	if state == State.JOINING and my_search == _search_id:
+		state = State.IDLE
+		failed.emit("Your opponent never arrived. Try again.")
+
+
+## A refused match join, said plainly. Nakama: code 4 = no such match, 5 = the match refused the join (its reason).
+static func join_error_text(r: Dictionary) -> String:
+	var code := int(r.get("code", -1))
+	var why := str(r.get("error", ""))
+	if code == 4 or why.to_lower().contains("not found") or why.to_lower().contains("is over"):
+		return "That duel has already ended."
+	if code == 5:
+		return "The duel would not let you in: %s." % why
+	return "Could not join the duel: %s" % why
 
 
 ## On launch: is there a duel to go back to? Its match id, or "" (also when offline or not configured).
@@ -341,13 +391,16 @@ func check_rejoin() -> String:
 ## Goes back into duel `id` (from check_rejoin): the server answers with RESYNC, then `match_ready` fires.
 func rejoin(id: String) -> void:
 	_search_id += 1
+	var my_search := _search_id
 	_reset_match()
 	status.emit("Returning to your duel...")
 	var err := await ensure_connected()
+	if my_search != _search_id: # cancelled while connecting: do not join behind the player's back
+		return
 	if err != "":
 		failed.emit(err)
 		return
-	await _join(id, {}, _search_id)
+	await _join(id, {}, my_search)
 
 
 func _reset_match() -> void:
@@ -362,6 +415,17 @@ func _reset_match() -> void:
 
 func _on_match_data(op: int, data: Dictionary) -> void:
 	data["_rx"] = Time.get_ticks_msec() # when it arrived (the turn timer counts from here)
+	# Only the match this session is joining or playing: a search cancelled while its join was under way (or a duel
+	# already left) must not start a duel behind the player's back, nor feed another match's moves into this one.
+	var mid := str(data.get("_mid", ""))
+	if not state in [State.JOINING, State.IN_MATCH] or (mid != "" and mid != match_id):
+		return
+	if op == DuelSync.S_END and state == State.JOINING: # the server gave up waiting for the other player
+		state = State.IDLE
+		match_id = ""
+		failed.emit("Your opponent never arrived. Try again." if str(data.get("reason", "")) == "no_show"
+			else "That duel has already ended.")
+		return
 	match op:
 		DuelSync.S_START:
 			start = data
@@ -419,9 +483,14 @@ func _reconnect() -> void:
 	connection.emit(false)
 	var t0 := Time.get_ticks_msec()
 	var id := match_id
+	var reason := "connection_lost"
 	while state == State.IN_MATCH and match_id == id and (Time.get_ticks_msec() - t0) / 1000.0 < RECONNECT_FOR:
 		if await ensure_connected() == "":
 			var r := await client.match_join(id, {})
+			if not (state == State.IN_MATCH and match_id == id): # the player left the duel meanwhile
+				if not r.has("error"):
+					client.match_leave(id)
+				break
 			if not r.has("error"):
 				_reconnecting = false
 				if chat_channel != "" and start.has("players"):
@@ -429,10 +498,44 @@ func _reconnect() -> void:
 					open_chat()
 				connection.emit(true)
 				return
+			if int(r.get("code", -1)) in [4, 5]: # no such match / the match refused: it is over, stop trying
+				reason = "gone"
+				break
 		await get_tree().create_timer(2.0).timeout
 	_reconnecting = false
 	if state == State.IN_MATCH and match_id == id:
-		inbox.append([DuelSync.S_END, {"winner": "", "loser": "", "reason": "connection_lost"}])
+		inbox.append([DuelSync.S_END, {"winner": "", "loser": "", "reason": reason, "_mid": id}])
+
+
+# ---------------------------------------------------------------- liveness (phones in the background, changed networks)
+
+var _hb_t := 0.0
+var _hb_busy := false
+
+
+## While searching or in a duel: a ping every HEARTBEAT_EVERY seconds. A socket can look open long after it died (a
+## phone that slept, Wi-Fi swapped for mobile data): with no pong it is dropped, which starts the rejoin (in a duel) or
+## ends the search with a message (it would wait on a dead ticket for ever).
+func _heartbeat(delta: float) -> void:
+	if not state in [State.SEARCHING, State.IN_MATCH] or _reconnecting or _hb_busy or client == null \
+			or not client.socket_open():
+		_hb_t = 0.0
+		return
+	_hb_t += delta
+	if _hb_t >= HEARTBEAT_EVERY:
+		_hb_t = 0.0
+		check_alive()
+
+
+## Pings the server; no pong in PING_TIMEOUT seconds while the socket still looks open: drop it (see `_heartbeat`).
+func check_alive() -> void:
+	if _hb_busy or client == null or not client.socket_open():
+		return
+	_hb_busy = true
+	var alive := await client.ping(PING_TIMEOUT)
+	_hb_busy = false
+	if not alive and client.socket_open():
+		client.drop_socket("no answer from the server")
 
 
 # ---------------------------------------------------------------- chat
@@ -541,7 +644,7 @@ func gather() -> Dictionary:
 	var data := {
 		"collection": {"owned": Collection.owned.duplicate(), "obols": Collection.obols, "packs": Collection.packs,
 			"pity": Collection.packs_since_legendary, "opened": Collection.opened_total,
-			"decks": Collection.decks.duplicate(true)},
+			"decks": Collection.decks.duplicate(true), "deleted_decks": Collection.deck_tombs.duplicate()},
 		"record": {"wins": int(Game.stats.wins), "losses": int(Game.stats.losses),
 			"class_games": Game.class_games.duplicate()},
 		"online": record(),
@@ -580,6 +683,7 @@ func apply(b: Dictionary) -> void:
 		if not clean.is_empty():
 			decks.append(clean)
 	Collection.decks = decks
+	Collection.deck_tombs = ProgressMerge.merge_tombs(col.get("deleted_decks", {}), Collection.deck_tombs)
 	Collection.save()
 	var rec: Dictionary = d.get("record", {})
 	Game.stats = {"wins": maxi(0, int(rec.get("wins", 0))), "losses": maxi(0, int(rec.get("losses", 0)))}
@@ -614,6 +718,7 @@ func apply(b: Dictionary) -> void:
 
 
 func _process(delta: float) -> void:
+	_heartbeat(delta)
 	if not cloud_on() or _syncing:
 		return
 	_sync_t -= delta
@@ -659,7 +764,9 @@ func _merge_with_account(local: Dictionary) -> void:
 			_set_sync("offline")
 			return
 		var server: Dictionary = got.get("value", {})
-		_server_version = str(got.get("version", ""))
+		# No save yet: "*" writes only if there still is none, so two devices creating it at once cannot overwrite
+		# each other (the second one's write is refused, and it reads, merges and writes again).
+		_server_version = str(got.version) if got.has("version") else "*"
 		_server_blob = server
 		var merged := ProgressMerge.merge(local, server)
 		if not ProgressMerge.same(merged, local):
@@ -709,6 +816,13 @@ func _push(local: Dictionary) -> void:
 
 ## Quitting: one last upload when something changed (at most 3 s), then the game closes.
 func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_RESUMED:
+		# Back from the background (Android, iOS): the OS may have killed the socket without a word. Check it now
+		# rather than at the next heartbeat; a dead one is dropped and the duel rejoins (RESYNC brings the clock back).
+		_hb_t = 0.0
+		if state in [State.SEARCHING, State.IN_MATCH] and not _reconnecting:
+			check_alive()
+		return
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and cloud_on() and not _quitting:
 		_quitting = true
 		get_tree().create_timer(3.0).timeout.connect(func(): get_tree().quit())

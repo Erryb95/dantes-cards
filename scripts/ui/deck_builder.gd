@@ -582,6 +582,7 @@ static func _draw_plus(ci: CanvasItem, c: Vector2, arm: float, thick: float, rim
 func _save() -> void:
 	if deck.name.strip_edges() == "":
 		deck.name = "Unnamed Deck"
+	Collection.stamp_deck(deck, Collection.decks[_index] if _index >= 0 and _index < Collection.decks.size() else {})
 	if _index >= 0:
 		Collection.decks[_index] = deck
 	else:
@@ -607,7 +608,7 @@ func _delete() -> void:
 
 
 func _delete_now() -> void:
-	Collection.decks.remove_at(_index)
+	Collection.delete_deck(_index)
 	Collection.save()
 	# The player's decks after it move up one place: keep Choose your path on the same deck (or the first one).
 	var sel := str(Settings.deck_choice.get("selected", ""))

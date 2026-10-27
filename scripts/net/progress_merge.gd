@@ -12,7 +12,9 @@ extends RefCounted
 ## Merge (`merge`): an empty side takes the other; a fresh install (nothing beyond the starter state) takes the
 ## account's; otherwise the newer save wins field by field, but nothing earned is lost: owned cards are united (the
 ## most copies of each), packs, pity, packs opened and the records keep the larger value, custom decks and lessons
-## are united, coach tips seen are united.
+## are united, coach tips seen are united. A deleted (or renamed) deck leaves a tombstone (`collection.deleted_decks`,
+## "cls|name" -> unix ms), and a deck is united only if it was saved (`saved_ms`) after its tombstone: deleted decks
+## no longer come back from another device's save.
 
 const VERSION := 1
 
@@ -66,14 +68,10 @@ static func merge(local: Dictionary, server: Dictionary) -> Dictionary:
 	for k in ["packs", "pity", "opened"]:
 		nc[k] = maxi(int(nc.get(k, 0)), int(oc.get(k, 0)))
 	nc["obols"] = int(nc.get("obols", 0))
-	var decks: Array = (nc.get("decks", []) as Array).duplicate(true)
-	var names := {}
-	for dk in decks:
-		names[_deck_key(dk)] = true
-	for dk in oc.get("decks", []):
-		if not names.has(_deck_key(dk)):
-			decks.append(dk)
-	nc["decks"] = decks
+	var tombs := merge_tombs(nc.get("deleted_decks", {}), oc.get("deleted_decks", {}))
+	nc["decks"] = merge_decks(nc.get("decks", []), oc.get("decks", []), tombs)
+	if not tombs.is_empty() or nc.has("deleted_decks") or oc.has("deleted_decks"): # (a save from 0.8.1 has none)
+		nc["deleted_decks"] = tombs
 	n["collection"] = nc
 	# Records only grow.
 	for sec in ["record", "online"]:
@@ -136,19 +134,77 @@ static func keep_foreign(local: Dictionary, server: Dictionary, known_card: Call
 	var decks: Array = lc.get("decks", [])
 	var names := {}
 	for dk in decks:
-		names[_deck_key(dk)] = true
+		names[deck_key(dk)] = true
 	for dk in sc.get("decks", []):
-		if dk is Dictionary and not known_class.call(str(dk.get("cls", ""))) and not names.has(_deck_key(dk)):
+		if dk is Dictionary and not known_class.call(str(dk.get("cls", ""))) and not names.has(deck_key(dk)):
 			decks.append(dk)
 	lc["decks"] = decks
+	if lc.has("deleted_decks") or sc.has("deleted_decks"): # another device's deletions stay on the account
+		lc["deleted_decks"] = merge_tombs(lc.get("deleted_decks", {}), sc.get("deleted_decks", {}))
 	out.data["collection"] = lc
 	return out
 
 
-static func _deck_key(dk: Variant) -> String:
+## A custom deck's identity across devices: its class and name.
+static func deck_key(dk: Variant) -> String:
 	if not (dk is Dictionary):
 		return str(dk)
 	return "%s|%s" % [str(dk.get("cls", "")), str(dk.get("name", ""))]
+
+
+## When a deck was last saved (unix ms, its `saved_ms`; 0 for a deck from before 0.8.2).
+static func deck_ms(dk: Variant) -> int:
+	return int(dk.get("saved_ms", 0)) if dk is Dictionary else 0
+
+
+const MAX_TOMBS := 200 ## deleted-deck records kept (the most recent)
+
+
+## Deleted decks ("tombstones", deck_key -> unix ms of the deletion) of two saves united, the later time of each.
+static func merge_tombs(a: Variant, b: Variant) -> Dictionary:
+	var out := {}
+	for src in [a, b]:
+		if not (src is Dictionary):
+			continue
+		for k in src:
+			if typeof(src[k]) in [TYPE_INT, TYPE_FLOAT]:
+				out[str(k)] = maxi(int(out.get(str(k), 0)), int(src[k]))
+	if out.size() > MAX_TOMBS:
+		var keys := out.keys()
+		keys.sort_custom(func(x, y): return int(out[x]) > int(out[y]))
+		var kept := {}
+		for i in MAX_TOMBS:
+			kept[keys[i]] = out[keys[i]]
+		out = kept
+	return out
+
+
+## The custom decks of two saves: the newer save's, plus the older save's other decks; a deck saved later on the older
+## side replaces the newer side's copy of it. A deck deleted (or renamed away) at or after its last save is dropped,
+## so a deck deleted on one device does not come back from another one's save.
+static func merge_decks(newer: Variant, older: Variant, tombs: Dictionary) -> Array:
+	var out := []
+	var at := {} ## deck_key -> index in `out` of the newer side's deck
+	for dk in (newer if newer is Array else []):
+		if _buried(dk, tombs):
+			continue
+		if not at.has(deck_key(dk)):
+			at[deck_key(dk)] = out.size()
+		out.append((dk as Dictionary).duplicate(true) if dk is Dictionary else dk)
+	for dk in (older if older is Array else []):
+		if _buried(dk, tombs):
+			continue
+		var k := deck_key(dk)
+		if not at.has(k):
+			out.append((dk as Dictionary).duplicate(true) if dk is Dictionary else dk)
+		elif deck_ms(dk) > deck_ms(out[at[k]]):
+			out[at[k]] = (dk as Dictionary).duplicate(true)
+	return out
+
+
+static func _buried(dk: Variant, tombs: Dictionary) -> bool:
+	var k := deck_key(dk)
+	return tombs.has(k) and int(tombs[k]) >= deck_ms(dk)
 
 
 ## True when two blobs hold the same progress (saved_at_ms aside).

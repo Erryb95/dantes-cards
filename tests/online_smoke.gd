@@ -186,8 +186,10 @@ func _run() -> void:
 		_finish()
 		return
 	_check_same("after the mulligan")
-	# Play turns with Easy-AI moves; one client drops and rejoins halfway.
+	# Play turns with Easy-AI moves; one client drops and rejoins halfway, the other later through the session's own
+	# reconnect.
 	var dropped := false
+	var auto_dropped := false
 	var t := 0.0
 	while syncs[0].st.turn < turns_wanted and syncs[0].st.winner == -1 and t < TIMEOUT:
 		await get_tree().process_frame
@@ -196,6 +198,10 @@ func _run() -> void:
 		if not dropped and syncs[0].st.turn >= 3:
 			dropped = true
 			await _drop_and_rejoin(1)
+			await _session_steps(0)
+		if not auto_dropped and syncs[0].st.turn >= 5:
+			auto_dropped = true
+			await _auto_rejoin(0)
 		for k in 2:
 			_maybe_act(k)
 	if t >= TIMEOUT:
@@ -212,6 +218,16 @@ func _run() -> void:
 			"client 1" if str(ends[k].get("winner")) == clients[1].user_id() else str(ends[k].get("winner"))])
 		if str(ends[k].get("reason")) != "concede" or str(ends[k].get("winner")) != clients[1].user_id():
 			_fail("client %d: wrong END %s" % [k, ends[k]])
+	# Coming back to the finished duel on a new socket (a rejoin) is refused, and the player is told it has ended.
+	# (The same socket would simply be told it is already in.)
+	clients[1].client.close_socket()
+	await clients[1].ensure_connected()
+	var late := await clients[1].client.match_join(clients[1].match_id, {})
+	if not late.has("error") or OnlineSession.join_error_text(late) != "That duel has already ended.":
+		_fail("joining a finished duel: %s -> %s" % [late, OnlineSession.join_error_text(late)])
+	else:
+		print("a finished duel refuses the join (code %d): \"%s\"" % [int(late.get("code", -1)),
+			OnlineSession.join_error_text(late)])
 	for k in 2:
 		if not syncs[k].desyncs.is_empty():
 			_fail("client %d desyncs: %s" % [k, syncs[k].desyncs])
@@ -327,6 +343,52 @@ func _drop_and_rejoin(k: int) -> void:
 		_fail("the game rebuilt from RESYNC differs from the live one")
 	else:
 		print("RESYNC rebuild matches the live game (seq %d)" % fresh.last_seq)
+
+
+## In the middle of the duel: the server answers a ping (the heartbeat), the app-resume check keeps a live socket, and
+## renewing the 2 h session (after 100 min) keeps the duel's socket open: it used to close it without a word.
+func _session_steps(k: int) -> void:
+	var s := clients[k]
+	if not await s.client.ping(5.0):
+		_fail("client %d: no pong from the server" % k)
+	s._notification(NOTIFICATION_APPLICATION_RESUMED)
+	await _wait_until(func(): return not s._hb_busy, 8.0, "the resume check ends")
+	if not s.client.socket_open():
+		_fail("client %d: the resume check dropped a live socket" % k)
+	var uid := s.user_id()
+	s.client.token_time -= 101 * 60 # the session is now old enough to be renewed
+	var err := await s.ensure_connected()
+	if err != "" or not s.client.session_fresh() or not s.client.socket_open() or s.user_id() != uid or not s.in_match():
+		_fail("client %d: renewing the session broke the duel (%s, socket %s)" % [k, err, s.client.socket_open()])
+	else:
+		print("ping, resume check and session renewal kept the duel's socket")
+
+
+## The session's own path: its socket dies under it (drop_socket, as the heartbeat does), it reconnects and rejoins by
+## itself, and the RESYNC's clock is the server's remaining time (rope included, never more than turn + rope).
+func _auto_rejoin(k: int) -> void:
+	var s := clients[k]
+	var before := s.resync
+	var ups := []
+	var on_conn := func(up: bool): ups.append(up)
+	s.connection.connect(on_conn)
+	print("client %d: socket dropped at turn %d, the session rejoins" % [k, syncs[k].st.turn])
+	s.client.drop_socket("smoke test drop")
+	await _wait_until(func(): return ups.has(true), 30.0, "client %d reconnects by itself" % k)
+	s.connection.disconnect(on_conn)
+	if not ups.has(false):
+		_fail("client %d: the drop was not reported" % k)
+	if not await _wait_until(func(): return s.resync != before and not s.resync.is_empty(), 10.0,
+			"client %d gets RESYNC after its own rejoin" % k):
+		return
+	var clock := DuelSync.resync_clock(s.resync)
+	var left := int(clock[0]) - int(s.resync.get("_rx", 0))
+	var limit := syncs[k].turn_ms + syncs[k].rope_ms
+	if str(s.resync.get("phase")) == "play" and (left <= 0 or left > limit):
+		_fail("RESYNC clock out of range: %d ms (limit %d)" % [left, limit])
+	else:
+		print("rejoined by itself; RESYNC clock %d ms left (phase %s, roped %s)" % [left, s.resync.get("phase"),
+			s.resync.get("roped")])
 
 
 ## The cloud save on a test account: write a progress blob, read it back the same, and a write over a version that
