@@ -260,6 +260,12 @@ static func add_field(c: Control, inset: float = 5.0, tint: Color = FIELD) -> vo
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.modulate = tint
 	c.add_child(bg, false, Node.INTERNAL_MODE_FRONT)
+	# A container fits every child, internal ones too, into its content rect (inside the frame's text margins), which
+	# left the field a dark box behind the text only: put it back over the whole plaque after each sort.
+	if c is Container:
+		c.sort_children.connect(func() -> void:
+			bg.position = Vector2(inset, inset)
+			bg.size = c.size - Vector2(inset, inset) * 2.0)
 
 
 ## The thin bronze plaque frame (deck_row) as a style with room for text: `pad` px inside it left / right and
