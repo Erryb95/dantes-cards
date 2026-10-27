@@ -71,26 +71,36 @@ var hero_wounds := [0, 0] ## per side: damage the hero has already taken when th
 var start_mana := [0, 0] ## per side: the empty mana crystals it starts with (its first turn adds one)
 var start_board: Array = [[], []] ## per side: minion card ids already in play when the game starts (awake)
 
+## Online duels: both players build the same canonical game (side 0 = the match's players[0]), but each one sees
+## itself at the bottom as side 0. With `flip` 1 (this player is players[1]) `sides` keeps the local order (sides[0]
+## is this player) while everything in `start` that uses the random stream or hands out uids runs in canonical order,
+## so uids, shuffles and random picks match on both machines. Every rule after `start` only uses sides relative to the
+## acting one, so nothing else depends on it. Set before start(). Canonical side = local side ^ flip.
+var flip := 0
+
 
 # ---------------------------------------------------------------- setup
 
 ## With wait_mulligan the opening hands are dealt and the game waits for finish_mulligan() from both sides.
 ## `first`: the side that takes the first turn (-1 = coin flip); the other side opens with one more card and
 ## Charon's Obol after the mulligan.
+## Online (`flip` 1): the arguments and `first` are canonical sides (deck_a belongs to players[0]); see `flip`.
 func start(deck_a: Array[String], hero_a: String, deck_b: Array[String], hero_b: String, seed_value: int = 0,
 		wait_mulligan: bool = false, first: int = 0) -> void:
 	rng.seed = seed_value if seed_value != 0 else randi()
 	sides.clear()
-	for i in 2:
+	sides.resize(2)
+	for c in 2: # canonical order: the shuffles, hero uids and opening draws match whichever side is local
+		var i := c ^ flip
 		var s := SideState.new()
-		s.hero_id = hero_a if i == 0 else hero_b
-		s.deck = (deck_a if i == 0 else deck_b).duplicate()
+		s.hero_id = hero_a if c == 0 else hero_b
+		s.deck = (deck_a if c == 0 else deck_b).duplicate()
 		if stacked:
 			s.deck.reverse() # cards are drawn from the back: the list's first card comes first
 		else:
 			_shuffle(s.deck)
 		var h := Unit.new()
-		h.uid = HERO_UIDS[i]
+		h.uid = HERO_UIDS[c]
 		h.id = s.hero_id
 		h.side = i
 		h.is_hero = true
@@ -99,10 +109,11 @@ func start(deck_a: Array[String], hero_a: String, deck_b: Array[String], hero_b:
 		s.hero = h
 		s.max_mana = clampi(int(start_mana[i]), 0, MAX_MANA - 1)
 		units[h.uid] = h
-		sides.append(s)
+		sides[i] = s
 	_emit({"t": "start", "heroes": [sides[0].hero.snapshot(), sides[1].hero.snapshot()],
 		"decks": [sides[0].deck.size(), sides[1].deck.size()]})
-	for i in 2:
+	for c in 2:
+		var i := c ^ flip
 		for id in start_board[i]:
 			var u := _summon(i, str(id))
 			if u != null:
@@ -113,9 +124,10 @@ func start(deck_a: Array[String], hero_a: String, deck_b: Array[String], hero_b:
 			_emit({"t": "mana", "side": i, "mana": 0, "max": sides[i].max_mana})
 	if wait_mulligan:
 		_emit({"t": "mulligan_begin"})
-	current = first if first != -1 else rng.randi() % 2
+	current = (first ^ flip) if first != -1 else rng.randi() % 2
 	_emit({"t": "first", "side": current})
-	for i in 2:
+	for c in 2:
+		var i := c ^ flip
 		var n := int(opening[i])
 		draw(i, n if n >= 0 else (START_HAND[0] if i == current else START_HAND[1]))
 	if wait_mulligan:
@@ -146,6 +158,7 @@ func clone(seed: int) -> BattleState:
 	b.winner = winner
 	b._next_uid = _next_uid
 	b._mulligan_pending = _mulligan_pending.duplicate()
+	b.flip = flip
 	b.rng.seed = seed
 	for s in sides:
 		var n := SideState.new()
@@ -198,6 +211,30 @@ static func _copy_unit(u: Unit) -> Unit:
 
 func in_mulligan() -> bool:
 	return _mulligan_pending[0] or _mulligan_pending[1]
+
+
+## A fingerprint of the whole game in canonical side order (see `flip`), the random stream included: two machines
+## playing the same online duel must get the same value after every action, so a mismatch is a desync.
+func checksum() -> String:
+	var parts := PackedStringArray([str(turn), str(current ^ flip), str(winner if winner > 1 or winner < 0 else winner ^ flip),
+		str(rng.state), str(_next_uid), str(_mulligan_pending[flip]), str(_mulligan_pending[1 - flip])])
+	for c in 2:
+		var s := sides[c ^ flip]
+		parts.append("|%s,%d,%d,%s,%d,%d" % [s.hero_id, s.mana, s.max_mana, s.power_used, s.fatigue, s.played])
+		parts.append(_unit_print(s.hero))
+		parts.append(",".join(s.deck))
+		for h in s.hand:
+			parts.append("%d:%s" % [h.uid, h.id])
+		for u in s.board:
+			parts.append(_unit_print(u))
+	return "%08x" % ("/".join(parts).hash() & 0xffffffff)
+
+
+static func _unit_print(u: Unit) -> String:
+	var kw: Array = u.keywords.keys()
+	kw.sort()
+	return "%d:%s:%d/%d/%d/%d:%s:%s%d%s%s%d%s" % [u.uid, u.id, u.attack, u.health, u.max_health, u.armor,
+		",".join(PackedStringArray(kw)), u.sleeping, u.attacks_made, u.frozen, u.silenced, u.rage, u.frenzied]
 
 
 ## Shuffles the chosen opening cards back and draws replacements; the game starts once both sides are done.

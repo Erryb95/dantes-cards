@@ -30,6 +30,8 @@ var last_winner := -1
 var stats := {"wins": 0, "losses": 0}
 var intro_played := false ## the cinematic has played in this run (so `--intro` does not loop)
 var lesson := "" ## the lesson (data/lessons.json id) the next / current battle is, "" for a real match
+var online := false ## the next / current battle is an online duel (the match is in the `Online` autoload)
+var online_requeue := false ## Choose your path opens the online search at once (the result's "Find another duel")
 
 var _fade: ColorRect
 var _layer: CanvasLayer
@@ -150,6 +152,7 @@ func prepare_lesson(id: String) -> bool:
 		return false
 	var lu := Lessons.line_up(l)
 	lesson = id
+	online = false
 	player_cards.assign(lu.player_cards)
 	player_hero = lu.player_hero
 	player_deck = CardDB.hero_class(player_hero)
@@ -168,8 +171,32 @@ func prepare_lesson(id: String) -> bool:
 
 ## Starts a battle with any card list; the opponent plays a random preconstructed deck of class `enemy_cls`, or of
 ## a random other class when it is "".
+## Opens the online duel whose START (or RESYNC) the `Online` autoload holds. The decks and heroes come from the
+## match; the arena is drawn from the match's seed, so both players stand in the same place.
+func start_online(sync: DuelSync) -> void:
+	lesson = ""
+	online = true
+	player_cards.assign(sync.decks[sync.me])
+	player_hero = str(sync.heroes[sync.me])
+	player_deck = str(sync.classes[sync.me])
+	enemy_cards.assign(sync.decks[1 - sync.me])
+	enemy_hero = str(sync.heroes[1 - sync.me])
+	enemy_deck = str(sync.classes[1 - sync.me])
+	enemy_deck_id = ""
+	var pool: Array[String] = []
+	for a in CardDB.arenas():
+		if CardDB.arena_ready(a.id):
+			pool.append(str(a.id))
+	pool.sort()
+	if not pool.is_empty():
+		arena_id = pool[sync.seed_value % pool.size()]
+		arena_picked = true
+	go(BATTLE)
+
+
 func start_with(cards: Array, hero: String, enemy_cls := "") -> void:
 	lesson = ""
+	online = false
 	player_cards.assign(cards)
 	player_hero = hero
 	player_deck = CardDB.hero_class(hero)

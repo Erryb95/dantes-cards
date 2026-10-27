@@ -94,6 +94,9 @@ func _ready() -> void:
 	root.add_child(bc)
 	_refill()
 	_show(_find(_selected), 0)
+	if Game.online_requeue: # "Find another duel" on an online result: search again with the same deck
+		Game.online_requeue = false
+		OnlineOverlay.open.call_deferred(self, Game.player_deck, Game.player_cards.duplicate())
 
 
 ## Height of the showcase / library row: what the screen leaves under the title banner and header and above Back
@@ -224,7 +227,25 @@ func _header() -> Control:
 		diff.add_theme_font_size_override("font_size", 30)
 		UI.fit_text(diff))
 	head.add_child(diff)
+	# Online: the selected deck against another player (OnlineOverlay searches, then the battle opens).
+	var online := UI.button("Play online", 300, 60)
+	online.name = "PlayOnline"
+	online.add_theme_font_size_override("font_size", 30)
+	online.pressed.connect(func(): _play_online(_find(_selected)))
+	head.add_child(online)
 	return head
+
+
+## Searches for an online duel with deck `e` (a deck that cannot be played says why instead).
+func _play_online(e: Dictionary) -> void:
+	if e.is_empty():
+		return
+	if e.problem != "":
+		UI.dialog(self, "This deck cannot be played", str(e.problem), [["Close", null]])
+		return
+	Sfx.play("ui_confirm", -4.0)
+	var cards: Array = Collection.deck_cards(Collection.decks[e.index].cards) if e.own else CardDB.deck_list(e.id)
+	OnlineOverlay.open(self, e.cls, cards)
 
 
 # --- Showcase ----------------------------------------------------------------------------------------------------
