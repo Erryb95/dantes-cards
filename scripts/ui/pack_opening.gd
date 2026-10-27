@@ -90,6 +90,11 @@ func _ready() -> void:
 		_auto()
 
 
+## Esc / the back gesture (Game.back): like Back (the cards of an opened pack are already in the collection).
+func go_back() -> void:
+	Game.go(Game.MENU)
+
+
 ## Debug / smoke test: opens a pack and reveals every card on its own.
 func _auto() -> void:
 	await get_tree().create_timer(0.8).timeout
@@ -108,6 +113,15 @@ func _refresh() -> void:
 	_obols_label.text = "%d Obols" % Collection.obols
 	(_buttons.get_node("Buy") as Button).disabled = Collection.obols < Collection.PACK_PRICE
 	(_buttons.get_node("Next") as Button).visible = _state == "done" and Collection.packs > 0
+	# Keep the row centred under the table whether "Open next" shows or not.
+	var w := 0.0
+	var n := 0
+	for b in _buttons.get_children():
+		if b.visible:
+			w += b.custom_minimum_size.x
+			n += 1
+	w += _buttons.get_theme_constant("separation") * maxi(0, n - 1)
+	_buttons.position.x = (V.x - w) / 2.0
 
 
 func _buy() -> void:
@@ -115,7 +129,9 @@ func _buy() -> void:
 		Sfx.play("coins", -2.0)
 		Sfx.play("coin_pouch", -6.0)
 		_refresh()
-		if pack == null and _state != "reveal":
+		# A new pack goes on the table only when it is free: bought while a pack was bursting open ("opening"), the
+		# cards in flight were swept away and the screen hung in "reveal" with nothing left to reveal.
+		if pack == null and _state in ["idle", "done"]:
 			_next_pack()
 
 
