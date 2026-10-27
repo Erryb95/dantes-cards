@@ -32,7 +32,7 @@ const SECTIONS := [
 ## The "Credits" plate for the Options panel `host`: opens the credits over it (one line there:
 ## `<column>.add_child(CreditsPanel.open_button(self))`).
 static func open_button(host: Control) -> Button:
-	var b := UI.button("Credits", 300)
+	var b := UI.button("Credits", 400, 64)
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	b.pressed.connect(func(): host.get_parent().add_child(CreditsPanel.new()))
 	return b

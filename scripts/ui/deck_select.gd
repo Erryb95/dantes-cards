@@ -17,7 +17,7 @@ const SHOW_W := 640.0 ## the showcase panel
 const LIB_COLS := 4
 const DECK_W := 180.0 ## a deck's cell in the library
 const DECK_GAP := 18.0
-const DECK_H_MIN := 196.0 ## a deck cell's height range (_library sizes it from the room the screen gives)
+const DECK_H_MIN := 184.0 ## a deck cell's height range (_library sizes it from the room the screen gives)
 const DECK_H_MAX := 250.0
 const STACK := 12.0 ## how far the cards under the face show (right, and a little down)
 const PLAQUE_H := 52.0 ## the name plaque at the foot of a deck
@@ -467,7 +467,7 @@ func _fill_power(cls: String) -> void:
 	n.size = Vector2(w, n.custom_minimum_size.y)
 	n.position = Vector2(0, 84)
 	_power.add_child(n)
-	var t := UI.label(str(info.power.get("text", "")), 17, "italic", UI.BONE, 3, SHADE)
+	var t := UI.label(str(info.power.get("text", "")), 19, "italic", UI.BONE, 3, SHADE)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	t.size = Vector2(w, 60)

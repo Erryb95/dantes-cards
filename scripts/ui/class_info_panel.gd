@@ -465,8 +465,8 @@ static func open(from: Node, cls: String) -> Control:
 		Color(0, 0, 0, 0.7), 30))
 	s.content_margin_left = 84
 	s.content_margin_right = 84
-	s.content_margin_top = 56
-	s.content_margin_bottom = 60
+	s.content_margin_top = 74
+	s.content_margin_bottom = 72
 	panel.add_theme_stylebox_override("panel", s)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	center.add_child(panel)

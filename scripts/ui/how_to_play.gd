@@ -18,7 +18,7 @@ static var last_chapter := 0 ## reopens where the player left it
 
 ## The "How to Play" plate for the Options panel `host`: opens the reference over it (like CreditsPanel.open_button).
 static func open_button(host: Control) -> Button:
-	var b := UI.button("How to Play", 300)
+	var b := UI.button("How to Play", 400, 64)
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	b.pressed.connect(func(): host.get_parent().add_child(HowToPlayPanel.new()))
 	return b
@@ -47,7 +47,7 @@ func _ready() -> void:
 		UI.box(Color(0.09, 0.05, 0.04, 0.97), UI.GOLD, 3, 14, Color(0, 0, 0, 0.7), 30))
 	s.content_margin_left = 76
 	s.content_margin_right = 76
-	s.content_margin_top = 48
+	s.content_margin_top = 66 # the banner overhangs the frame's top edge
 	s.content_margin_bottom = 56
 	panel.add_theme_stylebox_override("panel", s)
 	center.add_child(panel)
@@ -60,7 +60,7 @@ func _ready() -> void:
 	v.add_child(body)
 	# The chapters, one plate each, down the left.
 	var tabs := VBoxContainer.new()
-	tabs.add_theme_constant_override("separation", 12)
+	tabs.add_theme_constant_override("separation", 20) # the plates' scrollwork overhangs their height
 	body.add_child(tabs)
 	for i in CHAPTERS.size():
 		var b := UI.button(CHAPTERS[i], 320, 68)
@@ -71,7 +71,7 @@ func _ready() -> void:
 	UI.even_text(_tabs)
 	# The pages in the room the screen leaves (a phone at 1080 px high, a 4:3 tablet taller).
 	_w = clampf(vs.x - 2.0 * 76.0 - 300.0 - 26.0 - 30.0 - 120.0, 760.0, 1240.0)
-	var h := clampf(vs.y - 48.0 - 56.0 - 80.0 - 14.0 - 76.0 - 14.0 - 60.0, 560.0, 900.0)
+	var h := clampf(vs.y - 66.0 - 56.0 - 80.0 - 14.0 - 76.0 - 14.0 - 60.0, 560.0, 900.0)
 	_scroll = ScrollContainer.new()
 	_scroll.name = "Pages"
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED

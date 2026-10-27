@@ -97,7 +97,7 @@ func _ready() -> void:
 func _left_column() -> Control:
 	var left := VBoxContainer.new()
 	left.add_theme_constant_override("separation", 10)
-	left.custom_minimum_size.x = 300
+	left.custom_minimum_size.x = 340
 	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_big_holder = CenterContainer.new()
 	_big_holder.custom_minimum_size = BIG * 1.22 # room for the ring, which overhangs the oval
@@ -107,7 +107,7 @@ func _left_column() -> Control:
 	_hero_line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	left.add_child(_hero_line)
 	_show_big()
-	left.add_child(ClassInfoPanel.section("Record", 300))
+	left.add_child(ClassInfoPanel.section("Record", 340))
 	var sheet := PanelContainer.new()
 	sheet.add_theme_stylebox_override("panel", UI.parchment_box(30, 16))
 	sheet.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -138,21 +138,21 @@ func _online_account() -> Control:
 	var box := VBoxContainer.new()
 	box.name = "OnlineAccount"
 	box.add_theme_constant_override("separation", 8)
-	box.add_child(ClassInfoPanel.section("Online", 300))
+	box.add_child(ClassInfoPanel.section("Online", 340))
 	var g := Online.google_account()
 	var who := "Playing as a guest"
 	if not g.is_empty():
 		who = "Signed in with Google as %s" % (g.name if str(g.name) != "" else g.email)
-	var line := UI.parchment_label(who, 20, "italic", UI.INK, 260.0, 20, 10)
+	var line := UI.parchment_label(who, 20, "italic", UI.INK, 300.0, 20, 10)
 	box.add_child(line)
 	var b: Button = null
 	if g.is_empty() and Online.google_available():
-		b = UI.button("Sign in with Google", 300, 60)
+		b = UI.button("Sign in with Google", 340, 60)
 		b.pressed.connect(func():
 			var p := GoogleSignInPanel.open(self)
 			p.finished.connect(func(_ok): _refresh_online()))
 	elif not g.is_empty():
-		b = UI.button("Play as guest", 300, 60)
+		b = UI.button("Play as guest", 340, 60)
 		b.pressed.connect(func():
 			Online.play_as_guest()
 			_refresh_online())
