@@ -170,7 +170,15 @@ func _show_zoom(id: String) -> void:
 	holder.position = Vector2(vs.x * 0.58, 0)
 	holder.size = Vector2(w + 40, vs.y)
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	holder.add_child(plate)
+	# Under the plate, a tip for each keyword the card uses (Guard, Last Breath, Freeze...).
+	var side := VBoxContainer.new()
+	side.add_theme_constant_override("separation", 10)
+	side.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	side.add_child(plate)
+	var tips := UI.tip_column(card, false, w - 100.0)
+	if tips != null:
+		side.add_child(tips)
+	holder.add_child(side)
 	_zoom.add_child(holder)
 	Sfx.play("page", -6.0)
 	_zoom.gui_input.connect(func(e):

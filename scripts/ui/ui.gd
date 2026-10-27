@@ -513,4 +513,98 @@ const KEYWORD_HELP := {
 	"death": ["Last Breath", "Does something when it dies."],
 	"play": ["On Play", "Does something when you play it from your hand."],
 	"ruse": ["Ruse", "A bonus when you play it after another card this turn."],
+	"freeze": ["Freeze", "A frozen character can't attack during its owner's next turn."],
+	"silence": ["Silence", "Removes its card text and keywords. Stat changes stay."],
+	"frozen": ["Frozen", "It can't attack during its owner's next turn."],
+	"silenced": ["Silenced", "Its card text and keywords are gone. Stat changes stay."],
 }
+
+## Keyword words a rules text can mention (a token it summons, a keyword it gives), and the tip each one opens.
+const _TEXT_KEYWORDS := ["Guard", "Swift", "Ward", "Drain", "Venom", "Rebirth", "Freeze", "Silence"]
+static var _text_kw: RegEx
+
+
+## The keyword tips for a card, as [title, text] pairs in reading order: its status (a live unit), its keywords, its
+## triggers (minions), then the keywords its effects or its text mention. A live unit goes in as the card dictionary
+## with its current "keywords" and the flags "frozen" / "silenced" (a silenced minion has no text or triggers left).
+## `on_board`: the minion is already in play, so its "On Play" is history and gets no tip.
+static func card_tips(card: Dictionary, on_board: bool = false) -> Array:
+	var keys: Array[String] = []
+	var add := func(k: String) -> void:
+		if KEYWORD_HELP.has(k) and not keys.has(k):
+			keys.append(k)
+	if card.get("frozen", false):
+		add.call("frozen")
+	var silenced: bool = card.get("silenced", false)
+	if silenced:
+		add.call("silenced")
+	for k in card.get("keywords", []):
+		add.call(str(k))
+	if not silenced:
+		var minion: bool = card.get("type", "minion") == "minion"
+		for e in card.get("effects", []):
+			# A Ruse bonus is an On Play effect too, but its tip explains the Ruse.
+			var on: String = "ruse" if e.get("ruse", false) else str(e.get("on", ""))
+			# Triggers belong to minions; a spell's Ruse bonus gets its tip too.
+			if (minion or on == "ruse") and on in ["death", "play", "turn_end", "turn_start", "ruse"] \
+					and not (on_board and on == "play"):
+				add.call(on)
+			if on_board and str(e.get("on", "")) == "play":
+				continue # what it did when played is history: no Freeze / Silence / keyword tips for it
+			var does := str(e.get("do", ""))
+			if does == "freeze" or does == "silence":
+				add.call(does)
+			for k in e.get("keywords", []):
+				add.call(str(k))
+			if e.has("card"): # a token it summons or a card it gives, with that card's keywords
+				for k in CardDB.card(str(e.card)).get("keywords", []):
+					add.call(str(k))
+		if not on_board: # the text may name a keyword the effects only imply
+			if _text_kw == null:
+				_text_kw = RegEx.create_from_string("\\b(" + "|".join(_TEXT_KEYWORDS) + ")\\b")
+			for m in _text_kw.search_all(str(card.get("text", ""))):
+				add.call(m.get_string(1).to_lower())
+	var out := []
+	for k in keys:
+		out.append(KEYWORD_HELP[k])
+	return out
+
+
+## One keyword tip on the painted tip plate: the keyword in gold over its explanation.
+static func tip_plate(title: String, text: String, width: float = 320.0) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", tip_box())
+	p.custom_minimum_size = Vector2(width, 0)
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var v := VBoxContainer.new()
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(v)
+	v.add_child(label(title, 24, "title", GOLD))
+	var b := label(text, 22, "body", BONE)
+	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	b.custom_minimum_size = Vector2(width - 20.0, 0)
+	v.add_child(b)
+	return p
+
+
+## A column of keyword tips for a card (see card_tips), or null when it has none.
+static func tip_column(card: Dictionary, on_board: bool = false, width: float = 320.0) -> VBoxContainer:
+	var tips := card_tips(card, on_board)
+	if tips.is_empty():
+		return null
+	var col := VBoxContainer.new()
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_theme_constant_override("separation", 8)
+	for t in tips:
+		col.add_child(tip_plate(t[0], t[1], width))
+	return col
+
+
+## A touch screen phone or tablet (the hints say "Tap" / "Touch" there, "Click" / "mouse" on a desktop).
+static func touch_ui() -> bool:
+	return DisplayServer.is_touchscreen_available() and OS.has_feature("mobile")
+
+
+## "Tap" on a touch screen, "Click" with a mouse.
+static func tap_word() -> String:
+	return "Tap" if touch_ui() else "Click"
