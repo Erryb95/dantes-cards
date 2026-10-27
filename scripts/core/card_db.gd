@@ -9,6 +9,7 @@ static var _arenas: Array = []
 static var _loaded := false
 static var _framed := {}
 static var _loops := {}
+static var _depths := {}
 
 
 static func _ensure() -> void:
@@ -214,6 +215,23 @@ static func art_loop(id: String) -> VideoStream:
 
 static func hero_art(id: String) -> Texture2D:
 	return _tex("res://assets/cards/heroes/%s.jpg" % id)
+
+
+## The card art's depth map (near = white, made by tools/cards/make_depth.py from the full picture), or null when the
+## card has none yet: then the art simply has no parallax. Cached. Pair it with `art_crop_uv` for a framed picture.
+static func art_depth(id: String) -> Texture2D:
+	return _depth("res://assets/cards/depth/%s.png" % id)
+
+
+## The hero portrait's depth map, or null.
+static func hero_depth(id: String) -> Texture2D:
+	return _depth("res://assets/cards/depth/heroes/%s.png" % id)
+
+
+static func _depth(path: String) -> Texture2D:
+	if not _depths.has(path):
+		_depths[path] = _tex(path)
+	return _depths[path]
 
 
 static func _tex(path: String) -> Texture2D:

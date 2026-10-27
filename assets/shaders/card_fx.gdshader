@@ -4,6 +4,9 @@ shader_type canvas_item;
 // `tilt` turns the whole card in fake 3D: every vertex is projected through a pinhole camera in the card's own
 // frame (card_center / card_x / card_y are its canvas transform), UVs are interpolated perspective-correct, and a
 // glare and a light falloff follow the tilt.
+// Depth parallax (art only): with a depth map (near = white) the painting is sampled through a window: what lies behind
+// `depth_focus` slides against the frame as the view turns (`parallax`, radians like `tilt`), what lies in front slides the
+// other way. The art is over-scaled by `depth_margin` so a shifted edge never shows.
 
 uniform int mask_mode = 0; // 0 none, 1 oval, 2 rounded rectangle
 uniform float corner = 0.08;
@@ -24,6 +27,13 @@ uniform vec2 card_x = vec2(1.0, 0.0);
 uniform vec2 card_y = vec2(0.0, 1.0);
 uniform float half_h = 180.0;
 uniform float cam_dist = 2.6; // in half-heights; smaller = stronger perspective
+uniform sampler2D depth_tex : filter_linear, repeat_disable;
+uniform float depth_amount = 0.0; // UV shift per radian of view for a full depth step; 0 = no parallax
+uniform vec2 parallax = vec2(0.0); // view direction in radians (+x: seen from the left, +y: seen from above)
+uniform vec4 depth_rect = vec4(0.0, 0.0, 1.0, 1.0); // where the art's UV 0..1 lies in the depth map
+uniform float depth_focus = 0.6; // the depth that stays put (the window plane)
+uniform float depth_margin = 0.03; // over-scale, >= the largest shift
+uniform float art_aspect = 1.0; // w / h of the art rect, so a turn shifts as many pixels across as down
 // Off for text: MSDF glyphs are decoded before this shader runs, so they must not be resampled.
 uniform bool resample = true;
 
@@ -78,8 +88,23 @@ void fragment() {
 		uv = puv.xy / puv.z;
 		c = texture(TEXTURE, uv) * vcol;
 	}
+	vec2 suv = uv; // where the art is sampled; the masks below keep using the frame's uv
+	if (depth_amount > 0.0) {
+		suv = 0.5 + (uv - 0.5) * (1.0 - 2.0 * depth_margin);
+		if (parallax != vec2(0.0)) {
+			vec2 k = parallax * vec2(1.0, art_aspect) * depth_amount;
+			// Two taps: the second reads the depth where the first one landed, so silhouettes keep their shape.
+			float d = texture(depth_tex, depth_rect.xy + suv * depth_rect.zw).r;
+			vec2 off = (depth_focus - d) * k;
+			d = texture(depth_tex, depth_rect.xy + (suv + off) * depth_rect.zw).r;
+			off = 0.5 * (off + (depth_focus - d) * k);
+			suv += clamp(off, -depth_margin, depth_margin);
+		}
+	}
 	if (crop.zw != vec2(1.0)) {
-		c = texture(TEXTURE, crop.xy + uv * crop.zw) * vcol;
+		c = texture(TEXTURE, crop.xy + suv * crop.zw) * vcol;
+	} else if (depth_amount > 0.0) {
+		c = texture(TEXTURE, suv) * vcol;
 	}
 	if (mask_mode == 1) {
 		float d = length((uv - 0.5) * 2.0);

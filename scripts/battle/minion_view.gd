@@ -36,6 +36,8 @@ var _zzz: Label
 var _icons: Node2D
 var _t := 0.0
 var _shadow: Node2D
+var _depth := false ## the portrait has a depth map (ArtDepth): a small parallax on hover and while it lunges
+var _view := Vector2.ZERO
 
 
 func setup(snap: Dictionary) -> MinionView:
@@ -81,6 +83,7 @@ func _build() -> void:
 	_art_mat = ShaderMaterial.new()
 	_art_mat.shader = CARD_FX
 	_art_mat.set_shader_parameter("mask_mode", 1)
+	_depth = ArtDepth.setup_card(_art_mat, card_id, W / H, 0.34, ArtDepth.MINION)
 	art.material = _art_mat
 	if art.texture == null:
 		var g := GradientTexture2D.new()
@@ -240,6 +243,21 @@ func _process(delta: float) -> void:
 	if _zzz.visible:
 		_zzz.position.y = -H / 2 - 30 + sin(_t * 1.6) * 6.0
 		_zzz.modulate.a = 0.6 + 0.4 * sin(_t * 1.6)
+	if _depth:
+		_update_parallax(delta)
+
+
+## A board portrait leans under the pointer like a card (pressed where the pointer is), and is seen from behind its swing while
+## it lunges at a target; otherwise it is flat.
+func _update_parallax(delta: float) -> void:
+	var view := Vector2.ZERO
+	if busy and position.distance_squared_to(home) > 16.0:
+		view = ((position - home) / 260.0).limit_length(1.0) * 0.3
+	elif is_visible_in_tree() and contains_point(get_global_mouse_position()):
+		var m := (to_local(get_global_mouse_position()) / Vector2(W / 2, H / 2)).limit_length(1.0)
+		view = m * 0.22 + Vector2(sin(_t * 1.3), cos(_t * 1.05)) * 0.05
+	_view = _view.lerp(view, minf(1.0, delta * 8.0))
+	ArtDepth.look(_art_mat, _view)
 
 
 func flash(color: Color = Color(1, 0.2, 0.1), duration: float = 0.35) -> void:

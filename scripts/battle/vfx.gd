@@ -37,6 +37,7 @@ static func cast(view, c: Node2D, id: String, side: int = 0) -> void:
 	await view._wait(0.3)
 	# Release.
 	_paint(fx, s.impact, pos, 380.0 + 120.0 * p.power, 0.6, _mid(s))
+	FxLight.add(fx, pos, s, 520.0 + 200.0 * p.power, 1.3, 0.65 / k)
 	Fx.flash(fx, "k_flare_01", pos, 420.0, 0.4, s.hot, 0.0)
 	_motes(view, pos, s, 26 + int(p.power * 20), 320.0, 12.0, 0.9, 180.0, -60.0 if s.rise else 200.0)
 	match p.cast:
@@ -154,6 +155,7 @@ static func heal(view, v: Node2D, src: String) -> bool:
 	m.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
 	m.emission_rect_extents = Vector2(70, 20)
 	_paint(fx, ["vfx_heal_swirl"], v.position, 300.0, 0.8, Color.WHITE)
+	FxLight.add(fx, v.position, s, 340.0, 0.8, 0.8, 0.15)
 	if p.school == "holy":
 		Fx.flash(fx, "holy_light", v.position, 300.0, 0.7, Color.WHITE, 0.2)
 	else:
@@ -222,6 +224,7 @@ static func death(view, m: Node2D, id: String) -> void:
 		"fire", "pitch", "judgment":
 			_paint(fx, ["vfx_fire_explosion", "fire_burst"] if p.big else ["fire_burst"], pos, 300.0 * big, 0.7,
 				Color.WHITE)
+			FxLight.add(fx, pos, s, 360.0 * big, 1.2, 0.9)
 			Fx.burst(fx, pos, UI.EMBER, int(40 * big), 180.0, 1.4, 10.0, -140.0, 120.0)
 			Fx.smoke(fx, pos, Color(0.2, 0.17, 0.15, 0.75) if p.school != "pitch" else Color(0.08, 0.06, 0.05, 0.85),
 				220.0 * big)
@@ -277,6 +280,7 @@ static func legendary(view, m: Node2D, id: String) -> void:
 		t.tween_property(sig, "modulate:a", 0.0, 0.7 / k).set_delay(0.9 / k)
 		t.chain().tween_callback(sig.queue_free)
 	Fx.shockwave(fx, m.position, s.color, 700.0, 0.8)
+	FxLight.add(fx, m.position, s, 640.0, 1.4, 1.2 / k, 0.2 / k)
 	view._screen_flash(s.color, 0.3)
 	_motes(view, m.position, s, 60, 520.0, 14.0, 1.3, 180.0, -120.0 if s.rise else 300.0)
 	match p.school:
@@ -410,6 +414,7 @@ static func impact(view, target, s: Dictionary, kind: String, p: Dictionary) -> 
 	var pos: Vector2 = target.position
 	var friendly := kind == "buff"
 	Fx.flash(fx, "k_flare_01", pos, 320.0, 0.35, s.hot, 0.0)
+	FxLight.add(fx, pos, s, 380.0 + 180.0 * p.power, 0.9 if friendly else 1.5, 0.5)
 	_paint(fx, s.impact, pos, 200.0 + 100.0 * p.power, 0.45, _mid(s))
 	_motes(view, pos, s, 20 + int(p.power * 20), 300.0, 11.0, 0.6, 180.0, -100.0 if s.rise else 260.0)
 	Sfx.play(s.hit_sfx, -6.0, randf_range(0.9, 1.1))
@@ -524,6 +529,7 @@ static func _missile(view, from: Vector2, to: Vector2, s: Dictionary, dur: float
 		else:
 			head.scale = Vector2(base * 1.5, base * 1.5)
 	var glow := _sprite(orb, ["k_light_01"], Vector2.ZERO, size * 1.6, Color(s.color.r, s.color.g, s.color.b, 0.6))
+	var lamp = FxLight.add(orb, Vector2.ZERO, s, 140.0 + size * 1.4, 0.9, 0.0, 0.1) # rides the missile
 	var trail := CPUParticles2D.new()
 	trail.texture = Fx._tex(s.trail)
 	trail.amount = 50
@@ -552,6 +558,7 @@ static func _missile(view, from: Vector2, to: Vector2, s: Dictionary, dur: float
 		head.visible = false
 	if glow != null:
 		glow.visible = false
+	FxLight.release(lamp, 0.12)
 	trail.emitting = false
 	view.get_tree().create_timer(0.6).timeout.connect(orb.queue_free)
 
@@ -583,6 +590,7 @@ static func _beam(view, to: Vector2, s: Dictionary, weight: float) -> void:
 	var halo := _sprite(fx, ["k_light_01"], to, 260.0 * weight, s.color, 67)
 	if halo != null:
 		halo.modulate.a = 0.0
+	FxLight.add(fx, to, s, 360.0 * weight + 120.0, 1.7, 0.6 / k, 0.14 / k)
 	Sfx.play("magic", -8.0, 1.2)
 	var t := col.create_tween()
 	t.tween_property(col, "scale:x", 300.0 * weight / w, 0.14 / k).set_ease(Tween.EASE_OUT)
@@ -603,6 +611,8 @@ static func _beam(view, to: Vector2, s: Dictionary, weight: float) -> void:
 static func _bolt(view, from: Vector2, to: Vector2, s: Dictionary) -> void:
 	var fx: Node2D = view.fx_layer
 	Sfx.play("thunder", -10.0, 1.5)
+	FxLight.flicker(fx, from.lerp(to, 0.7), {"name": "holy", "color": s.color, "hot": Color(0.85, 0.9, 1.0)},
+		from.distance_to(to) * 0.5 + 260.0, 1.8)
 	for i in 3:
 		var b := _sprite(fx, ["vfx_lightning", "k_spark_05", "k_spark_06"], (from + to) / 2, 64.0, s.hot, 69)
 		if b == null:
@@ -1003,6 +1013,7 @@ static func _mid(s: Dictionary) -> Color:
 static func _add() -> CanvasItemMaterial:
 	var m := CanvasItemMaterial.new()
 	m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	m.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED # it is light itself: FxLight must not brighten it again
 	return m
 
 
