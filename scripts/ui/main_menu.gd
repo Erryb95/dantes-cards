@@ -12,7 +12,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(MenuBackdrop.new())
 	Sfx.play_music("intro")
-	Sfx.play_ambience("limbo_drone.ogg", -18.0)
+	Sfx.play_ambience("") # the music alone (Enrico picks background sounds himself)
 
 	var col := VBoxContainer.new()
 	col.set_anchors_and_offsets_preset(Control.PRESET_LEFT_WIDE)
