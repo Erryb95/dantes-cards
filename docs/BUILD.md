@@ -5,6 +5,7 @@
 ```sh
 timeout 300 $G --headless --path . -s res://tests/run_tests.gd        # rules + AI soak
 timeout 240 $G --headless --path . res://tests/ui_smoke.tscn          # input smoke test
+timeout 300 $G --headless --path . res://tests/menu_smoke.tscn        # menu dialogs, pack opening, deck problems
 timeout 300 $G --headless --path . res://tests/intro_test.tscn        # opening cinematic data + player + skip
 timeout 600 $G --headless --path . --export-release "Windows Desktop" build/windows/DantesInfernoCards.exe
 timeout 600 $G --headless --path . --export-debug   "Android"         build/android/DantesInfernoCards.apk
