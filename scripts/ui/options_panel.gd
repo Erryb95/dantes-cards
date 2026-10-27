@@ -82,8 +82,11 @@ func _slider(text: String, value: float, on_change: Callable) -> HBoxContainer:
 	if UiSkin.has("slider_grabber"):
 		s.add_theme_icon_override("grabber", UI.scaled_tex("slider_grabber", 46))
 		s.add_theme_icon_override("grabber_highlight", UI.scaled_tex("slider_grabber", 52))
-	s.add_theme_stylebox_override("grabber_area", UI.box(UI.CRIMSON, UI.GOLD_DARK, 2, 8))
-	s.add_theme_stylebox_override("grabber_area_highlight", UI.box(UI.CRIMSON.lightened(0.2), UI.GOLD, 2, 8))
+	# The filled part of the track: the same bronze rod, glowing like heated metal.
+	s.add_theme_stylebox_override("grabber_area", UI.frame_box("slider_track", 14, 6,
+		UI.box(UI.CRIMSON, UI.GOLD_DARK, 2, 8), Color(1.5, 0.75, 0.45)))
+	s.add_theme_stylebox_override("grabber_area_highlight", UI.frame_box("slider_track", 14, 6,
+		UI.box(UI.CRIMSON.lightened(0.2), UI.GOLD, 2, 8), Color(1.7, 0.9, 0.55)))
 	s.value_changed.connect(on_change)
 	h.add_child(s)
 	return h
@@ -103,11 +106,17 @@ func _cycle(text: String, names: Array, value: int, on_change: Callable) -> HBox
 	return h
 
 
+## An On / Off switch on a painted plate: lit when on, dimmed when off.
 func _toggle(text: String, value: bool, on_change: Callable) -> HBoxContainer:
 	var h := _row(text)
-	var b := CheckButton.new()
+	var b := UI.button("On" if value else "Off", 200, 60)
+	b.toggle_mode = true
 	b.button_pressed = value
-	b.scale = Vector2(1.6, 1.6)
-	b.toggled.connect(on_change)
+	b.add_theme_font_size_override("font_size", 30)
+	b.modulate = Color(1.1, 1.02, 0.88) if value else Color(0.68, 0.62, 0.58)
+	b.toggled.connect(func(on: bool):
+		b.text = "On" if on else "Off"
+		b.modulate = Color(1.1, 1.02, 0.88) if on else Color(0.68, 0.62, 0.58)
+		on_change.call(on))
 	h.add_child(b)
 	return h
