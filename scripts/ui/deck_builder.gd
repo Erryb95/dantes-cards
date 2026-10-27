@@ -150,7 +150,7 @@ func _ready() -> void:
 	nr.add_child(_name)
 	# Rename: a bronze disc with an engraved pen nib (the Rename plate took almost half the row, and a long name
 	# shrank to 16 px and still ran under the frame).
-	var ren := _disc("Rename the deck", _draw_nib)
+	var ren := _disc("Rename the deck", _draw_nib, "icon_rename")
 	ren.pressed.connect(func():
 		_name.grab_focus()
 		_name.select_all())
@@ -210,7 +210,7 @@ func _ready() -> void:
 	r1.add_child(clear)
 	if _index >= 0:
 		# Delete on a bronze disc with an engraved cross (as a third plate the row left each label about 56 px).
-		var del := _disc("Delete this deck", _draw_cross)
+		var del := _disc("Delete this deck", _draw_cross, "icon_delete")
 		del.pressed.connect(_delete)
 		r1.add_child(del)
 	var r2 := HBoxContainer.new()
@@ -274,7 +274,7 @@ func go_back() -> void:
 
 ## A round button: the painted bronze disc (like Choose your path's scroll discs) with a glyph engraved on it by
 ## `glyph` (a static drawing function taking the canvas item and the disc's centre), `tip` as its tooltip.
-func _disc(tip: String, glyph: Callable) -> Button:
+func _disc(tip: String, glyph: Callable, icon: String = "") -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(60, 60)
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -285,11 +285,16 @@ func _disc(tip: String, glyph: Callable) -> Button:
 		b.add_theme_stylebox_override(st[0], UI.frame_box("power_disc", 0, 0,
 			UI.box(Color(0.1, 0.04, 0.03, 0.88), UI.GOLD_DARK, 3, 30), st[1]))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	var nib := Control.new()
-	nib.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	nib.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	nib.draw.connect(func(): glyph.call(nib, Vector2(30, 30)))
-	b.add_child(nib)
+	if UiSkin.has(icon): # the painted icon (a nib, a broken seal), else the glyph engraved in code
+		var r := UiSkin.rect(icon, Vector2(42, 42), Vector2(9, 9))
+		r.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		b.add_child(r)
+	else:
+		var nib := Control.new()
+		nib.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		nib.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		nib.draw.connect(func(): glyph.call(nib, Vector2(30, 30)))
+		b.add_child(nib)
 	b.mouse_entered.connect(func():
 		Sfx.play("ui_hover", -10.0)
 		b.create_tween().tween_property(b, "scale", Vector2.ONE * 1.08, 0.08))
