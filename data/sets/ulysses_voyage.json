@@ -1,0 +1,1141 @@
+{
+ "set_name": "The Last Voyage",
+ "cards": [
+  {
+   "id": "ul_ithacan_sailor",
+   "name": "Ithacan Sailor",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 2,
+   "health": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "self",
+     "attack": 1,
+     "health": 1,
+     "ruse": true
+    }
+   ],
+   "text": "Ruse: Gain +1/+1.",
+   "flavor": "He would follow his captain past the edge of the map.",
+   "circle": "malebolge",
+   "art": "A weathered young sailor in a short tunic hauls on a rope at the side of a small Greek ship."
+  },
+  {
+   "id": "ul_puccio",
+   "name": "Puccio Sciancato",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 1,
+   "attack": 1,
+   "health": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "copy",
+     "from": "enemy_hand"
+    }
+   ],
+   "text": "On Play: Copy a random card from the enemy's hand into yours.",
+   "flavor": "Of the five thieves, he alone kept his own shape.",
+   "circle": "malebolge",
+   "art": "A limping thief in a ragged cloak glances back over his shoulder as serpents coil on the rocks around him."
+  },
+  {
+   "id": "ul_tongue_of_flame",
+   "name": "Tongue of Flame",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_any",
+     "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_any",
+     "amount": 2,
+     "ruse": true
+    }
+   ],
+   "text": "Deal 1 damage. Ruse: Deal 2 more.",
+   "flavor": "The tip of the flame shook, like a tongue trying to speak.",
+   "circle": "malebolge",
+   "art": "A single tall flame shaped like a tongue flickers above a dark rocky ditch, sparks flying from its tip."
+  },
+  {
+   "id": "ul_counterfeit_florins",
+   "name": "Counterfeit Florins",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "mana",
+     "amount": 1,
+     "ruse": true
+    }
+   ],
+   "text": "Draw a card. Ruse: Gain 1 Mana this turn only.",
+   "flavor": "Three carats of dross in every coin, and Florence never noticed.",
+   "circle": "malebolge",
+   "art": "A pile of gold coins spills from a crucible on a forge, a hammer and a coin die beside them."
+  },
+  {
+   "id": "ul_forged_will",
+   "name": "Forged Will",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "copy",
+     "target": "choose_minion"
+    }
+   ],
+   "text": "Copy a minion into your hand.",
+   "flavor": "Schicchi lay in a dead man's bed and dictated a will in his voice.",
+   "circle": "malebolge",
+   "art": "A hand holding a quill signs a long parchment by candlelight while a dead man lies in the bed behind."
+  },
+  {
+   "id": "ul_turn_the_prow",
+   "name": "Turn the Prow",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 0,
+   "effects": [
+    {
+     "on": "play",
+     "do": "bounce",
+     "target": "choose_friendly_minion"
+    }
+   ],
+   "text": "Return a friendly minion to your hand.",
+   "flavor": "We turned our stern to the morning and made wings of our oars.",
+   "circle": "malebolge",
+   "art": "A small Greek ship swings its curved prow around on a dark sea, its sail filling with wind."
+  },
+  {
+   "id": "ul_old_companions",
+   "name": "Old Companions",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1,
+     "ruse": true
+    }
+   ],
+   "text": "Ruse: Draw a card.",
+   "flavor": "We were old and slow by the time we reached the narrow strait.",
+   "circle": "malebolge",
+   "art": "Three grey-bearded sailors sit together at the oars of a ship, tired but still pulling."
+  },
+  {
+   "id": "ul_wandering_flames",
+   "name": "Wandering Flames",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "all_enemy_minions",
+     "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "all_enemy_minions",
+     "amount": 1,
+     "ruse": true
+    }
+   ],
+   "text": "Deal 1 damage to all enemy minions. Ruse: Deal 1 more.",
+   "flavor": "Each flame steals a sinner away, and no one sees him inside.",
+   "circle": "malebolge",
+   "art": "Dozens of small flames drift like fireflies along the bottom of a deep stone valley at night."
+  },
+  {
+   "id": "ul_griffolino",
+   "name": "Griffolino of Arezzo",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 3,
+   "health": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "self",
+     "keywords": [
+      "swift"
+     ],
+     "ruse": true
+    }
+   ],
+   "text": "Ruse: Gain Swift.",
+   "flavor": "He joked that he could fly. The fool who believed him had him burned.",
+   "circle": "malebolge",
+   "art": "A scrawny alchemist in a stained robe stands on a rooftop with his arms spread as if to fly."
+  },
+  {
+   "id": "ul_beacon_keeper",
+   "name": "Beacon Keeper",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 2,
+   "health": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_any",
+     "amount": 1
+    }
+   ],
+   "text": "On Play: Deal 1 damage.",
+   "flavor": "A fire on the shore can guide a ship home, or onto the rocks.",
+   "circle": "malebolge",
+   "art": "A hooded man raises a burning torch beside a tall signal fire on a cliff above the sea."
+  },
+  {
+   "id": "ul_achaean_in_hiding",
+   "name": "Achaean in Hiding",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 2,
+   "attack": 1,
+   "health": 2,
+   "effects": [
+    {
+     "on": "death",
+     "do": "summon",
+     "card": "ul_achaean_raider"
+    }
+   ],
+   "text": "Last Breath: Summon a 2/2 Achaean Raider.",
+   "flavor": "Inside the horse, no one dared to breathe.",
+   "circle": "malebolge",
+   "art": "A Greek soldier crouches in the dark belly of a wooden structure, gripping his sword and holding his breath."
+  },
+  {
+   "id": "ul_barbed_counsel",
+   "name": "Barbed Counsel",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_minion",
+     "amount": 2
+    },
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1,
+     "ruse": true
+    }
+   ],
+   "text": "Deal 2 damage to a minion. Ruse: Draw a card.",
+   "flavor": "Good advice, given for a bad end.",
+   "circle": "malebolge",
+   "art": "A cloaked adviser whispers into the ear of a crowned king, a thin dagger hidden behind his back."
+  },
+  {
+   "id": "ul_spoils_of_troy",
+   "name": "Spoils of Troy",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "copy",
+     "count": 2,
+     "from": "enemy_deck"
+    }
+   ],
+   "text": "Copy 2 random cards from the enemy's deck into your hand.",
+   "flavor": "Troy burned, and the Greeks sailed home heavy with its treasure.",
+   "circle": "malebolge",
+   "art": "Greek soldiers carry chests, golden cups and bronze shields out of a burning city gate."
+  },
+  {
+   "id": "ul_buoso",
+   "name": "Buoso Donati",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 2,
+   "health": 1,
+   "effects": [
+    {
+     "on": "death",
+     "do": "summon",
+     "card": "mc_serpent"
+    }
+   ],
+   "text": "Last Breath: Summon a 2/2 Serpent with Venom.",
+   "flavor": "The man became a serpent, and the serpent became a man.",
+   "circle": "malebolge",
+   "art": "A man's body twists as his legs turn into the tail of a great serpent, smoke rising around him."
+  },
+  {
+   "id": "ul_oarsmen",
+   "name": "Oarsmen of Ithaca",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 3,
+   "health": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "self",
+     "attack": 1,
+     "health": 1,
+     "ruse": true
+    }
+   ],
+   "text": "Ruse: Gain +1/+1.",
+   "flavor": "Our oars became wings for that mad flight.",
+   "circle": "malebolge",
+   "art": "A row of muscular oarsmen bend to their long oars in the hull of a galley on rough water."
+  },
+  {
+   "id": "ul_gilded_hypocrite",
+   "name": "Gilded Hypocrite",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 3,
+   "attack": 2,
+   "health": 5,
+   "keywords": [
+    "guard"
+   ],
+   "text": "Guard",
+   "flavor": "His cloak shines like gold outside. It is lead all the way through.",
+   "circle": "malebolge",
+   "art": "A hooded monk trudges forward under a heavy cloak that shines like gold but drags like lead."
+  },
+  {
+   "id": "ul_burning_counsellor",
+   "name": "Burning Counsellor",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 4,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "death",
+     "do": "damage",
+     "target": "random_enemy",
+     "amount": 2
+    }
+   ],
+   "text": "Last Breath: Deal 2 damage to a random enemy.",
+   "flavor": "Every one of these flames wraps a sinner who gave false counsel.",
+   "circle": "malebolge",
+   "art": "An old adviser in a long robe stands wrapped in a column of fire, one hand raised as he speaks."
+  },
+  {
+   "id": "ul_speech_of_fire",
+   "name": "Speech of Fire",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_minion",
+     "amount": 3
+    },
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "enemy_hero",
+     "amount": 2,
+     "ruse": true
+    }
+   ],
+   "text": "Deal 3 damage to a minion. Ruse: Deal 2 damage to the enemy hero.",
+   "flavor": "The flame spoke, and its words came out as fire.",
+   "circle": "malebolge",
+   "art": "A flame bends and shapes itself into a speaking mouth, words of sparks pouring out over a ravine."
+  },
+  {
+   "id": "ul_eurypylus",
+   "name": "Eurypylus, the Augur",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 5,
+   "attack": 4,
+   "health": 5,
+   "effects": [
+    {
+     "on": "play",
+     "do": "copy",
+     "from": "enemy_deck"
+    }
+   ],
+   "text": "On Play: Copy a random card from the enemy's deck into your hand.",
+   "flavor": "He and Calchas chose the hour when the fleet would sail.",
+   "circle": "malebolge",
+   "art": "A Greek augur in a white robe reads the flight of birds above a beach full of ships."
+  },
+  {
+   "id": "ul_night_raid",
+   "name": "Night Raid",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "summon",
+     "card": "ul_achaean_raider",
+     "count": 2
+    }
+   ],
+   "text": "Summon two 2/2 Achaean Raiders.",
+   "flavor": "Two men went into the Trojan camp by night, and came back with its horses.",
+   "circle": "malebolge",
+   "art": "Two Greek warriors creep through an enemy camp at night, spears low, past sleeping guards."
+  },
+  {
+   "id": "ul_little_ship",
+   "name": "The Little Ship",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 4,
+   "attack": 2,
+   "health": 3,
+   "effects": [
+    {
+     "on": "death",
+     "do": "summon",
+     "card": "ul_ithacan_sailor",
+     "count": 2
+    }
+   ],
+   "text": "Last Breath: Summon two 2/1 Ithacan Sailors.",
+   "flavor": "One ship, and the few companions who never left me.",
+   "circle": "malebolge",
+   "art": "A small single-masted Greek ship sails alone across a vast open sea under a low sky."
+  },
+  {
+   "id": "ul_past_the_pillars",
+   "name": "Past the Pillars",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "common",
+   "cost": 4,
+   "effects": [
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 2
+    },
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1,
+     "ruse": true
+    }
+   ],
+   "text": "Draw 2 cards. Ruse: Draw 1 more.",
+   "flavor": "Hercules set his markers so no one would sail further. We sailed further.",
+   "circle": "malebolge",
+   "art": "A small ship sails between two enormous stone pillars rising from the sea at the edge of the world."
+  },
+  {
+   "id": "ul_achaean_captain",
+   "name": "Achaean Captain",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 6,
+   "attack": 5,
+   "health": 6,
+   "effects": [
+    {
+     "on": "play",
+     "do": "summon",
+     "card": "ul_achaean_raider",
+     "count": 2,
+     "ruse": true
+    }
+   ],
+   "text": "Ruse: Summon two 2/2 Achaean Raiders.",
+   "flavor": "Ten years at the walls, and still he leads the charge.",
+   "circle": "malebolge",
+   "art": "A Greek captain in a crested bronze helmet raises his sword and shouts orders to his men."
+  },
+  {
+   "id": "ul_epeius",
+   "name": "Epeius, Horse-Builder",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "common",
+   "cost": 5,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "summon",
+     "card": "ul_achaean_raider"
+    }
+   ],
+   "text": "On Play: Summon a 2/2 Achaean Raider.",
+   "flavor": "He built a gift so fine that Troy broke its own wall to let it in.",
+   "circle": "malebolge",
+   "art": "A bearded carpenter with an adze works on the huge wooden leg of an unfinished horse."
+  },
+  {
+   "id": "ul_sweet_siren",
+   "name": "The Sweet Siren",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 2,
+   "attack": 1,
+   "health": 4,
+   "effects": [
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "random_enemy_minion",
+     "ruse": true
+    }
+   ],
+   "text": "Ruse: Freeze a random enemy minion.",
+   "flavor": "\"I am the sweet siren who turned Ulysses from his course.\"",
+   "circle": "malebolge",
+   "art": "A pale siren sits on a rock above the waves and sings, her long hair blowing toward a passing ship."
+  },
+  {
+   "id": "ul_fra_gomita",
+   "name": "Fra Gomita",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 2,
+   "attack": 2,
+   "health": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "mana",
+     "amount": 1
+    }
+   ],
+   "text": "On Play: Gain 1 Mana this turn only.",
+   "flavor": "He sold every office in Gallura, and never tired of talking about it.",
+   "circle": "malebolge",
+   "art": "A friar with a sly smile weighs a fat purse of coins in his hand behind a judge's bench."
+  },
+  {
+   "id": "ul_absolved_in_advance",
+   "name": "Absolved in Advance",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "choose_friendly_minion",
+     "keywords": [
+      "rebirth"
+     ]
+    },
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
+    }
+   ],
+   "text": "Give a friendly minion Rebirth. Draw a card.",
+   "flavor": "\"I absolve you now,\" said the Pope, \"for the sin you are about to commit.\"",
+   "circle": "malebolge",
+   "art": "A pope in a tall tiara raises two fingers in blessing over a kneeling knight in armour."
+  },
+  {
+   "id": "ul_curio",
+   "name": "Curio, the Tongueless",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "silence",
+     "target": "random_enemy_minion",
+     "ruse": true
+    }
+   ],
+   "text": "Ruse: Silence a random enemy minion.",
+   "flavor": "He told Caesar to cross the river. Now he has no tongue to speak with.",
+   "circle": "malebolge",
+   "art": "A Roman tribune in a torn toga stands mute in a dark ravine, one hand pressed over his mouth."
+  },
+  {
+   "id": "ul_potiphars_wife",
+   "name": "Potiphar's Wife",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 2,
+   "attack": 1,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "choose_enemy_minion"
+    },
+    {
+     "on": "play",
+     "do": "silence",
+     "target": "choose_enemy_minion",
+     "ruse": true
+    }
+   ],
+   "text": "On Play: Freeze an enemy minion. Ruse: Silence it.",
+   "flavor": "She lied about Joseph, and now she burns with fever.",
+   "circle": "malebolge",
+   "art": "A richly dressed Egyptian noblewoman holds up a torn cloak and points accusingly into the shadows."
+  },
+  {
+   "id": "ul_circes_draught",
+   "name": "Circe's Draught",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 4,
+   "effects": [
+    {
+     "on": "play",
+     "do": "transform",
+     "target": "choose_minion",
+     "card": "ul_swine"
+    }
+   ],
+   "text": "Transform a minion into a 1/1 Swine.",
+   "flavor": "One sip, and proud men were rooting in the dirt.",
+   "circle": "malebolge",
+   "art": "A golden cup of glowing potion is held out by a woman's hand, a pig sniffing at the floor below."
+  },
+  {
+   "id": "ul_calchas",
+   "name": "Calchas, the Augur",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 2,
+   "health": 4,
+   "effects": [
+    {
+     "on": "turn_start",
+     "do": "copy",
+     "from": "enemy_deck"
+    }
+   ],
+   "text": "Start of Turn: Copy a random card from the enemy's deck into your hand.",
+   "flavor": "The augur read the birds and sent the Greeks to sea.",
+   "circle": "malebolge",
+   "art": "An old seer with a staff stands on a shore at dawn, pointing at the sky above a fleet of ships."
+  },
+  {
+   "id": "ul_sinon",
+   "name": "Sinon, the False Greek",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 3,
+   "attack": 2,
+   "health": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "bounce",
+     "target": "random_enemy_minion",
+     "ruse": true
+    }
+   ],
+   "text": "Ruse: Return a random enemy minion to its owner's hand.",
+   "flavor": "His lie did what ten years of war could not.",
+   "circle": "malebolge",
+   "art": "A Greek prisoner in chains pleads before Trojan soldiers, a giant wooden horse looming behind him."
+  },
+  {
+   "id": "ul_false_beacon",
+   "name": "False Beacon",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 1,
+   "effects": [
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "choose_enemy_minion"
+    },
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "all_enemy_minions",
+     "ruse": true
+    }
+   ],
+   "text": "Freeze an enemy minion. Ruse: Freeze all enemy minions.",
+   "flavor": "Wreckers light their fires where the reefs are sharpest.",
+   "circle": "malebolge",
+   "art": "A bonfire burns on a rocky headland at night, luring a ship toward jagged reefs."
+  },
+  {
+   "id": "ul_envoy_to_troy",
+   "name": "Envoy to Troy",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "rare",
+   "cost": 4,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "copy",
+     "count": 2,
+     "from": "enemy_hand"
+    }
+   ],
+   "text": "On Play: Copy 2 random cards from the enemy's hand into yours.",
+   "flavor": "He came to talk of peace, and counted every spear on the walls.",
+   "circle": "malebolge",
+   "art": "A Greek envoy in a travelling cloak bows before the high walls and gate of Troy."
+  },
+  {
+   "id": "ul_greek_ambush",
+   "name": "The Greek Ambush",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 2,
+   "effects": [
+    {
+     "on": "play",
+     "do": "summon",
+     "card": "ul_achaean_raider"
+    },
+    {
+     "on": "play",
+     "do": "summon",
+     "card": "ul_achaean_raider",
+     "ruse": true
+    }
+   ],
+   "text": "Summon a 2/2 Achaean Raider. Ruse: Summon another.",
+   "flavor": "They waited in the reeds until the patrol passed.",
+   "circle": "malebolge",
+   "art": "Greek soldiers leap from tall reeds by a riverbank, spears raised, onto a startled patrol."
+  },
+  {
+   "id": "ul_arms_of_achilles",
+   "name": "Arms of Achilles",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "rare",
+   "cost": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "choose_friendly_minion",
+     "attack": 2,
+     "health": 2
+    },
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "choose_friendly_minion",
+     "keywords": [
+      "ward"
+     ],
+     "ruse": true
+    }
+   ],
+   "text": "Give a friendly minion +2/+2. Ruse: Give it Ward.",
+   "flavor": "Ajax wanted the armour. Ulysses spoke better, and Ajax went mad.",
+   "circle": "malebolge",
+   "art": "A magnificent bronze shield, helmet and spear lie on a cloth before a crowd of Greek chiefs."
+  },
+  {
+   "id": "ul_palladium",
+   "name": "Theft of the Palladium",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "copy",
+     "count": 2,
+     "steal": true,
+     "from": "enemy_deck"
+    }
+   ],
+   "text": "Steal the top 2 cards of the enemy's deck.",
+   "flavor": "While Troy kept its statue, Troy could not fall. So we stole it.",
+   "circle": "malebolge",
+   "art": "Two Greek warriors carry a small wooden statue of a goddess out of a dark temple at night."
+  },
+  {
+   "id": "ul_two_horned_flame",
+   "name": "The Two-Horned Flame",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 4,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_enemy",
+     "amount": 3
+    },
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "enemy_hero",
+     "amount": 3,
+     "ruse": true
+    }
+   ],
+   "text": "Deal 3 damage to an enemy. Ruse: Deal 3 damage to the enemy hero.",
+   "flavor": "Two sinners in one fire, because they ran to ruin together.",
+   "circle": "malebolge",
+   "art": "One great flame split at the top into two horns burns in a deep ravine, two faces dimly inside it."
+  },
+  {
+   "id": "ul_simon_magus",
+   "name": "Simon Magus",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 4,
+   "attack": 3,
+   "health": 4,
+   "effects": [
+    {
+     "on": "play",
+     "do": "copy",
+     "count": 2,
+     "from": "enemy_deck"
+    }
+   ],
+   "text": "On Play: Copy 2 random cards from the enemy's deck into your hand.",
+   "flavor": "He offered silver for a gift that cannot be bought.",
+   "circle": "malebolge",
+   "art": "A sorcerer in a dark robe holds out a bag of silver toward two robed apostles who turn away."
+  },
+  {
+   "id": "ul_capocchio",
+   "name": "Capocchio, the Ape",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 5,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "copy",
+     "target": "choose_enemy_minion",
+     "to": "board"
+    }
+   ],
+   "text": "On Play: Summon a copy of an enemy minion.",
+   "flavor": "\"Remember what a good ape of nature I was.\"",
+   "circle": "malebolge",
+   "art": "A scabby alchemist crouches over a bench of flasks and mimics the pose of a man before him like an ape."
+  },
+  {
+   "id": "ul_valley_of_flames",
+   "name": "Valley of Flames",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 5,
+   "effects": [
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "all_enemy_minions",
+     "amount": 3
+    },
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "enemy_hero",
+     "amount": 2,
+     "ruse": true
+    }
+   ],
+   "text": "Deal 3 damage to all enemy minions. Ruse: Deal 2 damage to the enemy hero.",
+   "flavor": "As many flames as the fireflies a farmer sees on a summer evening.",
+   "circle": "malebolge",
+   "art": "A deep stone valley seen from a bridge above, filled from end to end with countless moving flames."
+  },
+  {
+   "id": "ul_little_speech",
+   "name": "The Little Speech",
+   "set": "ulysses",
+   "type": "spell",
+   "rarity": "epic",
+   "cost": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "all_friendly_minions",
+     "attack": 1,
+     "health": 1
+    },
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "all_friendly_minions",
+     "attack": 1,
+     "ruse": true
+    }
+   ],
+   "text": "Give your minions +1/+1. Ruse: Give them +1 Attack.",
+   "flavor": "\"You were not made to live like brutes, but to follow virtue and knowledge.\"",
+   "circle": "malebolge",
+   "art": "An old captain stands at the mast and speaks to his gathered crew, all of them turned toward the sunset."
+  },
+  {
+   "id": "ul_deidamia",
+   "name": "Deidamia, the Deceived",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "epic",
+   "cost": 4,
+   "attack": 2,
+   "health": 3,
+   "effects": [
+    {
+     "on": "death",
+     "do": "give_card",
+     "card": "uh_achilles"
+    }
+   ],
+   "text": "Last Breath: Add Achilles, Swift-Footed to your hand.",
+   "flavor": "Even dead, she grieves for Achilles, whom Ulysses lured away to war.",
+   "circle": "malebolge",
+   "art": "A young princess weeps alone in a palace room, holding a dress left behind on an empty chair."
+  },
+  {
+   "id": "ul_diomedes",
+   "name": "Diomedes, the Twin Flame",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 4,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "summon",
+     "card": "ul_diomedes",
+     "ruse": true
+    }
+   ],
+   "text": "Ruse: Summon a copy of this minion.",
+   "flavor": "They went to their ruin together, and together they burn.",
+   "circle": "malebolge",
+   "art": "A Greek warrior in a plumed helmet stands inside a tall flame, a second figure sharing the fire beside him."
+  },
+  {
+   "id": "ul_trojan_horse",
+   "name": "The Trojan Horse",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 5,
+   "attack": 0,
+   "health": 6,
+   "keywords": [
+    "guard"
+   ],
+   "effects": [
+    {
+     "on": "death",
+     "do": "summon",
+     "card": "ul_achaean_raider",
+     "count": 3
+    }
+   ],
+   "text": "Guard. Last Breath: Summon three 2/2 Achaean Raiders.",
+   "flavor": "It looked like an offering. It was a door.",
+   "circle": "malebolge",
+   "art": "A gigantic wooden horse on wheels stands before the walls of Troy, a hatch half open in its belly."
+  },
+  {
+   "id": "ul_black_cherub",
+   "name": "The Black Cherub",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 6,
+   "attack": 5,
+   "health": 5,
+   "effects": [
+    {
+     "on": "play",
+     "do": "copy",
+     "steal": true,
+     "from": "enemy_hand"
+    }
+   ],
+   "text": "On Play: Steal a random card from the enemy's hand.",
+   "flavor": "\"Perhaps you did not think that I was a logician!\"",
+   "circle": "malebolge",
+   "art": "A black-winged demon swoops down and seizes a dying friar's soul from the hands of a saint."
+  },
+  {
+   "id": "ul_circe",
+   "name": "Circe, the Enchantress",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 8,
+   "attack": 4,
+   "health": 5,
+   "effects": [
+    {
+     "on": "play",
+     "do": "transform",
+     "target": "all_enemy_minions",
+     "card": "ul_swine"
+    }
+   ],
+   "text": "On Play: Transform all enemy minions into 1/1 Swine.",
+   "flavor": "She kept me more than a year near Gaeta.",
+   "circle": "malebolge",
+   "art": "A sorceress on a stone throne raises a wand over men who are turning into pigs at her feet."
+  },
+  {
+   "id": "ul_distant_mountain",
+   "name": "The Distant Mountain",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 8,
+   "attack": 7,
+   "health": 7,
+   "effects": [
+    {
+     "on": "play",
+     "do": "bounce",
+     "target": "all_enemy_minions"
+    },
+    {
+     "on": "play",
+     "do": "bounce",
+     "target": "other_friendly_minions"
+    }
+   ],
+   "text": "On Play: Return all other minions to their owners' hands.",
+   "flavor": "A mountain, dark with distance, higher than any I had seen. Then the whirlwind came.",
+   "circle": "malebolge",
+   "art": "A dark mountain rises from the open sea while a whirlwind spins a small ship toward the waves."
+  },
+  {
+   "id": "ul_achaean_raider",
+   "name": "Achaean Raider",
+   "set": "token",
+   "type": "minion",
+   "rarity": "token",
+   "cost": 2,
+   "attack": 2,
+   "health": 2,
+   "text": "",
+   "circle": "malebolge",
+   "art": "A Greek soldier in a bronze helmet charges forward with a short sword and a round shield."
+  },
+  {
+   "id": "ul_swine",
+   "name": "Swine of Circe",
+   "set": "token",
+   "type": "minion",
+   "rarity": "token",
+   "cost": 1,
+   "attack": 1,
+   "health": 1,
+   "text": "",
+   "circle": "malebolge",
+   "art": "A bewildered pig with strangely human eyes stands in the straw of a sty."
+  }
+ ]
+}

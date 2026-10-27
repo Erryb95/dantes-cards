@@ -5,7 +5,8 @@
   python tools/cards/art_jobs.py import           # resize art_src/cards/*.png into assets/
   python tools/cards/art_jobs.py dore             # import the Dore batch (art_src/dore_cards) per card "image"
   python tools/cards/art_jobs.py v2               # download output/dantes_cards_v2/<id>_s777_00001_.png for the set cards
-                                                  # still missing art (list: art_src/new_card_art.json) and import them
+                                                  # still missing art (lists: art_src/new_card_art.json and
+                                                  # ulysses_card_art.json, see V2_LISTS) and import them
 
 House style (final, Enrico 2026-10-25): hand-tinted Dore engraving (dantes_00133_). The ComfyUI session runs the GPU;
 this game session only imports (`dore`).
@@ -184,12 +185,20 @@ V2_REVISED = {
 }
 
 
+# The card lists painted into output/dantes_cards_v2 (one {id, name, rarity, art} entry per card).
+V2_LISTS = ["new_card_art.json", "ulysses_card_art.json"]
+
+
 def import_v2() -> None:
     """Fetches the second card batch from the ComfyUI PC (read-only /view requests) and imports what exists."""
     import urllib.parse
     import urllib.request
     base = open(r"C:\Servers\comfy_url.txt", encoding="utf-8").readline().strip().rstrip("/")
-    todo = json.load(open(os.path.join(ROOT, "art_src", "new_card_art.json"), encoding="utf-8"))
+    todo = []
+    for lst in V2_LISTS:
+        path = os.path.join(ROOT, "art_src", lst)
+        if os.path.exists(path):
+            todo += json.load(open(path, encoding="utf-8"))
     src_dir = os.path.join(ROOT, "art_src", "dore_cards_v2")
     os.makedirs(src_dir, exist_ok=True)
     got = missing = 0

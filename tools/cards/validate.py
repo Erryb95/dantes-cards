@@ -10,11 +10,12 @@ import re
 import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-SETS = {"pilgrim", "ferry", "neutral", "token"}
+SETS = {"neutral", "token"}  # plus every hero's class (data/cards.json "heroes"), added in load_all()
 RARITY = {"common", "rare", "epic", "legendary", "token"}
 KEYWORDS = {"guard", "swift", "ward", "drain", "venom", "rebirth"}
 TRIGGERS = {"play", "death", "turn_end", "turn_start"}
-OPS = {"damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card", "mana"}
+OPS = {"damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card", "mana",
+       "copy", "transform"}
 CHOOSE = {"choose_any", "choose_enemy", "choose_minion", "choose_enemy_minion", "choose_friendly_minion"}
 AUTO = {"own_hero", "enemy_hero", "self", "all_minions", "all_enemy_minions", "all_friendly_minions",
         "other_friendly_minions", "all_enemies", "random_enemy", "random_enemy_minion", "random_friendly_minion"}
@@ -35,6 +36,9 @@ def load_all():
             sys.exit(1)
         for c in d.get("cards", []):
             out.append((f, c))
+        for h in d.get("heroes", []):
+            if h.get("class"):
+                SETS.add(h["class"])
     return out
 
 
@@ -78,7 +82,7 @@ def check(cards, only=None):
         for k in c.get("keywords", []):
             if k not in KEYWORDS:
                 e(f"unknown keyword {k}")
-        chooses = 0
+        chooses = set()
         effects = c.get("effects", [])
         if c.get("type") == "spell" and not effects:
             e("spell without effects")
@@ -93,12 +97,19 @@ def check(cards, only=None):
             if op not in OPS:
                 e(f"bad op {op}")
                 continue
-            if op in NO_TARGET:
+            if ef.get("ruse") and on != "play":
+                e("ruse only on play effects")
+            if op == "copy" and ef.get("from"):
+                if ef["from"] not in ("enemy_hand", "enemy_deck"):
+                    e("copy from must be enemy_hand or enemy_deck")
+                if tgt:
+                    e("copy from a zone takes no target")
+            elif op in NO_TARGET:
                 if tgt:
                     e(f"{op} takes no target")
             else:
                 if tgt in CHOOSE:
-                    chooses += 1
+                    chooses.add(tgt)
                     if on != "play":
                         e("choose_* only on play effects")
                 elif tgt not in AUTO:
@@ -115,6 +126,8 @@ def check(cards, only=None):
                 for k in ef.get("keywords", []):
                     if k not in KEYWORDS:
                         e(f"buff gives unknown keyword {k}")
+            if op == "transform" and by_id.get(ef.get("card"), {}).get("type") != "minion":
+                e("transform must name a minion card")
             if op in ("summon", "give_card"):
                 ref = by_id.get(ef.get("card"))
                 if ref is None:
@@ -123,10 +136,12 @@ def check(cards, only=None):
                     e("summon must refer to a minion")
             if on in PREFIX and on != "play" and PREFIX[on] not in c.get("text", ""):
                 e(f"text must contain '{PREFIX[on]}'")
-            if on == "play" and c.get("type") == "minion" and "On Play:" not in c.get("text", ""):
+            if ef.get("ruse") and "Ruse:" not in c.get("text", ""):
+                e("ruse effect needs 'Ruse:' in text")
+            if on == "play" and not ef.get("ruse") and c.get("type") == "minion" and "On Play:" not in c.get("text", ""):
                 e("minion play effect needs 'On Play:' in text")
-        if chooses > 1:
-            e("at most one choose_* target")
+        if len(chooses) > 1:
+            e("at most one choose_* target (several effects may share it)")
         if c.get("set") != "token":
             if not c.get("text") and (effects or c.get("keywords")):
                 e("missing text")

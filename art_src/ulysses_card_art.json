@@ -1,0 +1,302 @@
+[
+ {
+  "id": "ul_ithacan_sailor",
+  "name": "Ithacan Sailor",
+  "rarity": "common",
+  "art": "A weathered young sailor in a short tunic hauls on a rope at the side of a small Greek ship."
+ },
+ {
+  "id": "ul_puccio",
+  "name": "Puccio Sciancato",
+  "rarity": "common",
+  "art": "A limping thief in a ragged cloak glances back over his shoulder as serpents coil on the rocks around him."
+ },
+ {
+  "id": "ul_tongue_of_flame",
+  "name": "Tongue of Flame",
+  "rarity": "common",
+  "art": "A single tall flame shaped like a tongue flickers above a dark rocky ditch, sparks flying from its tip."
+ },
+ {
+  "id": "ul_counterfeit_florins",
+  "name": "Counterfeit Florins",
+  "rarity": "common",
+  "art": "A pile of gold coins spills from a crucible on a forge, a hammer and a coin die beside them."
+ },
+ {
+  "id": "ul_forged_will",
+  "name": "Forged Will",
+  "rarity": "common",
+  "art": "A hand holding a quill signs a long parchment by candlelight while a dead man lies in the bed behind."
+ },
+ {
+  "id": "ul_turn_the_prow",
+  "name": "Turn the Prow",
+  "rarity": "common",
+  "art": "A small Greek ship swings its curved prow around on a dark sea, its sail filling with wind."
+ },
+ {
+  "id": "ul_old_companions",
+  "name": "Old Companions",
+  "rarity": "common",
+  "art": "Three grey-bearded sailors sit together at the oars of a ship, tired but still pulling."
+ },
+ {
+  "id": "ul_wandering_flames",
+  "name": "Wandering Flames",
+  "rarity": "common",
+  "art": "Dozens of small flames drift like fireflies along the bottom of a deep stone valley at night."
+ },
+ {
+  "id": "ul_griffolino",
+  "name": "Griffolino of Arezzo",
+  "rarity": "common",
+  "art": "A scrawny alchemist in a stained robe stands on a rooftop with his arms spread as if to fly."
+ },
+ {
+  "id": "ul_beacon_keeper",
+  "name": "Beacon Keeper",
+  "rarity": "common",
+  "art": "A hooded man raises a burning torch beside a tall signal fire on a cliff above the sea."
+ },
+ {
+  "id": "ul_achaean_in_hiding",
+  "name": "Achaean in Hiding",
+  "rarity": "common",
+  "art": "A Greek soldier crouches in the dark belly of a wooden structure, gripping his sword and holding his breath."
+ },
+ {
+  "id": "ul_barbed_counsel",
+  "name": "Barbed Counsel",
+  "rarity": "common",
+  "art": "A cloaked adviser whispers into the ear of a crowned king, a thin dagger hidden behind his back."
+ },
+ {
+  "id": "ul_spoils_of_troy",
+  "name": "Spoils of Troy",
+  "rarity": "common",
+  "art": "Greek soldiers carry chests, golden cups and bronze shields out of a burning city gate."
+ },
+ {
+  "id": "ul_buoso",
+  "name": "Buoso Donati",
+  "rarity": "common",
+  "art": "A man's body twists as his legs turn into the tail of a great serpent, smoke rising around him."
+ },
+ {
+  "id": "ul_oarsmen",
+  "name": "Oarsmen of Ithaca",
+  "rarity": "common",
+  "art": "A row of muscular oarsmen bend to their long oars in the hull of a galley on rough water."
+ },
+ {
+  "id": "ul_gilded_hypocrite",
+  "name": "Gilded Hypocrite",
+  "rarity": "common",
+  "art": "A hooded monk trudges forward under a heavy cloak that shines like gold but drags like lead."
+ },
+ {
+  "id": "ul_burning_counsellor",
+  "name": "Burning Counsellor",
+  "rarity": "common",
+  "art": "An old adviser in a long robe stands wrapped in a column of fire, one hand raised as he speaks."
+ },
+ {
+  "id": "ul_speech_of_fire",
+  "name": "Speech of Fire",
+  "rarity": "common",
+  "art": "A flame bends and shapes itself into a speaking mouth, words of sparks pouring out over a ravine."
+ },
+ {
+  "id": "ul_eurypylus",
+  "name": "Eurypylus, the Augur",
+  "rarity": "common",
+  "art": "A Greek augur in a white robe reads the flight of birds above a beach full of ships."
+ },
+ {
+  "id": "ul_night_raid",
+  "name": "Night Raid",
+  "rarity": "common",
+  "art": "Two Greek warriors creep through an enemy camp at night, spears low, past sleeping guards."
+ },
+ {
+  "id": "ul_little_ship",
+  "name": "The Little Ship",
+  "rarity": "common",
+  "art": "A small single-masted Greek ship sails alone across a vast open sea under a low sky."
+ },
+ {
+  "id": "ul_past_the_pillars",
+  "name": "Past the Pillars",
+  "rarity": "common",
+  "art": "A small ship sails between two enormous stone pillars rising from the sea at the edge of the world."
+ },
+ {
+  "id": "ul_achaean_captain",
+  "name": "Achaean Captain",
+  "rarity": "common",
+  "art": "A Greek captain in a crested bronze helmet raises his sword and shouts orders to his men."
+ },
+ {
+  "id": "ul_epeius",
+  "name": "Epeius, Horse-Builder",
+  "rarity": "common",
+  "art": "A bearded carpenter with an adze works on the huge wooden leg of an unfinished horse."
+ },
+ {
+  "id": "ul_sweet_siren",
+  "name": "The Sweet Siren",
+  "rarity": "rare",
+  "art": "A pale siren sits on a rock above the waves and sings, her long hair blowing toward a passing ship."
+ },
+ {
+  "id": "ul_fra_gomita",
+  "name": "Fra Gomita",
+  "rarity": "rare",
+  "art": "A friar with a sly smile weighs a fat purse of coins in his hand behind a judge's bench."
+ },
+ {
+  "id": "ul_absolved_in_advance",
+  "name": "Absolved in Advance",
+  "rarity": "rare",
+  "art": "A pope in a tall tiara raises two fingers in blessing over a kneeling knight in armour."
+ },
+ {
+  "id": "ul_curio",
+  "name": "Curio, the Tongueless",
+  "rarity": "rare",
+  "art": "A Roman tribune in a torn toga stands mute in a dark ravine, one hand pressed over his mouth."
+ },
+ {
+  "id": "ul_potiphars_wife",
+  "name": "Potiphar's Wife",
+  "rarity": "rare",
+  "art": "A richly dressed Egyptian noblewoman holds up a torn cloak and points accusingly into the shadows."
+ },
+ {
+  "id": "ul_circes_draught",
+  "name": "Circe's Draught",
+  "rarity": "rare",
+  "art": "A golden cup of glowing potion is held out by a woman's hand, a pig sniffing at the floor below."
+ },
+ {
+  "id": "ul_calchas",
+  "name": "Calchas, the Augur",
+  "rarity": "rare",
+  "art": "An old seer with a staff stands on a shore at dawn, pointing at the sky above a fleet of ships."
+ },
+ {
+  "id": "ul_sinon",
+  "name": "Sinon, the False Greek",
+  "rarity": "rare",
+  "art": "A Greek prisoner in chains pleads before Trojan soldiers, a giant wooden horse looming behind him."
+ },
+ {
+  "id": "ul_false_beacon",
+  "name": "False Beacon",
+  "rarity": "rare",
+  "art": "A bonfire burns on a rocky headland at night, luring a ship toward jagged reefs."
+ },
+ {
+  "id": "ul_envoy_to_troy",
+  "name": "Envoy to Troy",
+  "rarity": "rare",
+  "art": "A Greek envoy in a travelling cloak bows before the high walls and gate of Troy."
+ },
+ {
+  "id": "ul_greek_ambush",
+  "name": "The Greek Ambush",
+  "rarity": "rare",
+  "art": "Greek soldiers leap from tall reeds by a riverbank, spears raised, onto a startled patrol."
+ },
+ {
+  "id": "ul_arms_of_achilles",
+  "name": "Arms of Achilles",
+  "rarity": "rare",
+  "art": "A magnificent bronze shield, helmet and spear lie on a cloth before a crowd of Greek chiefs."
+ },
+ {
+  "id": "ul_palladium",
+  "name": "Theft of the Palladium",
+  "rarity": "epic",
+  "art": "Two Greek warriors carry a small wooden statue of a goddess out of a dark temple at night."
+ },
+ {
+  "id": "ul_two_horned_flame",
+  "name": "The Two-Horned Flame",
+  "rarity": "epic",
+  "art": "One great flame split at the top into two horns burns in a deep ravine, two faces dimly inside it."
+ },
+ {
+  "id": "ul_simon_magus",
+  "name": "Simon Magus",
+  "rarity": "epic",
+  "art": "A sorcerer in a dark robe holds out a bag of silver toward two robed apostles who turn away."
+ },
+ {
+  "id": "ul_capocchio",
+  "name": "Capocchio, the Ape",
+  "rarity": "epic",
+  "art": "A scabby alchemist crouches over a bench of flasks and mimics the pose of a man before him like an ape."
+ },
+ {
+  "id": "ul_valley_of_flames",
+  "name": "Valley of Flames",
+  "rarity": "epic",
+  "art": "A deep stone valley seen from a bridge above, filled from end to end with countless moving flames."
+ },
+ {
+  "id": "ul_little_speech",
+  "name": "The Little Speech",
+  "rarity": "epic",
+  "art": "An old captain stands at the mast and speaks to his gathered crew, all of them turned toward the sunset."
+ },
+ {
+  "id": "ul_deidamia",
+  "name": "Deidamia, the Deceived",
+  "rarity": "epic",
+  "art": "A young princess weeps alone in a palace room, holding a dress left behind on an empty chair."
+ },
+ {
+  "id": "ul_diomedes",
+  "name": "Diomedes, the Twin Flame",
+  "rarity": "legendary",
+  "art": "A Greek warrior in a plumed helmet stands inside a tall flame, a second figure sharing the fire beside him."
+ },
+ {
+  "id": "ul_trojan_horse",
+  "name": "The Trojan Horse",
+  "rarity": "legendary",
+  "art": "A gigantic wooden horse on wheels stands before the walls of Troy, a hatch half open in its belly."
+ },
+ {
+  "id": "ul_black_cherub",
+  "name": "The Black Cherub",
+  "rarity": "legendary",
+  "art": "A black-winged demon swoops down and seizes a dying friar's soul from the hands of a saint."
+ },
+ {
+  "id": "ul_circe",
+  "name": "Circe, the Enchantress",
+  "rarity": "legendary",
+  "art": "A sorceress on a stone throne raises a wand over men who are turning into pigs at her feet."
+ },
+ {
+  "id": "ul_distant_mountain",
+  "name": "The Distant Mountain",
+  "rarity": "legendary",
+  "art": "A dark mountain rises from the open sea while a whirlwind spins a small ship toward the waves."
+ },
+ {
+  "id": "ul_achaean_raider",
+  "name": "Achaean Raider",
+  "rarity": "token",
+  "art": "A Greek soldier in a bronze helmet charges forward with a short sword and a round shield."
+ },
+ {
+  "id": "ul_swine",
+  "name": "Swine of Circe",
+  "rarity": "token",
+  "art": "A bewildered pig with strangely human eyes stands in the straw of a sty."
+ }
+]

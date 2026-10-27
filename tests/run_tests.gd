@@ -9,9 +9,13 @@ var checks := 0
 func _initialize() -> void:
 	_test_data()
 	_test_rules()
+	_test_ulysses()
 	_soak(120)
+	_soak_classes(24)
 	_soak_random(400)
+	_soak_random_classes(120)
 	_test_replay(20)
+	_test_replay(8, "ulysses")
 	print("TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures > 0 else 0)
 
@@ -47,10 +51,17 @@ func _test_data() -> void:
 		ok(CardDB.class_title(cls) != "" and CardDB.hero_class(CardDB.class_hero(cls)) == cls, "class %s has a hero" % cls)
 		ok(not CardDB.class_decks(cls).is_empty() and CardDB.class_decks(cls)[0].get("starter", false),
 			"the first %s deck is the starter" % cls)
+		var hero := CardDB.hero(CardDB.class_hero(cls))
+		ok(int(hero.get("health", 0)) == 30 and int(hero.get("power", {}).get("cost", 0)) == 2,
+			"hero of %s: 30 health, 2-mana power" % cls)
+		ok(ResourceLoader.exists("res://assets/ui/%s.png" % str(hero.get("power_icon", ""))), "hero of %s has a power icon" % cls)
+		ok(str(hero.get("defeat_line", "")) != "" and str(hero.get("power", {}).get("text", "")) != "",
+			"hero of %s has its lines" % cls)
+		ok(CardDB.class_decks(cls).size() == 3, "%s has three preconstructed decks" % cls)
 	for c in CardDB.all_cards():
 		for e in c.get("effects", []):
-			ok(e.do in ["damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card", "mana"], "%s effect %s" % [c.id, e.do])
-			if e.do in ["summon", "give_card"]:
+			ok(e.do in ["damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card", "mana", "copy", "transform"], "%s effect %s" % [c.id, e.do])
+			if e.do in ["summon", "give_card", "transform"]:
 				ok(not CardDB.card(e.card).is_empty(), "%s summons a known card" % c.id)
 		for k in c.get("keywords", []):
 			ok(k in ["guard", "swift", "ward", "drain", "venom", "rebirth"], "%s keyword %s" % [c.id, k])
@@ -341,16 +352,23 @@ func _soak_random(games: int) -> void:
 
 ## Determinism: the same decks, seed and list of moves must give the same battle, event for event. This is what
 ## replays, bug reports and a future authoritative multiplayer server rely on.
-func _test_replay(games: int) -> void:
+## `cls`: play that class against each other class in turn (default: Pilgrim against Ferryman).
+func _test_replay(games: int, cls: String = "") -> void:
 	var rng := RandomNumberGenerator.new()
-	rng.seed = 31
+	rng.seed = 31 if cls == "" else 32
+	var c0 := "pilgrim" if cls == "" else cls
+	var c1 := "ferry"
 	for g in games:
-		var d0 := random_deck("pilgrim", rng)
-		var d1 := random_deck("ferry", rng)
+		if cls != "":
+			c1 = CardDB.other_classes(cls)[g % CardDB.other_classes(cls).size()]
+		var d0 := random_deck(c0, rng)
+		var d1 := random_deck(c1, rng)
+		var h0 := CardDB.class_hero(c0)
+		var h1 := CardDB.class_hero(c1)
 		var st := BattleState.new()
 		var log_a := []
 		st.event.connect(func(ev): log_a.append(ev))
-		st.start(d0, "dante", d1, "charon", 777 + g, false, -1)
+		st.start(d0, h0, d1, h1, 777 + g, false, -1)
 		var ais := [BattleAI.new(0), BattleAI.new(1)]
 		var moves := []
 		var steps := 0
@@ -364,11 +382,234 @@ func _test_replay(games: int) -> void:
 		var rp := BattleState.new()
 		var log_b := []
 		rp.event.connect(func(ev): log_b.append(ev))
-		rp.start(d0, "dante", d1, "charon", 777 + g, false, -1)
+		rp.start(d0, h0, d1, h1, 777 + g, false, -1)
 		for m in moves:
 			if m.do == "end":
 				rp.end_turn()
 			else:
 				BattleAI.apply(rp, rp.current, m)
-		ok(rp.winner == st.winner and log_a.size() == log_b.size(), "replay %d ends the same" % g)
-		ok(str(log_a) == str(log_b), "replay %d matches event for event" % g)
+		ok(rp.winner == st.winner and log_a.size() == log_b.size(), "replay %s %d ends the same" % [cls, g])
+		ok(str(log_a) == str(log_b), "replay %s %d matches event for event" % [cls, g])
+
+
+## Every pair of classes with their starter decks, Hard AI, each deal from both seats: rules invariants hold and
+## every game ends.
+func _soak_classes(games: int) -> void:
+	var cls := CardDB.classes()
+	var line := "CLASS SOAK:"
+	for i in cls.size():
+		for j in range(i + 1, cls.size()):
+			var a: Dictionary = CardDB.class_decks(cls[i])[0]
+			var b: Dictionary = CardDB.class_decks(cls[j])[0]
+			var wins := [0, 0, 0]
+			for g in games:
+				var swap := g % 2 == 1
+				var d0: Dictionary = a if not swap else b
+				var d1: Dictionary = b if not swap else a
+				var st := BattleState.new()
+				st.start(CardDB.deck_list(d0.id), d0.hero, CardDB.deck_list(d1.id), d1.hero, 2000 + g)
+				_play_out(st, [BattleAI.new(0), BattleAI.new(1)], "class soak")
+				var w := st.winner
+				if w < 2 and swap:
+					w = 1 - w
+				wins[w] += 1
+			line += "  %s %d / %s %d / draws %d;" % [cls[i], wins[0], cls[j], wins[1], wins[2]]
+	print(line)
+
+
+## Random decks for every class other than Pilgrim and Ferryman (those two have their own soak), Easy AI, against
+## each other class: every card of the newer classes gets played.
+func _soak_random_classes(games: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 123
+	var played := {}
+	var line := "RANDOM CLASS SOAK:"
+	for cls in CardDB.classes():
+		if cls in ["pilgrim", "ferry"]:
+			continue
+		var wins := [0, 0, 0]
+		var others := CardDB.other_classes(cls)
+		for g in games:
+			var other: String = others[g % others.size()]
+			var swap := (g / others.size()) % 2 == 1
+			var c0: String = cls if not swap else other
+			var c1: String = other if not swap else cls
+			var st := BattleState.new()
+			st.start(random_deck(c0, rng), CardDB.class_hero(c0), random_deck(c1, rng), CardDB.class_hero(c1), 6000 + g)
+			_play_out(st, [BattleAI.new(0, BattleAI.Level.EASY), BattleAI.new(1, BattleAI.Level.EASY)],
+				"random class soak", played)
+			var w := st.winner
+			if w < 2 and swap:
+				w = 1 - w
+			wins[w] += 1
+		var total := 0
+		var seen := 0
+		for c in CardDB.all_cards():
+			if c.get("set", "") == cls:
+				total += 1
+				seen += int(played.has(c.id))
+		ok(seen == total, "every %s card got played in the random soak (%d of %d)" % [cls, seen, total])
+		line += "  %s %d / others %d / draws %d, %d of %d class cards played;" % [cls, wins[0], wins[1], wins[2], seen,
+			total]
+	print(line)
+
+
+## Plays a battle to the end with the given AIs, checking the invariants after every step.
+func _play_out(st: BattleState, ais: Array, what: String, played: Dictionary = {}) -> void:
+	var steps := 0
+	while st.winner == -1 and steps < 6000:
+		steps += 1
+		var act: Dictionary = ais[st.current].next_action(st)
+		if act.do == "play":
+			for c in st.sides[st.current].hand:
+				if c.uid == act.uid:
+					played[c.id] = true
+		if act.do == "end" or not BattleAI.apply(st, st.current, act):
+			st.end_turn()
+		for s in st.sides:
+			ok(s.board.size() <= BattleState.MAX_BOARD and s.hand.size() <= BattleState.MAX_HAND
+				and s.mana >= 0 and s.mana <= BattleState.MAX_MANA, what + " invariants")
+			for u in s.board:
+				ok(u.health > 0 and u.health <= u.max_health and st.units.get(u.uid) == u, what + " minion sane (%s)" % u.id)
+	ok(st.winner != -1, what + " game finished")
+
+
+## Ulysses' mechanics: Ruse, copy / steal, transform, Swift from a buff, the hero power.
+func _test_ulysses() -> void:
+	# Ruse: nothing as the first card of the turn, the bonus once another card was played; reset next turn.
+	var st := _blank()
+	var s1 := _give(st, 0, "ul_ithacan_sailor")
+	ok(not st.ruse_active(0), "no Ruse before any card")
+	st.play_card(0, s1)
+	var sailor: BattleState.Unit = st.sides[0].board[0]
+	ok(sailor.attack == 2 and sailor.health == 1, "Ruse does not fire on the first card")
+	ok(st.ruse_active(0), "Ruse is active after a card")
+	var s2 := _give(st, 0, "ul_ithacan_sailor")
+	var evs := []
+	st.event.connect(func(ev): evs.append(ev))
+	st.play_card(0, s2)
+	ok(st.sides[0].board[1].attack == 3 and st.sides[0].board[1].health == 2, "Ruse fires on the second card")
+	ok(evs.any(func(ev): return ev.t == "ruse"), "a ruse event is emitted")
+	st.end_turn()
+	st.end_turn()
+	ok(not st.ruse_active(0) and st.sides[0].played == 0, "Ruse resets each turn")
+
+	# The hero power (Searing Word) hits minions only and does not count as a card for Ruse.
+	st = _blank()
+	st.sides[0].hero_id = "ulysses"
+	ok(not st.can_use_power(0), "Searing Word needs a minion to hit")
+	var pm := _put(st, 1, "geryon")
+	ok(not st.use_power(0, st.sides[1].hero.uid), "Searing Word cannot hit a hero")
+	ok(st.use_power(0, pm.uid) and pm.health == 4, "Searing Word deals 1 to a minion")
+	ok(not st.ruse_active(0), "the hero power does not enable Ruse")
+	# Copying from the enemy deck leaves it as it was.
+	st = _blank()
+	var foe_deck := st.sides[1].deck.size()
+	st.play_card(0, _give(st, 0, "ul_spoils_of_troy"))
+	ok(st.sides[0].hand.size() == 2 and st.sides[0].hand.all(func(c): return c.id == "lost_pilgrim"), "Spoils of Troy copies 2")
+	ok(st.sides[1].deck.size() == foe_deck, "a copy leaves the enemy deck as it was")
+
+	# Ruse sharing the card's chosen target: Tongue of Flame deals 1, then 2 more.
+	st = _blank()
+	st.play_card(0, _give(st, 0, "ul_tongue_of_flame"), st.sides[1].hero.uid)
+	ok(st.sides[1].hero.health == 29, "Tongue of Flame alone deals 1")
+	st.play_card(0, _give(st, 0, "ul_tongue_of_flame"), st.sides[1].hero.uid)
+	ok(st.sides[1].hero.health == 26, "Tongue of Flame with Ruse deals 3 (%d)" % st.sides[1].hero.health)
+
+	# Copy from the enemy hand: the enemy keeps the card.
+	st = _blank()
+	_give(st, 1, "geryon")
+	st.play_card(0, _give(st, 0, "ul_puccio"))
+	ok(st.sides[0].hand.size() == 1 and st.sides[0].hand[0].id == "geryon" and st.sides[1].hand.size() == 1,
+		"Puccio copies the enemy's card")
+	# Steal from the hand: the card changes sides.
+	st = _blank()
+	var stolen_uid := _give(st, 1, "geryon")
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	st.play_card(0, _give(st, 0, "ul_black_cherub"))
+	ok(st.sides[1].hand.is_empty() and st.sides[0].hand.size() == 1 and st.sides[0].hand[0].id == "geryon",
+		"the Black Cherub steals the card")
+	ok(evs.any(func(ev): return ev.t == "steal" and ev.uid == stolen_uid and ev.from == 1), "a steal event names the card")
+	# Steal from the deck.
+	st = _blank()
+	var deck_before := st.sides[1].deck.size()
+	st.play_card(0, _give(st, 0, "ul_palladium"))
+	ok(st.sides[1].deck.size() == deck_before - 2 and st.sides[0].hand.size() == 2, "the Palladium steals 2 deck cards")
+	# Nothing is stolen into a full hand.
+	st = _blank()
+	var cherub := _give(st, 0, "ul_black_cherub")
+	for i in 10:
+		_give(st, 0, "lost_pilgrim")
+	_give(st, 1, "geryon")
+	st.play_card(0, cherub)
+	ok(st.sides[0].hand.size() == 10 and st.sides[1].hand.size() == 1, "no steal into a full hand")
+	# Copy a minion into the hand; copy an enemy minion onto the board.
+	st = _blank()
+	var gy := _put(st, 1, "geryon")
+	ok(st.play_card(0, _give(st, 0, "ul_forged_will"), gy.uid), "Forged Will plays on a minion")
+	ok(st.sides[0].hand.size() == 1 and st.sides[0].hand[0].id == "geryon", "Forged Will copies the minion")
+	gy.health = 1
+	st.play_card(0, _give(st, 0, "ul_capocchio"), gy.uid)
+	ok(st.sides[0].board.size() == 2 and st.sides[0].board[1].id == "geryon" and st.sides[0].board[1].health == 5,
+		"Capocchio summons a fresh copy next to him")
+
+	# Transform: same place, no Last Breath, Ward does not stop it, printed stats of the new card.
+	st = _blank()
+	_put(st, 1, "lost_pilgrim")
+	var w := _put(st, 1, "stung_neutral")
+	w.keywords["ward"] = true
+	w.attack = 9
+	_put(st, 1, "lost_pilgrim")
+	ok(st.play_card(0, _give(st, 0, "ul_circes_draught"), w.uid), "Circe's Draught plays")
+	ok(st.sides[1].board.size() == 3 and st.sides[1].board[1].id == "ul_swine" and st.sides[1].board[1].attack == 1
+		and not st.units.has(w.uid), "transformed in place into a 1/1")
+	ok(not st.sides[1].board.any(func(u): return u.id == "lost_soul"), "no Last Breath on a transform")
+	st.sides[0].mana = 10
+	st.play_card(0, _give(st, 0, "ul_circe"))
+	ok(st.sides[1].board.size() == 3 and st.sides[1].board.all(func(u): return u.id == "ul_swine"), "Circe turns all enemies")
+	ok(st.sides[0].board.size() == 1 and st.sides[0].board[0].id == "ul_circe", "Circe spares her own side")
+
+	# Gaining Swift wakes a minion played this turn (Griffolino with Ruse).
+	st = _blank()
+	st.play_card(0, _give(st, 0, "ul_ithacan_sailor"))
+	st.play_card(0, _give(st, 0, "ul_griffolino"))
+	var gr: BattleState.Unit = st.sides[0].board[1]
+	ok(gr.has("swift") and st.can_attack(gr), "Swift from Ruse lets it attack at once")
+
+	# Bounce and replay: Turn the Prow returns a friendly minion; the Distant Mountain returns every other minion.
+	st = _blank()
+	var pz := _put(st, 0, "ul_puccio")
+	st.play_card(0, _give(st, 0, "ul_turn_the_prow"), pz.uid)
+	ok(st.sides[0].board.is_empty() and st.sides[0].hand.any(func(c): return c.id == "ul_puccio"), "Turn the Prow")
+	_put(st, 0, "geryon")
+	_put(st, 1, "cerberus")
+	_put(st, 1, "lost_pilgrim")
+	st.play_card(0, _give(st, 0, "ul_distant_mountain"))
+	ok(st.sides[0].board.size() == 1 and st.sides[1].board.is_empty() and st.sides[1].hand.size() == 2,
+		"the Distant Mountain returns every other minion")
+
+	# Diomedes with Ruse summons a copy of himself; the copy does not repeat the Ruse (no loop).
+	st = _blank()
+	st.play_card(0, _give(st, 0, "ul_ithacan_sailor"))
+	st.play_card(0, _give(st, 0, "ul_diomedes"))
+	ok(st.sides[0].board.size() == 3 and st.sides[0].board[2].id == "ul_diomedes", "Diomedes doubles with Ruse")
+
+	# Every Ulysses card resolves cleanly with and without Ruse.
+	for c in CardDB.all_cards():
+		if c.get("set", "") != "ulysses":
+			continue
+		for pre in 2:
+			st = _blank()
+			_put(st, 1, "geryon")
+			_put(st, 1, "lost_pilgrim")
+			_put(st, 0, "ul_puccio")
+			_give(st, 1, "cerberus")
+			if pre == 1:
+				st.play_card(0, _give(st, 0, "obol_coin"))
+			var uid := _give(st, 0, c.id)
+			var tt := BattleState.target_type(c)
+			var targets := st.valid_targets(0, tt) if tt != "" else ([] as Array[int])
+			ok(st.play_card(0, uid, targets[0] if not targets.is_empty() else -1), "%s plays (ruse %d)" % [c.id, pre])
+			for s in st.sides:
+				ok(s.hand.size() <= BattleState.MAX_HAND and s.board.size() <= BattleState.MAX_BOARD, "%s keeps limits" % c.id)

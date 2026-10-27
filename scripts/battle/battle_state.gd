@@ -48,6 +48,7 @@ class SideState:
 	var max_mana := 0
 	var power_used := false
 	var fatigue := 0
+	var played := 0 ## cards played this turn (Ruse effects need one played before them)
 
 
 var sides: Array[SideState] = []
@@ -135,6 +136,7 @@ func clone(seed: int) -> BattleState:
 		n.max_mana = s.max_mana
 		n.power_used = s.power_used
 		n.fatigue = s.fatigue
+		n.played = s.played
 		n.hero = _copy_unit(s.hero)
 		b.units[n.hero.uid] = n.hero
 		for u in s.board:
@@ -213,6 +215,7 @@ func _begin_turn() -> void:
 	s.max_mana = mini(MAX_MANA, s.max_mana + 1)
 	s.mana = s.max_mana
 	s.power_used = false
+	s.played = 0
 	for u in s.board:
 		u.sleeping = false
 		u.attacks_made = 0
@@ -291,6 +294,12 @@ func hand_card(side: int, hand_uid: int) -> Dictionary:
 		if c.uid == hand_uid:
 			return c
 	return {}
+
+
+## Ruse: a card's "ruse" effects resolve only when its owner already played another card this turn (the hero power
+## does not count). The view can use this to light up Ruse cards in hand.
+func ruse_active(side: int) -> bool:
+	return side == current and sides[side].played > 0
 
 
 ## The "choose_*" target of the card's play effects ("" when it needs none).
@@ -394,13 +403,23 @@ func play_card(side: int, hand_uid: int, target_uid: int = -1, index: int = -1) 
 			return false
 	s.mana -= int(card.cost)
 	s.hand.erase(c)
+	var ruse := s.played > 0
+	s.played += 1
 	_emit({"t": "play", "side": side, "uid": hand_uid, "id": c.id, "type": card.type, "target": target_uid})
 	_emit({"t": "mana", "side": side, "mana": s.mana, "max": s.max_mana})
 	var source: Unit = null
 	if card.type == "minion":
 		source = _summon(side, c.id, index, hand_uid)
+	var ruse_shown := false
 	for e in card.get("effects", []):
 		if e.get("on", "play") == "play":
+			if e.get("ruse", false):
+				if not ruse:
+					continue
+				if not ruse_shown:
+					ruse_shown = true
+					# View hint: the Ruse goes off (a flash on the minion, or on the spell being cast).
+					_emit({"t": "ruse", "side": side, "id": c.id, "uid": source.uid if source != null else -1})
 			_resolve(e, side, source, target_uid, c.id)
 			_cleanup()
 	_cleanup()
@@ -498,6 +517,9 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 				t.max_health += int(e.get("health", 0))
 				for k in e.get("keywords", []):
 					t.keywords[k] = true
+				# Gaining Swift wakes a minion that came into play this turn.
+				if t.has("swift") and not t.is_hero and t.attacks_made == 0:
+					t.sleeping = false
 				_emit({"t": "buff", "uid": t.uid, "attack": t.attack, "health": t.health,
 					"max_health": t.max_health, "keywords": t.keywords.keys(), "src": from_id})
 		"summon":
@@ -550,6 +572,91 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 			for t in targets:
 				_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "destroy"})
 				t.dead = true
+		"copy":
+			_copy(e, side, source, targets, ttype, from_id)
+		"transform":
+			for t in targets:
+				if t.is_hero or t.dead:
+					continue
+				if ttype.begins_with("choose_") or ttype.begins_with("random_"):
+					_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "silence"})
+				_transform(t, str(e.card), from_id)
+
+
+## Copies cards into your hand (or onto your board with "to": "board"). Source: "from" = "enemy_hand" / "enemy_deck"
+## (random cards; with "steal" they leave the enemy instead), or else the effect's target minions. Hand limit applies.
+func _copy(e: Dictionary, side: int, source: Unit, targets: Array[Unit], ttype: String, from_id: String) -> void:
+	var me := sides[side]
+	var foe := sides[1 - side]
+	var from: String = e.get("from", "")
+	var steal: bool = e.get("steal", false)
+	var ids: Array[String] = []
+	if from == "enemy_hand" or from == "enemy_deck":
+		for i in int(e.get("count", 1)):
+			if from == "enemy_hand":
+				if foe.hand.is_empty():
+					break
+				var k := rng.randi_range(0, foe.hand.size() - 1)
+				var hc: Dictionary = foe.hand[k]
+				if steal:
+					if me.hand.size() >= MAX_HAND:
+						break # nothing is taken when there is no room for it
+					foe.hand.remove_at(k)
+					_emit({"t": "steal", "side": side, "from": 1 - side, "uid": hc.uid, "id": hc.id, "zone": "hand"})
+				ids.append(str(hc.id))
+			else:
+				if foe.deck.is_empty():
+					break
+				if steal:
+					if me.hand.size() >= MAX_HAND:
+						break
+					var top: String = foe.deck.pop_back()
+					ids.append(top)
+					_emit({"t": "steal", "side": side, "from": 1 - side, "uid": -1, "id": top, "zone": "deck",
+						"deck": foe.deck.size()})
+				else:
+					ids.append(foe.deck[rng.randi_range(0, foe.deck.size() - 1)])
+	else:
+		for t in targets:
+			if not t.is_hero:
+				if ttype.begins_with("choose_"):
+					_emit({"t": "projectile", "from": source.uid if source != null else me.hero.uid, "to": t.uid,
+						"id": from_id, "kind": "buff"})
+				ids.append(t.id)
+	if e.get("to", "hand") == "board":
+		var at := -1
+		if source != null and me.board.has(source):
+			at = me.board.find(source) + 1
+		for id in ids:
+			if CardDB.card(id).get("type", "") != "minion":
+				continue
+			var u := _summon(side, id, at)
+			if u != null and at != -1:
+				at += 1
+		return
+	for id in ids:
+		if me.hand.size() >= MAX_HAND:
+			break
+		var gc := {"uid": _uid(), "id": id}
+		me.hand.append(gc)
+		# View hint first (where the copy comes from), then the usual card-to-hand event.
+		_emit({"t": "copy", "side": side, "id": id, "src": from_id, "from": from if from != "" else "board"})
+		_emit({"t": "draw", "side": side, "uid": gc.uid, "id": id, "deck": me.deck.size()})
+
+
+## Turns a minion into another card (Circe's swine): it leaves without a Last Breath and the new minion takes its
+## place, with the new card's printed stats and keywords. Ward does not stop it.
+func _transform(t: Unit, into: String, from_id: String) -> void:
+	var owner := sides[t.side]
+	var idx := owner.board.find(t)
+	if idx == -1 or CardDB.card(into).is_empty():
+		return
+	_emit({"t": "transform", "uid": t.uid, "side": t.side, "into": into, "src": from_id}) # view hint
+	owner.board.erase(t)
+	units.erase(t.uid)
+	t.dead = true
+	_emit({"t": "death", "uid": t.uid, "side": t.side})
+	_summon(t.side, into, idx) # a fresh minion: it cannot attack this turn unless it has Swift
 
 
 ## A board-wide freeze or silence: one "aoe" event so the view can show it sweeping over every target (only a

@@ -1,5 +1,5 @@
 {
- "_doc": "Preconstructed decks: 30 cards each (class + neutral, max 2 copies, 1 per legendary). cls is the class (pilgrim / ferry), hero a heroes[].id from cards.json, featured the 3 cards shown on Choose your path. The decks marked starter are owned from the first run; the others can be played from Choose your path.",
+ "_doc": "Preconstructed decks: 30 cards each (class + neutral, max 2 copies, 1 per legendary). cls is the class (pilgrim / ferry / ulysses), hero a heroes[].id from cards.json, featured the 3 cards shown on Choose your path. The decks marked starter are owned from the first run; the others can be played from Choose your path.",
  "decks": [
   {
    "id": "pilgrim",
@@ -206,6 +206,110 @@
     "ih_serpents_kiss": 2,
     "mc_brutus": 2,
     "uh_achilles": 1
+   }
+  },
+  {
+   "id": "ulysses",
+   "cls": "ulysses",
+   "starter": true,
+   "name": "The Wanderer's Crew",
+   "hero": "ulysses",
+   "text": "Ulysses and the crew who followed him past the edge of the world. Play a cheap card first, then a Ruse card for its bonus.",
+   "featured": [
+    "ul_diomedes",
+    "ul_trojan_horse",
+    "ul_circe"
+   ],
+   "cards": {
+    "ul_ithacan_sailor": 2,
+    "ul_puccio": 1,
+    "ul_tongue_of_flame": 2,
+    "ul_old_companions": 2,
+    "ul_beacon_keeper": 2,
+    "ul_barbed_counsel": 1,
+    "ul_buoso": 2,
+    "ul_oarsmen": 2,
+    "ul_speech_of_fire": 2,
+    "ul_burning_counsellor": 1,
+    "ul_gilded_hypocrite": 2,
+    "ul_epeius": 1,
+    "ul_circes_draught": 1,
+    "ul_diomedes": 1,
+    "ul_trojan_horse": 1,
+    "ul_circe": 1,
+    "mc_caiaphas": 1,
+    "mc_guido": 1,
+    "ul_sweet_siren": 1,
+    "cd_cavalcante": 1,
+    "ul_wandering_flames": 2
+   }
+  },
+  {
+   "id": "ulysses_horse",
+   "cls": "ulysses",
+   "name": "The Wooden Horse",
+   "hero": "ulysses",
+   "text": "Tricks and tempo. Hidden Achaeans, stolen cards, and Sinon's lie that sends the enemy's best minion back to hand.",
+   "featured": [
+    "ul_trojan_horse",
+    "ul_black_cherub",
+    "ul_sinon"
+   ],
+   "cards": {
+    "ul_ithacan_sailor": 2,
+    "ul_puccio": 2,
+    "ul_sweet_siren": 2,
+    "ul_old_companions": 1,
+    "ul_griffolino": 2,
+    "ul_achaean_in_hiding": 2,
+    "ul_potiphars_wife": 1,
+    "ul_wandering_flames": 2,
+    "ul_sinon": 1,
+    "ul_epeius": 2,
+    "ul_black_cherub": 1,
+    "ul_trojan_horse": 1,
+    "ul_achaean_captain": 1,
+    "ul_arms_of_achilles": 1,
+    "ul_gilded_hypocrite": 2,
+    "ul_valley_of_flames": 1,
+    "ul_beacon_keeper": 1,
+    "ul_burning_counsellor": 1,
+    "mc_caiaphas": 2,
+    "mc_ulysses": 1,
+    "mc_guido": 1
+   }
+  },
+  {
+   "id": "ulysses_flight",
+   "cls": "ulysses",
+   "name": "The Mad Flight",
+   "hero": "ulysses",
+   "text": "Burn and spells. Chain cheap spells to set off every Ruse, then finish the enemy hero with fire.",
+   "featured": [
+    "ul_two_horned_flame",
+    "ul_valley_of_flames",
+    "ul_tongue_of_flame"
+   ],
+   "cards": {
+    "ul_tongue_of_flame": 2,
+    "ul_counterfeit_florins": 2,
+    "ul_wandering_flames": 2,
+    "ul_barbed_counsel": 2,
+    "mc_caiaphas": 2,
+    "ul_speech_of_fire": 2,
+    "ul_two_horned_flame": 2,
+    "ul_valley_of_flames": 1,
+    "ul_night_raid": 1,
+    "ul_past_the_pillars": 1,
+    "ul_false_beacon": 1,
+    "ul_sweet_siren": 2,
+    "ul_old_companions": 2,
+    "ul_curio": 1,
+    "ul_simon_magus": 1,
+    "ul_burning_counsellor": 2,
+    "ul_eurypylus": 1,
+    "ul_diomedes": 1,
+    "ul_gilded_hypocrite": 2
    }
   }
  ]

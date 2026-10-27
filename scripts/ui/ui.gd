@@ -495,7 +495,7 @@ static func fit_rules_size(plain: String, width: float, height: float, max_size:
 
 static func rules_bbcode(text: String) -> String:
 	var t := text
-	for k in ["On Play:", "Last Breath:", "End of Turn:", "Start of Turn:", "Guard", "Swift", "Ward", "Drain",
+	for k in ["On Play:", "Last Breath:", "End of Turn:", "Start of Turn:", "Ruse:", "Guard", "Swift", "Ward", "Drain",
 			"Venom", "Rebirth", "Freeze", "Silence"]:
 		t = t.replace(k, "[b]" + k + "[/b]")
 	return "[center]" + t + "[/center]"
@@ -512,4 +512,5 @@ const KEYWORD_HELP := {
 	"turn_start": ["Start of Turn", "Does something at the start of your turn."],
 	"death": ["Last Breath", "Does something when it dies."],
 	"play": ["On Play", "Does something when you play it from your hand."],
+	"ruse": ["Ruse", "A bonus when you play it after another card this turn."],
 }
