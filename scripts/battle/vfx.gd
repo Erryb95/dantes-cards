@@ -328,6 +328,23 @@ static func keyword(view, n: Node2D, kind: String) -> void:
 			Sfx.play("tick", -8.0, 1.2)
 		"burn":
 			_paint(fx, ["vfx_card_burn", "fire_burst"], n.position, 340.0, 0.7, Color.WHITE)
+		"wrath":
+			# Wrath wakes: a blood-red flare behind the minion, a ring of embers bursting outward and sparks rising,
+			# with a low growl. Then the minion's own ember aura holds (MinionView.set_raging).
+			var blood: Dictionary = VfxData.SCHOOLS.blood
+			_paint(fx, ["vfx_blood_burst", "blood_splat"], n.position, 250.0, 0.45, Color(1.0, 0.55, 0.4))
+			Fx.flash(fx, "k_flare_01", n.position, 330.0, 0.35, UI.EMBER, 0.0)
+			Fx.shockwave(fx, n.position, Color(0.95, 0.25, 0.05), 210.0, 0.4)
+			FxLight.add(fx, n.position, blood, 300.0, 1.1, 0.5)
+			_motes(view, n.position + Vector2(0, 40), VfxData.SCHOOLS.fire, 22, 230.0, 10.0, 0.8, 50.0, -160.0)
+			Sfx.play("growl", -8.0, 1.15)
+			Sfx.play("spell_fire", -16.0, 1.3)
+		"frenzy":
+			# Frenzy: a rake of claws across the minion and red sparks flung wide, a roar.
+			_paint(fx, ["vfx_claw_rake", "claw_slash"], n.position, 280.0, 0.4, Color(1.0, 0.6, 0.5))
+			Fx.flash(fx, "k_twirl_02", n.position, 300.0, 0.4, Color(1.0, 0.3, 0.15), 4.0)
+			_sparks(view, n.position, VfxData.SCHOOLS.blood, 22)
+			Sfx.play("roar", -12.0, 1.25)
 
 
 ## A polymorph (Circe's swine): a swirl and a puff of smoke in the source card's colours, where the minion is

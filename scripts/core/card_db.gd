@@ -213,8 +213,10 @@ static func art_loop(id: String) -> VideoStream:
 	return stream
 
 
+## The hero's portrait, or the Acheron landscape (like a card without its painting) until it arrives.
 static func hero_art(id: String) -> Texture2D:
-	return _tex("res://assets/cards/heroes/%s.jpg" % id)
+	var t := _tex("res://assets/cards/heroes/%s.jpg" % id)
+	return t if t != null else _tex("res://assets/arenas/acheron.jpg")
 
 
 ## The card art's depth map (near = white, made by tools/cards/make_depth.py from the full picture), or null when the

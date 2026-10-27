@@ -617,6 +617,33 @@
     ]
    },
    "image": "hero_ulysses_face_s777"
+  },
+  {
+   "id": "filippo",
+   "class": "wrath",
+   "class_name": "Wrathful",
+   "power_icon": "icon_ash",
+   "defeat_line": "Filippo sinks back into the mud, still gnawing at himself.",
+   "name": "Filippo Argenti, the Wrathful",
+   "health": 30,
+   "power": {
+    "name": "Spite",
+    "cost": 2,
+    "text": "Deal 1 damage to a minion and give it +1 Attack.",
+    "effects": [
+     {
+      "do": "damage",
+      "target": "choose_minion",
+      "amount": 1
+     },
+     {
+      "do": "buff",
+      "target": "choose_minion",
+      "attack": 1
+     }
+    ]
+   },
+   "image": "hero_filippo_face_s777"
   }
  ]
 }

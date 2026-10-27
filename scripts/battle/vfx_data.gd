@@ -84,6 +84,10 @@ const LEGEND_ART := {
 	# statue plate, the Black Cherub the devil's forks, Circe the enchanting swirl, the Mountain the sinking whirlwind.
 	"ul_diomedes": "vfx_leg_achilles", "ul_trojan_horse": "vfx_leg_old_man_crete",
 	"ul_black_cherub": "vfx_leg_malacoda", "ul_circe": "vfx_leg_semiramis", "ul_distant_mountain": "vfx_leg_typhon",
+	# The Wrathful's: Filippo and Tydeus gnaw like Ugolino, the Red Towers burn like Capaneus' rain, Athamas the
+	# maddened judge's coils.
+	"uh_filippo_argenti": "vfx_leg_ugolino", "wr_tydeus": "vfx_leg_ugolino", "wr_red_towers": "vfx_leg_capaneus",
+	"wr_athamas": "vfx_leg_minos",
 }
 
 ## A card's school when data/vfx.json does not name one.

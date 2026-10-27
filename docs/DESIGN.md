@@ -48,7 +48,7 @@ him, card by card. / At the river Acheron, Charon is waiting."
 - 30 health heroes; mana 1 to 10, refilled each turn; hand limit 10 (an overdraw, or a card added to a full hand, burns); board limit 7; fatigue.
 - Mulligan: you start with 3 cards, the opponent with 4, and either can replace any of them.
 - Hero power: 2 mana, once per turn. Dante: gain 2 Armor. Charon: 2 damage to the enemy hero. Ulysses: 1 damage to a
-  minion.
+  minion. Filippo Argenti: 1 damage to a minion and +1 Attack.
 - Keywords: **Guard** (must be attacked first), **Swift** (attacks at once), **Ward** (blocks the first
   damage), **Drain** (its damage heals your hero), **Venom** (destroys any minion it damages), **Rebirth**
   (returns once after dying, like Hearthstone's Reborn: a new minion with 1 Health and 1 max Health, its printed
@@ -60,7 +60,9 @@ him, card by card. / At the river Acheron, Charon is waiting."
   printed card, like Zola's copy in Hearthstone: a card in hand has no damage or buffs here. Diomedes' "Summon a copy of
   this minion" goes off as he enters, while he is still as printed, so a plain summon of the card is the same copy.
 - Triggers: **On Play**, **Last Breath**, **End of Turn**, **Start of Turn**, **Ruse** (On Play, but only if you
-  already played another card this turn).
+  already played another card this turn), **Frenzy** (the first time the minion takes damage and survives).
+- **Wrath: +N Attack** (a minion property): while the minion is damaged it has +N Attack. **Fight**: two minions deal
+  damage equal to their Attack to each other (not an attack). Rules in `docs/HERO_WRATH.md`.
 - **Freeze** costs a minion one attack (the Hearthstone rule): a Frozen minion can't attack, and it thaws at the end
   of its owner's turn only if the freeze took that turn's attack from it (it was awake and had not attacked). Frozen
   after it attacked (a Last Breath such as Ruggieri's or Cassius's set off by its own attack) or while still asleep,
@@ -69,7 +71,7 @@ him, card by card. / At the river Acheron, Charon is waiting."
 - Effects: damage, heal, draw, buff, summon, bounce, armor, destroy, freeze, silence, ramp, give_card, mana, copy, transform. Targets: `choose_*` are picked by the
   player; `all_*`, `own_hero`, `enemy_hero`, `random_enemy_minion` and `other_friendly_minions` resolve on their own.
 
-- Decks (as in Hearthstone): exactly 30 cards, your class (Pilgrim, Ferryman or Wanderer) plus Neutral, at most 2 copies
+- Decks (as in Hearthstone): exactly 30 cards, your class (Pilgrim, Ferryman, Wanderer or Wrathful) plus Neutral, at most 2 copies
   of a card and 1 of a legendary.
 - Preconstructed decks (`data/decks.json`), three per class, picked with the arrows on Choose your path (the last
   pick per class is saved in `Settings.deck_choice`); the opponent plays a random one of the other class
@@ -83,6 +85,9 @@ him, card by card. / At the river Acheron, Charon is waiting."
     *The Malebranche Raid* (Swift aggro and burn).
   - Wanderer: *The Wanderer's Crew* (starter, Ruse minions, flame removal, the Trojan Horse and Circe), *The Wooden
     Horse* (tricks and tempo: hidden Achaeans, stolen cards, Sinon's bounce), *The Mad Flight* (Ruse spells and burn).
+  - Wrathful: *The Wrath of the Styx* (starter, Wrath minions set off by Spite and self-pings, Filippo, the Red Towers,
+    Athamas), *The Mud Brawl* (Frenzy, fights and sweeps, Tydeus), *Spite and Pride* (aggro: health-costing Florentines,
+    Swift riders, burn).
   - Deck balance: `ai_duel.gd -- --matrix --games=200` (Hard vs Hard, each deal from both seats; every pair of classes,
     `--class=<cls>` keeps the pairs with one class), `-- --deck=<id>` (one deck against every other class's decks) or
     `-- --decks=<a>,<b>`; aim for 40-60% in every pairing.
@@ -115,13 +120,28 @@ souls and board clears; Ulysses wins with timing, stolen knowledge and false app
   (no death, no slam). Review: `tests/vfx_preview.tscn -- --cards=ul_black_cherub,ul_palladium,ul_circes_draught [--enemy]`,
   `tests/play_shots.tscn -- --class=ulysses`; `view_soak.gd` reports hand / board desyncs.
 
+## The Wrathful: Filippo Argenti (fourth class)
+Filippo Argenti, the Florentine knight sunk in the Styx (Inferno VIII), who bites himself in rage. The self-wounding
+brawler: **Wrath** minions hit harder while damaged, **Frenzy** minions pay back their first wound, **fights** trade
+minions without attacking, and burn and bodies are paid for with the hero's own health. Hero power **Spite** (2): deal 1
+damage to a minion and give it +1 Attack. Cards: `data/sets/wrath_styx.json` (prefix `wr_`, 48 cards + 1 token; the
+neutral Filippo Argenti and Wrathful Shade moved in, ids kept), art list `art_src/wrath_card_art.json`. Full design,
+rules, card list and AI notes: `docs/HERO_WRATH.md`.
+- Engine: `Unit.wrath` / `Unit.rage` (`_update_wrath`, `_refresh_wrath` at every cleanup), Frenzy queue
+  (`_hurt`, `_fire_frenzies` at the end of the cleanup), `_fight`; target `all_other_minions`. Events `wrath`
+  (`on`, `attack`), `frenzy`, `fight` (`a`, `b`).
+- View: a damaged Wrath minion burns with an ember aura (`Aura.RAGE`, breathing) and rising sparks, its Attack in ember
+  orange; Wrath waking flares red with a "Wrath" plaque; Frenzy rakes claws with a "Frenzy" plaque; a fight is both
+  minions rushing to clash halfway in a spray of mud. Review: `tests/wrath_shots.tscn -- --out=<dir>`.
+
 Balance check: `run_tests.gd` plays 300 starter-deck games with alternating seats. At v0.2 it reports
 Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman class pool needs more power.
 
 ## Collection and packs (v0.2)
-- 250 cards: core 27 + Pilgrim's Journey 35 + Infernal Host 35 + Upper Hell, City of Dis, Malebolge and Cocytus
-  (35 neutral each) + The Last Voyage 48 (Ulysses).
-- First run: you own the cards of the three starter decks and get 3 packs (the other preconstructed decks are played
+- 296 cards: core 27 + Pilgrim's Journey 35 + Infernal Host 35 + Upper Hell (33: Filippo Argenti and the Wrathful
+  Shade moved to the Wrathful), City of Dis, Malebolge and Cocytus (35 neutral each) + The Last Voyage 48 (Ulysses) +
+  The Stygian Marsh 48 (Filippo Argenti).
+- First run: you own the cards of the starter decks (one per class) and get 3 packs (the other preconstructed decks are played
   from Choose your path without owning their cards). Battles pay Obols (win 100, loss 25); a pack costs 100.
 - A pack holds 5 cards: per slot legendary 1.5%, epic 5.5%, rare 21%; at least one rare; a legendary within
   20 packs. Copies beyond the deck limit refund Obols (5 / 20 / 100 / 400).

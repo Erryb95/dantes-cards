@@ -13,16 +13,18 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SETS = {"neutral", "token"}  # plus every hero's class (data/cards.json "heroes"), added in load_all()
 RARITY = {"common", "rare", "epic", "legendary", "token"}
 KEYWORDS = {"guard", "swift", "ward", "drain", "venom", "rebirth"}
-TRIGGERS = {"play", "death", "turn_end", "turn_start"}
+TRIGGERS = {"play", "death", "turn_end", "turn_start", "frenzy"}
 OPS = {"damage", "heal", "draw", "buff", "summon", "bounce", "armor", "destroy", "freeze", "silence", "ramp", "give_card", "mana",
-       "copy", "transform"}
+       "copy", "transform", "fight"}
 CHOOSE = {"choose_any", "choose_enemy", "choose_minion", "choose_enemy_minion", "choose_friendly_minion"}
-AUTO = {"own_hero", "enemy_hero", "self", "all_minions", "all_enemy_minions", "all_friendly_minions",
+AUTO = {"own_hero", "enemy_hero", "self", "all_minions", "all_other_minions", "all_enemy_minions", "all_friendly_minions",
         "other_friendly_minions", "all_enemies", "random_enemy", "random_enemy_minion", "random_friendly_minion"}
 NO_TARGET = {"draw", "summon", "ramp", "give_card", "mana"}
 CIRCLES = {"dark_wood", "ante_inferno", "limbo", "lust", "gluttony", "greed", "wrath", "dis", "heresy", "violence",
            "malebolge", "cocytus"}
-PREFIX = {"play": "On Play:", "death": "Last Breath:", "turn_end": "End of Turn:", "turn_start": "Start of Turn:"}
+PREFIX = {"play": "On Play:", "death": "Last Breath:", "turn_end": "End of Turn:", "turn_start": "Start of Turn:",
+          "frenzy": "Frenzy:"}
+FIGHT_WITH = {"self", "random_enemy_minion", "random_friendly_minion", "all_friendly_minions"}
 
 
 def load_all():
@@ -82,6 +84,12 @@ def check(cards, only=None):
         for k in c.get("keywords", []):
             if k not in KEYWORDS:
                 e(f"unknown keyword {k}")
+        if "wrath" in c:  # Wrath (Filippo Argenti's class): the Attack a minion gains while damaged
+            w = c["wrath"]
+            if c.get("type") != "minion" or not isinstance(w, int) or w < 1:
+                e("wrath must be an int >= 1 on a minion")
+            elif f"Wrath: +{w} Attack." not in c.get("text", ""):
+                e(f"text must contain 'Wrath: +{w} Attack.'")
         chooses = set()
         effects = c.get("effects", [])
         if c.get("type") == "spell" and not effects:
@@ -126,6 +134,11 @@ def check(cards, only=None):
                 for k in ef.get("keywords", []):
                     if k not in KEYWORDS:
                         e(f"buff gives unknown keyword {k}")
+            if op == "fight":
+                if ef.get("with", "self") not in FIGHT_WITH:
+                    e(f"fight 'with' must be one of {sorted(FIGHT_WITH)}")
+                if ef.get("with", "self") == "self" and c.get("type") != "minion":
+                    e("a spell's fight needs 'with' (it has no minion of its own)")
             if op == "transform" and by_id.get(ef.get("card"), {}).get("type") != "minion":
                 e("transform must name a minion card")
             if op in ("summon", "give_card"):

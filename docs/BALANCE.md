@@ -21,6 +21,51 @@ Easy's win rate before -> after:
 
 Medium vs Hard is unchanged (39%, 41%, 37%); the moves are within the +/-3.5% noise of 200 games.
 
+## 2026-10-27: the Wrathful (Filippo Argenti), fourth class
+
+**Method.** As for the Wanderer: `tests/ai_duel.gd --deck=<id>` (one Wrathful deck against every deck of the other
+three classes, Hard vs Hard, every deal from both seats), probes at 20-40 games per pairing, per-card win rates with
+`--decks=a,b`, the final run at 100 games per pairing. No card of the other classes changed; only the two neutral
+cards that moved into the class (Filippo Argenti, Wrathful Shade) left the neutral pool.
+
+**What moved the numbers.**
+- The first draft sat at 48-57% per deck. Once its cheap enabler was made reliable (Gnawing Spite as a 0-mana
+  cantrip) and two Wrath bodies were buffed, the starter reached 61-63%, even with Spite cut from +2 to +1 Attack:
+  75-83% against Pilgrim, 25-35% against the Malebranche Raid.
+- Wrath is cheap to switch on (the hero power, any trade the minion survives, every sweeper), so a Wrath minion is
+  priced as if it were always raging, minus about 1 Attack. The fixes were mostly 1 Attack off the Wrath bodies
+  (Wrathful Shade 1/3, Stygian Brute 2/4, Tower Watchman 1/5, Drowned Knight 3/5, Rancorous Shade 2/5, Mire Hulk 4/6,
+  Colossus of Mud 4/8), Gnawing Spite to 1 mana, Marsh Warden's Armor 3 -> 2 and Filippo 3/6.
+  Cutting health instead would have deepened the Raid matchup.
+- The late Wrath bodies (Colossus 86%, Filippo 83% of games won when played against Pilgrim) were what buried the
+  Pilgrim; Rabble-Rouser and Geri del Bello were the weakest cards against the Raid and left the starter for a second
+  Stirring the Mud and a Brawl in the Mud, which sweep tokens and wake the deck's own Wrath at once.
+- Spite and Pride won only 18-20% against the Ferryman's face pings and sweepers while its self-damage cards (Signal
+  Fires, Gnawing Spite) were in it; two Black Guelph Brawlers and a second Back With the Other Dogs took their place.
+- Tried and reverted: The Eternal Fire as 3-mana minion removal (Spite and Pride fell to 47%, Pilgrim unchanged);
+  Adimari Captain 5/6.
+
+**Final matrix** (row deck's win rate, 100 games per pairing):
+
+| Wrathful deck | pilgrim | pilgrim_vigil | pilgrim_poets | ferry | ferry_serpents | ferry_raid | ulysses | ulysses_horse | ulysses_flight | overall |
+|---|---|---|---|---|---|---|---|---|---|---|
+| wrath (The Wrath of the Styx) | 53% | 48% | 39% | 49% | 76% | 33% | 55% | 48% | 46% | 49.7% |
+| wrath_brawl (The Mud Brawl) | 53% | 68% | 36% | 52% | 74% | 42% | 69% | 49% | 29% | 52.4% |
+| wrath_pride (Spite and Pride) | 64% | 80% | 57% | 37% | 53% | 40% | 42% | 53% | 50% | 52.9% |
+
+Per class (row deck's average): the starter 46.7% against Pilgrim, 52.7% against Ferryman, 49.7% against the
+Wanderer; the Mud Brawl 52.3 / 56.0 / 49.0; Spite and Pride 67.0 / 43.3 / 48.3.
+
+**Open.** Every deck is inside 47-55% overall, but the class is more polarised than the Wanderer: 11 of 27 cells are
+outside 40-60 (the Wanderer: 3 of 18).
+- The Serpent Pit cannot race the big Wrath health pools (74-76%).
+- The Raid's Venom, Silence and Swift tokens beat the self-damaging starter (33%).
+- Spite and Pride runs over the Pilgrim (67% on average, 80% against Cato's Vigil: a slow Guard deck with no early
+  sweeper) and loses to the Ferryman's face pings (43%).
+- The Mud Brawl wins its fights against the Wanderer's Crew (69%) and Cato's Vigil (68%) but cannot catch the Mad
+  Flight's tempo (29%) or the Poets' value (36%).
+Further Wrathful cuts cost the Ferryman matchups first; the next lever is probably the Pilgrim's early answers.
+
 ## 2026-10-27: the Wanderer (Ulysses), third class
 
 **Method.** `tests/ai_duel.gd` generalised to every pair of classes (`--matrix`, `--class=`, `--deck=`), Hard vs Hard, each

@@ -1,0 +1,296 @@
+[
+ {
+  "id": "wr_gnawing_spite",
+  "name": "Gnawing Spite",
+  "rarity": "common",
+  "art": "A mud-smeared hand clenched so hard that the nails draw blood from the palm."
+ },
+ {
+  "id": "wr_mud_brawler",
+  "name": "Mud Brawler",
+  "rarity": "common",
+  "art": "A thin sinner waist-deep in black mud raises both fists, ready to swing at anyone."
+ },
+ {
+  "id": "wr_adimari_bravo",
+  "name": "Adimari Bravo",
+  "rarity": "common",
+  "art": "A swaggering young Florentine thug in a red hood draws a dagger in a narrow medieval street."
+ },
+ {
+  "id": "wr_choked_soul",
+  "name": "Mud-Choked Soul",
+  "rarity": "rare",
+  "art": "A head barely above a black swamp, mud bubbling from its mouth as it tries to speak."
+ },
+ {
+  "id": "wr_tearing_teeth",
+  "name": "Tearing Teeth",
+  "rarity": "common",
+  "art": "Two muddy sinners locked together in the swamp, one biting into the other's shoulder."
+ },
+ {
+  "id": "wr_stirring_the_mud",
+  "name": "Stirring the Mud",
+  "rarity": "common",
+  "art": "The surface of a black swamp churning and bubbling as hands and heads break through it."
+ },
+ {
+  "id": "wr_signal_fires",
+  "name": "Signal Fires",
+  "rarity": "common",
+  "art": "Two small fires burning on top of a dark stone tower above a marsh, a third flame far off in the night."
+ },
+ {
+  "id": "wr_mud_wrestler",
+  "name": "Mud Wrestler",
+  "rarity": "common",
+  "art": "A broad-shouldered sinner wrestling another in knee-deep mud, his face twisted with fury."
+ },
+ {
+  "id": "wr_self_gnawing_shade",
+  "name": "Self-Gnawing Shade",
+  "rarity": "common",
+  "art": "A hunched shade in the swamp biting its own wrist, eyes burning with rage."
+ },
+ {
+  "id": "wr_black_guelph",
+  "name": "Black Guelph Brawler",
+  "rarity": "rare",
+  "art": "A Florentine soldier in a black tabard lunges with a short sword in a crowded street brawl."
+ },
+ {
+  "id": "wr_rabble_rouser",
+  "name": "Rabble-Rouser",
+  "rarity": "common",
+  "art": "A grinning sinner shoves another face-first into the mud while the crowd around them roars."
+ },
+ {
+  "id": "wr_florentine_hothead",
+  "name": "Florentine Hothead",
+  "rarity": "rare",
+  "art": "A young nobleman with a flushed face draws his sword in the middle of a crowded market."
+ },
+ {
+  "id": "wr_marsh_warden",
+  "name": "Marsh Warden",
+  "rarity": "common",
+  "art": "A heavy, mud-caked figure crouched like a boulder in the swamp, arms folded over its head."
+ },
+ {
+  "id": "wr_mud_caked_sinner",
+  "name": "Mud-Caked Sinner",
+  "rarity": "common",
+  "art": "A sinner sinking into the swamp while a second, smaller shape claws its way out beside him."
+ },
+ {
+  "id": "wr_scornful_soul",
+  "name": "Scornful Soul",
+  "rarity": "rare",
+  "art": "A proud traveller in a red cloak glares down from a small boat at a sinner reaching out of the mud."
+ },
+ {
+  "id": "wr_butting_heads",
+  "name": "Butting Heads",
+  "rarity": "rare",
+  "art": "Two brothers frozen together in ice, slamming their foreheads against each other like rams."
+ },
+ {
+  "id": "wr_furies_nails",
+  "name": "The Furies' Nails",
+  "rarity": "common",
+  "art": "Three wild-haired women with green serpents in their hair clawing at their own robes atop a burning tower."
+ },
+ {
+  "id": "wr_boiling_spring",
+  "name": "The Boiling Spring",
+  "rarity": "rare",
+  "art": "A spring of black boiling water spilling down a ravine of grey rock into a dark marsh."
+ },
+ {
+  "id": "wr_stygian_brute",
+  "name": "Stygian Brute",
+  "rarity": "common",
+  "art": "A huge bald sinner covered in black mud stands up in the swamp, roaring."
+ },
+ {
+  "id": "wr_brawling_shade",
+  "name": "Brawling Shade",
+  "rarity": "common",
+  "art": "A shade with a broken nose throws a wild punch at a figure behind him in the mud."
+ },
+ {
+  "id": "wr_mud_dweller",
+  "name": "Mud Dweller",
+  "rarity": "common",
+  "art": "A lumpy figure half made of swamp mud, smaller muddy hands reaching up around it."
+ },
+ {
+  "id": "wr_rinier_pazzo",
+  "name": "Rinier Pazzo, the Mad",
+  "rarity": "rare",
+  "art": "A wild-eyed highwayman on a rearing horse attacks travellers on a forest road."
+ },
+ {
+  "id": "wr_tower_watchman",
+  "name": "Tower Watchman",
+  "rarity": "common",
+  "art": "A grim watchman in a dark cloak standing on a battlement beside a small fire, spear in hand."
+ },
+ {
+  "id": "wr_erichtho",
+  "name": "Erichtho, the Witch",
+  "rarity": "epic",
+  "art": "A gaunt sorceress in tattered black robes calls a pale shade up from a battlefield by moonlight."
+ },
+ {
+  "id": "wr_silver_shod_horse",
+  "name": "The Silver-Shod Horse",
+  "rarity": "epic",
+  "art": "A proud warhorse with gleaming silver horseshoes rearing on a cobbled Florentine street."
+ },
+ {
+  "id": "wr_mob_turns",
+  "name": "The Mob Turns",
+  "rarity": "epic",
+  "art": "A crowd of muddy sinners swarming over one man in the swamp, dragging him down with their hands."
+ },
+ {
+  "id": "wr_brawl_in_the_mud",
+  "name": "Brawl in the Mud",
+  "rarity": "common",
+  "art": "A whole swamp of naked sinners fighting each other, mud and water flying everywhere."
+ },
+ {
+  "id": "wr_other_dogs",
+  "name": "Back With the Other Dogs",
+  "rarity": "rare",
+  "art": "A robed poet shoves a sinner's grasping hands off the side of a small boat, back into the black mud."
+ },
+ {
+  "id": "wr_boat_rides_low",
+  "name": "The Boat Rides Low",
+  "rarity": "rare",
+  "art": "An old wooden boat sitting low in black water, its prow cutting a deep wake through the swamp."
+ },
+ {
+  "id": "wr_drowned_knight",
+  "name": "Drowned Knight",
+  "rarity": "common",
+  "art": "A knight in a rusted helmet rising from the swamp, mud pouring from his armour, sword raised."
+ },
+ {
+  "id": "wr_adimari_captain",
+  "name": "Adimari Captain",
+  "rarity": "common",
+  "art": "A heavy-set Florentine captain in a fur-trimmed coat, sword at his hip, sneering from a palace doorway."
+ },
+ {
+  "id": "wr_marsh_champion",
+  "name": "Marsh Champion",
+  "rarity": "rare",
+  "art": "A towering sinner wading through the swamp, dragging a smaller one by the hair."
+ },
+ {
+  "id": "wr_red_towers",
+  "name": "The Red Towers of Dis",
+  "rarity": "legendary",
+  "art": "The towers of a dark iron city glowing red-hot from within, rising beyond a smoking marsh."
+ },
+ {
+  "id": "wr_rancorous_shade",
+  "name": "Rancorous Shade",
+  "rarity": "epic",
+  "art": "A shade bursting back up out of black water, gasping, its face twisted with hatred."
+ },
+ {
+  "id": "wr_geri_del_bello",
+  "name": "Geri del Bello",
+  "rarity": "rare",
+  "art": "A scowling Florentine in torn clothes points an accusing finger from the shadows of a stone bridge."
+ },
+ {
+  "id": "wr_muddy_mob",
+  "name": "The Muddy Mob",
+  "rarity": "common",
+  "art": "A crowd of mud-covered sinners rising together out of a swamp, fists raised."
+ },
+ {
+  "id": "wr_black_guelph_captain",
+  "name": "Black Guelph Captain",
+  "rarity": "rare",
+  "art": "A captain in a black surcoat with a bloody cheek raises his sword, calling his men to the fight."
+ },
+ {
+  "id": "wr_eternal_fire",
+  "name": "The Eternal Fire",
+  "rarity": "common",
+  "art": "A jet of red fire bursting from a glowing iron tower toward a dark sky."
+ },
+ {
+  "id": "wr_mire_hulk",
+  "name": "Mire Hulk",
+  "rarity": "common",
+  "art": "An enormous hulking sinner coated in thick swamp mud, bellowing with rage."
+ },
+ {
+  "id": "wr_alberti_brothers",
+  "name": "The Alberti Brothers",
+  "rarity": "rare",
+  "art": "Two identical brothers glaring at each other, hands on their daggers, in a cold stone hall."
+ },
+ {
+  "id": "wr_wrathful_throng",
+  "name": "The Wrathful Throng",
+  "rarity": "epic",
+  "art": "A great surge of naked, mud-covered sinners rising from the swamp in a wave of fists and teeth."
+ },
+ {
+  "id": "wr_storm_across_styx",
+  "name": "Storm Across the Styx",
+  "rarity": "epic",
+  "art": "A violent storm wind sweeping across a black marsh, tearing up water and mud under a dark sky."
+ },
+ {
+  "id": "wr_tydeus",
+  "name": "Tydeus, the Spiteful",
+  "rarity": "legendary",
+  "art": "A wounded ancient Greek warrior in a bronze helmet snarling over a fallen enemy on a dusty battlefield."
+ },
+ {
+  "id": "wr_gate_slams_shut",
+  "name": "The Gate Slams Shut",
+  "rarity": "epic",
+  "art": "Huge iron gates of a burning city slamming shut, dark winged figures crowding the walls above."
+ },
+ {
+  "id": "wr_athamas",
+  "name": "Athamas, the Maddened",
+  "rarity": "legendary",
+  "art": "A crowned king with wild, maddened eyes stalking along a rocky shore, arms spread like a hunter's."
+ },
+ {
+  "id": "wr_mud_colossus",
+  "name": "Colossus of Mud",
+  "rarity": "common",
+  "art": "A colossal figure made of black swamp mud rising over the marsh, rage blazing in its eyes."
+ },
+ {
+  "id": "wr_mud_soul",
+  "name": "Mud Soul",
+  "rarity": "token",
+  "art": "A small mud-covered soul climbing out of a black swamp, fists clenched."
+ },
+ {
+  "id": "hero_filippo_face",
+  "name": "Filippo Argenti, the Wrathful (hero portrait)",
+  "rarity": "hero",
+  "art": "Head and shoulders of a furious Florentine knight with wild dark hair and a mud-streaked beard, teeth bared, black swamp water around his shoulders."
+ },
+ {
+  "id": "icon_wrath",
+  "name": "Spite (hero power icon)",
+  "rarity": "icon",
+  "art": "A round bronze medallion with a clenched fist wreathed in small red flames at its centre."
+ }
+]

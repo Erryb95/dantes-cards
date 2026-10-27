@@ -203,8 +203,12 @@ func _unit_value(u) -> float:
 		v += 0.6 * u.attack
 	if not u.silenced:
 		for e in CardDB.card(u.id).get("effects", []):
-			if e.get("on", "play") != "play":
+			if e.get("on", "play") != "play" and not (e.get("on", "") == "frenzy" and u.frenzied):
 				v += 2.0
+	# Wrath: an undamaged minion's bonus is a threat in waiting (one ping away); a raging one already counts it in
+	# its Attack. Healthier ragers keep raging longer, so the latent part grows with health.
+	if u.wrath > 0 and u.rage == 0:
+		v += 0.35 * u.wrath + 0.05 * u.wrath * mini(u.health, 6)
 	if u.frozen:
 		v -= 0.5 * u.attack
 	return v
@@ -272,7 +276,8 @@ func _rules(st: BattleState) -> Dictionary:
 		var tt := BattleState.power_target_type(CardDB.hero(me.hero_id))
 		if tt == "":
 			return {"do": "power", "target": -1}
-		var t := _best_damage_target(st, 1, tt, true)
+		var pw: Array = CardDB.hero(me.hero_id).power.effects
+		var t := _goad_target(st, 1, tt) if _goads(pw) else _best_damage_target(st, 1, tt, true)
 		if t != -1:
 			return {"do": "power", "target": t}
 
@@ -310,6 +315,7 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 	var tt := BattleState.target_type(card)
 	var ruse := st.ruse_active(side)
 	var effects: Array = card.get("effects", [])
+	var fight_alone := false
 	if not ruse and effects.any(func(e): return e.get("ruse", false)):
 		# Ruse: play something else first when there is anything else to play.
 		for o in me.hand:
@@ -322,6 +328,30 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 		if e.get("ruse", false) and not ruse:
 			continue
 		match e.do:
+			"damage" when e.get("target", "") == "own_hero":
+				# Self-wounding (Wrath class): never pay with the last of our health.
+				if int(e.amount) >= me.hero.health + me.hero.armor:
+					return {}
+			"damage" when tt == "choose_friendly_minion" or (tt == "choose_minion" and _goads(effects)):
+				# Hurting our own minion on purpose (Wrath, Frenzy), or Spite-like "1 damage and +2 Attack".
+				target = _goad_target(st, int(e.amount), tt)
+				if target == -1 and card.type == "spell":
+					return {}
+			"fight":
+				if tt == "choose_enemy_minion":
+					var mob: bool = e.get("with", "self") == "all_friendly_minions"
+					var power := 0
+					for u in me.board:
+						power += u.attack if mob else 0
+					if not mob:
+						power = int(card.get("attack", 0))
+					target = _best_fight(st, power, 99 if mob else int(card.get("health", 0)))
+					if target == -1:
+						if card.type == "spell":
+							return {}
+						fight_alone = true # a fighter with nothing worth fighting is played without a target
+				elif card.type == "spell" and foe.board.is_empty():
+					return {}
 			"damage":
 				if tt != "":
 					target = _best_damage_target(st, int(e.amount), tt, card.type == "minion")
@@ -340,7 +370,7 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 					if theirs < mine + 6.0:
 						return {}
 			"buff":
-				if tt != "":
+				if tt != "" and target == -1: # a "damage, then buff" card already picked its minion
 					target = _best_friend(st)
 					if target == -1 and card.type == "spell":
 						return {}
@@ -448,7 +478,7 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 						worth += _silence_value(u)
 					if worth < 6.0:
 						return {}
-	if tt != "" and target == -1:
+	if tt != "" and target == -1 and not fight_alone:
 		if tt.contains("friendly"):
 			target = _best_friend(st)
 		else:
@@ -642,3 +672,55 @@ func _lethal_through_guards(st: BattleState) -> bool:
 	for u in ready:
 		left += u.attack
 	return left >= foe.hero.health + foe.hero.armor
+
+
+# ---------------------------------------------------------------- Wrath class (Easy rules)
+
+## True when the effects hurt a chosen minion and then buff that same minion ("Deal 1 damage to a minion and give it
+## +2 Attack": Spite, the Rabble-Rouser), so the target should be a friend, unless the blow kills an enemy.
+static func _goads(effects: Array) -> bool:
+	return effects.any(func(e): return e.do == "buff" and str(e.get("target", "")).begins_with("choose_"))
+
+
+## Easy: where to aim "hurt a minion (and maybe buff it)". An enemy the blow kills first (choose_minion only); then the
+## friend that gains the most from being hurt (Wrath not yet raging, a Frenzy still to fire) and survives it; then
+## any friend that survives it. -1 when there is none.
+func _goad_target(st: BattleState, amount: int, tt: String) -> int:
+	var valid := st.valid_targets(side, tt)
+	var best := -1
+	var best_v := -INF
+	for u in st.sides[1 - side].board:
+		if valid.has(u.uid) and u.health <= amount and not u.has("ward") and _value(u) > best_v:
+			best_v = _value(u)
+			best = u.uid
+	if best != -1:
+		return best
+	best_v = -INF
+	for u in st.sides[side].board:
+		if not valid.has(u.uid) or u.health <= amount or u.has("ward"):
+			continue
+		var v := 0.1 * u.health
+		if u.wrath > 0 and u.rage == 0:
+			v += 2.0 * u.wrath
+		if not u.frenzied and not u.silenced \
+				and CardDB.card(u.id).get("effects", []).any(func(e): return e.get("on", "") == "frenzy"):
+			v += 4.0
+		if v > best_v:
+			best_v = v
+			best = u.uid
+	return best
+
+
+## Easy: the enemy minion most worth a fight with `power` Attack and `toughness` Health: one that dies to it, best of
+## all one that dies and leaves the fighter alive. Ward shrugs the blow off, so it is skipped. -1 when none dies.
+func _best_fight(st: BattleState, power: int, toughness: int) -> int:
+	var best := -1
+	var best_v := -INF
+	for u in st.sides[1 - side].board:
+		if u.has("ward") or u.health > power:
+			continue
+		var v := _value(u) + (6.0 if u.attack < toughness and not u.has("venom") else 0.0)
+		if v > best_v:
+			best_v = v
+			best = u.uid
+	return best

@@ -186,7 +186,7 @@ V2_REVISED = {
 
 
 # The card lists painted into output/dantes_cards_v2 (one {id, name, rarity, art} entry per card).
-V2_LISTS = ["new_card_art.json", "ulysses_card_art.json"]
+V2_LISTS = ["new_card_art.json", "ulysses_card_art.json", "wrath_card_art.json"]
 
 
 def import_v2() -> None:
@@ -203,10 +203,16 @@ def import_v2() -> None:
     os.makedirs(src_dir, exist_ok=True)
     got = missing = 0
     for c in todo:
+        if c.get("rarity") == "icon":
+            continue  # a power icon ("icon_<name>") is cut out and imported by tools/ui/import_ui_v2.py
+        # A hero portrait ("hero_<hero id>_face") replaces any placeholder portrait, so only its own download counts.
+        hero = c.get("rarity") == "hero"
         dst = os.path.join(ROOT, "assets", "cards", "art", c["id"] + ".jpg")
+        if hero:
+            dst = os.path.join(ROOT, "assets", "cards", "heroes", c["id"][len("hero_"):-len("_face")] + ".jpg")
         name = c["id"] + "_s%d_00001_.png" % V2_REVISED.get(c["id"], 777)
         src = os.path.join(src_dir, name)
-        if os.path.exists(dst) and (c["id"] not in V2_REVISED or os.path.exists(src)):
+        if os.path.exists(src) if hero else os.path.exists(dst) and (c["id"] not in V2_REVISED or os.path.exists(src)):
             continue
         if not os.path.exists(src):
             q = urllib.parse.urlencode({"subfolder": "dantes_cards_v2", "type": "output", "filename": name})
@@ -218,7 +224,7 @@ def import_v2() -> None:
                 continue
             open(src, "wb").write(data)
         try:
-            _fit(src, dst)
+            _fit(src, dst, (512, 512), 0.3) if hero else _fit(src, dst)
         except OSError:  # still being written on the PC when we fetched it: drop it and retry next run
             os.remove(src)
             if os.path.exists(dst):
