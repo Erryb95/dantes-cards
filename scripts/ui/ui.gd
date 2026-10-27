@@ -235,6 +235,140 @@ static func tip_box() -> StyleBox:
 	return s
 
 
+## Tint of the painted field (assets/ui/panel_bg.jpg) inside plaques: dark enough for bone text.
+const FIELD := Color(0.55, 0.45, 0.4)
+
+
+## Lays the painted field (the dark iron panel) behind `c`'s own drawing, `inset` px inside its edges, so a thin
+## bronze frame drawn by `c` (a deck_row stylebox) reads as a plaque. The field is an internal child: containers
+## never lay it out, and it never takes the mouse.
+static func add_field(c: Control, inset: float = 5.0, tint: Color = FIELD) -> void:
+	if not ResourceLoader.exists("res://assets/ui/panel_bg.jpg"):
+		return
+	var bg := TextureRect.new()
+	bg.name = "Field"
+	bg.texture = load("res://assets/ui/panel_bg.jpg")
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.offset_left = inset
+	bg.offset_top = inset
+	bg.offset_right = -inset
+	bg.offset_bottom = -inset
+	bg.show_behind_parent = true
+	bg.clip_contents = true
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bg.modulate = tint
+	c.add_child(bg, false, Node.INTERNAL_MODE_FRONT)
+
+
+## The thin bronze plaque frame (deck_row) as a style with room for text: `pad` px inside it left / right and
+## `pad_y` px above / below.
+static func plaque_box(pad: float = 30.0, pad_y: float = 10.0, tint: Color = Color.WHITE) -> StyleBox:
+	var s := frame_box("deck_row", 10, 0, box(Color(0.08, 0.04, 0.035, 0.9), GOLD_DARK, 2, 8), tint)
+	s.content_margin_left = pad
+	s.content_margin_right = pad
+	s.content_margin_top = pad_y
+	s.content_margin_bottom = pad_y + 2.0
+	return s
+
+
+## An engraved plaque: the bronze frame around the painted dark field. Add the text (or a row of icon + text) as its
+## child; the plaque sizes itself around it.
+static func plaque(pad: float = 30.0, pad_y: float = 10.0) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", plaque_box(pad, pad_y))
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_field(p)
+	return p
+
+
+## A text line set on a plaque: bone (or `color`) letters with a dark edge, shrunk to `room` px when given.
+static func plaque_label(text: String, size: int, kind: String = "italic", color: Color = BONE,
+		room: float = 0.0, pad: float = 30.0, pad_y: float = 10.0) -> PanelContainer:
+	var p := plaque(pad, pad_y)
+	var l := label(text, size, kind, color, 4, Color(0.04, 0.01, 0.01))
+	l.name = "Text"
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	if room > 0.0:
+		fit_label(l, room, maxi(14, size - 12))
+	p.add_child(l)
+	return p
+
+
+## The red name ribbon `width` px wide with `text` in its flat middle (about 64% of the width, between the folded
+## tails), shrunk to fit. The ribbon is centred on (0, 0) of the returned control, so it can hang on a Node2D.
+static func ribbon(text: String, width: float, size: int, color: Color = BONE) -> Control:
+	var h := width * 144.0 / 768.0
+	var c := Control.new()
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.size = Vector2(width, h)
+	c.position = -c.size / 2
+	if UiSkin.has("name_ribbon"):
+		c.add_child(UiSkin.rect("name_ribbon", c.size))
+	var l := label(text, size, "title", color, 6 if UiSkin.has("name_ribbon") else 8, Color(0.12, 0.02, 0.02))
+	l.name = "Text"
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.size = Vector2(width, h * 0.78) # the ribbon's band sits a little above its middle (the tails hang below)
+	fit_label(l, width * 0.62, maxi(14, size - 16))
+	c.add_child(l)
+	return c
+
+
+## Shrinks a one-line label until its text fits `room` px.
+static func fit_label(l: Label, room: float, min_size: int) -> void:
+	var f := l.get_theme_font("font")
+	var px := l.get_theme_font_size("font_size")
+	while px > min_size and f.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x > room:
+		px -= 1
+	l.add_theme_font_size_override("font_size", px)
+
+
+## Paints a scroll container's vertical bar: the bronze rod of the slider as its track and a gilded plate (the menu
+## plate turned upright, its scrollwork at both ends) as the thumb. Wheel and drag scroll as before.
+static func paint_scroll(scroll: ScrollContainer, width: int = 26) -> void:
+	var bar := scroll.get_v_scroll_bar()
+	if not (UiSkin.has("slider_track") and UiSkin.has("menu_plate")):
+		bar.add_theme_stylebox_override("scroll", box(Color(0.08, 0.04, 0.035, 0.7), GOLD_DARK, 1, 8))
+		bar.add_theme_stylebox_override("grabber", box(GOLD_DARK, GOLD, 1, 8))
+		return
+	var track := StyleBoxTexture.new()
+	track.texture = upright_tex("slider_track", width)
+	track.texture_margin_top = width * 0.6
+	track.texture_margin_bottom = width * 0.6
+	track.content_margin_left = width / 2.0
+	track.content_margin_right = width / 2.0
+	track.modulate_color = Color(0.8, 0.72, 0.65)
+	for st in ["scroll", "scroll_focus"]:
+		bar.add_theme_stylebox_override(st, track)
+	for st in [["grabber", Color(0.9, 0.85, 0.78)], ["grabber_highlight", Color(1.15, 1.05, 0.88)],
+			["grabber_pressed", Color(1.25, 1.1, 0.85)]]:
+		var g := StyleBoxTexture.new()
+		g.texture = upright_tex("menu_plate", width)
+		g.texture_margin_top = width * 0.8
+		g.texture_margin_bottom = width * 0.8
+		g.content_margin_top = width * 0.8
+		g.content_margin_bottom = width * 0.8
+		g.modulate_color = st[1]
+		bar.add_theme_stylebox_override(st[0], g)
+	bar.custom_minimum_size.x = width
+
+
+## A painted strip turned upright (rotated a quarter turn) and scaled to `px` wide, for vertical bars.
+static func upright_tex(name: String, px: int) -> Texture2D:
+	var key := "%s@up%d" % [name, px]
+	if not _scaled.has(key):
+		var img := UiSkin.tex(name).get_image()
+		if img.is_compressed():
+			img.decompress()
+		img.rotate_90(CLOCKWISE)
+		img.resize(px, maxi(1, roundi(img.get_height() * float(px) / img.get_width())), Image.INTERPOLATE_LANCZOS)
+		_scaled[key] = ImageTexture.create_from_image(img)
+	return _scaled[key]
+
+
 ## A copy of a painted texture scaled to `px` (for theme icons, which Godot never scales).
 static var _scaled := {}
 static func scaled_tex(name: String, px: int) -> Texture2D:

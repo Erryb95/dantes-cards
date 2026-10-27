@@ -52,12 +52,16 @@ func _ready() -> void:
 		quit.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		quit.pressed.connect(func(): get_tree().quit())
 		col.add_child(quit)
-	var stats := UI.label("Victories %d   ·   Defeats %d" % [Game.stats.wins, Game.stats.losses], 26, "body",
-		Color(0.8, 0.72, 0.6), 4, Color.BLACK)
+	# The record, engraved on a plaque as wide as the buttons.
+	var stats := UI.plaque_label("Victories %d   ·   Defeats %d" % [Game.stats.wins, Game.stats.losses], 26, "title",
+		Color(0.95, 0.86, 0.68), 400.0)
+	stats.name = "Record"
+	stats.custom_minimum_size = Vector2(460, 64)
+	stats.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	col.add_child(stats)
 
 	var credit := UI.label("v%s  ·  card art AI-generated (Qwen-Image), music public domain" % ProjectSettings.get_setting(
-		"application/config/version"), 18, "body", Color(0.6, 0.55, 0.5), 3, Color.BLACK)
+		"application/config/version"), 22, "body", Color(0.82, 0.76, 0.66), 4, Color.BLACK)
 	credit.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	credit.position = Vector2(24, -40)
 	credit.grow_vertical = Control.GROW_DIRECTION_BEGIN

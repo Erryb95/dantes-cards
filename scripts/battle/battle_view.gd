@@ -576,19 +576,38 @@ func _oy() -> float:
 
 
 func _intro(p_arena: Dictionary) -> void:
-	var circle := UI.label(str(p_arena.get("circle", "")).to_upper(), 26, "title", Color(0.85, 0.7, 0.5), 6, Color.BLACK)
+	# The arena's name as a big title; its circle and intro line on an engraved plaque under it.
 	var title := UI.label(p_arena.get("name", ""), 64, "title", UI.GOLD, 12, Color(0.1, 0.0, 0.0))
-	var sub := UI.label(p_arena.get("intro", ""), 30, "italic", UI.BONE, 6, Color.BLACK)
-	for l in [circle, title, sub]:
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.size = Vector2(V.x, 100)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.size = Vector2(V.x, 90)
+	title.position = Vector2(0, V.y * 0.36)
+	var holder := CenterContainer.new()
+	holder.size = Vector2(V.x, 0)
+	holder.position = Vector2(0, V.y * 0.36 + 96)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var plaque := UI.plaque(40, 16)
+	holder.add_child(plaque)
+	var pv := VBoxContainer.new()
+	pv.add_theme_constant_override("separation", 4)
+	pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plaque.add_child(pv)
+	var room := minf(1100.0, V.x - 240.0)
+	var circle_name := str(p_arena.get("circle", "")).to_upper()
+	if circle_name != "":
+		var circle := UI.label(circle_name, 24, "title", Color(0.92, 0.76, 0.5), 3, Color.BLACK)
+		circle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		pv.add_child(circle)
+	var sub := UI.label(p_arena.get("intro", ""), 28, "italic", UI.BONE, 3, Color.BLACK)
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# One line when it fits, else wrapped inside the plaque.
+	sub.custom_minimum_size = Vector2(minf(room,
+		UI.font("italic").get_string_size(sub.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x + 8.0), 0)
+	pv.add_child(sub)
+	for l in [title, holder]:
 		l.modulate.a = 0.0
 		ui.add_child(l)
-	circle.position = Vector2(0, V.y * 0.36 - 44)
-	title.position = Vector2(0, V.y * 0.36)
-	sub.position = Vector2(0, V.y * 0.36 + 90)
-	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	for l in [circle, title, sub]:
+	for l in [title, holder]:
 		var t: Tween = l.create_tween()
 		t.tween_property(l, "modulate:a", 1.0, 0.6)
 		t.tween_interval(1.8)
@@ -755,7 +774,7 @@ func _present(ev: Dictionary) -> void:
 			await c.burn_away(0.8)
 		"fatigue":
 			var h: HeroView = heroes[ev.side]
-			Fx.number(fx_layer, h.position + Vector2(0, -130), "Fatigue %d" % ev.amount, Color(0.8, 0.7, 1.0), false)
+			_toast(h.position + Vector2(0, -130), "Fatigue: %d damage" % ev.amount, Color(0.85, 0.75, 1.0))
 			await _wait(0.4)
 		"play":
 			_last_aoe = ""
@@ -943,11 +962,14 @@ func _mulligan_wait() -> void:
 	title.position = Vector2(0, V.y * 0.12)
 	_mull_ui.add_child(title)
 	var order := "You go first." if _first_side == 0 else "You go second, with an extra card and Charon's Obol."
-	var sub := UI.label(order + "   Tap the cards you want to replace.", 30, "italic", UI.BONE, 5, Color.BLACK)
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sub.size = Vector2(V.x, 40)
-	sub.position = Vector2(0, V.y * 0.12 + 80)
-	_mull_ui.add_child(sub)
+	# The instructions on an engraved plaque under the title.
+	var sub_row := CenterContainer.new()
+	sub_row.size = Vector2(V.x, 64)
+	sub_row.position = Vector2(0, V.y * 0.12 + 84)
+	sub_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sub_row.add_child(UI.plaque_label(order + "   Tap the cards you want to replace.", 28, "italic", UI.BONE,
+		minf(1300.0, V.x - 160.0), 36, 10))
+	_mull_ui.add_child(sub_row)
 	var ok := UI.button("Confirm", 340, 84)
 	ok.position = Vector2(V.x / 2 - 170, V.y * 0.78)
 	ok.pressed.connect(_confirm_mulligan)
@@ -961,10 +983,9 @@ func _toggle_mulligan(c: CardView) -> void:
 		_mull_marks.erase(c.uid)
 		c.modulate = Color.WHITE
 	else:
-		var x := UI.label("REPLACE", 40, "title", Color(1.0, 0.35, 0.25), 10, Color.BLACK)
-		x.size = Vector2(CardView.W, 60)
-		x.position = Vector2(-CardView.W / 2, -30)
-		x.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		# A red sash across the card with the word on it.
+		var x := UI.ribbon("Replace", CardView.W + 70, 38)
+		x.pivot_offset = x.size / 2
 		x.rotation = -0.2
 		c.add_child(x)
 		_mull_marks[c.uid] = x
@@ -1314,15 +1335,38 @@ func _show_result(winner: int) -> void:
 	box.add_child(title)
 	var line := "Charon steps aside. The river can be crossed." if won and Game.enemy_deck == "ferry" else (
 		"The pilgrim falls silent on the shore." if won else "The shades close in. Try again.")
-	var sub := UI.label(line, 34, "italic", UI.BONE, 6, Color.BLACK)
+	# The verdict and the reward on a framed plate under the title, the Obols beside their coin.
+	var plate := PanelContainer.new()
+	plate.add_theme_stylebox_override("panel", UI.tip_box())
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var pc := CenterContainer.new()
+	pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pc.add_child(plate)
+	box.add_child(pc)
+	var pv := VBoxContainer.new()
+	pv.add_theme_constant_override("separation", 10)
+	pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plate.add_child(pv)
+	var sub := UI.label(line, 34, "italic", UI.BONE, 3, Color.BLACK)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(sub)
+	UI.fit_label(sub, minf(1100.0, V.x - 260.0), 22)
+	pv.add_child(sub)
 	var reward := Collection.reward_battle(won)
 	Sfx.play("coins", -4.0)
-	var gain := UI.label("+%d Obols   ·   a pack costs %d" % [reward, Collection.PACK_PRICE], 34, "title",
-		Color(1.0, 0.85, 0.5), 6, Color.BLACK)
-	gain.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(gain)
+	var gain_row := HBoxContainer.new()
+	gain_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	gain_row.add_theme_constant_override("separation", 12)
+	gain_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pv.add_child(gain_row)
+	if UiSkin.has("icon_obol"):
+		var coin := UiSkin.rect("icon_obol", Vector2(46, 46))
+		coin.custom_minimum_size = coin.size
+		coin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		gain_row.add_child(coin)
+	var gain := UI.label("+%d Obols   ·   a pack costs %d" % [reward, Collection.PACK_PRICE], 30, "title",
+		Color(1.0, 0.85, 0.5), 3, Color.BLACK)
+	gain.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	gain_row.add_child(gain)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 30)
@@ -1379,9 +1423,9 @@ func _legendary_cutin(id: String) -> void:
 	name_l.position = Vector2(V.x * 0.4, V.y / 2 - 90)
 	name_l.modulate.a = 0.0
 	root.add_child(name_l)
-	var epithet := UI.label(parts[1].strip_edges() if parts.size() > 1 else "Legendary", 40, "italic", UI.BONE, 6, Color.BLACK)
-	epithet.size = Vector2(V.x * 0.55, 60)
-	epithet.position = Vector2(V.x * 0.4 + 6, V.y / 2 + 30)
+	# The epithet on the red ribbon under the name.
+	var epithet := UI.ribbon(parts[1].strip_edges() if parts.size() > 1 else "Legendary", 640, 38)
+	epithet.position = Vector2(V.x * 0.4 - 50, V.y / 2 + 22)
 	epithet.modulate.a = 0.0
 	root.add_child(epithet)
 	var cv := CardView.new().setup(id, -1, true)
@@ -1923,9 +1967,31 @@ func _end_turn() -> void:
 	st.end_turn()
 
 
+## Why an action was refused ("Not enough mana"), on a small plaque that pops above `pos` and fades.
 func _nope(pos: Vector2, text: String) -> void:
-	Fx.number(fx_layer, pos + Vector2(0, -80), text, Color(1.0, 0.85, 0.7), false)
 	Sfx.play("ui_back", -8.0)
+	_toast(pos + Vector2(0, -110), text, Color(1.0, 0.86, 0.7))
+
+
+## A short message on an engraved plaque centred on board point `pos`: pops in, holds, fades. One at a time.
+func _toast(pos: Vector2, text: String, color: Color) -> void:
+	var old := ui.get_node_or_null("Toast")
+	if old != null:
+		old.name = "ToastOld"
+		old.queue_free()
+	var plate := UI.plaque_label(text, 30, "title", color, 0.0, 30, 10)
+	plate.name = "Toast"
+	ui.add_child(plate)
+	plate.reset_size()
+	var screen := get_canvas_transform() * pos # the board may sit under a moved camera
+	plate.position = (screen - plate.size / 2).clamp(Vector2(16, 16), V - plate.size - Vector2(16, 16))
+	plate.pivot_offset = plate.size / 2
+	plate.scale = Vector2(0.4, 0.4)
+	var t := plate.create_tween()
+	t.tween_property(plate, "scale", Vector2.ONE, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_interval(0.9)
+	t.tween_property(plate, "modulate:a", 0.0, 0.3)
+	t.tween_callback(plate.queue_free)
 
 
 ## Touching the empty board: ripples in the river, scattered wisps, a puff of ash on the shore.
