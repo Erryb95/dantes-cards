@@ -18,6 +18,7 @@ Settings="*res://scripts/core/settings.gd"
 Sfx="*res://scripts/core/sfx.gd"
 Game="*res://scripts/core/game.gd"
 Collection="*res://scripts/core/collection.gd"
+Online="*res://scripts/net/online_session.gd"
 
 [display]
 

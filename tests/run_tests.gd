@@ -15,6 +15,11 @@ func _initialize() -> void:
 		print("TESTS: %d checks, %d failures" % [checks, failures])
 		quit(1 if failures > 0 else 0)
 		return
+	if "--only=online" in OS.get_cmdline_user_args():
+		_test_online_mirror(12)
+		print("TESTS: %d checks, %d failures" % [checks, failures])
+		quit(1 if failures > 0 else 0)
+		return
 	_test_data()
 	_test_class_info()
 	_test_rules()
@@ -44,6 +49,7 @@ func _initialize() -> void:
 	_test_replay(20)
 	_test_replay(8, "ulysses")
 	_test_replay(8, "wrath")
+	_test_online_mirror(24)
 	print("TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures > 0 else 0)
 
@@ -1952,3 +1958,170 @@ func _test_lesson_progress() -> void:
 	prefs.lessons = keep
 	col.obols = obols
 	col.packs = packs
+
+
+# ---------------------------------------------------------------- online duels
+
+var _mseq := 0 ## the fake server's seq counter (_mirror_send)
+
+
+## Online duels: two clients, one players[0] and one players[1] (its state flipped, so it sees itself as side 0), get
+## the same server stream (START, the mulligans, TURN, ACTION) through DuelSync. Their games must stay identical:
+## the same checksum after every message, the same events once sides are put back in canonical order, the same end.
+func _test_online_mirror(games: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4242
+	var classes := CardDB.classes()
+	var ids := ["user-a", "user-b"]
+	for g in games:
+		var c0: String = classes[g % classes.size()]
+		var c1: String = classes[rng.randi_range(0, classes.size() - 1)]
+		var start := {"seed": 90000 + g * 7919, "players": ids, "names": ["Ann", "Bob"], "first": ids[g % 2],
+			"turn": 0, "phase": "mulligan", "turn_ms": 75000, "rope_ms": 15000,
+			"decks": [DuelSync.deck_metadata(c0, random_deck(c0, rng), "Ann").deck,
+				DuelSync.deck_metadata(c1, random_deck(c1, rng), "Bob").deck]}
+		var cl: Array[DuelSync] = [DuelSync.new(), DuelSync.new()]
+		var logs := [[], []]
+		for k in 2:
+			ok(cl[k].setup(start, ids[k]), "online %d: client %d reads START" % [g, k])
+			var lg: Array = logs[k]
+			cl[k].build(func(ev): lg.append(ev))
+		ok(cl[0].st.flip == 0 and cl[1].st.flip == 1, "online %d: players[1] plays a flipped state" % g)
+		ok(cl[0].st.checksum() == cl[1].st.checksum(), "online %d: the same opening on both clients" % g)
+		ok(cl[1].st.sides[0].hero_id == cl[1].heroes[1], "online %d: the flipped client sees itself at the bottom" % g)
+		_mseq = 0
+		for k in 2: # the mulligans, each chosen by the client from its own view
+			var pick := BattleAI.new(0, BattleAI.Level.EASY).mulligan_choice(cl[k].st)
+			_mirror_send(cl, DuelSync.S_MULLIGAN, {"from": ids[k], "data": cl[k].mulligan_payload(pick)})
+		_mirror_send(cl, DuelSync.S_TURN, {"turn": 1, "active": ids[cl[0].st.current], "reason": "start"})
+		var steps := 0
+		while cl[0].st.winner == -1 and steps < 3000:
+			steps += 1
+			var a := cl[0].st.current # canonical side to act (client 0 is not flipped)
+			var mine := cl[a] # the acting client, on its own (local side 0) view
+			var bot := BattleAI.new(0, BattleAI.Level.EASY)
+			var act: Dictionary = bot.next_action(mine.st)
+			var probe := mine.st.clone(1)
+			if act.do == "end" or not BattleAI.apply(probe, 0, act):
+				_mirror_send(cl, DuelSync.S_TURN, {"turn": mine.st.turn + 1, "active": ids[1 - a],
+					"reason": "timeout" if steps % 9 == 0 else "end_turn"})
+				continue
+			var data := {}
+			match act.do:
+				"play":
+					data = mine.play_payload(act.uid, act.target, act.index)
+				"attack":
+					data = mine.attack_payload(act.attacker, act.target)
+				"power":
+					data = mine.power_payload(act.target)
+			_mirror_send(cl, DuelSync.S_ACTION, {"turn": mine.st.turn, "from": ids[a], "data": data})
+		ok(cl[0].st.winner != -1, "online %d: the duel ends" % g)
+		ok(cl[0].winner_id() == cl[1].winner_id(), "online %d: both clients report the same winner" % g)
+		ok(cl[0].desyncs.is_empty() and cl[1].desyncs.is_empty(),
+			"online %d: no desync (%s / %s)" % [g, cl[0].desyncs, cl[1].desyncs])
+		var same: bool = logs[0].size() == logs[1].size()
+		if same:
+			for i in logs[0].size():
+				if JSON.stringify(_canon_event(logs[0][i], 0)) != JSON.stringify(_canon_event(logs[1][i], 1)):
+					same = false
+					printerr("online %d: event %d differs: %s / %s" % [g, i, logs[0][i], logs[1][i]])
+					break
+		ok(same, "online %d: identical events in canonical order (%d / %d)" % [g, logs[0].size(), logs[1].size()])
+	# Out-of-order delivery is held back until its turn; a replayed (old) seq is dropped.
+	var ds := DuelSync.new()
+	ds.push(DuelSync.S_TURN, {"seq": 2})
+	ds.push(DuelSync.S_TURN, {"seq": 1})
+	ok(int(ds.pop()[1].seq) == 1 and int(ds.pop()[1].seq) == 2 and ds.pop().is_empty(), "online: seq order")
+	ds.push(DuelSync.S_TURN, {"seq": 2})
+	ok(ds.pop().is_empty(), "online: an old seq is dropped")
+	ok(DuelSync.parse_deck("{\"cls\":\"nobody\",\"cards\":[]}").is_empty(), "online: an unknown class is refused")
+	_test_progress_merge()
+	# Chat text is plain: no control characters, no BBCode tags, at most 120 characters.
+	ok(ChatText.clean("hi\u0007 [b]there[/b]\n[color=red]x[/color]") == "hi there x", "chat: control chars and BBCode go")
+	ok(ChatText.clean("a".repeat(300)).length() == ChatText.MAX_LEN, "chat: 120 characters at most")
+	ok(ChatText.clean("  [3 cards] ok ") == "[3 cards] ok", "chat: brackets that are not tags stay")
+
+
+## The cloud save's merge rules (ProgressMerge): pure functions, no network.
+func _test_progress_merge() -> void:
+	var fresh := ProgressMerge.blob({"collection": {"owned": {"a": 2}, "obols": 0, "packs": 3, "pity": 0, "opened": 0,
+		"decks": []}, "record": {"wins": 0, "losses": 0}, "online": {}, "profile": {"name": ""}, "settings": {}}, 100)
+	var played := ProgressMerge.blob({"collection": {"owned": {"a": 2, "b": 1}, "obols": 300, "packs": 1, "pity": 7,
+		"opened": 5, "decks": [{"name": "Mine", "cls": "pilgrim", "cards": {"a": 2}}]},
+		"record": {"wins": 4, "losses": 2, "class_games": {"pilgrim": 6}}, "online": {"wins": 1, "losses": 0, "draws": 0},
+		"profile": {"name": "Enrico", "avatar": "dante"},
+		"settings": {"lessons": {"l1": "done", "l2": "skipped"}, "coach_seen": ["play"]}}, 5000)
+	ok(ProgressMerge.is_fresh(fresh) and not ProgressMerge.is_fresh(played), "save: fresh means the starter state")
+	ok(ProgressMerge.same(ProgressMerge.merge(played, {}), played), "save: an empty account takes this install's")
+	ok(ProgressMerge.same(ProgressMerge.merge(fresh, played), played), "save: a fresh install takes the account's")
+	ok(ProgressMerge.same(ProgressMerge.merge(played, fresh), played), "save: a fresh account never wipes progress")
+	# Both played: the newer wins field by field, nothing earned is lost.
+	var other := ProgressMerge.blob({"collection": {"owned": {"a": 1, "c": 2}, "obols": 40, "packs": 4, "pity": 2,
+		"opened": 9, "decks": [{"name": "Phone deck", "cls": "ferry", "cards": {"c": 2}}]},
+		"record": {"wins": 2, "losses": 5, "class_games": {"ferry": 7}}, "online": {"wins": 0, "losses": 3, "draws": 1},
+		"profile": {"name": "Enrico", "avatar": "charon"},
+		"settings": {"lessons": {"l2": "done", "l3": "skipped"}, "coach_seen": ["attack"]}}, 9000)
+	var m := ProgressMerge.merge(played, other)
+	var c: Dictionary = m.data.collection
+	ok(int(c.owned.a) == 2 and int(c.owned.b) == 1 and int(c.owned.c) == 2, "save: owned cards are united (most copies)")
+	ok(int(c.packs) == 4 and int(c.pity) == 7 and int(c.opened) == 9, "save: packs, pity and opened keep the larger")
+	ok(int(c.obols) == 40, "save: Obols follow the newer save")
+	ok(c.decks.size() == 2, "save: custom decks are united")
+	ok(int(m.data.record.wins) == 4 and int(m.data.record.losses) == 5 and int(m.data.record.class_games.pilgrim) == 6
+		and int(m.data.record.class_games.ferry) == 7, "save: the AI record only grows")
+	ok(int(m.data.online.wins) == 1 and int(m.data.online.losses) == 3, "save: the online record only grows")
+	ok(m.data.settings.lessons == {"l1": "done", "l2": "done", "l3": "skipped"}, "save: lessons are united, done wins")
+	ok(m.data.settings.coach_seen.size() == 2, "save: coach tips seen are united")
+	ok(str(m.data.profile.avatar) == "charon" and int(m.saved_at_ms) == 9000, "save: the newer profile and time")
+	ok(ProgressMerge.same(ProgressMerge.merge(other, played), m), "save: the merge does not depend on the side")
+	ok(ProgressMerge.same(JSON.parse_string(JSON.stringify(m)), m), "save: a server round trip reads the same")
+	# An older build uploading keeps what it cannot show (cards "c", the "ferry" class), and nothing else comes back.
+	var kept := ProgressMerge.keep_foreign(played, other, func(id: String) -> bool: return id != "c",
+		func(cls: String) -> bool: return cls != "ferry")
+	var kc: Dictionary = kept.data.collection
+	ok(int(kc.owned.get("c", 0)) == 2 and int(kc.owned.a) == 2 and kc.decks.size() == 2 and int(kc.obols) == 300,
+		"save: an upload keeps the account's cards and decks this build does not know")
+	var none := ProgressMerge.keep_foreign(played, other, func(_id: String) -> bool: return true,
+		func(_cls: String) -> bool: return true)
+	ok(ProgressMerge.same(none, played), "save: an upload with nothing unknown is this install's progress")
+
+
+## The fake server: stamps the next seq and hands the message to both clients, which apply all they can; then the
+## two games must match.
+func _mirror_send(cl: Array[DuelSync], op: int, data: Dictionary) -> void:
+	_mseq += 1
+	data["seq"] = _mseq
+	for k in 2:
+		cl[k].push(op, data.duplicate(true))
+		while true:
+			var m := cl[k].pop()
+			if m.is_empty():
+				break
+			var why := cl[k].apply(m[0], m[1])
+			if why != "":
+				ok(false, "online: client %d refused seq %d: %s" % [k, _mseq, why])
+	if cl[0].st.checksum() != cl[1].st.checksum():
+		ok(false, "online: checksums differ after seq %d (op %d)" % [_mseq, op])
+
+
+## An event with its sides put back in canonical order (`flip` of the client that saw it).
+static func _canon_event(ev: Dictionary, flip: int) -> Dictionary:
+	var e := ev.duplicate(true)
+	if flip == 0:
+		return e
+	if e.has("side") and (e.side is int or e.side is float):
+		e.side = int(e.side) ^ 1
+	if e.get("t") == "game_over" and int(e.winner) in [0, 1]:
+		e.winner = int(e.winner) ^ 1
+	if e.get("t") == "steal":
+		e.from = int(e.from) ^ 1
+	for k in ["heroes", "decks"]:
+		if e.has(k):
+			var arr: Array = e[k]
+			arr.reverse()
+	var snaps: Array = e.get("heroes", []).duplicate()
+	if e.has("unit"):
+		snaps.append(e.unit)
+	for snap in snaps:
+		snap.side = int(snap.side) ^ 1
+	return e

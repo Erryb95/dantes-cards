@@ -221,6 +221,77 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
   that cannot be parsed is copied to `<file>.bad` and the game starts from defaults; a value of the wrong type keeps
   its default and a malformed custom deck is dropped. Test and tooling runs only read them.
 
+## Online duels (1v1 against another player)
+- **Server:** Nakama 3.41, instance "dantes-cards" (modules and protocol in `server/nakama/`). The match
+  `dantes_match` is an authoritative **relay**: it orders and times the players' moves but does not run the rules.
+  Both clients run the same deterministic `BattleState` and apply the same ordered stream.
+- **Client, no SDK:** `scripts/net/nakama_client.gd` (`NakamaClient`: device auth over HTTP, display name and avatar,
+  the realtime socket on Godot's `WebSocketPeer` with Nakama's JSON envelopes: matchmaker, match join / data, RPC,
+  chat). `scripts/net/online_session.gd` (`OnlineSession`, the autoload `Online`): device id, sign-in, search, join,
+  rejoin, reconnect after a drop, the match inbox, the online record (`user://online_record.cfg`, apart from the AI
+  record). `scripts/net/duel_sync.gd` (`DuelSync`): builds the canonical game from START and applies MULLIGAN / TURN /
+  ACTION strictly by `seq`. `scripts/net/online_config.gd`: where the server is (see BUILD.md).
+- **One game, two seats:** side 0 of the canonical game is the match's `players[0]`. Each client still shows itself
+  at the bottom: `BattleState.flip` keeps `sides` in local order (`sides[0]` = me) while `start` deals, shuffles and
+  hands out uids in canonical order, so uids and the random stream match on both machines; every later rule is
+  relative to the acting side. `BattleState.checksum()` fingerprints the game (random state included) in canonical
+  order. Tested by `run_tests.gd` (`_test_online_mirror`: random duels through serialized moves on a flipped and an
+  unflipped client, same checksum after every message, same events once sides are mapped back, same winner).
+- **Moves:** op 1 ACTION `{t: "play", hand_uid, target, index}`, `{t: "attack", attacker, target}`,
+  `{t: "power", target}`, each with `ck` (the sender's checksum just before it: a mismatch is reported as a desync);
+  op 2 END_TURN, op 3 CONCEDE, op 4 RESULT `{winner: user id or ""}` (both clients, when the rules end the game),
+  op 6 MULLIGAN `{replace: [hand indices]}`. A move is not applied when it is made: it is applied when the server's
+  echo (102 / 103 / 108) comes back in order, on both machines at once. The board waits for the echo (about 50 ms on
+  the tailnet) and the opponent's moves animate at the AI's pace.
+- **Flow:** Choose your path > **Play online** (header) plays the selected deck: `OnlineOverlay` (painted search with
+  your name, the time spent and Cancel; errors inked on the same parchment with Try again) > a versus splash (both
+  heroes and names, who goes first) > the battle (the arena is drawn from the match seed, the same for both). The
+  mulligan is simultaneous (30 s, a timer under End Turn). Online battles show both names by the heroes, the turn
+  clock under End Turn and the burning rope (`TurnRope`) along the river for the last 15 s of either turn, the
+  opponent's connection (dropped: a countdown of their 30 s grace; back: a note), Concede in the pause menu (op 3).
+  The pause menu does not hold an online duel. The result names the reason (fallen, conceded, left, time limit,
+  desync) and offers Find another duel / Main Menu; it pays Obols like any battle.
+- **Rejoin:** the title screen asks the server (`dantes_active_match`) once per run and offers Rejoin; a search also
+  goes back into a running duel first. A dropped socket in a duel retries for 40 s and rejoins; the server's RESYNC
+  (107) lists every event since the start, `DuelSync` drops what it already applied, and a fresh battle replays the
+  missed moves at 6x speed.
+- **Mini chat** (`scripts/battle/duel_chat.gd`, `DuelChat`): Nakama's direct-message channel between the two players
+  (`channel_join` type 2, not persistent, hidden; content `{"msg"}` or `{"emote"}`; left with the match). A Chat plate
+  bottom left with an unread seal opens a parchment panel: the last messages with their senders, the gold-ink name
+  field (Enter or Send; the phone keyboard), quick emotes (Greetings, Well played, Thanks, Oops, Good game; also a
+  speech bubble by the hero) and Mute (hides the opponent's messages and emotes). Closed, new messages show on
+  parchment slips that fade. Plain text only (`ChatText.clean`: no control characters, BBCode stripped and never
+  parsed, 120 characters), 1 message a second and 5 per 10 s. No word filter (Enrico's call).
+- **Accounts:** a device account by default ("Playing as a guest"). **Sign in with Google** (Profile, when the config
+  has the Google client): Google's device-code flow (`scripts/net/google_auth.gd`, `GoogleAuth`; the client is a
+  "TVs and Limited Input devices" one, so it works on phones too) shows google.com/device and a code on parchment
+  (Copy code, Open the page; the code is also put on the clipboard on a desktop), polls for the id_token, then links
+  Google to the guest account (`/v2/account/link/google`, nothing lost); when that Google account already has its own
+  game account the install signs into it and gets a fresh device id linked there. "Play as guest" starts a new guest.
+  While the consent screen is in testing only its listed test users can sign in (the refusal says so). A future Steam
+  provider plugs into the same hook: `OnlineSession.sign_in_with("steam", ticket)` links the identity to the guest
+  account or moves the install onto that account (`NakamaClient.link_provider` / `authenticate_provider`); it only
+  needs a Steam ticket source in place of `GoogleAuth`, plus the app id and publisher key on the server.
+- **Progress on the account (cloud save):** the account (guest or Google) keeps one storage object, collection
+  `dantes_save`, key `progress` (owner read/write only), value `{version, saved_at_ms, data}` with the collection
+  (owned copies, Obols, packs, pity, packs opened, custom decks), the AI record and games per class, the online
+  record, the profile name and avatar, and the settings that belong to the player (lessons, intro and coach tips seen,
+  difficulty, deck choice, fast animations, subtitles; never volumes, window, frame limit or vsync).
+  `OnlineSession.cloud_sync` runs 2 s after launch and then checks every 10 s (a finished duel within 1 s; at most one
+  write each 10 s), uploads only when the progress changed, and makes one last upload when the window closes
+  (at most 3 s). After every sign-in (launch, Google, a new guest) it reads the account's save and merges
+  (`scripts/net/progress_merge.gd`, `ProgressMerge.merge`, pure and unit-tested): an empty account takes this
+  install's; a fresh install takes the account's; otherwise the newer save wins field by field but nothing earned is
+  lost (cards united with the most copies, the larger packs / pity / opened / records, decks and lessons united).
+  Applying a merge first copies each save file to `<file>.bak`. Writes carry the version last read; a refused write
+  (someone else saved meanwhile) reads, merges and writes again. An upload keeps the account's cards and decks this
+  build does not know (`keep_foreign`), so an older build never erases a newer one's. Linking Google to the guest
+  keeps the same account, so the save goes with it; signing into a Google account that has its own save merges the
+  two. The status shows under the profile plaque ("Saved to your account" / "Offline: will sync later"); failures
+  never block play. Tests and debug runs never touch an account's save or the local files. **Limit:** the client
+  writes the save, so a cheater can edit it (Obols, cards); a server-authoritative economy (packs opened and Obols
+  granted by server RPCs) is the later fix, needed before any trading or ranked rewards.
+
 ## Adding content
 - **Card:** add an entry to `cards.json` and use it in a deck. Run `python tools/cards/art_jobs.py run`
   (it generates only the missing images), then run the tests.

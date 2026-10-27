@@ -111,6 +111,30 @@ func _ready() -> void:
 	if Lessons.offer_due():
 		# A new player, once: Virgil offers his lessons when the title screen has settled.
 		get_tree().create_timer(1.1).timeout.connect(offer_lessons)
+	_offer_rejoin()
+
+
+## On launch: an online duel this player left running (a crash, a closed window) can be rejoined while the server
+## still holds the seat. Asked once per run; tests and tooling never go online.
+func _offer_rejoin() -> void:
+	for a in OS.get_cmdline_user_args():
+		if a == "--google-signin": # debug: the profile with Google's sign-in code on top (screenshots)
+			var p := ProfilePanel.open(self)
+			GoogleSignInPanel.open.call_deferred(p)
+			return
+		if a.begins_with("--online-quick="): # debug: straight into an online search with this premade deck
+			var deck := CardDB.deck(a.substr(15))
+			if not deck.is_empty():
+				OnlineOverlay.open.call_deferred(self, CardDB.deck_class(deck), CardDB.deck_list(str(deck.id)))
+			return
+	if Game.debug_run() or not Online.configured() or Online.rejoin_checked or Online.in_match():
+		return
+	Online.rejoin_checked = true
+	var id := await Online.check_rejoin()
+	if id == "" or not is_inside_tree() or get_node_or_null("Dialog") != null:
+		return
+	UI.dialog(self, "Your duel is still on", "You left an online duel before it ended. Go back to it?",
+		[["Rejoin", func(): OnlineOverlay.open(self, "", [], id)], ["Not now", null]])
 
 
 ## Learn to Play as a round medallion: Virgil's face on the bronze disc, its name on a small red ribbon across the
@@ -229,6 +253,23 @@ func _add_profile_plaque() -> void:
 		Sfx.play("ui_confirm", -6.0)
 		open_profile())
 	add_child(b)
+	# The cloud save's state in small letters under the plaque ("Saved to your account").
+	var sync := UI.label(Online.sync_text(), 18, "italic", Color(0.86, 0.8, 0.7), 3, ClassInfoPanel.SHADE)
+	sync.name = "SyncStatus"
+	sync.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	sync.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(sync) # goes with the plaque when it is rebuilt
+	sync.position = Vector2(0, b.custom_minimum_size.y + 2)
+	sync.size = Vector2(b.custom_minimum_size.x - 6, 26)
+	if not Online.sync_status_changed.is_connected(_on_sync_status):
+		Online.sync_status_changed.connect(_on_sync_status)
+		Online.progress_applied.connect(_add_profile_plaque)
+
+
+func _on_sync_status(text: String) -> void:
+	var l := get_node_or_null("ProfilePlaque/SyncStatus") as Label
+	if l != null:
+		l.text = text
 
 
 ## Opens the profile panel over the title screen (Esc, back and Back close it).
