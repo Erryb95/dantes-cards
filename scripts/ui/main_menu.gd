@@ -24,10 +24,12 @@ func _ready() -> void:
 
 	var title := UI.label("DANTE'S INFERNO", 92, "title", UI.GOLD, 14, Color(0.12, 0.01, 0.0))
 	col.add_child(title)
-	var sub := UI.label("THE CARD GAME", 40, "title", UI.BONE, 6, Color.BLACK)
+	# The subtitle on the charred banner under the logo.
+	var sub := UI.banner("THE CARD GAME", 34, UI.BONE)
+	sub.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	col.add_child(sub)
 	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0, 40)
+	spacer.custom_minimum_size = Vector2(0, 16)
 	col.add_child(spacer)
 
 	var play := UI.button("Play", 460, 96)
@@ -60,10 +62,13 @@ func _ready() -> void:
 	stats.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	col.add_child(stats)
 
-	var credit := UI.label("v%s  ·  card art AI-generated (Qwen-Image), music public domain" % ProjectSettings.get_setting(
-		"application/config/version"), 22, "body", Color(0.82, 0.76, 0.66), 4, Color.BLACK)
+	# Version and credits engraved on a small plaque in the corner.
+	var credit := UI.plaque_label("v%s  ·  card art AI-generated (Qwen-Image), music public domain" %
+		ProjectSettings.get_setting("application/config/version"), 20, "body", Color(0.86, 0.8, 0.7), 0.0, 20, 5)
+	credit.name = "Credit"
 	credit.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	credit.position = Vector2(24, -40)
+	credit.offset_left = 16
+	credit.offset_bottom = -12
 	credit.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	add_child(credit)
 
