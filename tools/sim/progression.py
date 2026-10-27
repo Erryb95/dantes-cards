@@ -561,12 +561,25 @@ def med(vals):
     return statistics.median(vals) if vals else 0
 
 
+MAX_SECONDS = 1800  # a whole run may take this long at most (main sets it from --max-seconds)
+
+
 def run_all(variants, profiles, players, seed, horizon, workers):
+    """Runs every (variant, profile) cell in a process pool. A run that outlives MAX_SECONDS stops: its workers are
+    terminated and the script exits with an error, so a stuck cell can never leave processes burning the CPU (one
+    once ran for a day after the agent that started it had finished)."""
     jobs = [(e, p, players, seed, horizon) for e in variants for p in profiles]
     res = {}
-    with cf.ProcessPoolExecutor(max_workers=workers) as ex:
-        for ek, pk, runs in ex.map(run_cell, jobs):
+    ex = cf.ProcessPoolExecutor(max_workers=workers)
+    try:
+        for ek, pk, runs in ex.map(run_cell, jobs, timeout=MAX_SECONDS):
             res[(ek, pk)] = runs
+    except cf.TimeoutError:
+        for proc in list(getattr(ex, "_processes", {}).values()):
+            proc.terminate()
+        ex.shutdown(wait=False, cancel_futures=True)
+        sys.exit("progression.py: gave up after %d s (a cell is stuck); workers terminated" % MAX_SECONDS)
+    ex.shutdown()
     return res
 
 
@@ -900,6 +913,7 @@ def sweep_section(g, args, profiles) -> str:
 
 
 def main():
+    global MAX_SECONDS
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--players", type=int, default=400, help="simulated players per profile and variant")
     ap.add_argument("--seed", type=int, default=2026)
@@ -909,11 +923,14 @@ def main():
     ap.add_argument("--quick", action="store_true", help="20 players, write to a scratch file only")
     ap.add_argument("--sweep", action="store_true", help="add the craft-cost sensitivity table")
     ap.add_argument("--sweep-players", type=int, default=150)
-    ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
+    # Half the cores: the game, its tests and other tools share the machine.
+    ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) // 2))
+    ap.add_argument("--max-seconds", type=int, default=MAX_SECONDS, help="stop (and kill the workers) after this long")
     ap.add_argument("--tuned-craft", default="30,80,250,700", help="craft costs C,R,E,L of variant B2/D/E")
     ap.add_argument("--tuned-dis", default="5,20,80,300", help="disenchant values C,R,E,L of variant B2/D/E")
     ap.add_argument("--print-only", action="store_true", help="print the report instead of writing files")
     args = ap.parse_args()
+    MAX_SECONDS = args.max_seconds
     args.runtime_hint = "3 minutes on 20 logical cores"
     if args.quick:
         args.players, args.sweep_players = 20, 20
