@@ -4,7 +4,7 @@ its class average, used by the deck builder's Auto-fill to pick the strongest ow
   Godot --headless --path . -s res://tests/card_stats.gd -- --games=250 --first=N --raw > <dir>/N.txt   (shards)
   python tools/cards/card_ratings.py <dir>
 
-Rating = mostly the win rate of decks holding the card, minus its class average (pilgrim / ferry / neutral), plus
+Rating = mostly the win rate of decks holding the card, minus its class average (its class, or neutral), plus
 a quarter of the same edge measured on games where it was played. The "played" rate alone misleads: cheap freezes
 and armor get cast when the AI is already losing. Each edge is shrunk toward 0 for cards seen in few games. Ramp
 cards read low because the AI rarely plays them; their rating is floored at 0.

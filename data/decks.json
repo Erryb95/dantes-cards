@@ -231,16 +231,15 @@
     "ul_oarsmen": 2,
     "ul_speech_of_fire": 2,
     "ul_burning_counsellor": 1,
-    "ul_little_ship": 1,
-    "ul_night_raid": 1,
+    "ul_gilded_hypocrite": 2,
     "ul_epeius": 1,
     "ul_circes_draught": 1,
     "ul_diomedes": 1,
     "ul_trojan_horse": 1,
     "ul_circe": 1,
-    "mc_ulysses": 1,
+    "mc_caiaphas": 1,
     "mc_guido": 1,
-    "uh_hector": 1,
+    "ul_sweet_siren": 1,
     "cd_cavalcante": 1,
     "ul_wandering_flames": 2
    }
@@ -250,7 +249,7 @@
    "cls": "ulysses",
    "name": "The Wooden Horse",
    "hero": "ulysses",
-   "text": "Tricks and tempo. Hidden Achaeans, stolen cards and minions that come back to play their trick again.",
+   "text": "Tricks and tempo. Hidden Achaeans, stolen cards, and Sinon's lie that sends the enemy's best minion back to hand.",
    "featured": [
     "ul_trojan_horse",
     "ul_black_cherub",
@@ -259,27 +258,25 @@
    "cards": {
     "ul_ithacan_sailor": 2,
     "ul_puccio": 2,
-    "ul_turn_the_prow": 1,
-    "ul_forged_will": 1,
+    "ul_sweet_siren": 2,
+    "ul_old_companions": 1,
     "ul_griffolino": 2,
     "ul_achaean_in_hiding": 2,
     "ul_potiphars_wife": 1,
-    "ul_fra_gomita": 1,
-    "ul_greek_ambush": 2,
-    "ul_sinon": 2,
-    "ul_deidamia": 1,
-    "ul_little_speech": 1,
+    "ul_wandering_flames": 2,
+    "ul_sinon": 1,
     "ul_epeius": 2,
     "ul_black_cherub": 1,
     "ul_trojan_horse": 1,
-    "ul_capocchio": 1,
     "ul_achaean_captain": 1,
     "ul_arms_of_achilles": 1,
-    "uh_achilles": 1,
+    "ul_gilded_hypocrite": 2,
+    "ul_valley_of_flames": 1,
+    "ul_beacon_keeper": 1,
+    "ul_burning_counsellor": 1,
+    "mc_caiaphas": 2,
     "mc_ulysses": 1,
-    "cd_lano": 1,
-    "ul_wandering_flames": 1,
-    "ul_gilded_hypocrite": 1
+    "mc_guido": 1
    }
   },
   {
@@ -302,7 +299,7 @@
     "ul_speech_of_fire": 2,
     "ul_two_horned_flame": 2,
     "ul_valley_of_flames": 1,
-    "ul_palladium": 1,
+    "ul_night_raid": 1,
     "ul_past_the_pillars": 1,
     "ul_false_beacon": 1,
     "ul_sweet_siren": 2,
@@ -312,8 +309,7 @@
     "ul_burning_counsellor": 2,
     "ul_eurypylus": 1,
     "ul_diomedes": 1,
-    "ul_gilded_hypocrite": 1,
-    "mc_boiling_pitch": 1
+    "ul_gilded_hypocrite": 2
    }
   }
  ]

@@ -605,13 +605,14 @@
    "name": "Ulysses, the Wanderer",
    "health": 30,
    "power": {
-    "name": "Guile",
+    "name": "Searing Word",
     "cost": 2,
-    "text": "Copy a random card from the enemy's deck into your hand.",
+    "text": "Deal 1 damage to a minion.",
     "effects": [
      {
-      "do": "copy",
-      "from": "enemy_deck"
+      "do": "damage",
+      "target": "choose_minion",
+      "amount": 1
      }
     ]
    },

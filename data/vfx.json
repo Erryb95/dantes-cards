@@ -124,7 +124,7 @@
     "uh_achilles": {"school": "blood", "hit": "volley"},
     "uh_caesar": {"school": "gold"},
 
-    "power_ulysses": {"school": "shadow", "cast": "pages"},
+    "power_ulysses": {"school": "fire", "hit": "bolt"},
     "ul_tongue_of_flame": {"school": "fire", "hit": "bolt"},
     "ul_counterfeit_florins": {"school": "gold", "cast": "coins"},
     "ul_forged_will": {"school": "word", "hit": "seal", "cast": "pages"},

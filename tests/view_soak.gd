@@ -1,8 +1,11 @@
 extends Node
 ## Soak test of the real battle scene: AI vs AI with every animation and effect, game after game, watching for
 ## stalls. Script errors show up in the log.   Godot --headless --path . res://tests/view_soak.tscn -- --games=10
+## Game g puts class g % classes on the player's side against the next class, cycling through each class's
+## preconstructed decks; --class=<cls> keeps that class on the player's side.
 
 var games := 10
+var only := ""
 var done := 0
 var stalls := 0
 
@@ -11,6 +14,8 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--games="):
 			games = int(a.substr(8))
+		if a.begins_with("--class="):
+			only = a.substr(8)
 	Settings.fast_animations = true
 	Engine.time_scale = 4.0
 	_loop()
@@ -18,10 +23,16 @@ func _ready() -> void:
 
 func _loop() -> void:
 	for g in games:
-		Game.player_cards = CardDB.deck_list("pilgrim" if g % 2 == 0 else "ferry")
-		Game.player_hero = "dante" if g % 2 == 0 else "charon"
-		Game.enemy_cards = CardDB.deck_list("ferry" if g % 2 == 0 else "pilgrim")
-		Game.enemy_hero = "charon" if g % 2 == 0 else "dante"
+		var cls := CardDB.classes()
+		var mine: String = only if only != "" else cls[g % cls.size()]
+		var others := CardDB.other_classes(mine)
+		var theirs: String = others[g % others.size()]
+		var my_decks := CardDB.class_decks(mine)
+		var their_decks := CardDB.class_decks(theirs)
+		Game.player_cards = CardDB.deck_list(my_decks[(g / cls.size()) % my_decks.size()].id)
+		Game.player_hero = CardDB.class_hero(mine)
+		Game.enemy_cards = CardDB.deck_list(their_decks[g % their_decks.size()].id)
+		Game.enemy_hero = CardDB.class_hero(theirs)
 		var battle: Node = load(Game.BATTLE).instantiate()
 		battle.autoplay = true
 		add_child(battle)

@@ -494,14 +494,20 @@ func _test_ulysses() -> void:
 	st.end_turn()
 	ok(not st.ruse_active(0) and st.sides[0].played == 0, "Ruse resets each turn")
 
-	# The hero power copies a card of the enemy deck and does not count as a card for Ruse.
+	# The hero power (Searing Word) hits minions only and does not count as a card for Ruse.
 	st = _blank()
 	st.sides[0].hero_id = "ulysses"
-	var foe_deck := st.sides[1].deck.size()
-	ok(st.use_power(0), "Ulysses' power usable")
-	ok(st.sides[0].hand.size() == 1 and st.sides[0].hand[0].id == "lost_pilgrim", "the power copies an enemy deck card")
-	ok(st.sides[1].deck.size() == foe_deck, "a copy leaves the enemy deck as it was")
+	ok(not st.can_use_power(0), "Searing Word needs a minion to hit")
+	var pm := _put(st, 1, "geryon")
+	ok(not st.use_power(0, st.sides[1].hero.uid), "Searing Word cannot hit a hero")
+	ok(st.use_power(0, pm.uid) and pm.health == 4, "Searing Word deals 1 to a minion")
 	ok(not st.ruse_active(0), "the hero power does not enable Ruse")
+	# Copying from the enemy deck leaves it as it was.
+	st = _blank()
+	var foe_deck := st.sides[1].deck.size()
+	st.play_card(0, _give(st, 0, "ul_spoils_of_troy"))
+	ok(st.sides[0].hand.size() == 2 and st.sides[0].hand.all(func(c): return c.id == "lost_pilgrim"), "Spoils of Troy copies 2")
+	ok(st.sides[1].deck.size() == foe_deck, "a copy leaves the enemy deck as it was")
 
 	# Ruse sharing the card's chosen target: Tongue of Flame deals 1, then 2 more.
 	st = _blank()

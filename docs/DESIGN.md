@@ -47,8 +47,8 @@ him, card by card. / At the river Acheron, Charon is waiting."
 ## Rules (v0.2)
 - 30 health heroes; mana 1 to 10, refilled each turn; hand limit 10 (overdraw burns); board limit 7; fatigue.
 - Mulligan: you start with 3 cards, the opponent with 4, and either can replace any of them.
-- Hero power: 2 mana, once per turn. Dante: gain 2 Armor. Charon: 2 damage to the enemy hero. Ulysses: copy a random
-  card from the enemy's deck into your hand.
+- Hero power: 2 mana, once per turn. Dante: gain 2 Armor. Charon: 2 damage to the enemy hero. Ulysses: 1 damage to a
+  minion.
 - Keywords: **Guard** (must be attacked first), **Swift** (attacks at once), **Ward** (blocks the first
   damage), **Drain** (its damage heals your hero), **Venom** (destroys any minion it damages), **Rebirth**
   (returns once after dying).
@@ -67,7 +67,7 @@ him, card by card. / At the river Acheron, Charon is waiting."
   - Ferryman: *The Ferryman's Host* (starter, souls, venom, clears), *The Serpent Pit* (cheap souls and Venom swarm),
     *The Malebranche Raid* (Swift aggro and burn).
   - Wanderer: *The Wanderer's Crew* (starter, Ruse minions, flame removal, the Trojan Horse and Circe), *The Wooden
-    Horse* (tricks and tempo: hidden Achaeans, stolen cards, bounce and replay), *The Mad Flight* (Ruse spells and burn).
+    Horse* (tricks and tempo: hidden Achaeans, stolen cards, Sinon's bounce), *The Mad Flight* (Ruse spells and burn).
   - Deck balance: `ai_duel.gd -- --matrix --games=200` (Hard vs Hard, each deal from both seats; every pair of classes,
     `--class=<cls>` keeps the pairs with one class), `-- --deck=<id>` (one deck against every other class's decks) or
     `-- --decks=<a>,<b>`; aim for 40-60% in every pairing.
@@ -77,7 +77,9 @@ Ulysses, the false counsellor of Inferno XXVI, wrapped with Diomedes in a two-ho
 The class is the trickster of the three: Dante has Armor, draw, guards and holy light; Charon has damage, Venom,
 souls and board clears; Ulysses wins with timing, stolen knowledge and false appearances. Cards: `data/sets/ulysses_voyage.json`
 (prefix `ul_`, 48 cards + 2 tokens), art list `art_src/ulysses_card_art.json`.
-- **Hero power, Guile (2):** copy a random card from the enemy's deck into your hand.
+- **Hero power, Searing Word (2):** deal 1 damage to a minion. (A first draft copied a card from the enemy's deck
+  every turn: it buried the slow Pilgrim decks in cards, about 75-80% wins, and did nothing against Ferryman aggro.
+  The ping keeps the flame identity, answers small swarms and adds no reach to the face.)
 - **Ruse:** a bonus that needs another card played earlier in the same turn (the Obol counts, the hero power does not).
   Cheap cards (0-1 mana) set it up; the class sequences its turn instead of just spending mana.
 - **Copy / Steal:** Puccio, Spoils of Troy, the augurs and Simon Magus copy from the enemy's hand or deck; the Palladium
@@ -96,9 +98,9 @@ Balance check: `run_tests.gd` plays 300 starter-deck games with alternating seat
 Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman class pool needs more power.
 
 ## Collection and packs (v0.2)
-- 202 cards: core 27 + Pilgrim's Journey 35 + Infernal Host 35 + Upper Hell, City of Dis, Malebolge and Cocytus
-  (35 neutral each).
-- First run: you own the cards of the two starter decks and get 3 packs (the other preconstructed decks are played
+- 250 cards: core 27 + Pilgrim's Journey 35 + Infernal Host 35 + Upper Hell, City of Dis, Malebolge and Cocytus
+  (35 neutral each) + The Last Voyage 48 (Ulysses).
+- First run: you own the cards of the three starter decks and get 3 packs (the other preconstructed decks are played
   from Choose your path without owning their cards). Battles pay Obols (win 100, loss 25); a pack costs 100.
 - A pack holds 5 cards: per slot legendary 1.5%, epic 5.5%, rare 21%; at least one rare; a legendary within
   20 packs. Copies beyond the deck limit refund Obols (5 / 20 / 100 / 400).
