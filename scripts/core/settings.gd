@@ -19,6 +19,7 @@ var intro_seen := false ## the opening cinematic has been played (or skipped) on
 var difficulty := 0 ## the opponent's BattleAI.Level: 0 Easy, 1 Medium, 2 Hard (new players start on Easy)
 var coach_seen: Array = [] ## ids of the first-game tips already shown (scripts/battle/coach.gd)
 var deck_choice := {} ## class -> id of the preconstructed deck last picked on Choose your path
+var collection_sort := "cost" ## the order of the Collection screen (an id of SORTS in scripts/ui/collection.gd)
 
 
 func _ready() -> void:
@@ -52,6 +53,7 @@ func load_settings(path: String = PATH) -> void:
 	difficulty = clampi(SaveFile.value(cfg, "game", "difficulty", difficulty), 0, DIFFICULTY_NAMES.size() - 1)
 	coach_seen = SaveFile.value(cfg, "game", "coach_seen", coach_seen)
 	deck_choice = SaveFile.value(cfg, "game", "deck_choice", deck_choice)
+	collection_sort = str(SaveFile.value(cfg, "game", "collection_sort", collection_sort))
 
 
 ## Tests and tooling runs (`Game.debug_run()`) keep their changes in memory: the player's real settings are never written.
@@ -71,6 +73,7 @@ func save() -> void:
 	cfg.set_value("game", "difficulty", difficulty)
 	cfg.set_value("game", "coach_seen", coach_seen)
 	cfg.set_value("game", "deck_choice", deck_choice)
+	cfg.set_value("game", "collection_sort", collection_sort)
 	cfg.save(PATH)
 
 

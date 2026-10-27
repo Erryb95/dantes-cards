@@ -13,6 +13,7 @@ const DECK_SIZE := 30
 ## Chance per card slot; the last slot is upgraded to rare if the pack has no rare yet.
 const ODDS := {"legendary": 0.015, "epic": 0.055, "rare": 0.21}
 const PITY_LEGENDARY := 20 ## guaranteed legendary within this many packs
+const RARITY_ORDER := ["legendary", "epic", "rare", "common"] ## best first
 const MAX_COPIES := {"common": 2, "rare": 2, "epic": 2, "legendary": 1}
 ## Obols refunded for a copy beyond the deck limit.
 const REFUND := {"common": 5, "rare": 20, "epic": 100, "legendary": 400}
@@ -128,6 +129,28 @@ func _pool() -> Dictionary:
 		if by.has(c.get("rarity", "")):
 			by[c.rarity].append(c.id)
 	return by
+
+
+## The chance of each rarity for one card slot, best first (RARITY_ORDER), computed from ODDS: a common is whatever
+## the others leave. The drop-rates panel and the reveal show these numbers, so they never drift from the roll.
+static func drop_rates() -> Dictionary:
+	var out := {}
+	var left := 1.0
+	for r in RARITY_ORDER:
+		if r == "common":
+			break
+		out[r] = float(ODDS[r])
+		left -= out[r]
+	out["common"] = maxf(0.0, left)
+	return out
+
+
+## A chance as players read it: 0.015 -> "1.5%", 0.21 -> "21%".
+static func percent_text(p: float) -> String:
+	var t := "%.1f" % (p * 100.0)
+	if t.ends_with(".0"):
+		t = t.substr(0, t.length() - 2)
+	return t + "%"
 
 
 func _roll_rarity() -> String:

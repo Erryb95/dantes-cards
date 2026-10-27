@@ -1,6 +1,7 @@
 extends Node2D
 ## Pack opening: tap the sealed pack to tear it open; five cards fly out face down with a glow that hints their
-## rarity; tap each to reveal it (rare / epic / legendary get bigger and bigger effects).
+## rarity; tap each to reveal it (rare / epic / legendary get bigger and bigger effects). The "Drop rates" plaque
+## opens the odds (DropRatesPanel); a revealed card also shows its rarity's chance under it.
 
 const RARITY_GLOW := {"common": Color(0.75, 0.7, 0.62), "rare": Color(0.3, 0.6, 1.0), "epic": Color(0.75, 0.35, 1.0),
 	"legendary": Color(1.0, 0.6, 0.15)}
@@ -64,6 +65,14 @@ func _ready() -> void:
 	_obols_label = UI.label("", 30, "title", Color(1.0, 0.85, 0.5), 4, Color(0.04, 0.01, 0.01))
 	_obols_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(_obols_label)
+	# The odds, one plaque away, on the right at the height of the purse.
+	var rates := UI.button("Drop rates", 300, 64)
+	rates.name = "DropRatesButton"
+	rates.add_theme_font_size_override("font_size", 30)
+	UI.fit_text(rates)
+	rates.position = Vector2(V.x - 300 - 56, 128)
+	rates.pressed.connect(func(): DropRatesPanel.open(self))
+	ui.add_child(rates)
 	_buttons = HBoxContainer.new()
 	_buttons.add_theme_constant_override("separation", 24)
 	_buttons.position = Vector2(V.x / 2 - 520, V.y - 120)
@@ -342,6 +351,7 @@ func _reveal(c: Dictionary) -> void:
 	elif d.refund > 0:
 		_tag(v, "+%d Obols" % d.refund, Color(1.0, 0.85, 0.5))
 		Sfx.play("coin_spin", -8.0)
+	_rate_note(v, d.rarity)
 	if _cards.all(func(x): return x.revealed):
 		_state = "done"
 		_refresh()
@@ -358,6 +368,19 @@ func _tag(v: Node2D, text: String, color: Color) -> void:
 	holder.scale = Vector2(0.3, 0.3)
 	holder.pivot_offset = holder.size / 2
 	holder.create_tween().tween_property(holder, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK)
+
+
+## How likely this rarity was, in small letters under a revealed card ("Rare · 21%"), from the pack odds.
+func _rate_note(v: Node2D, rarity: String) -> void:
+	var l := UI.label("%s · %s" % [rarity.capitalize(), Collection.percent_text(Collection.drop_rates()[rarity])], 26,
+		"title", RARITY_GLOW[rarity].lerp(UI.BONE, 0.35), 5, Color(0.04, 0.01, 0.01))
+	l.name = "RateNote"
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.size = Vector2(CardView.W, 36)
+	l.position = Vector2(-CardView.W / 2, CardView.H / 2 + 6)
+	v.add_child(l)
+	l.modulate.a = 0.0
+	l.create_tween().tween_property(l, "modulate:a", 0.85, 0.4).set_delay(0.3)
 
 
 ## A legendary's name on the charred banner across the top of the table.

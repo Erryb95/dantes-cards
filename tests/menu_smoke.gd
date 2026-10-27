@@ -10,7 +10,11 @@ extends Node
 ##   guide and Esc closes it, View cards lists the deck and Esc closes a zoomed card before the list, a key card
 ##   shown big closes on Esc without leaving the screen;
 ## - the collection shows the class strip on a class filter (a note on Neutral, nothing on All), and its Class guide
-##   button opens the guide.
+##   button opens the guide;
+## - the collection's sort plaque cycles through the orders (cost, rarity high / low, name, owned), keeps
+##   the choice in the settings, orders the cards as it says, and puts a divider per rarity when sorted by rarity;
+## - the pack screen's Drop rates plaque opens the odds sheet (numbers from Collection.ODDS, the pity counter) and Esc
+##   closes it.
 
 var fails := 0
 
@@ -24,6 +28,8 @@ func _ready() -> void:
 	_problem_text()
 	await _deck_select()
 	await _collection_class()
+	await _collection_sort()
+	await _drop_rates()
 	print("MENU SMOKE: %d failures" % fails)
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -227,5 +233,116 @@ func _collection_class() -> void:
 	await _frames()
 	if not s.find_children("ClassStrip", "", true, false).filter(func(n): return not n.is_queued_for_deletion()).is_empty():
 		_fail("All shows a class strip")
+	s.queue_free()
+	await _frames()
+
+
+func _collection_sort() -> void:
+	Settings.collection_sort = "cost"
+	var s := _open(Game.COLLECTION)
+	await _frames()
+	var btn := s.find_child("SortButton", true, false) as Button
+	if btn == null:
+		_fail("the collection has no sort plaque")
+		return
+	var seen := []
+	for k in s.SORTS.size() + 1:
+		seen.append(s._sort)
+		if not btn.text.begins_with("Sort: "):
+			_fail("the sort plaque says '%s'" % btn.text)
+		btn.pressed.emit()
+		await _frames()
+	if seen.size() != s.SORTS.size() + 1 or seen[0] != seen[-1] or seen.slice(0, s.SORTS.size()).has("") 			or seen.slice(0, s.SORTS.size()).size() != _unique(seen.slice(0, s.SORTS.size())).size():
+		_fail("the sort plaque did not cycle through every order and back: %s" % str(seen))
+	if Settings.collection_sort != s._sort:
+		_fail("the sort was not kept in the settings")
+	# Rarity: legendaries first, a divider per rarity; low first reverses the rarities.
+	s._sort = "rarity"
+	s._fill()
+	await _frames()
+	var cards: Array = s._visible_cards()
+	var order := []
+	for c in cards:
+		if c.set != "token" and not order.has(c.rarity):
+			order.append(c.rarity)
+	if order != Collection.RARITY_ORDER:
+		_fail("sorted by rarity the order was %s" % str(order))
+	var dividers := s.find_children("Divider_*", "", true, false).filter(func(n): return not n.is_queued_for_deletion())
+	if dividers.size() < 4:
+		_fail("sorted by rarity there are %d dividers" % dividers.size())
+	s._sort = "rarity_asc"
+	if s._visible_cards()[0].rarity != "common":
+		_fail("rarity, low first did not start with a common")
+	s._sort = "name"
+	var names: Array = s._visible_cards().filter(func(c): return c.set != "token").map(func(c): return str(c.name).to_lower())
+	var sorted_names := names.duplicate()
+	sorted_names.sort()
+	if names != sorted_names:
+		_fail("sorted by name the cards are not in A-Z order")
+	s._sort = "owned"
+	var seen_unowned := false
+	for c in s._visible_cards():
+		if c.set == "token":
+			continue
+		if Collection.copies(c.id) == 0:
+			seen_unowned = true
+		elif seen_unowned:
+			_fail("owned first: an owned card comes after an unowned one (%s)" % c.id)
+			break
+	s._sort = "cost"
+	s._set_filter("all")
+	await _frames()
+	if not s.find_children("Divider_*", "", true, false).filter(func(n): return not n.is_queued_for_deletion()).is_empty():
+		_fail("cost order shows rarity dividers")
+	s.queue_free()
+	await _frames()
+	Settings.collection_sort = "cost"
+
+
+func _unique(a: Array) -> Array:
+	var out := []
+	for x in a:
+		if not out.has(x):
+			out.append(x)
+	return out
+
+
+func _drop_rates() -> void:
+	Collection.packs_since_legendary = 7
+	var s := _open(Game.PACKS)
+	await get_tree().create_timer(0.6).timeout
+	var btn := s.find_child("DropRatesButton", true, false) as Button
+	if btn == null:
+		_fail("the pack screen has no Drop rates plaque")
+		s.queue_free()
+		return
+	btn.pressed.emit()
+	await _frames()
+	if s.get_node_or_null("Dialog") == null:
+		_fail("Drop rates did not open the sheet")
+	else:
+		var rows := DropRatesPanel.rows()
+		var total := 0.0
+		for row in rows:
+			total += float(row[1])
+			if row[0] != "common" and not is_equal_approx(float(row[1]), float(Collection.ODDS[row[0]])):
+				_fail("the %s row is not Collection.ODDS" % row[0])
+		if not is_equal_approx(total, 1.0) or rows.size() != Collection.RARITY_ORDER.size():
+			_fail("the drop-rate rows do not add up to 100%% (%f)" % total)
+		for r in Collection.RARITY_ORDER:
+			var l := s.find_child("Rate_" + r, true, false) as Label
+			var want := Collection.percent_text(Collection.drop_rates()[r])
+			if l == null or l.text != want:
+				_fail("the %s rate shows '%s', wanted '%s'" % [r, l.text if l != null else "nothing", want])
+		var pity := s.find_child("Pity", true, false) as Label
+		if pity == null or pity.text != "Packs since your last Legendary: 7 / %d" % Collection.PITY_LEGENDARY:
+			_fail("the pity counter shows '%s'" % (pity.text if pity != null else "nothing"))
+		if not UI.cancel_dialog(s):
+			_fail("Esc did not close the drop-rates sheet")
+		await _frames()
+		await _frames()
+		var d := s.get_node_or_null("Dialog")
+		if d != null and not d.is_queued_for_deletion():
+			_fail("the drop-rates sheet stayed open after Esc")
 	s.queue_free()
 	await _frames()
