@@ -12,6 +12,7 @@ static var _tags: RegEx
 
 static func clean(raw: String) -> String:
 	var out := ""
+	raw = raw.left(MAX_LEN * 8) # a flood from a modified client is cut before the per-character work
 	for i in raw.length():
 		var c := raw.unicode_at(i)
 		if c < 32 or c == 127 or (c >= 0x80 and c < 0xA0) or c in _INVISIBLE:

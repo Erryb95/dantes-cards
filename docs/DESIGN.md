@@ -254,7 +254,14 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
 - **Rejoin:** the title screen asks the server (`dantes_active_match`) once per run and offers Rejoin; a search also
   goes back into a running duel first. A dropped socket in a duel retries for 40 s and rejoins; the server's RESYNC
   (107) lists every event since the start, `DuelSync` drops what it already applied, and a fresh battle replays the
-  missed moves at 6x speed.
+  missed moves at 6x speed. The clock after a rejoin is the server's `remaining_ms` (it already includes the rope);
+  replayed TURNs keep that clock. A match the server no longer has (or that refuses the join) stops the retries at
+  once ("The duel ended while you were away", not counted in the record). While searching or in a duel the session
+  pings the server every 15 s, and at once when a phone comes back from the background or a move gets no echo: a
+  socket that looks open but does not answer is dropped, which starts the rejoin. Renewing the 2 h session (after
+  100 min) never closes a socket a search or a duel is using. Only messages of the match being joined or played are
+  taken (`_mid`); a search cancelled while its join was under way leaves the match. A RESULT that could not be sent
+  (socket down) is sent again after the rejoin. The server's END decides the result screen (a desync is a draw).
 - **Mini chat** (`scripts/battle/duel_chat.gd`, `DuelChat`): Nakama's direct-message channel between the two players
   (`channel_join` type 2, not persistent, hidden; content `{"msg"}` or `{"emote"}`; left with the match). A Chat plate
   bottom left with an unread seal opens a parchment panel: the last messages with their senders, the gold-ink name
@@ -283,6 +290,9 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
   (`scripts/net/progress_merge.gd`, `ProgressMerge.merge`, pure and unit-tested): an empty account takes this
   install's; a fresh install takes the account's; otherwise the newer save wins field by field but nothing earned is
   lost (cards united with the most copies, the larger packs / pity / opened / records, decks and lessons united).
+  A deleted or renamed deck leaves a tombstone (`deleted_decks`, "cls|name" -> time) and decks carry `saved_ms`: a
+  deck comes back from another save only if it was saved after its tombstone, and the copy saved last wins. The
+  first write of an account's save uses version "*" (only if there is none yet).
   Applying a merge first copies each save file to `<file>.bak`. Writes carry the version last read; a refused write
   (someone else saved meanwhile) reads, merges and writes again. An upload keeps the account's cards and decks this
   build does not know (`keep_foreign`), so an older build never erases a newer one's. Linking Google to the guest

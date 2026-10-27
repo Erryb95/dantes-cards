@@ -1963,6 +1963,7 @@ func _test_lesson_progress() -> void:
 # ---------------------------------------------------------------- online duels
 
 var _mseq := 0 ## the fake server's seq counter (_mirror_send)
+var _mlog: Array[String] = [] ## the fake server's event log (what a RESYNC lists)
 
 
 ## Online duels: two clients, one players[0] and one players[1] (its state flipped, so it sees itself as side 0), get
@@ -1990,6 +1991,7 @@ func _test_online_mirror(games: int) -> void:
 		ok(cl[0].st.checksum() == cl[1].st.checksum(), "online %d: the same opening on both clients" % g)
 		ok(cl[1].st.sides[0].hero_id == cl[1].heroes[1], "online %d: the flipped client sees itself at the bottom" % g)
 		_mseq = 0
+		_mlog.clear()
 		for k in 2: # the mulligans, each chosen by the client from its own view
 			var pick := BattleAI.new(0, BattleAI.Level.EASY).mulligan_choice(cl[k].st)
 			_mirror_send(cl, DuelSync.S_MULLIGAN, {"from": ids[k], "data": cl[k].mulligan_payload(pick)})
@@ -2027,6 +2029,21 @@ func _test_online_mirror(games: int) -> void:
 					printerr("online %d: event %d differs: %s / %s" % [g, i, logs[0][i], logs[1][i]])
 					break
 		ok(same, "online %d: identical events in canonical order (%d / %d)" % [g, logs[0].size(), logs[1].size()])
+		# A rejoin: a fresh client rebuilt from START and the server's event log (JSON text, as RESYNC carries it,
+		# numbers turned to floats) must reach the live game exactly.
+		var resync := {"start": start, "events": _mlog.map(func(j): return JSON.parse_string(j)), "seq": _mseq,
+			"phase": "play", "remaining_ms": 0}
+		for k in 2:
+			var fresh := DuelSync.new()
+			fresh.setup(JSON.parse_string(JSON.stringify(start)), ids[k])
+			fresh.build()
+			for e in DuelSync.resync_events(resync):
+				fresh.push(e[0], e[1])
+			while fresh.pending():
+				var m := fresh.pop()
+				fresh.apply(m[0], m[1])
+			ok(fresh.st.checksum() == cl[k].st.checksum() and fresh.desyncs.is_empty(),
+				"online %d: client %d rebuilt from RESYNC matches the live game (%s)" % [g, k, fresh.desyncs])
 	# Out-of-order delivery is held back until its turn; a replayed (old) seq is dropped.
 	var ds := DuelSync.new()
 	ds.push(DuelSync.S_TURN, {"seq": 2})
@@ -2040,6 +2057,123 @@ func _test_online_mirror(games: int) -> void:
 	ok(ChatText.clean("hi\u0007 [b]there[/b]\n[color=red]x[/color]") == "hi there x", "chat: control chars and BBCode go")
 	ok(ChatText.clean("a".repeat(300)).length() == ChatText.MAX_LEN, "chat: 120 characters at most")
 	ok(ChatText.clean("  [3 cards] ok ") == "[3 cards] ok", "chat: brackets that are not tags stay")
+	var t0 := Time.get_ticks_msec()
+	ok(ChatText.clean("x".repeat(200000)).length() == ChatText.MAX_LEN and Time.get_ticks_msec() - t0 < 500,
+		"chat: a flood is cut before it is cleaned (%d ms)" % (Time.get_ticks_msec() - t0))
+	_test_online_net()
+	_test_deck_tombs()
+
+
+## The online session's message handling and clocks, without a server.
+func _test_online_net() -> void:
+	# RESYNC: remaining_ms already includes the rope (the client used to add 15 s on top).
+	var rs := {"_rx": 1000, "remaining_ms": 50000, "roped": false, "phase": "play", "over": false}
+	ok(DuelSync.resync_clock(rs) == [51000, false], "online: a RESYNC's clock is remaining_ms, rope included")
+	rs.roped = true
+	rs.remaining_ms = 9000
+	ok(DuelSync.resync_clock(rs) == [10000, true], "online: a RESYNC in the rope keeps the rope lit")
+	ok(DuelSync.resync_clock({"_rx": 1000, "remaining_ms": 20000, "roped": false, "phase": "mulligan"}) == [21000, false],
+		"online: a RESYNC in the mulligan runs to its end")
+	ok(DuelSync.resync_clock({"_rx": 1000, "remaining_ms": 0}) == [0, false], "online: no remaining time, no clock")
+	# A TURN replayed from that RESYNC keeps the RESYNC's clock; a live TURN counts turn + rope from its arrival.
+	rs.events = [{"seq": 1, "from": "a", "data": {"replace": []}}, {"seq": 2, "from": "b", "data": {"replace": [1]}},
+		{"seq": 3, "turn": 1, "active": "a", "reason": "start", "turn_ms": 75000, "rope_ms": 15000},
+		{"seq": 4, "turn": 1, "from": "a", "data": {"t": "power", "target": -1}}]
+	var evs := DuelSync.resync_events(rs)
+	ok(evs.size() == 4 and evs[0][0] == DuelSync.S_MULLIGAN and evs[2][0] == DuelSync.S_TURN
+		and evs[3][0] == DuelSync.S_ACTION, "online: RESYNC events are told apart by their fields")
+	ok(DuelSync.turn_clock(evs[2][1]) == [10000, true], "online: a replayed TURN keeps the RESYNC's clock")
+	ok(DuelSync.turn_clock({"_rx": 2000, "turn_ms": 75000, "rope_ms": 15000}) == [92000, false],
+		"online: a live TURN runs turn_ms + rope_ms from its arrival")
+	# Server errors in plain words; the mulligan the server already decided says nothing.
+	ok(DuelSync.error_text("already_sent") == "" and DuelSync.error_text("not_in_mulligan") == ""
+		and DuelSync.error_text("not_your_turn").begins_with("Too late"), "online: server errors in plain words")
+	# END: the server's winner is final, as a local side.
+	var ds := DuelSync.new()
+	ds.players = ["user-a", "user-b"]
+	ds.me = 1
+	ok(ds.end_side({"winner": "user-b"}) == 0 and ds.end_side({"winner": "user-a"}) == 1
+		and ds.end_side({"winner": "", "reason": "desync"}) == 2, "online: END's winner as a local side")
+	# Joins and links refused, said plainly. (OnlineSession uses autoloads: loaded at run time, its State by number:
+	# 0 IDLE, 3 JOINING.)
+	var sess_script: GDScript = load("res://scripts/net/online_session.gd")
+	ok(sess_script.join_error_text({"error": "Match not found", "code": 4}) == "That duel has already ended."
+		and sess_script.join_error_text({"error": "match is over", "code": 5}) == "That duel has already ended.",
+		"online: joining a finished duel says so")
+	ok(sess_script.link_taken({"error": "Google ID is already in use.", "code": 409})
+		and not sess_script.link_taken({"error": "The server did not answer (timed out)."}),
+		"online: only an identity taken by another account moves the install there")
+	# The session's match inbox: only the match it joins or plays, and END while joining fails the search at once.
+	var s: Node = sess_script.new(950)
+	var got := {"ready": 0, "failed": []}
+	s.match_ready.connect(func(_st): got.ready += 1)
+	s.failed.connect(func(m): got.failed.append(m))
+	s.state = 0
+	s.match_id = "m1"
+	s._on_match_data(DuelSync.S_START, {"_mid": "m1", "players": ["a", "b"]})
+	ok(got.ready == 0 and s.state == 0, "online: a START after a cancelled join starts nothing")
+	s.state = 3
+	s._on_match_data(DuelSync.S_START, {"_mid": "m2", "players": ["a", "b"]})
+	ok(got.ready == 0 and s.state == 3, "online: another match's START is ignored")
+	s._on_match_data(DuelSync.S_END, {"_mid": "m1", "winner": "", "reason": "no_show"})
+	ok(s.state == 0 and s.match_id == "" and got.failed.size() == 1
+		and str(got.failed[0]).contains("never arrived"), "online: END no_show while joining fails the search")
+	s.state = 3
+	s.match_id = "m1"
+	s._on_match_data(DuelSync.S_START, {"_mid": "m1", "players": ["a", "b"]})
+	ok(got.ready == 1 and s.in_match(), "online: the joined match's START starts the duel")
+	s._on_match_data(DuelSync.S_ACTION, {"_mid": "m2", "seq": 5})
+	s._on_match_data(DuelSync.S_ACTION, {"_mid": "m1", "seq": 5})
+	ok(s.inbox.size() == 1 and int(s.inbox[0][1].seq) == 5, "online: only this match's moves reach the inbox")
+	s.free()
+
+
+## Deleted decks stay deleted across devices (tombstones in the cloud save), and nothing else is lost.
+func _test_deck_tombs() -> void:
+	var a := {"name": "Wrath", "cls": "pilgrim", "cards": {"x": 2}}
+	var b := {"name": "Ferry", "cls": "ferry", "cards": {"y": 2}, "saved_ms": 7000}
+	var tombs := {"pilgrim|Wrath": 5000}
+	var m := ProgressMerge.merge_decks([b], [a], tombs)
+	ok(m.size() == 1 and m[0].name == "Ferry", "decks: a deck deleted here does not come back from the other save")
+	var again := a.duplicate(true)
+	again["saved_ms"] = 6000
+	ok(ProgressMerge.merge_decks([again], [a], tombs).size() == 1, "decks: a deck made again after the deletion stays")
+	var edited := b.duplicate(true)
+	edited.cards = {"y": 1, "z": 1}
+	edited.saved_ms = 9000
+	m = ProgressMerge.merge_decks([b], [edited], {})
+	ok(m.size() == 1 and m[0].cards.has("z"), "decks: the copy saved last wins, even from the older save")
+	ok(ProgressMerge.merge_decks([a, a.duplicate()], [], {}).size() == 2, "decks: two decks of the same name both stay")
+	ok(ProgressMerge.merge_tombs({"k": 3, "j": 1}, {"k": 9}) == {"k": 9, "j": 1}, "decks: tombstones keep the later time")
+	# Through the whole merge, both directions, and an upload that keeps another device's tombstones.
+	var col := func(decks: Array, t: Dictionary) -> Dictionary:
+		return {"owned": {}, "obols": 5, "packs": 0, "pity": 0, "opened": 1, "decks": decks, "deleted_decks": t}
+	var here := ProgressMerge.blob({"collection": col.call([b], tombs), "record": {"wins": 1}}, 8000)
+	var there := ProgressMerge.blob({"collection": col.call([a, b], {}), "record": {"wins": 1}}, 9000)
+	for pair in [[here, there], [there, here]]:
+		var mm := ProgressMerge.merge(pair[0], pair[1])
+		ok(mm.data.collection.decks.size() == 1 and mm.data.collection.deleted_decks.has("pilgrim|Wrath"),
+			"decks: the merge drops the deleted deck and keeps its tombstone")
+	var up := ProgressMerge.keep_foreign(ProgressMerge.blob({"collection": col.call([], {})}, 1), here,
+		func(_id: String) -> bool: return true, func(_c: String) -> bool: return true)
+	ok(up.data.collection.deleted_decks.has("pilgrim|Wrath"), "decks: an upload keeps the account's tombstones")
+	# The collection stamps saves, buries renames and deletions.
+	var coll: Node = root.get_node_or_null("Collection")
+	if coll == null:
+		return
+	var keep := [coll.decks.duplicate(true), coll.deck_tombs.duplicate()]
+	var d := {"name": "Old name", "cls": "pilgrim", "cards": {}}
+	coll.stamp_deck(d)
+	ok(int(d.get("saved_ms", 0)) > 0, "decks: a saved deck carries its time")
+	var renamed := d.duplicate(true)
+	renamed.name = "New name"
+	coll.stamp_deck(renamed, d)
+	ok(coll.deck_tombs.has("pilgrim|Old name"), "decks: a rename buries the old name")
+	coll.decks = [renamed]
+	coll.delete_deck(0)
+	ok(coll.decks.is_empty() and coll.deck_tombs.has("pilgrim|New name"), "decks: a deletion leaves a tombstone")
+	coll.decks = keep[0]
+	coll.deck_tombs = keep[1]
 
 
 ## The cloud save's merge rules (ProgressMerge): pure functions, no network.
@@ -2091,6 +2225,7 @@ func _test_progress_merge() -> void:
 func _mirror_send(cl: Array[DuelSync], op: int, data: Dictionary) -> void:
 	_mseq += 1
 	data["seq"] = _mseq
+	_mlog.append(JSON.stringify(data)) # the server keeps each event as its JSON text, without the op code
 	for k in 2:
 		cl[k].push(op, data.duplicate(true))
 		while true:

@@ -58,7 +58,9 @@ timeout 300 $G --headless --path . res://tests/online_smoke.tscn -- --online-con
 ```
 The smoke runs two clients in one process (device accounts of profiles 900 / 901): matchmaking, START, chat, the
 mulligan, a few turns of Easy-AI moves with the checksums compared, one client dropped and rejoined (the RESYNC
-rebuild must match), a concession and END on both. It also checks the cloud save on the test accounts: a progress
+rebuild must match), a ping, the app-resume check and a session renewal that must keep the duel's socket, the other
+client's socket dropped under it so the session rejoins by itself (the RESYNC clock must be within turn + rope), a
+concession and END on both, and a late join of the finished duel refused as "That duel has already ended." It also checks the cloud save on the test accounts: a progress
 blob written and read back the same, a stale write refused as a version conflict, and the session's own sync (merge
 after sign-in, no write without changes, re-merge after a conflict). In debug runs `OnlineSession.apply` writes no
 file (the blob goes to `last_applied`), and the sync only runs when a test sets `cloud_forced`.

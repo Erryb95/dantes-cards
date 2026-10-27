@@ -2970,7 +2970,7 @@ func _concede() -> void:
 		if is_instance_valid(_pause_dim):
 			_pause_dim.queue_free()
 		Online.send(DuelSync.OP_CONCEDE, {})
-		_net_note_show("Conceding...")
+		_net_note_show("Conceding...", "concede") # its own kind: a "mulligan" note is hidden at once after the mulligan
 		await get_tree().create_timer(6.0).timeout
 		if _end_info.is_empty() and is_inside_tree(): # no answer: leave anyway
 			Online.leave_match()
@@ -3121,6 +3121,8 @@ func _net_tick(delta: float) -> void:
 			_net_wait = -1.0
 			_toast(V / 2, "The server did not answer", Color(1.0, 0.6, 0.5))
 			_return_card()
+			Online.check_alive() # a dead socket that still looks open is dropped now, and the duel rejoins
+	_net_report_result()
 	# The server decided the mulligan for us (time ran out): close the choice.
 	if _mull_waiting and net.mulligan_held_from(Online.user_id()):
 		_confirm_mulligan()
@@ -3153,9 +3155,9 @@ func _net_apply(delta: float) -> void:
 		_toast(V / 2, "Out of step with %s (desync)" % _opp_name(), Color(1.0, 0.5, 0.4))
 	if m[0] == DuelSync.S_TURN:
 		_net_wait = -1.0
-		_roped = false
-		var rx := int(m[1].get("_rx", Time.get_ticks_msec()))
-		_turn_end_ms = rx + int(m[1].get("turn_ms", net.turn_ms)) + int(m[1].get("rope_ms", net.rope_ms))
+		var clock := DuelSync.turn_clock(m[1], net.turn_ms, net.rope_ms) # a replayed TURN keeps the RESYNC's clock
+		_turn_end_ms = int(clock[0])
+		_roped = bool(clock[1])
 		if st.current != 0 and mode != Mode.IDLE:
 			_cancel() # the turn ran out under the player's hand
 	elif m[0] == DuelSync.S_ACTION and mine:
@@ -3163,9 +3165,14 @@ func _net_apply(delta: float) -> void:
 	if was_mull and not st.in_mulligan():
 		_turn_end_ms = 0 # until TURN 1 arrives with its clock
 	_ai_delay = 0.45 / Settings.anim_speed()
-	if st.winner != -1 and not _result_sent:
-		_result_sent = true
-		Online.send(DuelSync.OP_RESULT, {"winner": net.winner_id()})
+	_net_report_result()
+
+
+## The rules ended the game: tell the server who won (op 4). Not sent while the socket is down: `_net_tick` tries again
+## every frame until it goes (after a rejoin), so the server is not left waiting for a result that was lost.
+func _net_report_result() -> void:
+	if st.winner != -1 and not _result_sent and _end_info.is_empty():
+		_result_sent = Online.send(DuelSync.OP_RESULT, {"winner": net.winner_id()})
 
 
 func _net_message(op: int, data: Dictionary) -> void:
@@ -3190,12 +3197,11 @@ func _net_message(op: int, data: Dictionary) -> void:
 				net.push(e[0], e[1])
 			if int(data.get("seq", 0)) > net.last_seq + 2:
 				_ff = true # a rejoin: replay what was missed quickly
-			var rx := int(data.get("_rx", Time.get_ticks_msec()))
-			var rem := int(data.get("remaining_ms", 0))
-			if rem > 0:
-				var roped := bool(data.get("roped", false))
-				var mull := str(data.get("phase", "")) == "mulligan"
-				_turn_end_ms = rx + rem + (0 if roped or mull else net.rope_ms)
+			# remaining_ms already runs to the end of the turn, the rope included (it used to get the rope again)
+			var clock := DuelSync.resync_clock(data)
+			if int(clock[0]) > 0:
+				_turn_end_ms = int(clock[0])
+				_roped = bool(clock[1])
 			# A move sent just before a drop may still come back after this: keep waiting for it (or time out).
 			_net_note_hide()
 		DuelSync.S_END:
@@ -3215,9 +3221,9 @@ func _net_message(op: int, data: Dictionary) -> void:
 				queue.append({"t": "game_over", "winner": w})
 		DuelSync.S_ERROR:
 			_net_wait = -1.0
-			var code := str(data.get("code", "error"))
-			if code != "already_sent":
-				_toast(V / 2, "The server refused that (%s)" % code.replace("_", " "), Color(1.0, 0.6, 0.5))
+			var say := DuelSync.error_text(str(data.get("code", "error")))
+			if say != "":
+				_toast(V / 2, say, Color(1.0, 0.6, 0.5))
 			_return_card()
 
 
@@ -3319,6 +3325,8 @@ func _end_reason(won: bool) -> String:
 			return "The two games went out of step, so the server ended the duel."
 		"connection_lost":
 			return "The connection to the server was lost."
+		"gone":
+			return "The duel ended while you were away."
 	return "%s has fallen." % opp if won else "%s has the better of you." % opp
 
 
@@ -3330,8 +3338,13 @@ func _show_online_result(winner: int) -> void:
 		t += get_process_delta_time()
 	_turn_end_ms = 0
 	_tick_turn_clock()
+	if not _end_info.is_empty():
+		winner = net.end_side(_end_info) # the server's END is final (a desync has no winner, whatever the rules said)
+	var reason := str(_end_info.get("reason", "result"))
+	var unknown := reason in ["connection_lost", "gone"] # this client never heard how it ended
 	var won := winner == 0
-	Online.record_result("win" if won else ("loss" if winner == 1 else "draw"))
+	if not unknown:
+		Online.record_result("win" if won else ("loss" if winner == 1 else "draw"))
 	var dim := ColorRect.new()
 	dim.color = Color(0, 0, 0, 0)
 	dim.size = V
@@ -3343,8 +3356,8 @@ func _show_online_result(winner: int) -> void:
 	box.size = V
 	box.add_theme_constant_override("separation", 26)
 	ui.add_child(box)
-	var title := UI.banner("VICTORY" if won else ("DEFEAT" if winner == 1 else "DRAW"), 120,
-		UI.GOLD if won else Color(0.9, 0.3, 0.24), 0.0, 0.0, 1.8)
+	var title := UI.banner("VICTORY" if won else ("DEFEAT" if winner == 1 else ("DISCONNECTED" if unknown else "DRAW")),
+		120, UI.GOLD if won else Color(0.9, 0.3, 0.24), 0.0, 0.0, 1.8)
 	box.add_child(title)
 	var plate := PanelContainer.new()
 	plate.add_theme_stylebox_override("panel", UI.parchment_box(56, 34))
@@ -3357,7 +3370,9 @@ func _show_online_result(winner: int) -> void:
 	pv.add_theme_constant_override("separation", 10)
 	pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	plate.add_child(pv)
-	var sub := UI.label(_end_reason(won) if winner != 2 else "Neither of you prevails.", 34, "italic", UI.INK)
+	# A duel with no winner still says why (the connection, a desync, the time limit), not only "Neither prevails".
+	var sub := UI.label(_end_reason(won) if winner != 2 or reason != "result" else "Neither of you prevails.", 34,
+		"italic", UI.INK)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	UI.fit_label(sub, minf(1100.0, V.x - 260.0), 22)
 	pv.add_child(sub)
