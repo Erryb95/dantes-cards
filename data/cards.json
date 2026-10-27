@@ -557,7 +557,7 @@
    "class": "pilgrim",
    "class_name": "Pilgrim",
    "power_icon": "icon_shield",
-   "defeat_line": "The Pilgrim falls. The way down is closed to him.",
+   "defeat_line": "The pilgrim falls silent on the shore.",
    "name": "Dante, the Pilgrim",
    "health": 30,
    "power": {

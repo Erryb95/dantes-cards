@@ -39,6 +39,8 @@ var _shadow: Control
 var _mat: ShaderMaterial
 var _mats: Array[ShaderMaterial] = [] ## every card_fx material on the card (the tilt / burn uniforms go to all)
 var _art_mat: ShaderMaterial
+var _depth := false ## the art has a depth map: the parallax follows the tilt (ArtDepth)
+var _drift := Vector2.ZERO
 var _face: Control
 var _back: Control
 var _glow: Aura
@@ -144,6 +146,7 @@ func _build_face() -> void:
 		art.size = Vector2(W - 60, 200)
 		art.texture = CardDB.art_framed(card_id, art.size.x / art.size.y)
 		_art_mat.set_shader_parameter("mask_mode", 1)
+	_depth = ArtDepth.setup_card(_art_mat, card_id, art.size.x / art.size.y, 0.45 if is_spell else 0.36, ArtDepth.CARD)
 	if art.texture == null:
 		art.texture = _placeholder()
 	_face.add_child(art)
@@ -266,6 +269,7 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	_art_mat.shader = CARD_FX
 	_art_mat.set_shader_parameter("mask_mode", 2)
 	_art_mat.set_shader_parameter("corner", 0.07)
+	_depth = ArtDepth.setup_card(_art_mat, card_id, art.size.x / art.size.y, 0.42, ArtDepth.CARD)
 	art.material = _art_mat
 	_face.add_child(art)
 	ArtLoop.attach(_face, _face, art, _art_mat, card_id, art.size.x / art.size.y, 0.42)
@@ -442,6 +446,7 @@ func _process(delta: float) -> void:
 	_last_pos = position
 	var target := Vector2.ZERO
 	var lift := 0.0
+	var hovered := false
 	if dragging:
 		rotation = lerp_angle(rotation, clampf(_vel.x * 0.0002, -0.25, 0.25), 0.3)
 		target = (_vel * 0.0006).limit_length(0.5)
@@ -452,6 +457,7 @@ func _process(delta: float) -> void:
 		# would push that edge off the screen.
 		target = m.clamp(-Vector2.ONE, Vector2.ONE) * (0.13 if look else 0.32)
 		lift = 0.5
+		hovered = true
 	elif sway:
 		_sway_t += delta
 		target = Vector2(sin(_sway_t * 0.9) * 0.14, cos(_sway_t * 0.7) * 0.09)
@@ -460,6 +466,8 @@ func _process(delta: float) -> void:
 	if not hold_tilt and _tilt.length() < 0.002 and target == Vector2.ZERO:
 		_tilt = Vector2.ZERO
 	_param("tilt", _tilt)
+	if _depth:
+		_update_parallax(delta, hovered)
 	if _tilt != Vector2.ZERO:
 		var xf := get_global_transform()
 		_param("card_center", xf.origin)
@@ -473,6 +481,17 @@ func _process(delta: float) -> void:
 		if _foil > 1.6:
 			_foil = -0.6
 		_art_mat.set_shader_parameter("shine", clampf(_foil, -1.0, 1.2) if _foil >= 0.0 else -1.0)
+
+
+## The art's depth parallax follows the tilt, so the painting reads as a window with depth. Under a resting pointer, on
+## the inspect view and on a big zoomed card it also drifts gently, so the depth shows without moving anything.
+func _update_parallax(delta: float, hovered: bool) -> void:
+	var drift := Vector2.ZERO
+	if face_up and not dragging and (hovered or sway or get_global_transform().get_scale().x >= 1.4):
+		_sway_t += delta if not sway else 0.0 # `sway` already advances it
+		drift = Vector2(sin(_sway_t * 1.3), cos(_sway_t * 1.05)) * 0.07
+	_drift = _drift.lerp(drift, minf(1.0, delta * 4.0))
+	ArtDepth.look(_art_mat, _tilt + _drift)
 
 
 ## Burns the card away (spells after casting, cards burned from a full hand).

@@ -1,5 +1,5 @@
 shader_type canvas_item;
-render_mode blend_add;
+render_mode blend_add, unshaded;
 // Animated selection aura around a card (rounded rectangle) or a portrait (ellipse): soft glow, tongues of
 // spectral fire licking outward along the edge, and a bright spark that runs around the rim. Drawn on a ColorRect
 // larger than the shape (`margin` px on every side); nothing is drawn inside the shape.

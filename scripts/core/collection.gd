@@ -9,8 +9,6 @@ const WIN_REWARD := 100
 const LOSS_REWARD := 25
 const START_PACKS := 3
 const DECK_SIZE := 30
-## Class -> hero.
-const CLASS_HERO := {"pilgrim": "dante", "ferry": "charon"}
 ## Chance per card slot; the last slot is upgraded to rare if the pack has no rare yet.
 const ODDS := {"legendary": 0.015, "epic": 0.055, "rare": 0.21}
 const PITY_LEGENDARY := 20 ## guaranteed legendary within this many packs

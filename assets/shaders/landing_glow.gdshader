@@ -1,5 +1,5 @@
 shader_type canvas_item;
-render_mode blend_add;
+render_mode blend_add, unshaded;
 // Bright side of a minion's landing: hellfire glowing up through the fresh cracks, cooling from white-hot to the
 // minion's rarity colour and out, plus a brief flash at the point of impact.
 #include "res://assets/shaders/landing.gdshaderinc"

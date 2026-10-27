@@ -1,5 +1,5 @@
 shader_type canvas_item;
-render_mode blend_add;
+render_mode blend_add, unshaded;
 // Brings the painted VFX sprites to life without extra frames: the painting flows (rising heat for fire, a faint
 // shimmer for ice and light), and instead of fading uniformly it burns away through noise with a hot rim. The fade
 // is driven by the sprite's alpha (modulate.a), so the existing tweens animate it unchanged.
