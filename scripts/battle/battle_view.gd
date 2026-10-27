@@ -11,6 +11,9 @@ const HOVER_SCALE := 1.12
 const END_OVAL := Vector2(236, 150) ## the end-turn seal's visible oval, px
 const MINION_GAP := 40.0
 const PLAY_LINE := 0.70 ## releasing a dragged card above this fraction of the screen height plays it
+const INSPECT_SCALE := 0.95 ## the enlarged card shown beside a hovered minion
+const TIP_W := 400.0 ## a keyword tip plate's width (UI.tip_plate: a 320 px text column inside the frame)
+const TIP_GAP := 8
 
 enum Mode { IDLE, DRAG_CARD, AIM_SPELL, AIM_BATTLECRY, AIM_ATTACK, AIM_POWER }
 
@@ -73,7 +76,10 @@ var _end_glow: Aura
 var _end_disc: Shapes
 var banner: Label
 var inspect: CardView
-var _tips: VBoxContainer
+var _tips: GridContainer ## the inspect card's keyword tips (one column, or two when one would not fit)
+var _hand_tips: GridContainer ## keyword tips beside the lifted (hovered or held) hand card
+var _hand_tips_card: CardView
+var _pointer := Vector2.ZERO
 var _coach: Coach
 var _pause_dim: Control ## the open pause menu (no coach tips while it is up)
 var _flash_rect: ColorRect
@@ -337,6 +343,7 @@ func _build_scene() -> void:
 		mana_views[i] = _build_mana(i)
 		_set_mana(i, 0, 0)
 		deck_views[i] = _build_deck(i)
+		_set_deck_count(i, (Game.player_cards if i == 0 else Game.enemy_cards).size())
 
 	banner = UI.label("", 96, "title", UI.BONE, 14, Color(0.15, 0.02, 0.0))
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -361,10 +368,8 @@ func _build_scene() -> void:
 	_flash_rect.color = Color(1, 0.2, 0.05, 0.0)
 	_flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(_flash_rect)
-	_tips = VBoxContainer.new()
-	_tips.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_tips.add_theme_constant_override("separation", 8)
-	ui.add_child(_tips)
+	_tips = _tip_grid()
+	_hand_tips = _tip_grid()
 	# The coach floats above everything, cards in hand included.
 	var coach_layer := CanvasLayer.new()
 	coach_layer.layer = 50
@@ -378,6 +383,15 @@ func _build_scene() -> void:
 	menu.pressed.connect(_open_pause)
 	ui.add_child(menu)
 	_layout_static()
+
+
+func _tip_grid() -> GridContainer:
+	var g := GridContainer.new()
+	g.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	g.add_theme_constant_override("h_separation", TIP_GAP)
+	g.add_theme_constant_override("v_separation", TIP_GAP)
+	ui.add_child(g)
+	return g
 
 
 func _build_end_button() -> void:
@@ -478,7 +492,9 @@ func _build_deck(side: int) -> Node2D:
 		c.modulate = Color(k, k, k)
 		c.set_process(false)
 		n.add_child(c)
-	var l := UI.label("20", 30, "title", UI.BONE, 7, Color.BLACK)
+	# The real deck size from the start (the arena intro plays before the deal reports it).
+	var l := UI.label(str((Game.player_cards if side == 0 else Game.enemy_cards).size()), 30, "title", UI.BONE, 7,
+		Color.BLACK)
 	l.name = "Count"
 	l.size = Vector2(100, 40)
 	l.position = Vector2(-50, -20)
@@ -623,6 +639,7 @@ func _intro(p_arena: Dictionary) -> void:
 
 func _process(delta: float) -> void:
 	_tick_fx(delta)
+	_tick_hand_tips()
 	_tick_parallax(delta)
 	if _painted_board:
 		var mist := bg_layer.get_node_or_null("Board_mist") as Sprite2D
@@ -988,8 +1005,9 @@ func _mulligan_wait() -> void:
 	sub_row.size = Vector2(V.x, 64)
 	sub_row.position = Vector2(0, V.y * 0.12 + 84)
 	sub_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sub_row.add_child(UI.plaque_label(order + "   Tap the cards you want to replace.", 28, "italic", UI.BONE,
-		minf(1300.0, V.x - 160.0), 36, 10))
+	# "Click" with a mouse, "Tap" on a touch screen.
+	var how := "   %s the cards you want to replace." % UI.tap_word()
+	sub_row.add_child(UI.plaque_label(order + how, 28, "italic", UI.BONE, minf(1300.0, V.x - 160.0), 36, 10))
 	_mull_ui.add_child(sub_row)
 	var ok := UI.button("Confirm", 340, 84)
 	ok.position = Vector2(V.x / 2 - 170, V.y * 0.78)
@@ -1007,6 +1025,7 @@ func _toggle_mulligan(c: CardView) -> void:
 		# A red sash across the card with the word on it.
 		var x := UI.ribbon("Replace", CardView.W + 70, 38)
 		x.pivot_offset = x.size / 2
+		x.position.y -= 85.0 # across the painting, clear of the name ribbon and the rules text
 		x.rotation = -0.2
 		c.add_child(x)
 		_mull_marks[c.uid] = x
@@ -1575,7 +1594,8 @@ func _show_result(winner: int) -> void:
 		packs.pressed.connect(func(): Game.go(Game.PACKS))
 		row.add_child(packs)
 	var again := UI.button("Play Again", 340)
-	again.pressed.connect(func(): Game.go(Game.BATTLE))
+	# Through start_with, so the opponent deals a new deck (never the one just faced) instead of a rematch.
+	again.pressed.connect(func(): Game.start_with(Game.player_cards.duplicate(), Game.player_hero))
 	row.add_child(again)
 	var menu := UI.button("Main Menu", 340)
 	menu.pressed.connect(func(): Game.go(Game.MENU))
@@ -1979,6 +1999,7 @@ func _on_press(p: Vector2) -> void:
 
 
 func _on_motion(p: Vector2) -> void:
+	_pointer = p
 	match mode:
 		Mode.IDLE:
 			if _pressed or _in_mulligan:
@@ -2227,33 +2248,186 @@ func add_ripple(p: Vector2, strength: float) -> void:
 
 func _show_inspect(u) -> void:
 	_hide_inspect()
-	var id := ""
-	if u is MinionView:
-		id = u.card_id
-	elif u is HeroView:
+	if u is HeroView:
 		_show_hero_tip(u)
 		return
-	else:
+	if not (u is MinionView):
 		return
+	var id: String = u.card_id
 	inspect = CardView.new().setup(id, -1, true)
 	inspect.z_index = 300
 	inspect.sway = true
-	var left: bool = u.position.x > V.x / 2
-	inspect.position = Vector2(u.position.x + (-260.0 if left else 260.0), clampf(u.position.y, 200, V.y - 200))
 	inspect.scale = Vector2(0.6, 0.6)
 	fx_layer.add_child(inspect)
-	inspect.create_tween().tween_property(inspect, "scale", Vector2(0.95, 0.95), 0.12)
-	var kws: Array = CardDB.card(id).get("keywords", []).duplicate() # a copy: appending must not touch the card data
-	for e in CardDB.card(id).get("effects", []):
-		# A Ruse bonus is an On Play effect too, but its tip explains the Ruse.
-		var on: String = "ruse" if e.get("ruse", false) else str(e.get("on", ""))
-		if on in ["death", "play", "turn_end", "turn_start", "ruse"] and not kws.has(on) \
-				and CardDB.card(id).get("type") == "minion":
-			kws.append(on)
-	for k in kws:
-		if UI.KEYWORD_HELP.has(k):
-			_add_tip(UI.KEYWORD_HELP[k][0], UI.KEYWORD_HELP[k][1])
-	_tips.position = Vector2(inspect.position.x + (150.0 if not left else -470.0), inspect.position.y - 160)
+	inspect.create_tween().tween_property(inspect, "scale", Vector2(INSPECT_SCALE, INSPECT_SCALE), 0.12)
+	# The minion as it is now, not as printed: its current numbers, the keywords it has gained or lost, frozen,
+	# silenced (a silenced minion keeps no text, so its old keywords and triggers get no tips).
+	var live: Dictionary = CardDB.card(id).duplicate()
+	var unit = st.units.get(u.uid)
+	if unit != null:
+		inspect.set_stats(unit.attack, unit.health, unit.max_health)
+		live["keywords"] = unit.keywords.keys()
+		live["frozen"] = unit.frozen
+		live["silenced"] = unit.silenced
+	var tips := UI.card_tips(live, true)
+	for t in tips:
+		_add_tip(t[0], t[1])
+	# Beside the minion, clear of both heroes, their gems, the End Turn seal and the minion itself. The tips go on the
+	# far side of the card (so the card stays next to the minion it explains), in two columns when one is too tall.
+	var card_size := Vector2(CardView.W, CardView.H) * INSPECT_SCALE
+	var left: bool = u.position.x > V.x / 2
+	var avoid := _keep_out()
+	avoid.append(Rect2(u.position - Vector2(80, 100), Vector2(160, 200)))
+	var spots := [] ## [card rect, card on the left of the minion]
+	for side_left in [left, not left]:
+		var x: float = u.position.x - 140.0 - card_size.x if side_left else u.position.x + 140.0
+		var spot = _clear_spot(card_size, Vector2(x, u.position.y - card_size.y / 2), avoid)
+		if spot != null:
+			spots.append([Rect2(spot, card_size), side_left])
+	if spots.is_empty():
+		var fx: float = u.position.x - 140.0 - card_size.x if left else u.position.x + 140.0
+		spots.append([Rect2(Vector2(fx, clampf(u.position.y - card_size.y / 2, 16.0, V.y - card_size.y - 16.0)),
+			card_size), left])
+	var chosen: Array = spots[0]
+	if not tips.is_empty():
+		var placed := false
+		for outer in [true, false]:
+			for sp in spots:
+				var av: Array[Rect2] = avoid.duplicate()
+				av.append(sp[0])
+				if _fit_tips(_tips, tips, sp[0], sp[1] if outer else not sp[1], av):
+					chosen = sp
+					placed = true
+					break
+			if placed:
+				break
+		if not placed:
+			_tips_fallback(_tips, tips, chosen[0], chosen[1])
+	inspect.position = (chosen[0] as Rect2).get_center()
+
+
+## Lays the tips grid beside `card` on its left (`left`) or right side, in one column or else two, slid up or down
+## to stay on screen and clear of `avoid`; false when neither fits on that side.
+func _fit_tips(grid: GridContainer, tips: Array, card: Rect2, left: bool, avoid: Array[Rect2]) -> bool:
+	for cols in [1, 2]:
+		if cols > tips.size():
+			break
+		var sz := _tips_size(tips, cols)
+		var x: float = card.position.x - 12.0 - sz.x if left else card.end.x + 12.0
+		var spot = _clear_spot(sz, Vector2(x, card.position.y), avoid)
+		if spot != null:
+			grid.columns = cols
+			grid.position = spot
+			return true
+	return false
+
+
+## No clear room anywhere: one column beside the card, kept on screen.
+func _tips_fallback(grid: GridContainer, tips: Array, card: Rect2, left: bool) -> void:
+	var sz := _tips_size(tips, 1)
+	grid.columns = 1
+	var x: float = card.position.x - 12.0 - sz.x if left else card.end.x + 12.0
+	grid.position = Vector2(clampf(x, 16.0, V.x - sz.x - 16.0), clampf(card.position.y, 16.0, maxf(16.0, V.y - sz.y - 16.0)))
+
+
+## The size of a grid of tip plates (UI.tip_plate at its default width) in `cols` columns, measured from the fonts.
+func _tips_size(tips: Array, cols: int) -> Vector2:
+	var hs: Array[float] = []
+	var title_h := UI.font("title").get_height(24)
+	for t in tips:
+		hs.append(78.0 + 4.0 + title_h + UI.font("body").get_multiline_string_size(str(t[1]), HORIZONTAL_ALIGNMENT_LEFT,
+			TIP_W - 100.0, 22).y + 6.0)
+	var h := 0.0
+	for i in range(0, hs.size(), cols):
+		var row := hs[i]
+		if cols > 1 and i + 1 < hs.size():
+			row = maxf(row, hs[i + 1])
+		h += row + TIP_GAP
+	return Vector2(cols * TIP_W + (cols - 1) * TIP_GAP, h - TIP_GAP)
+
+
+## What a pop-up card and its tips must never cover: both heroes (portrait, health and armor gems, hero power), the
+## End Turn seal, the mana trays, the deck piles and the Menu button.
+func _keep_out() -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	for i in 2:
+		out.append(Rect2(_hero_pos(i) + Vector2(-130, -135), Vector2(370, 262)))
+		if mana_views[i] != null:
+			out.append(Rect2(mana_views[i].position + Vector2(-250, -45), Vector2(450, 90)))
+		if deck_views[i] != null: # the pile lies on its side, about 130 x 90 px, a little stacked up and right
+			out.append(Rect2(deck_views[i].position + Vector2(-75, -70), Vector2(165, 125)))
+	out.append(Rect2(end_btn.position - END_OVAL / 2 - Vector2(14, 14), END_OVAL + Vector2(28, 28)))
+	out.append(Rect2(16, 12, 180, 72))
+	return out
+
+
+## Top-left for a `size` box as close to `want` (top-left) as it can be by sliding it up or down, inside the screen
+## and clear of `avoid`; null when the column at that x has no such room.
+func _clear_spot(size: Vector2, want: Vector2, avoid: Array[Rect2]):
+	if want.x < 16.0 or want.x + size.x > V.x - 16.0:
+		return null
+	var top := 16.0
+	var bottom := V.y - 16.0 - size.y
+	if bottom < top:
+		return null
+	for d in range(0, int(V.y), 8):
+		for dir in [1.0, -1.0]:
+			if d == 0 and dir < 0.0:
+				continue
+			var y: float = want.y + d * dir
+			if y < top or y > bottom:
+				continue
+			var r := Rect2(Vector2(want.x, y), size)
+			var clear := true
+			for a in avoid:
+				if r.intersects(a):
+					clear = false
+					break
+			if clear:
+				return Vector2(want.x, y)
+	return null
+
+
+## Keyword tips beside the hand card you look at: the one lifted under the pointer, or the one you hold over the
+## hand (shown full size above the finger). Gone once the card leaves the hand area, is played or let go.
+func _tick_hand_tips() -> void:
+	var c: CardView = null
+	var center := Vector2.ZERO
+	var scl := 1.0
+	var paused := _pause_dim != null and is_instance_valid(_pause_dim)
+	if over or _in_mulligan or paused:
+		c = null
+	elif mode == Mode.IDLE and hover_card != null and is_instance_valid(hover_card) and hand_views[0].has(hover_card):
+		c = hover_card
+		center = c.home
+		scl = HOVER_SCALE
+	elif mode == Mode.DRAG_CARD and drag_card != null and is_instance_valid(drag_card) \
+			and _pointer.y >= V.y * PLAY_LINE:
+		c = drag_card
+		center = c.position
+		scl = c.scale.x
+	if c != _hand_tips_card:
+		_hand_tips_card = c
+		for t in _hand_tips.get_children():
+			t.queue_free()
+		_hand_tips.set_meta("tips", [])
+		if c != null:
+			var tips := UI.card_tips(CardDB.card(c.card_id))
+			for t in tips:
+				_hand_tips.add_child(UI.tip_plate(t[0], t[1]))
+			_hand_tips.set_meta("tips", tips)
+	_hand_tips.visible = c != null
+	if c == null:
+		return
+	var size := Vector2(CardView.W, CardView.H) * scl
+	var rect := Rect2(center - size / 2, size)
+	var avoid := _keep_out()
+	avoid.append(rect)
+	# Toward the nearer screen edge first, so the tips cover as little of the hand as they can.
+	var tips: Array = _hand_tips.get_meta("tips", [])
+	var edge := center.x < V.x / 2
+	if not _fit_tips(_hand_tips, tips, rect, edge, avoid) and not _fit_tips(_hand_tips, tips, rect, not edge, avoid):
+		_tips_fallback(_hand_tips, tips, rect, edge)
 
 
 func _show_hero_tip(h: HeroView) -> void:
@@ -2265,19 +2439,7 @@ func _show_hero_tip(h: HeroView) -> void:
 
 
 func _add_tip(title: String, text: String) -> void:
-	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", UI.tip_box())
-	p.custom_minimum_size = Vector2(320, 0)
-	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var v := VBoxContainer.new()
-	p.add_child(v)
-	var t := UI.label(title, 24, "title", UI.GOLD)
-	v.add_child(t)
-	var b := UI.label(text, 22, "body", UI.BONE)
-	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	b.custom_minimum_size = Vector2(300, 0)
-	v.add_child(b)
-	_tips.add_child(p)
+	_tips.add_child(UI.tip_plate(title, text))
 
 
 func _hide_inspect() -> void:
@@ -2286,6 +2448,7 @@ func _hide_inspect() -> void:
 		inspect = null
 	for c in _tips.get_children():
 		c.queue_free()
+	_tips.columns = 1
 
 
 # ================================================================ pause / debug
@@ -2305,12 +2468,39 @@ func _open_pause() -> void:
 	box.add_child(UI.banner("Paused", 66)) # the heading on the charred banner
 	for entry in [["Resume", dim.queue_free],
 			["Options", func(): dim.add_child(OptionsPanel.new())],
-			["Concede", _concede]]:
+			["Concede", _ask_concede.bind(dim, box)]]:
 		var b := UI.button(entry[0], 380)
 		b.pressed.connect(entry[1])
 		var c := CenterContainer.new()
 		c.add_child(b)
 		box.add_child(c)
+
+
+## "Concede this match?" on the charred banner over the pause dim: Concede ends the match as a loss, Keep playing
+## closes the pause menu.
+func _ask_concede(dim: Control, menu: Control) -> void:
+	menu.visible = false
+	var box := VBoxContainer.new()
+	box.name = "ConcedeConfirm"
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.size = V
+	box.add_theme_constant_override("separation", 26)
+	dim.add_child(box)
+	box.add_child(UI.banner("Concede this match?", 60))
+	var note := CenterContainer.new()
+	note.add_child(UI.plaque_label("It counts as a loss.", 30, "italic", UI.BONE, 0.0, 36, 10))
+	box.add_child(note)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 30)
+	box.add_child(row)
+	var yes := UI.button("Concede", 340)
+	yes.pressed.connect(_concede)
+	row.add_child(yes)
+	var no := UI.button("Keep playing", 340)
+	no.pressed.connect(dim.queue_free)
+	row.add_child(no)
+	Sfx.play("ui_back", -8.0)
 
 
 func _concede() -> void:

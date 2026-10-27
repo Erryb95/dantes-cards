@@ -50,7 +50,13 @@ var _face: Control
 var _back: Control
 var _glow: Aura
 var _cost_label: Label
+var _atk_label: Label
+var _hp_label: Label
 var _foil := -1.0
+var _ruse_pulse := false ## the Ruse glow is breathing (its strength is driven here, not by the Aura's fade)
+
+## Ruse ready: a deep, warm gold that breathes slowly, so it never reads as the green "playable" glow.
+const RUSE_GLOW := [Color(1.0, 0.9, 0.5), Color(1.0, 0.5, 0.0)]
 
 
 func setup(p_card_id: String, p_uid: int = -1, p_face_up: bool = true) -> CardView:
@@ -254,8 +260,10 @@ func _build_face() -> void:
 			var hp := Shapes.make(Shapes.Kind.DROP, Vector2(58, 70), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
 			hp.position = hp_at
 			_face.add_child(hp)
-		_face.add_child(_stat_label(str(int(card.get("attack", 0))), atk_at + UI.gem_number_offset("gem_attack", 74, 34), 34))
-		_face.add_child(_stat_label(str(int(card.get("health", 0))), hp_at + UI.gem_number_offset("gem_health", 74, 34), 34))
+		_atk_label = _stat_label(str(int(card.get("attack", 0))), atk_at + UI.gem_number_offset("gem_attack", 74, 34), 34)
+		_face.add_child(_atk_label)
+		_hp_label = _stat_label(str(int(card.get("health", 0))), hp_at + UI.gem_number_offset("gem_health", 74, 34), 34)
+		_face.add_child(_hp_label)
 
 
 ## Full-art layout (Enrico 2026-10-25): the painting fills the card inside a thin painted border; name ribbon,
@@ -377,8 +385,10 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 		var hp_at := Vector2(W - 28, H - 30)
 		_face.add_child(UiSkin.rect("gem_attack", Vector2(72, 72), atk_at - Vector2(36, 36)))
 		_face.add_child(UiSkin.rect("gem_health", Vector2(72, 72), hp_at - Vector2(36, 36)))
-		_face.add_child(_stat_label(str(int(card.get("attack", 0))), atk_at + UI.gem_number_offset("gem_attack", 74, 34), 34))
-		_face.add_child(_stat_label(str(int(card.get("health", 0))), hp_at + UI.gem_number_offset("gem_health", 74, 34), 34))
+		_atk_label = _stat_label(str(int(card.get("attack", 0))), atk_at + UI.gem_number_offset("gem_attack", 74, 34), 34)
+		_face.add_child(_atk_label)
+		_hp_label = _stat_label(str(int(card.get("health", 0))), hp_at + UI.gem_number_offset("gem_health", 74, 34), 34)
+		_face.add_child(_hp_label)
 
 
 func _stat_label(text: String, center: Vector2, size: int) -> Label:
@@ -456,14 +466,54 @@ func set_cost(cost: int) -> void:
 	_cost_label.text = str(cost)
 
 
+## A minion's live numbers (the inspect view of a minion in play): raised values green, damaged health red, as on
+## the board.
+func set_stats(attack: int, health: int, max_health: int) -> void:
+	if _atk_label == null:
+		return
+	_atk_label.text = str(attack)
+	_hp_label.text = str(health)
+	_atk_label.add_theme_color_override("font_color", UI.HEAL if attack > int(card.get("attack", 0)) else UI.NUMBER)
+	var hp_col := UI.NUMBER
+	if health < max_health:
+		hp_col = Color(1.0, 0.35, 0.3)
+	elif health > int(card.get("health", 0)):
+		hp_col = UI.HEAL
+	_hp_label.add_theme_color_override("font_color", hp_col)
+
+
 func _update_glow() -> void:
 	if _glow == null:
 		return
-	var preset: Array = Aura.SELECTED if selected else (Aura.RUSE if ruse else Aura.PLAYABLE)
+	var preset: Array = Aura.SELECTED if selected else (RUSE_GLOW if ruse else Aura.PLAYABLE)
 	_glow.set_on(face_up and (playable or selected), preset)
+	# The gold fire also licks faster than the green.
+	_glow.material.set_shader_parameter("speed", 1.5 if ruse and not selected else 1.0)
+
+
+## The Ruse glow breathes (strength 0.95 to 1.5, about a 2.6 s cycle) once the Aura has faded it in; it settles
+## back to the steady 1.0 when the Ruse is no longer live.
+func _tick_ruse_glow(delta: float) -> void:
+	var pulse := ruse and playable and not selected and face_up and _glow.on
+	var fading := _glow._tween != null and _glow._tween.is_running()
+	if not _glow.on:
+		_ruse_pulse = false # the Aura fades it out on its own
+		return
+	if fading or (not pulse and not _ruse_pulse):
+		return
+	var cur: float = _glow.material.get_shader_parameter("strength")
+	var want := 1.0
+	if pulse:
+		want = 1.22 + 0.28 * sin(Time.get_ticks_msec() / 1000.0 * 2.4)
+	cur = lerpf(cur, want, minf(1.0, delta * 6.0))
+	_glow.material.set_shader_parameter("strength", cur)
+	_ruse_pulse = pulse or absf(cur - 1.0) > 0.01
+	if not _ruse_pulse:
+		_glow.material.set_shader_parameter("strength", 1.0)
 
 
 func _process(delta: float) -> void:
+	_tick_ruse_glow(delta)
 	# Velocity tilt while dragged: lean into the motion like a real card.
 	_vel = _vel.lerp((position - _last_pos) / maxf(delta, 0.001), 0.25)
 	_last_pos = position

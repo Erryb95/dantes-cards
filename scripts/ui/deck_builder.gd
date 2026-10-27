@@ -27,6 +27,7 @@ var _views := {} ## id -> CardView
 var _set_tabs := {} ## set filter -> Button
 var _cost_tabs := {} ## cost filter -> Button
 var _own_tab: Button
+var _hover_tips: Control ## keyword tips beside the card under the pointer
 
 
 func _ready() -> void:
@@ -291,6 +292,7 @@ func _fill() -> void:
 		c.queue_free()
 	_badges.clear()
 	_views.clear()
+	_hide_tips()
 	var w := size.x - 480 - 100
 	_grid.columns = maxi(2, int(w / (CardView.W * S + 18)))
 	for c in _pool():
@@ -313,8 +315,12 @@ func _fill() -> void:
 		_badges[c.id] = tag.get_node("Text")
 		_views[c.id] = v
 		var id: String = c.id
-		slot.mouse_entered.connect(func(): v.create_tween().tween_property(v, "scale", Vector2(S, S) * 1.06, 0.1))
-		slot.mouse_exited.connect(func(): v.create_tween().tween_property(v, "scale", Vector2(S, S), 0.1))
+		slot.mouse_entered.connect(func():
+			v.create_tween().tween_property(v, "scale", Vector2(S, S) * 1.06, 0.1)
+			_show_tips(id, slot))
+		slot.mouse_exited.connect(func():
+			v.create_tween().tween_property(v, "scale", Vector2(S, S), 0.1)
+			_hide_tips())
 		slot.gui_input.connect(func(e):
 			if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
 				_add(id)
@@ -322,6 +328,32 @@ func _fill() -> void:
 				_remove(id))
 		_grid.add_child(slot)
 	_refresh()
+
+
+## The keyword tips of the card under the pointer, beside its slot (right of it, or left near the screen edge).
+func _show_tips(id: String, slot: Control) -> void:
+	_hide_tips()
+	var col := UI.tip_column(CardDB.card(id))
+	if col == null:
+		return
+	col.top_level = true
+	col.z_index = 50
+	add_child(col)
+	_hover_tips = col
+	var r := slot.get_global_rect()
+	var vs := get_viewport_rect().size
+	var w := col.get_combined_minimum_size().x
+	var x := r.end.x + 10.0 if r.end.x + 10.0 + w < vs.x - 16.0 else r.position.x - 10.0 - w
+	col.position = Vector2(x, r.position.y)
+	await get_tree().process_frame
+	if is_instance_valid(col): # laid out now: keep the whole column on screen
+		col.position.y = clampf(r.position.y, 16.0, maxf(16.0, vs.y - col.size.y - 16.0))
+
+
+func _hide_tips() -> void:
+	if _hover_tips != null and is_instance_valid(_hover_tips):
+		_hover_tips.queue_free()
+	_hover_tips = null
 
 
 func _limit(id: String) -> int:
