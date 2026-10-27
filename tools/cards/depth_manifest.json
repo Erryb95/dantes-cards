@@ -1,0 +1,854 @@
+{
+ "banner_chaser": {
+  "src": "1a025e15550e11942d6797c5171143daf3fe38d7",
+  "v": 1
+ },
+ "cd_accorso": {
+  "src": "deae9e8c1542e26c4607897fdc9a7060a10a38bb",
+  "v": 1
+ },
+ "cd_alexander": {
+  "src": "93b67020c69202490909150a4777466bdcfc1c57",
+  "v": 1
+ },
+ "cd_anastasius": {
+  "src": "df6b611993acad91ef0d55a37242d33bfc8b064c",
+  "v": 1
+ },
+ "cd_attila": {
+  "src": "858ba758215cd11635fde7279f976210c846287b",
+  "v": 1
+ },
+ "cd_black_hound": {
+  "src": "c52574341cdd3e80c2ec0e22a145adf452d8e4e8",
+  "v": 1
+ },
+ "cd_bleeding_branch": {
+  "src": "bc1bc45a7d4917bacc1faf8429f87e7bf1b57676",
+  "v": 1
+ },
+ "cd_burning_sand": {
+  "src": "580de71bc5faff2a87776921b4e5f936d6e87f94",
+  "v": 1
+ },
+ "cd_capaneus": {
+  "src": "386311a0124d7db0055ae22fe282e8992bb11ae9",
+  "v": 1
+ },
+ "cd_cavalcante": {
+  "src": "666f4e81a471574d62b7f344b243eea9c0d7ca00",
+  "v": 1
+ },
+ "cd_dionysius": {
+  "src": "bb40cb0302a738f721525057e6215e799715f767",
+  "v": 1
+ },
+ "cd_epicurus": {
+  "src": "97afe0f3ed4fb5066928b27e323c34edf8a4f5e6",
+  "v": 1
+ },
+ "cd_ezzelino": {
+  "src": "86c1e183dfaa290f677bf1e842242f0967389019",
+  "v": 1
+ },
+ "cd_frederick_ii": {
+  "src": "b530217f1ce33c331e2776c02bde27c98bd29a4b",
+  "v": 1
+ },
+ "cd_furys_lash": {
+  "src": "e5b1d3e9f8181f5268b783011c7bcb7a55ffa110",
+  "v": 1
+ },
+ "cd_gate_of_dis": {
+  "src": "ebd677f034a8dcaf7add0624172f81f705fd3684",
+  "v": 1
+ },
+ "cd_giacomo": {
+  "src": "363c3601076ab640b0216745fcfc21c77a3cde88",
+  "v": 1
+ },
+ "cd_guido_guerra": {
+  "src": "c7727bd25a8bcd85c97a4a9483e39194c2e67c8d",
+  "v": 1
+ },
+ "cd_guy_montfort": {
+  "src": "29c937269968db3bac195d4c6e09155860705389",
+  "v": 1
+ },
+ "cd_hounds_of_lano": {
+  "src": "577b3dbebc30cae8ac94afd87436406cbccf579c",
+  "v": 1
+ },
+ "cd_lano": {
+  "src": "5efc3c3a9a4782ccce71851e3952984090f50e98",
+  "v": 1
+ },
+ "cd_medusa_gate": {
+  "src": "4e9c890b9df39c4da0e2a70462d7a0006e92d2c9",
+  "v": 1
+ },
+ "cd_minotaur": {
+  "src": "64ce3b2547627b345fe96e027ba7a607f17eac4f",
+  "v": 1
+ },
+ "cd_nameless_bush": {
+  "src": "9c5494c940eeebe8fc3324a1b2322147d25c3d9e",
+  "v": 1
+ },
+ "cd_nessus": {
+  "src": "cc20258ce78e797f5cf35944c94ea00643b431e8",
+  "v": 1
+ },
+ "cd_nicholas_iii": {
+  "src": "dd856075b8d8c861e81d364cbd577eb054450367",
+  "v": 1
+ },
+ "cd_old_man_crete": {
+  "src": "5f2dae18b41eb09728f1fdc5d8a0a08d5e98217e",
+  "v": 1
+ },
+ "cd_pholus": {
+  "src": "ad451761436d030e291cea5fd54ef457227cb9c9",
+  "v": 1
+ },
+ "cd_priscian": {
+  "src": "c3698b2aa360b049216ba3aa31c07b206a8aa41f",
+  "v": 1
+ },
+ "cd_rain_of_fire": {
+  "src": "f064d24121b34e0f5e4866b98f76b95a64ec6a4b",
+  "v": 1
+ },
+ "cd_rusticucci": {
+  "src": "3887a09164bb0cd6b476dfde850ba3cb0d4823ce",
+  "v": 1
+ },
+ "cd_scrovegni": {
+  "src": "77b717d8f0e2f10397ba9ef426df558ac820e7cd",
+  "v": 1
+ },
+ "cd_sealed_lids": {
+  "src": "ef4647bbb41aaee45b5b8179dc77f188c02e4b6a",
+  "v": 1
+ },
+ "cd_sealed_tomb": {
+  "src": "2c08e2908a165b4ea5d1610cd0bc7200b91efde5",
+  "v": 1
+ },
+ "cd_usurers_purse": {
+  "src": "1619db6fdf6a50e7e470b33fea4285ee0c39225b",
+  "v": 1
+ },
+ "cd_vitaliano": {
+  "src": "c250189f3eeb0a10e3a769021fd6cc0ca83e562b",
+  "v": 1
+ },
+ "cd_walls_of_dis": {
+  "src": "3c853d6cf252f4862880bfa5b21ed3d3a0826da7",
+  "v": 1
+ },
+ "centaur_arrows": {
+  "src": "51643431af6cdf4924e15b8fa2fc6c90a4a5afe7",
+  "v": 1
+ },
+ "cerberus": {
+  "src": "c9cf11c89f0dd958ec37a1768cef0d0498be20fe",
+  "v": 1
+ },
+ "chiron_centaurs": {
+  "src": "96e4854cc3a7d6182a9e91090604050fe77ca3ec",
+  "v": 1
+ },
+ "farinata": {
+  "src": "d648f7465b0f460f0e4777c3ac49d4c8fc481b71",
+  "v": 1
+ },
+ "farinata_tomb": {
+  "src": "53cdbaf4db5c2bac3b596185dc130a1321761540",
+  "v": 1
+ },
+ "francesca": {
+  "src": "0e36a3e33998132163342513ae278edd8e4b7941",
+  "v": 1
+ },
+ "furies": {
+  "src": "f25b119f6d5b46e5ecf3eb091e623743f80b8c16",
+  "v": 1
+ },
+ "geryon": {
+  "src": "ac9857cfd631d0e48f00fd580d155e9dca6364ff",
+  "v": 1
+ },
+ "harpies_flock": {
+  "src": "39178a883ea7b45be8e41262be28ee6e741a3b61",
+  "v": 1
+ },
+ "harpy": {
+  "src": "c53422811636e7e903d4e79cdcb8ecb36a6d82eb",
+  "v": 1
+ },
+ "hero:charon": {
+  "src": "96fa184fd7b749993ab7812e18df271555eab59d",
+  "v": 1
+ },
+ "hero:dante": {
+  "src": "d022a7e998b6a2dc0b5a0e8eacf34c7d75decb17",
+  "v": 1
+ },
+ "ih_antaeus": {
+  "src": "9f53794fa2b411684824b5ea8f0578b4453a665f",
+  "v": 1
+ },
+ "ih_barbariccia": {
+  "src": "7e3dd151f44e102babe7cd3c3591b696cc671c24",
+  "v": 1
+ },
+ "ih_barbed_imp": {
+  "src": "7cf4a8527b226ba306ca4f802a188eb85ffa8deb",
+  "v": 1
+ },
+ "ih_blood_swimmer": {
+  "src": "203c2424a1bd4840e9901b35a1ce20690760d75c",
+  "v": 1
+ },
+ "ih_boiling_tide": {
+  "src": "b6440176d8648427818d98369a9bda74e13f2ebc",
+  "v": 1
+ },
+ "ih_briareus": {
+  "src": "50a8ea0d49e9e3b04b42118829ff9b9064926bcf",
+  "v": 1
+ },
+ "ih_burning_rain": {
+  "src": "6f55e0df0d03deebdee751907fb9e07e67b61908",
+  "v": 1
+ },
+ "ih_cacus": {
+  "src": "8f9dbcd78522ba350fdaf8d61b0242908a831c5e",
+  "v": 1
+ },
+ "ih_cacus_stolen_herd": {
+  "src": "3819b2b7979d862d627f60efd6bf959412081d54",
+  "v": 1
+ },
+ "ih_cagnazzo": {
+  "src": "f5568aad1071e32a32ef19c3870b61a5d1643561",
+  "v": 1
+ },
+ "ih_calcabrina": {
+  "src": "1e94ff954caf850999052d6dc8affe90f900ad22",
+  "v": 1
+ },
+ "ih_cocytus_chill": {
+  "src": "3d76bcb7ecc613804374ef063535f2ba803c8304",
+  "v": 1
+ },
+ "ih_cocytus_winter": {
+  "src": "57723aad2b6ba04a85cc4dbcffc01f2d5647590a",
+  "v": 1
+ },
+ "ih_demons_lash": {
+  "src": "29c3ab22cd7b314f6ac1611a1904a57691bc12fb",
+  "v": 1
+ },
+ "ih_draghignazzo": {
+  "src": "9e6e6c69608f8ab41cd3e0f62f97db007cf2e392",
+  "v": 1
+ },
+ "ih_ephialtes": {
+  "src": "db56ed4f13f0aa88f9de20dbbf87c5c2ee800b71",
+  "v": 1
+ },
+ "ih_farfarello": {
+  "src": "35a3f8597772a83dbb793b0e12cebb374c7fc1e6",
+  "v": 1
+ },
+ "ih_gate_angel": {
+  "src": "3c5b6ed1750ba143daead45eaa82e476f7f28a62",
+  "v": 1
+ },
+ "ih_graffiacane": {
+  "src": "8cbec5ae623efef8a60039944b1479d1a2188b5a",
+  "v": 1
+ },
+ "ih_hellhound_guardian": {
+  "src": "881e0d7e7e845c87984e89e1e0d466d8cb5169ef",
+  "v": 1
+ },
+ "ih_hellhound_pup": {
+  "src": "11d739797c68edef4aeeeeb9802ea79effff1aef",
+  "v": 1
+ },
+ "ih_libicocco": {
+  "src": "0b15b0808197d2ad0928b04bab4b346cc8fc950d",
+  "v": 1
+ },
+ "ih_malacoda": {
+  "src": "704b708e6a1bdc78a24381e4b8d419240875625c",
+  "v": 1
+ },
+ "ih_nimrod": {
+  "src": "67e69a84de07842036c8eff769eb93b623436b1e",
+  "v": 1
+ },
+ "ih_pitch_sinner": {
+  "src": "2aa87a769077bca09ce92ee7d59f7956a11e61b6",
+  "v": 1
+ },
+ "ih_rain_of_sand": {
+  "src": "8bce31c53ac449bd77e2fb4f8833752a93dfecde",
+  "v": 1
+ },
+ "ih_rubicante": {
+  "src": "9bcfaa9ae386591b9817d136c842b1ae3c49c30b",
+  "v": 1
+ },
+ "ih_scarmiglione": {
+  "src": "de8f2112a914baccdeebc3c3545225b661c8944d",
+  "v": 1
+ },
+ "ih_serpents_kiss": {
+  "src": "0c55db8f6ca73396f923d6ef02c853fbd666c581",
+  "v": 1
+ },
+ "ih_strength_of_earth": {
+  "src": "4bb7c9a660de4b8076ac709d98e1f8a87be830d0",
+  "v": 1
+ },
+ "ih_sulphur_vent": {
+  "src": "5630a549c4eb21b90effd4bdae1fb0e294a1e274",
+  "v": 1
+ },
+ "ih_thief_serpent": {
+  "src": "51f45f93f0dafa2da9b652ef387b1775c5cfa97c",
+  "v": 1
+ },
+ "ih_thieves_bargain": {
+  "src": "add1ec4ac0779d96e42c5468ca2fc2014096c62c",
+  "v": 1
+ },
+ "ih_tormented_shade": {
+  "src": "ac5ffb8c8a31072adc8e4aaf255db68485136a33",
+  "v": 1
+ },
+ "ih_typhon": {
+  "src": "fd64de9edbec95cb59150fba6d8331625c365ee8",
+  "v": 1
+ },
+ "ih_whip_demon": {
+  "src": "b13aaa9080b0969a51d02f7ad54f763d1e62cd0c",
+  "v": 1
+ },
+ "limbo_philosophers": {
+  "src": "ece640314118b8fedfd447af029da40bb4c4af7d",
+  "v": 1
+ },
+ "lost_pilgrim": {
+  "src": "d699120b8df66e00622f34e2406faefe689473b3",
+  "v": 1
+ },
+ "lost_soul": {
+  "src": "781eaff3af44792187fb7934613b63040f905fbb",
+  "v": 1
+ },
+ "mc_agnello": {
+  "src": "134ed25465b04fe8ce25293b9f32f3570957606c",
+  "v": 1
+ },
+ "mc_alberigo": {
+  "src": "2c555365cb568dc1f59555d41ec7822be7f6ceee",
+  "v": 1
+ },
+ "mc_alessio": {
+  "src": "e441ee95c7ba480b1765562b56bd46928688087a",
+  "v": 1
+ },
+ "mc_bertran": {
+  "src": "9fc78b9cd0ec2b3685ed0e863d6e51103961641e",
+  "v": 1
+ },
+ "mc_bocca": {
+  "src": "f9d2db252eda67a2eb26bd6a9413184f42104d43",
+  "v": 1
+ },
+ "mc_boiling_pitch": {
+  "src": "ff9f1a82d2edff3f0093aca4f9bde022ac519a80",
+  "v": 1
+ },
+ "mc_brutus": {
+  "src": "12e475c370d8566e35d9c59418b2bc3516fe58b4",
+  "v": 1
+ },
+ "mc_caiaphas": {
+  "src": "26ff778834073f38d655c494b5ffc2f7e6f8de28",
+  "v": 1
+ },
+ "mc_cassius": {
+  "src": "b7fd71787ef5d3b3d5ce2c37d2519c1db30b8c87",
+  "v": 1
+ },
+ "mc_ciampolo": {
+  "src": "3313690cb3a1ad1bc824a8b0baf93f5b6117904d",
+  "v": 1
+ },
+ "mc_discord_silence": {
+  "src": "0927de3ab6946ee71b222a42c60a1708437dc4dc",
+  "v": 1
+ },
+ "mc_earth_swallows": {
+  "src": "9c2c01208eca5c33a3a7ed0207aee489cf1cdce2",
+  "v": 1
+ },
+ "mc_frozen_lake": {
+  "src": "d1c0475f891e51e4c14c920dad2744b75d5f2ba3",
+  "v": 1
+ },
+ "mc_frozen_shade": {
+  "src": "03daddab6b6cdc90a090be9cc0f858a8d575cdc0",
+  "v": 1
+ },
+ "mc_frozen_tears": {
+  "src": "9f2468968f8ba87e4466a4be6757051e582ce107",
+  "v": 1
+ },
+ "mc_gianni_schicchi": {
+  "src": "dd9fd6b76cfdabca74e5b9ddf94dd2f0170ffe8b",
+  "v": 1
+ },
+ "mc_gilded_cloak": {
+  "src": "ee27648d5c0f575e7b9db7c4e9ff15d42c364931",
+  "v": 1
+ },
+ "mc_guido": {
+  "src": "06a887f822a37ed4ada74f0db5a89739816de36f",
+  "v": 1
+ },
+ "mc_jason": {
+  "src": "92e51c0b8fa6ac5f03431b8eb44be95c64a65338",
+  "v": 1
+ },
+ "mc_jovial_friars": {
+  "src": "2c1796e8acca5f197b0601a2164b45dc3522bdde",
+  "v": 1
+ },
+ "mc_judas": {
+  "src": "69ef267a7e0fbcf4207f534ab145aff9dc993627",
+  "v": 1
+ },
+ "mc_lucifer": {
+  "src": "dcf5f84dc01b882964fdec82e40fd9a6786b46c2",
+  "v": 1
+ },
+ "mc_manto": {
+  "src": "b58009dc0b760a437b1ac2ddd33ac0600b5996fb",
+  "v": 1
+ },
+ "mc_master_adam": {
+  "src": "4023cbf2cc56bc14a03d8d35e96c623f1c5ad634",
+  "v": 1
+ },
+ "mc_michael_scot": {
+  "src": "5282fc92d037e1df26184a079444dd2238b23be2",
+  "v": 1
+ },
+ "mc_mosca": {
+  "src": "9aaf56e95525d5d8e47054627677c1a2f426ad9e",
+  "v": 1
+ },
+ "mc_myrrhas_disguise": {
+  "src": "0ad5d4c263d59f63aaa0cb94e537024ff0d15f69",
+  "v": 1
+ },
+ "mc_pier_medicina": {
+  "src": "1325e6354cb10bd2f7fbb53397cfa48358f85361",
+  "v": 1
+ },
+ "mc_ruggieri": {
+  "src": "fce801054abfc2309d7aff46b97f93af0c41761c",
+  "v": 1
+ },
+ "mc_serpent": {
+  "src": "0ab39978f1bd76683dac42aaf5ee89fd74f8a3d7",
+  "v": 1
+ },
+ "mc_sinons_lie": {
+  "src": "7f9f75feab9472d32e482d1ad3d28a3d4b9bd39d",
+  "v": 1
+ },
+ "mc_six_wings": {
+  "src": "97158086f701b32396aeac175439e64a30e745ac",
+  "v": 1
+ },
+ "mc_thais": {
+  "src": "ce82b1f60d174ee37442c6017ce630e9b41bdae6",
+  "v": 1
+ },
+ "mc_tiresias": {
+  "src": "19f1743a0577cc422531f65dd039b89826f6ab58",
+  "v": 1
+ },
+ "mc_ulysses": {
+  "src": "895d0e48a86ba7bc7bfcde020c7163e76184aaa1",
+  "v": 1
+ },
+ "mc_vanni_fucci": {
+  "src": "c9f6b2d9a26da465c3b31f173f5bd15a9e7c28be",
+  "v": 1
+ },
+ "mc_venedico": {
+  "src": "3ec972ad4bd24d95903e95818d2ca916afd847cf",
+  "v": 1
+ },
+ "medusa_gaze": {
+  "src": "8c927266e272d8c8aca5f13347da6fca25c39bf0",
+  "v": 1
+ },
+ "minos": {
+  "src": "c0f82692605066d8d0b93adca283df1a436f3870",
+  "v": 1
+ },
+ "minotaur_rampage": {
+  "src": "dc2625b257aa708bbb2708eff268f9f7840b3502",
+  "v": 1
+ },
+ "oar_strike": {
+  "src": "846678d5c842f175225094d938d0674b233185c2",
+  "v": 1
+ },
+ "obol_coin": {
+  "src": "8b543037ac65dde507bad499346d4424b55899cb",
+  "v": 1
+ },
+ "paolo": {
+  "src": "9b907e125454607cc5fbf62fbe04805b8dcae1c8",
+  "v": 1
+ },
+ "phlegyas": {
+  "src": "e6c5dac4e5bde2869182452b9188d4526109c637",
+  "v": 1
+ },
+ "pj_ascent_of_mountain": {
+  "src": "a127e2fef83d93e4f383d2febd11da6b87b02451",
+  "v": 1
+ },
+ "pj_beatrice": {
+  "src": "e487bb7d388b3ee90bdfa658b0843c6fb06054de",
+  "v": 1
+ },
+ "pj_beatrices_grace": {
+  "src": "dc3a5c08c73ea9819551dca3cac950cc869b5372",
+  "v": 1
+ },
+ "pj_brunetto_latini": {
+  "src": "8e1a48b2ab1b65033a6067a6ace0b31eea7a0892",
+  "v": 1
+ },
+ "pj_cato": {
+  "src": "34a103ca80f500a13b057bd4a5c1343af7e4e351",
+  "v": 1
+ },
+ "pj_centaur_escort": {
+  "src": "76b66298b86f20ceac6edb7f86e980d273fcaeee",
+  "v": 1
+ },
+ "pj_ciacco": {
+  "src": "20fcf6002e06801300293b5ec8db49dcbc30bfc9",
+  "v": 1
+ },
+ "pj_cleopatra": {
+  "src": "6304319afec9bd485c6e11bbf0d4a9736a9cad35",
+  "v": 1
+ },
+ "pj_dantes_courage": {
+  "src": "6b3f5f8bd26ff31563f984b37ae518f6811ee66a",
+  "v": 1
+ },
+ "pj_dantes_resolve": {
+  "src": "601cce8576e398c2ff1f1878a0bc193e32759992",
+  "v": 1
+ },
+ "pj_guiding_stars": {
+  "src": "b6545bdc0580f11614d406aebc199e9c40fdcc0e",
+  "v": 1
+ },
+ "pj_harpy_of_the_wood": {
+  "src": "33eb0f21ec9ba4bd4bc5d79b1cfc53c145e9a1ac",
+  "v": 1
+ },
+ "pj_heavenly_messenger": {
+  "src": "76a342fdbf0fc968847310b15e1450adc10598c2",
+  "v": 1
+ },
+ "pj_homer": {
+  "src": "a299109fc11f53366002285c2e50d8d9a4d93827",
+  "v": 1
+ },
+ "pj_horace": {
+  "src": "6f3bac3ec84979d0b7d1d4404e5b1e6e1607a8bd",
+  "v": 1
+ },
+ "pj_hungry_wolf": {
+  "src": "22647b3362e603eb59a83cb6d4957d4b33ceab3b",
+  "v": 1
+ },
+ "pj_led_back_dark_wood": {
+  "src": "095931180e4e6e68d3e122082aee1aa3d9365bdc",
+  "v": 1
+ },
+ "pj_leopard_of_lust": {
+  "src": "f236197d9dba6587c7aafec50dcdf294070fb4bf",
+  "v": 1
+ },
+ "pj_lion_of_violence": {
+  "src": "0e487954e38eb4e3fb361df1090d49b8e0413e3c",
+  "v": 1
+ },
+ "pj_lost_shade": {
+  "src": "ef0e921f42214581d3b790bc3fb9bd53bb76004d",
+  "v": 1
+ },
+ "pj_lucan": {
+  "src": "4bbeaff6950dbfbe22189ca0bd5e797478f4c4c4",
+  "v": 1
+ },
+ "pj_ovid": {
+  "src": "5011587329f3e2687b52ac7cd46debb265a959d4",
+  "v": 1
+ },
+ "pj_pier_della_vigna": {
+  "src": "5ce9303aa3eaa62ba29ef2c268573d3b96d71f28",
+  "v": 1
+ },
+ "pj_reed_of_humility": {
+  "src": "cf4f389497c748815ab0c4899f53b349ee88097c",
+  "v": 1
+ },
+ "pj_rope_belt": {
+  "src": "583e698341d8b76b3a167195cfc1573209214d4f",
+  "v": 1
+ },
+ "pj_saint_lucy": {
+  "src": "175259cabce69f8c3882780d51565dcf8f79f20b",
+  "v": 1
+ },
+ "pj_serpent_of_the_pit": {
+  "src": "16ec90dec5ed7e53cf597120658cb72e12592abc",
+  "v": 1
+ },
+ "pj_stars_again": {
+  "src": "43e8f671265bdd273fe7efdb9ac8ad75a462fe21",
+  "v": 1
+ },
+ "pj_statius": {
+  "src": "29499772a1921e6e2d8de6a013ffdc5d6e9d2f16",
+  "v": 1
+ },
+ "pj_swoon_of_pity": {
+  "src": "6a0b104c73a2d3773b2e5684bcdea84360eb3668",
+  "v": 1
+ },
+ "pj_three_beasts": {
+  "src": "252fa6cac4220118df3239535af71b07b477e181",
+  "v": 1
+ },
+ "pj_trembling_pilgrim": {
+  "src": "365ab0d6ca29650fafae82ca6730f778e28157fd",
+  "v": 1
+ },
+ "pj_veil_of_stillness": {
+  "src": "e8dc180b66a453e8b04666eb412f53d9c638b8ad",
+  "v": 1
+ },
+ "pj_virgils_wisdom": {
+  "src": "6cad5afc85aacd90371005da3779a7a514d2d6ac",
+  "v": 1
+ },
+ "pj_virgins_mercy": {
+  "src": "4defd4f70d558a5d0dd2fbf06a1ea88aba770df9",
+  "v": 1
+ },
+ "pj_wanderer_dark_wood": {
+  "src": "879a0b03e0728ddde328aed809c02048b7c3d83d",
+  "v": 1
+ },
+ "plutus": {
+  "src": "83c7e7d2591a0e766b9571fa2f96250077a9a1a5",
+  "v": 1
+ },
+ "she_wolf": {
+  "src": "f9f69a28d8815b004280a68c7b3d779a37c47cf2",
+  "v": 1
+ },
+ "souls_of_the_styx": {
+  "src": "781eaff3af44792187fb7934613b63040f905fbb",
+  "v": 1
+ },
+ "stung_neutral": {
+  "src": "70519dd013f871f6abf559a832b52acff4a20543",
+  "v": 1
+ },
+ "turned_back": {
+  "src": "2f4006f3b9d7fe00c00004e4dcf708b94430da48",
+  "v": 1
+ },
+ "ugolino": {
+  "src": "e5d7e9ea24bf0b57a947a5879ae772ae1845568d",
+  "v": 1
+ },
+ "uh_achilles": {
+  "src": "0c2ed4f0178943b019126ae6b03c864acdfc4739",
+  "v": 1
+ },
+ "uh_avaricious_hoarder": {
+  "src": "ac76355dd701563d7c28311f43857b56eed008d0",
+  "v": 1
+ },
+ "uh_avaricious_weight": {
+  "src": "8c8c2d91ba50dfd3ad5b376d40623b27ea1f9698",
+  "v": 1
+ },
+ "uh_bitter_chill": {
+  "src": "cb8485065cc1bda105004e87d37d187d20813d08",
+  "v": 1
+ },
+ "uh_caesar": {
+  "src": "c48c9b1da7570c7631fc6cc3565ef19464cacda3",
+  "v": 1
+ },
+ "uh_camilla": {
+  "src": "3b7da0ceae48dcd9acf89e4b29755eca7dac2c7f",
+  "v": 1
+ },
+ "uh_cup_of_forgetting": {
+  "src": "f64d911ef261536856acb62b7c5c3ffda40eb5ee",
+  "v": 1
+ },
+ "uh_cut_the_thread": {
+  "src": "9020c935f3073fab13351400d452b3111fbdc523",
+  "v": 1
+ },
+ "uh_dido": {
+  "src": "e0764065eaf71b0615a2468c6bd5677a0d1ae50f",
+  "v": 1
+ },
+ "uh_electra": {
+  "src": "fbc037628d03fdf7716f9fc1ed24a9b4205e693a",
+  "v": 1
+ },
+ "uh_filippo_argenti": {
+  "src": "e04f96e5695816de4cd2cee249905f8ccd307120",
+  "v": 1
+ },
+ "uh_forese": {
+  "src": "7cbc9369ea201576a6c233da69234df194502ac3",
+  "v": 1
+ },
+ "uh_gale_of_the_lustful": {
+  "src": "7f65e0f8c6076c0abc9a152fc718b45b06a5cde7",
+  "v": 1
+ },
+ "uh_great_refusal": {
+  "src": "84c5aba88db90becace80c2f7fab1ae8f4fff87c",
+  "v": 1
+ },
+ "uh_greyhound": {
+  "src": "691a3fafd31ad68adc77eb8a58b60e2db181654d",
+  "v": 1
+ },
+ "uh_hector": {
+  "src": "2546af86c7daff698e8c17a44daed0a63a3e4fb5",
+  "v": 1
+ },
+ "uh_helen": {
+  "src": "658f8218cb8adaaad72568b95709af23671ddecb",
+  "v": 1
+ },
+ "uh_hidden_shield": {
+  "src": "517b66484f7353713f1bbbc7675c8ba9c58214db",
+  "v": 1
+ },
+ "uh_hoarded_coin": {
+  "src": "8b543037ac65dde507bad499346d4424b55899cb",
+  "v": 1
+ },
+ "uh_limbo_shade": {
+  "src": "ab7f951f4ec29987d841da5783b7a5b49191c8f4",
+  "v": 1
+ },
+ "uh_lost_path": {
+  "src": "1ba74486af9786797095e15128ce930d06ef345b",
+  "v": 1
+ },
+ "uh_orpheus": {
+  "src": "2b77581619037873e5ada18bb7338823d5d529b3",
+  "v": 1
+ },
+ "uh_penthesilea": {
+  "src": "d4a7d67e30713d07812f052de0f7ea77e2f5cbf9",
+  "v": 1
+ },
+ "uh_phoenix": {
+  "src": "110651dc3ebe72538f00f050be3f9a439820ffbd",
+  "v": 1
+ },
+ "uh_prodigal_weight": {
+  "src": "8234a491b96186a76247d887325bc5cda72b057d",
+  "v": 1
+ },
+ "uh_saladin": {
+  "src": "032ec73c2247133bba146b3de552911d621e6205",
+  "v": 1
+ },
+ "uh_semiramis": {
+  "src": "a1a8a403c54f88dea07e8ebaf9ed9ee3c13b266b",
+  "v": 1
+ },
+ "uh_shore_soul": {
+  "src": "fddba4a32d012a50d7535213005768237d53bac2",
+  "v": 1
+ },
+ "uh_silencing_word": {
+  "src": "f7bc372aac3646c81689758dee40163958e12e2e",
+  "v": 1
+ },
+ "uh_socrates": {
+  "src": "37096264d2927d94abd055923644bc6f5fb944c4",
+  "v": 1
+ },
+ "uh_sullen_one": {
+  "src": "cfe15d9dcd73d10bafd5e9b4430bb06ffef5a6e7",
+  "v": 1
+ },
+ "uh_thorn_jab": {
+  "src": "a724ef4f96896dd67130a3722d57f56b734be368",
+  "v": 1
+ },
+ "uh_tristan": {
+  "src": "4900328a259d98aaa864671141f6ff73b9fff662",
+  "v": 1
+ },
+ "uh_turned_away": {
+  "src": "67e6da56dfd5842716f04463c549ff22e667d5c7",
+  "v": 1
+ },
+ "uh_undecided_soul": {
+  "src": "531998a029278aecb7f2a4291d3aba59e8ddf18c",
+  "v": 1
+ },
+ "uh_wrathful_shade": {
+  "src": "0c2cf1509653e26e1c17c87c923b5e167c34971d",
+  "v": 1
+ },
+ "virgil_guide": {
+  "src": "06e439acba8f65fbd0165714f38c9f3d94957e55",
+  "v": 1
+ },
+ "virgils_counsel": {
+  "src": "2db93e8c8a0e1b9ceca1923a9214a2e43c426013",
+  "v": 1
+ },
+ "virtuous_pagans": {
+  "src": "ea3bf13d9bb4bde442c5b0f2912308b02d02325e",
+  "v": 1
+ }
+}

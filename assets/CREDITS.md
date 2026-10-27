@@ -60,6 +60,11 @@ imported by tools/vfx/import_vfx.py.
 The looping animations of some legendary cards (assets/cards/loops/*.ogv, 3 s, silent) are AI-generated: Wan 2.2
 image-to-video (Apache-2.0) on the owner's ComfyUI, made from the card's own AI art above. A card animates when its
 loop file exists; tools/cards/make_loops.py converts the Wan mp4 clips to Ogg Theora.
+The depth maps in assets/cards/depth/ (greyscale, used only for the art's parallax) are estimated by an AI model from the
+card and hero art above: **Depth Anything V2 Small** ([model card](https://huggingface.co/depth-anything/Depth-Anything-V2-Small),
+Apache-2.0; only the Small size is Apache, Base / Large / Giant are CC-BY-NC and are not used), run as the ONNX export
+[onnx-community/depth-anything-v2-small](https://huggingface.co/onnx-community/depth-anything-v2-small) (Apache-2.0) with
+onnxruntime (MIT) on the CPU by tools/cards/make_depth.py, then normalised and blurred. The model is not shipped.
 The opening cinematic (assets/intro/) is made of Gustave Dore's public-domain plates. Four of its clips (forest, panther,
 lion, gate) were animated with the AI video model Wan 2.2 (Apache-2.0) on the owner's PC; the other two clips, the
 plates and the narration are not AI (the narration is a human LibriVox recording). Cards without a painting yet
