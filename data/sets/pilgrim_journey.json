@@ -602,9 +602,15 @@
      "on": "play",
      "do": "freeze",
      "target": "choose_enemy_minion"
+    },
+    {
+     "on": "play",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 2
     }
    ],
-   "text": "Freeze an enemy minion.",
+   "text": "Freeze an enemy minion. Restore 2 Health to your hero.",
    "flavor": "He dropped his cord into the abyss, and the beast came up to meet it.",
    "circle": "violence",
    "art": "A coil of rope falls down a dark cliff into a deep chasm."
@@ -622,9 +628,15 @@
      "do": "damage",
      "target": "all_enemy_minions",
      "amount": 2
+    },
+    {
+     "on": "play",
+     "do": "armor",
+     "target": "own_hero",
+     "amount": 2
     }
    ],
-   "text": "Deal 2 damage to all enemy minions.",
+   "text": "Deal 2 damage to all enemy minions. Gain 2 Armor.",
    "flavor": "The leopard, the lion and the wolf all turned away at last.",
    "circle": "dark_wood",
    "art": "A leopard, a lion and a wolf stand in a row on a forest path."
@@ -646,9 +658,15 @@
      "on": "play",
      "do": "draw",
      "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 3
     }
    ],
-   "text": "Gain an empty Mana Crystal. Draw a card.",
+   "text": "Gain an empty Mana Crystal. Draw a card. Restore 3 Health to your hero.",
    "flavor": "Each step up the slope makes the next one easier.",
    "circle": "ante_inferno",
    "art": "A narrow stone path climbs a sunlit mountain slope toward a bright sky."
@@ -659,15 +677,20 @@
    "set": "pilgrim",
    "type": "spell",
    "rarity": "rare",
-   "cost": 1,
+   "cost": 2,
    "effects": [
     {
      "on": "play",
      "do": "silence",
      "target": "choose_minion"
+    },
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
     }
    ],
-   "text": "Silence a minion.",
+   "text": "Silence a minion. Draw a card.",
    "flavor": "One quiet word strips away its tricks.",
    "circle": "heresy",
    "art": "An open stone tomb with a grey cloth draped over its edge."
@@ -732,9 +755,15 @@
      "on": "play",
      "do": "bounce",
      "target": "choose_enemy_minion"
+    },
+    {
+     "on": "play",
+     "do": "heal",
+     "target": "own_hero",
+     "amount": 3
     }
    ],
-   "text": "Return an enemy minion to its owner's hand.",
+   "text": "Return an enemy minion to its owner's hand. Restore 3 Health to your hero.",
    "flavor": "Sometimes the path forces you to go back the way you came.",
    "circle": "dark_wood",
    "art": "A grey wolf stumbles backward along a forest path, with a bright light behind it."

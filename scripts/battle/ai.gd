@@ -414,11 +414,13 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 					return {}
 				target = best
 			"mana":
-				# Charon's Obol: only when the extra crystal unlocks a card that is not playable now.
+				# Charon's Obol, Sinon's Lie: only when the extra mana (after paying for this card) unlocks a card that is
+				# not playable now.
 				var unlock := 0
 				for o in me.hand:
 					var oc := CardDB.card(o.id)
-					if o.uid != c.uid and int(oc.cost) == me.mana + int(e.amount):
+					if o.uid != c.uid and int(oc.cost) == me.mana - int(card.cost) + int(e.amount) \
+							and int(oc.cost) > me.mana:
 						unlock = maxi(unlock, int(oc.cost))
 				if unlock == 0:
 					if card.type == "spell" and effects.size() == 1:

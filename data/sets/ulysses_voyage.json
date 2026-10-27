@@ -225,9 +225,16 @@
      "do": "damage",
      "target": "choose_any",
      "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_any",
+     "amount": 1,
+     "ruse": true
     }
    ],
-   "text": "On Play: Deal 1 damage.",
+   "text": "On Play: Deal 1 damage. Ruse: Deal 1 more.",
    "flavor": "A fire on the shore can guide a ship home, or onto the rocks.",
    "circle": "malebolge",
    "art": "A hooded man raises a burning torch beside a tall signal fire on a cliff above the sea."
@@ -1110,6 +1117,33 @@
    "flavor": "A mountain, dark with distance, higher than any I had seen. Then the whirlwind came.",
    "circle": "malebolge",
    "art": "A dark mountain rises from the open sea while a whirlwind spins a small ship toward the waves."
+  },
+  {
+   "id": "mc_ulysses",
+   "name": "Ulysses, the Schemer",
+   "set": "ulysses",
+   "type": "minion",
+   "rarity": "legendary",
+   "cost": 4,
+   "attack": 3,
+   "health": 3,
+   "effects": [
+    {
+     "on": "play",
+     "do": "copy",
+     "target": "choose_enemy_minion",
+     "ruse": true
+    },
+    {
+     "on": "play",
+     "do": "bounce",
+     "target": "choose_enemy_minion"
+    }
+   ],
+   "text": "On Play: Return an enemy minion to its owner's hand. Ruse: Keep a copy.",
+   "flavor": "He talked his crew past the edge of the world, and none of them came home.",
+   "circle": "malebolge",
+   "art": "A helmeted man at a ship's prow beside a lit beacon fire on dark water."
   },
   {
    "id": "ul_achaean_raider",

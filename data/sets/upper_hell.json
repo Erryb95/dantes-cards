@@ -92,9 +92,14 @@
      "on": "play",
      "do": "draw",
      "amount": 1
+    },
+    {
+     "on": "death",
+     "do": "draw",
+     "amount": 1
     }
    ],
-   "text": "On Play: Draw a card.",
+   "text": "On Play: Draw a card. Last Breath: Draw a card.",
    "flavor": "He questioned everyone until they admitted they knew nothing.",
    "circle": "limbo",
    "art": "An old bald man in a plain cloak questioning a small circle of students."
@@ -252,12 +257,12 @@
    "health": 3,
    "effects": [
     {
-     "on": "play",
+     "on": "death",
      "do": "silence",
-     "target": "choose_enemy_minion"
+     "target": "all_enemy_minions"
     }
    ],
-   "text": "On Play: Silence an enemy minion.",
+   "text": "Last Breath: Silence all enemy minions.",
    "flavor": "She loved too much, and the love left her with nothing.",
    "circle": "lust",
    "art": "A queen in a long gown standing beside a burning funeral pyre on the shore."
@@ -484,10 +489,15 @@
      "on": "play",
      "do": "damage",
      "target": "choose_any",
-     "amount": 2
+     "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
     }
    ],
-   "text": "Deal 2 damage.",
+   "text": "Deal 1 damage. Draw a card.",
    "flavor": "Snap a thorn off the wood and strike.",
    "circle": "dark_wood",
    "art": "A broken thorny branch lying on dead leaves."
@@ -529,10 +539,20 @@
      "on": "play",
      "do": "armor",
      "target": "own_hero",
-     "amount": 3
+     "amount": 2
+    },
+    {
+     "on": "play",
+     "do": "buff",
+     "target": "random_friendly_minion",
+     "attack": 0,
+     "health": 0,
+     "keywords": [
+      "ward"
+     ]
     }
    ],
-   "text": "Gain 3 Armor.",
+   "text": "Gain 2 Armor. Give a random friendly minion Ward.",
    "flavor": "Sometimes the safest place is the one nobody notices.",
    "circle": "ante_inferno",
    "art": "A round bronze shield leaning against a stone wall in shadow."
@@ -620,16 +640,16 @@
    "set": "neutral",
    "type": "spell",
    "rarity": "rare",
-   "cost": 4,
+   "cost": 3,
    "effects": [
     {
      "on": "play",
      "do": "damage",
-     "target": "all_enemy_minions",
+     "target": "all_minions",
      "amount": 2
     }
    ],
-   "text": "Deal 2 damage to all enemy minions.",
+   "text": "Deal 2 damage to ALL minions.",
    "flavor": "Lovers swept together by a storm that never ends.",
    "circle": "lust",
    "art": "A violent wind over a rough sea with many figures carried along."
@@ -663,11 +683,16 @@
    "effects": [
     {
      "on": "play",
+     "do": "silence",
+     "target": "choose_enemy_minion"
+    },
+    {
+     "on": "play",
      "do": "destroy",
      "target": "choose_enemy_minion"
     }
    ],
-   "text": "Destroy an enemy minion.",
+   "text": "Silence an enemy minion, then destroy it.",
    "flavor": "Someone has to cut the thread, even in Hell.",
    "circle": "dis",
    "art": "Heavy iron shears cutting a long white thread."

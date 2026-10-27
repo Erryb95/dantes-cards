@@ -96,7 +96,8 @@ him, card by card. / At the river Acheron, Charon is waiting."
 Ulysses, the false counsellor of Inferno XXVI, wrapped with Diomedes in a two-horned flame in the eighth bolgia.
 The class is the trickster of the three: Dante has Armor, draw, guards and holy light; Charon has damage, Venom,
 souls and board clears; Ulysses wins with timing, stolen knowledge and false appearances. Cards: `data/sets/ulysses_voyage.json`
-(prefix `ul_`, 48 cards + 2 tokens), art list `art_src/ulysses_card_art.json`.
+(prefix `ul_`, 48 cards + 2 tokens, plus the legendary Ulysses, the Schemer, kept under its old id `mc_ulysses`), art list
+`art_src/ulysses_card_art.json`.
 - **Hero power, Searing Word (2):** deal 1 damage to a minion. (A first draft copied a card from the enemy's deck
   every turn: it buried the slow Pilgrim decks in cards, about 75-80% wins, and did nothing against Ferryman aggro.
   The ping keeps the flame identity, answers small swarms and adds no reach to the face.)
@@ -104,7 +105,8 @@ souls and board clears; Ulysses wins with timing, stolen knowledge and false app
   Cheap cards (0-1 mana) set it up; the class sequences its turn instead of just spending mana.
 - **Copy / Steal:** Puccio, Spoils of Troy, the augurs and Simon Magus copy from the enemy's hand or deck; the Palladium
   steals the top of the enemy's deck and the Black Cherub a card from their hand; Capocchio summons a copy of an enemy
-  minion as it is now (buffs, damage, Silence, Freeze; see "Copies" under Rules).
+  minion as it is now (buffs, damage, Silence, Freeze; see "Copies" under Rules); Ulysses, the Schemer sends an
+  enemy minion back to its owner's hand and, with Ruse, keeps a copy of it.
 - **Transform:** Circe's Draught and Circe turn minions into 1/1 Swine (no Last Breath, Ward does not help).
 - **Disguise and replay:** weak-looking bodies with a payoff (Achaean in Hiding, Buoso Donati, the Trojan Horse: a 0/6
   Guard that releases three Achaean Raiders), bounce to replay On Play effects (Turn the Prow, the Distant Mountain).
@@ -139,8 +141,8 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
 
 ## Collection and packs (v0.2)
 - 296 cards: core 27 + Pilgrim's Journey 35 + Infernal Host 35 + Upper Hell (33: Filippo Argenti and the Wrathful
-  Shade moved to the Wrathful), City of Dis, Malebolge and Cocytus (35 neutral each) + The Last Voyage 48 (Ulysses) +
-  The Stygian Marsh 48 (Filippo Argenti).
+  Shade moved to the Wrathful), City of Dis (35 neutral), Malebolge and Cocytus (34 neutral: Ulysses, the Schemer moved
+  to the Wanderer) + The Last Voyage 49 (Ulysses) + The Stygian Marsh 48 (Filippo Argenti).
 - First run: you own the cards of the starter decks (one per class) and get 3 packs (the other preconstructed decks are played
   from Choose your path without owning their cards). Battles pay Obols (win 100, loss 25); a pack costs 100.
 - A pack holds 5 cards: per slot legendary 1.5%, epic 5.5%, rare 21%; at least one rare; a legendary within

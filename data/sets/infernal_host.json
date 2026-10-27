@@ -516,11 +516,23 @@
     {
      "on": "play",
      "do": "damage",
-     "target": "choose_any",
-     "amount": 2
+     "target": "random_enemy",
+     "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "random_enemy",
+     "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "random_enemy",
+     "amount": 1
     }
    ],
-   "text": "Deal 2 damage.",
+   "text": "Deal 3 damage randomly split among all enemies.",
    "flavor": "Slow flakes of fire fall on the sand, and they never stop.",
    "circle": "violence",
    "art": "Slow flakes of fire falling through the air above a plain of gray sand."
@@ -531,15 +543,21 @@
    "set": "ferry",
    "type": "spell",
    "rarity": "common",
-   "cost": 0,
+   "cost": 1,
    "effects": [
     {
      "on": "play",
      "do": "silence",
-     "target": "choose_minion"
+     "target": "choose_enemy_minion"
+    },
+    {
+     "on": "play",
+     "do": "damage",
+     "target": "choose_enemy_minion",
+     "amount": 1
     }
    ],
-   "text": "Silence a minion.",
+   "text": "Silence an enemy minion. Deal 1 damage to it.",
    "flavor": "One bite, and the minion forgets every trick it knew.",
    "circle": "malebolge",
    "art": "A green serpent with fangs bared in front of a small armored demon."
@@ -667,11 +685,17 @@
    "effects": [
     {
      "on": "play",
+     "do": "damage",
+     "target": "choose_enemy_minion",
+     "amount": 1
+    },
+    {
+     "on": "play",
      "do": "bounce",
      "target": "choose_enemy_minion"
     }
    ],
-   "text": "Return an enemy minion to its owner's hand.",
+   "text": "Deal 1 damage to an enemy minion. If it survives, return it to its owner's hand.",
    "flavor": "One crack of the whip, and you start the whole way over.",
    "circle": "malebolge",
    "art": "A demon's long barbed whip wrapped around a naked sinner's wrists."
@@ -687,11 +711,11 @@
     {
      "on": "play",
      "do": "damage",
-     "target": "all_enemy_minions",
+     "target": "all_enemies",
      "amount": 2
     }
    ],
-   "text": "Deal 2 damage to all enemy minions.",
+   "text": "Deal 2 damage to all enemies.",
    "flavor": "The sand falls like snow, and every flake burns.",
    "circle": "violence",
    "art": "Burning sand falling from a red sky onto a flat desert plain where figures lie under it."
@@ -737,12 +761,13 @@
     },
     {
      "on": "play",
-     "do": "freeze",
-     "target": "all_enemy_minions"
+     "do": "summon",
+     "card": "mc_frozen_shade",
+     "count": 2
     }
    ],
-   "text": "Deal 2 damage to all enemy minions and Freeze them.",
-   "flavor": "The lake freezes solid, and everything in it stops moving.",
+   "text": "Deal 2 damage to all enemy minions. Summon two 1/2 Frozen Shades.",
+   "flavor": "Whoever the cold does not kill, the ice keeps.",
    "circle": "cocytus",
    "art": "A wide sheet of blue ice with several pale shapes trapped beneath its surface."
   },

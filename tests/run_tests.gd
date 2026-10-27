@@ -24,6 +24,7 @@ func _initialize() -> void:
 	_test_damage_edges()
 	_test_copy_state()
 	_test_rebirth()
+	_test_variety()
 	_test_ai_edges()
 	_test_easy_guard()
 	_test_saves()
@@ -992,6 +993,56 @@ func _test_game_end() -> void:
 	ok(not st.play_card(0, _give(st, 0, "cd_burning_sand"), st.sides[1].hero.uid), "no card can be played after the end")
 
 
+## The variety pass (2026-10-27): cards that combine existing effects in an order that matters.
+func _test_variety() -> void:
+	# Demon's Lash: 1 damage, and only a survivor goes back to the hand.
+	var st := _blank()
+	var small := _put(st, 1, "lost_pilgrim")
+	var big := _put(st, 1, "geryon")
+	ok(st.play_card(0, _give(st, 0, "ih_demons_lash"), small.uid) and st.sides[1].board.size() == 1
+		and not st.sides[1].hand.any(func(c): return c.id == "lost_pilgrim"), "Demon's Lash kills a 1-health minion")
+	ok(st.play_card(0, _give(st, 0, "ih_demons_lash"), big.uid) and st.sides[1].board.is_empty()
+		and st.sides[1].hand.any(func(c): return c.id == "geryon"), "Demon's Lash returns a survivor")
+	# Ulysses, the Schemer: the Ruse copies the minion before it is sent back.
+	st = _blank()
+	big = _put(st, 1, "geryon")
+	ok(st.play_card(0, _give(st, 0, "mc_ulysses"), big.uid), "Ulysses plays without a Ruse")
+	ok(st.sides[1].hand.size() == 1 and st.sides[0].hand.is_empty(), "no Ruse: only the bounce")
+	st = _blank()
+	big = _put(st, 1, "geryon")
+	st.sides[0].played = 1
+	ok(st.play_card(0, _give(st, 0, "mc_ulysses"), big.uid) and st.sides[1].board.is_empty(), "Ulysses with a Ruse")
+	ok(st.sides[1].hand.any(func(c): return c.id == "geryon") and st.sides[0].hand.any(func(c): return c.id == "geryon"),
+		"Ruse: the bounced minion's copy goes to Ulysses' hand")
+	# Cut the Thread: silenced first, so no Last Breath.
+	st = _blank()
+	var horse := _put(st, 1, "ul_trojan_horse")
+	ok(st.play_card(0, _give(st, 0, "uh_cut_the_thread"), horse.uid) and st.sides[1].board.is_empty(),
+		"Cut the Thread: the Horse leaves no Raiders")
+	# Burning Rain: three 1-damage hits among the enemies.
+	st = _blank()
+	big = _put(st, 1, "geryon")
+	ok(st.play_card(0, _give(st, 0, "ih_burning_rain")), "Burning Rain needs no target")
+	ok(st.sides[1].hero.health + big.health == 30 + 5 - 3, "Burning Rain deals 3 in all")
+	# Earth Swallows the Seer: 2 to the target, then 1 to every enemy minion.
+	st = _blank()
+	big = _put(st, 1, "geryon")
+	small = _put(st, 1, "lost_pilgrim")
+	ok(st.play_card(0, _give(st, 0, "mc_earth_swallows"), big.uid) and big.health == 2 and small.dead,
+		"Earth Swallows: 3 to the target, 1 to the rest")
+	# Sinon's Lie: pay 1, get 2 this turn.
+	st = _blank()
+	st.sides[0].mana = 3
+	ok(st.play_card(0, _give(st, 0, "mc_sinons_lie")) and st.sides[0].mana == 4 and st.sides[0].max_mana == 10,
+		"Sinon's Lie: +1 mana net, no crystal")
+	# Winter of Cocytus: the board clear leaves two Frozen Shades.
+	st = _blank()
+	_put(st, 1, "lost_pilgrim")
+	ok(st.play_card(0, _give(st, 0, "ih_cocytus_winter")) and st.sides[1].board.is_empty()
+		and st.sides[0].board.size() == 2 and st.sides[0].board.all(func(u): return u.id == "mc_frozen_shade"),
+		"Winter of Cocytus summons two Frozen Shades")
+
+
 ## Damage details: Drain at full health, Drain into Ward, Armor (partial soak, fatigue), Venom against Ward, and Rebirth
 ## given back after a Silence.
 func _test_damage_edges() -> void:
@@ -1442,7 +1493,7 @@ func _test_wrath() -> void:
 	st.event.connect(func(ev): evs.append(ev))
 	var sh := _put(st, 0, "uh_wrathful_shade") # x/3, Wrath: +3 Attack
 	ok(sh.wrath == 3 and sh.attack == sa and sh.rage == 0, "Wrath is idle while undamaged")
-	st.play_card(0, _give(st, 0, "uh_thorn_jab"), sh.uid) # 2 damage
+	st._resolve({"do": "damage", "target": "choose_minion", "amount": 2}, 0, null, sh.uid, "test")
 	ok(sh.health == 1 and sh.attack == sa + 3 and sh.rage == 3, "damage turns Wrath on (%d attack)" % sh.attack)
 	ok(evs.any(func(ev): return ev.t == "wrath" and ev.uid == sh.uid and ev.on and ev.attack == sa + 3), "a wrath event")
 	st._heal(sh, 1, "test")
