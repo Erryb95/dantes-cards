@@ -32,7 +32,7 @@ var _frost: Sprite2D
 var _ward: Node2D
 var _atk_l: Label
 var _hp_l: Label
-var _zzz: Label
+var _zzz: Control
 var _icons: Node2D
 var _t := 0.0
 var _shadow: Node2D
@@ -131,9 +131,14 @@ func _build() -> void:
 	add_child(hp)
 	_hp_l = _stat(hp.position + UI.gem_number_offset("gem_health", 62, 30))
 
-	_zzz = UI.label("z z", 28, "italic", Color(0.8, 0.85, 1.0, 0.9), 5, Color(0, 0, 0.1))
-	_zzz.position = Vector2(W / 2 - 40, -H / 2 - 30)
-	_zzz.use_parent_material = true
+	# Asleep (can't attack yet): the painted smoke z's, or the letters without the painting.
+	if UiSkin.has("icon_sleep"):
+		_zzz = UiSkin.rect("icon_sleep", Vector2(63, 48), Vector2(W / 2 - 40, -H / 2 - 30))
+		_zzz.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	else:
+		_zzz = UI.label("z z", 28, "italic", Color(0.8, 0.85, 1.0, 0.9), 5, Color(0, 0, 0.1))
+		_zzz.position = Vector2(W / 2 - 40, -H / 2 - 30)
+		_zzz.use_parent_material = true
 	add_child(_zzz)
 
 
