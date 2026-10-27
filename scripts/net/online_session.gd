@@ -33,6 +33,7 @@ var chat_channel := ""
 var _search_id := 0 ## bumps on every search / cancel, so a stale await knows it was cancelled
 var _deck_meta := {}
 var _reconnecting := false
+var rejoin_checked := false ## the main menu asked the server about a running duel once this run
 
 
 func _init(p_profile: int = -1) -> void:
@@ -82,19 +83,89 @@ func device_id() -> String:
 			var id := f.get_as_text().strip_edges()
 			if id.length() >= 10:
 				return id
-	var made := "dc-" + Crypto.new().generate_random_bytes(16).hex_encode()
-	var w := FileAccess.open(path, FileAccess.WRITE)
-	if w != null:
-		w.store_string(made)
+	var made := _new_device_id()
+	_save_device_id(made)
 	return made
 
 
+static func _new_device_id() -> String:
+	return "dc-" + Crypto.new().generate_random_bytes(16).hex_encode()
+
+
+func _save_device_id(id: String) -> void:
+	var w := FileAccess.open("user://online_device%s.txt" % _suffix(), FileAccess.WRITE)
+	if w != null:
+		w.store_string(id)
+
+
+# ---------------------------------------------------------------- Google (and, later, other providers)
+
+func _google_path() -> String:
+	return "user://online_google%s.cfg" % _suffix()
+
+
+func google_available() -> bool:
+	return config.google_ready()
+
+
+## The Google account this install is signed in with: {name, email}, or {} for a guest.
+func google_account() -> Dictionary:
+	var cfg := ConfigFile.new()
+	if cfg.load(_google_path()) != OK:
+		return {}
+	return {"name": str(cfg.get_value("google", "name", "")), "email": str(cfg.get_value("google", "email", ""))}
+
+
+## Signs this install in with Google (an id_token from GoogleAuth). The guest account is linked to Google, so nothing
+## is lost; when that Google account already has its own game account, this install moves onto it instead (it gets a
+## new device id linked there, so later sign-ins land on the Google account). "" on success, else what went wrong.
+func sign_in_google(id_token: String, info: Dictionary) -> String:
+	var err := await ensure_connected()
+	if err != "":
+		return err
+	var linked := await client.link_google(id_token)
+	if linked.has("error"):
+		var a := await client.authenticate_google(id_token)
+		if a.has("error"):
+			return str(a.error)
+		var fresh := _new_device_id()
+		var l := await client.link_device(fresh)
+		if l.has("error"):
+			return "Signed in, but this device could not be remembered (%s)." % str(l.error)
+		_save_device_id(fresh)
+		client.close_socket()
+		await client.set_display_name(display_name(), avatar_url())
+		var s := await client.connect_socket()
+		if s.has("error"):
+			return str(s.error)
+	var cfg := ConfigFile.new()
+	cfg.set_value("google", "name", str(info.get("name", "")))
+	cfg.set_value("google", "email", str(info.get("email", "")))
+	cfg.save(_google_path())
+	return ""
+
+
+## Back to a guest: a fresh device account (the Google one stays on the server, for the next sign-in).
+func play_as_guest() -> void:
+	if state == State.IN_MATCH:
+		return
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(_google_path()))
+	_save_device_id(_new_device_id())
+	client.close_socket()
+	client.token = ""
+
+
 ## The name the opponent sees: the profile's name when there is one, else "Pilgrim" and four digits of the device.
+## A second test profile on the same PC (`--online-profile=N`) adds " N", so two windows can be told apart.
 func display_name() -> String:
-	if "player_name" in Settings and str(Settings.get("player_name")).strip_edges() != "":
-		return str(Settings.get("player_name")).strip_edges().left(24)
-	var n := absi(device_id().hash()) % 10000
-	return "Pilgrim%04d" % n + ("" if profile == 0 else " %d" % profile)
+	var n := str(Profile.online().get("display_name", "")).strip_edges().left(24)
+	if n == "":
+		n = "Pilgrim%04d" % (absi(device_id().hash()) % 10000)
+	return n + ("" if profile == 0 else " %d" % profile)
+
+
+func avatar_url() -> String:
+	return str(Profile.online().get("avatar_url", ""))
 
 
 # ---------------------------------------------------------------- connection
@@ -108,7 +179,7 @@ func ensure_connected() -> String:
 		var r := await client.authenticate_device(device_id())
 		if r.has("error"):
 			return str(r.error)
-		await client.set_display_name(display_name())
+		await client.set_display_name(display_name(), avatar_url())
 	if not client.socket_open():
 		var s := await client.connect_socket()
 		if s.has("error"):
@@ -352,6 +423,8 @@ func record() -> Dictionary:
 
 ## Counts a finished duel: "win", "loss" or "draw".
 func record_result(outcome: String) -> void:
+	if Game.debug_run(): # screenshots and tests never touch the record
+		return
 	var cfg := ConfigFile.new()
 	cfg.load(_record_path())
 	var k := {"win": "wins", "loss": "losses"}.get(outcome, "draws") as String

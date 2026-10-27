@@ -42,23 +42,23 @@ func _draw() -> void:
 	var dir := (to - from) / length
 	var n := Vector2(-dir.y, dir.x)
 	# The ash already burnt: a thin grey trail.
-	draw_line(from, tip, ASH, 3.0, true)
+	draw_line(from, tip, ASH, 4.0, true)
 	# The rope: a thick strand with its twist drawn as slanted dark bands.
 	if left > 0.0:
-		draw_line(tip, to, ROPE_DARK, 13.0, true)
-		draw_line(tip, to, ROPE, 9.0, true)
+		draw_line(tip, to, ROPE_DARK, 20.0, true)
+		draw_line(tip, to, ROPE, 14.0, true)
 		var step := 14.0
 		var d := (1.0 - left) * length
 		d = ceilf(d / step) * step
 		while d < length:
 			var p := from + dir * d
-			draw_line(p - n * 5.0 - dir * 3.0, p + n * 5.0 + dir * 3.0, ROPE_DARK, 2.5, true)
+			draw_line(p - n * 7.0 - dir * 4.0, p + n * 7.0 + dir * 4.0, ROPE_DARK, 3.0, true)
 			d += step
 		# The flame at the burning end.
 		var flick := 1.0 + 0.25 * sin(_t * 23.0) + 0.15 * sin(_t * 37.0)
-		draw_circle(tip, 22.0 * flick, Color(1.0, 0.35, 0.05, 0.25))
-		draw_circle(tip + Vector2(0, -4), 13.0 * flick, Color(1.0, 0.55, 0.1, 0.7))
-		draw_circle(tip + Vector2(0, -6), 7.0 * flick, Color(1.0, 0.9, 0.5, 0.95))
+		draw_circle(tip, 40.0 * flick, Color(1.0, 0.35, 0.05, 0.22))
+		draw_circle(tip + Vector2(0, -6), 22.0 * flick, Color(1.0, 0.55, 0.1, 0.7))
+		draw_circle(tip + Vector2(0, -10), 11.0 * flick, Color(1.0, 0.9, 0.5, 0.95))
 	for s in _sparks:
 		var a: float = clampf(s[2] / 0.5, 0.0, 1.0)
-		draw_circle(s[0], 2.5, Color(1.0, 0.7, 0.25, a))
+		draw_circle(s[0], 3.5, Color(1.0, 0.7, 0.25, a))

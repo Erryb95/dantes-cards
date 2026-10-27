@@ -56,6 +56,22 @@ func _ready() -> void:
 	modulate.a = 0.0
 	create_tween().tween_property(self, "modulate:a", 1.0, 0.2)
 	_start()
+	_shot("online_search", 2.0)
+
+
+## Debug: `-- --online-shots=<dir>` saves the search and the versus splash as PNGs.
+func _shot(what: String, after: float) -> void:
+	var dir := ""
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--online-shots="):
+			dir = a.substr(15)
+	if dir == "":
+		return
+	await get_tree().create_timer(after).timeout
+	if not is_inside_tree():
+		return
+	DirAccess.make_dir_recursive_absolute(dir)
+	get_viewport().get_texture().get_image().save_png(dir.path_join(what + ".png"))
 
 
 func _exit_tree() -> void:
@@ -182,6 +198,9 @@ func _on_match_ready(start: Dictionary) -> void:
 		return
 	set_meta("cancel", Button.new()) # no way back from here: the duel is on
 	Sfx.play("title_sting", -6.0, 1.0, 0.0)
+	var dim := get_child(0) as ColorRect
+	if dim != null:
+		dim.create_tween().tween_property(dim, "color:a", 0.9, 0.3) # the menu fades out behind the two heroes
 	for c in _body.get_children():
 		c.queue_free()
 	var row := HBoxContainer.new()
@@ -202,6 +221,7 @@ func _on_match_ready(start: Dictionary) -> void:
 	var sc := CenterContainer.new()
 	sc.add_child(sub)
 	_body.add_child(sc)
+	_shot("online_versus", 1.2)
 	await get_tree().create_timer(2.8).timeout
 	if is_inside_tree():
 		Game.start_online(sync)

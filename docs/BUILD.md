@@ -30,6 +30,39 @@ Headless runs, `--autoplay`, `--snap=`, `--shots=`, `--out=`, `--intro-shots=` a
 `res://tests/` are debug runs (`Game.debug_run()`): no intro, no coach tips, and nothing is written to the player's
 settings, progress or collection.
 
+## Online play
+The server settings live in **`config/online.local.cfg`** (gitignored, never committed; the exports pack it through
+`config/*.cfg` in every preset's `include_filter`). `user://online.cfg` overrides it per install, and
+`-- --online-config=<path>` reads one more file (tests, a worktree without the file). INI, values bare or quoted:
+
+```ini
+[online]
+server_key = <Nakama server key>
+host = 100.80.41.96        ; the tailnet address, or the public Funnel host
+port = 7450
+scheme = http              ; https for the Funnel (then the socket is wss)
+```
+
+Without a `server_key` (or host) the game runs offline and Play online says that online play is not set up. The key
+is never printed in the log.
+
+Tests (the online smoke is not part of run_tests: it needs the live server):
+```sh
+timeout 120 $G --headless --path . -s res://tests/run_tests.gd -- --only=online   # the mirror test alone
+timeout 300 $G --headless --path . res://tests/online_smoke.tscn -- --online-config=C:/Progetti/DantesCards/config/online.local.cfg
+```
+The smoke runs two clients in one process (device accounts of profiles 900 / 901): matchmaking, START, chat, the
+mulligan, a few turns of Easy-AI moves with the checksums compared, one client dropped and rejoined (the RESYNC
+rebuild must match), a concession and END on both.
+
+Two players on one PC: every `-- --online-profile=N` has its own device id (`user://online_device_N.txt`, so its own
+account) and record; its name gets " N". Run two windows, e.g.
+`$G --path . -- --online-profile=1` and `$G --path . -- --online-profile=2`, and press Play online in both.
+Debug: `--online-quick=<deck id>` opens the search at once from the title screen, `--online-shots=<dir>` saves the
+search and versus screens; with `--shots=<dir>` (autoplay) an Easy AI plays the online battle through the server. A
+bot opponent: `timeout 900 $G --headless --path . res://tests/online_smoke.tscn -- --bot [--idle-turn=4]` (it sits
+out turn 4 or 5, so the rope burns).
+
 Art depth maps (parallax): `python -I tools/cards/make_depth.py [--sheet <out.png>]` writes assets/cards/depth/<id>.png
 (and depth/heroes/<id>.png) for new or changed art only, with Depth Anything V2 **Small** (Apache-2.0; never the
 CC-BY-NC Base / Large / Giant) from `C:/Progetti/Tools/depth/da2_small_onnx/model.onnx` (onnx-community export), then

@@ -8,6 +8,8 @@ extends RefCounted
 ##     host = 100.80.41.96
 ##     port = 7450
 ##     scheme = http          ; http -> ws, https -> wss
+##     google_client_id = ... ; optional: Google sign-in (an OAuth client for TVs and Limited Input devices)
+##     google_client_secret = ...
 ##
 ## Values may be quoted or bare; `;` and `#` start a comment. A missing key means online play is not configured.
 
@@ -18,6 +20,8 @@ var server_key := ""
 var host := ""
 var port := 7350
 var scheme := "http"
+var google_client_id := "" ## Google sign-in (device code flow); never printed
+var google_client_secret := ""
 
 
 static func load_default() -> OnlineConfig:
@@ -77,3 +81,12 @@ func read(path: String) -> void:
 					port = int(v)
 			"scheme":
 				scheme = "https" if v.to_lower() in ["https", "wss"] else "http"
+			"google_client_id":
+				google_client_id = v
+			"google_client_secret":
+				google_client_secret = v
+
+
+## Google sign-in is offered only when this game has its OAuth client ("TVs and Limited Input devices").
+func google_ready() -> bool:
+	return configured() and google_client_id != "" and google_client_secret != ""

@@ -127,7 +127,55 @@ func _left_column() -> Control:
 		val.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		UI.fit_label(val, 120.0, 15)
 		grid.add_child(val)
+	if Online.configured():
+		left.add_child(_online_account())
 	return left
+
+
+## Online: who this install plays as (a guest, or a Google account) and the way to switch. The Google button shows
+## only when this copy has its Google client; Play as guest is always the fallback.
+func _online_account() -> Control:
+	var box := VBoxContainer.new()
+	box.name = "OnlineAccount"
+	box.add_theme_constant_override("separation", 8)
+	box.add_child(ClassInfoPanel.section("Online", 300))
+	var g := Online.google_account()
+	var who := "Playing as a guest"
+	if not g.is_empty():
+		who = "Signed in with Google as %s" % (g.name if str(g.name) != "" else g.email)
+	var line := UI.parchment_label(who, 20, "italic", UI.INK, 260.0, 20, 10)
+	box.add_child(line)
+	var b: Button = null
+	if g.is_empty() and Online.google_available():
+		b = UI.button("Sign in with Google", 300, 60)
+		b.pressed.connect(func():
+			var p := GoogleSignInPanel.open(self)
+			p.finished.connect(func(_ok): _refresh_online()))
+	elif not g.is_empty():
+		b = UI.button("Play as guest", 300, 60)
+		b.pressed.connect(func():
+			Online.play_as_guest()
+			_refresh_online())
+	if b != null:
+		b.add_theme_font_size_override("font_size", 24)
+		UI.fit_text(b)
+		var c := CenterContainer.new()
+		c.add_child(b)
+		box.add_child(c)
+	return box
+
+
+func _refresh_online() -> void:
+	var old := find_child("OnlineAccount", true, false)
+	if old == null:
+		return
+	var parent := old.get_parent()
+	var at := old.get_index()
+	old.name = "OnlineAccountOld"
+	old.queue_free()
+	var fresh := _online_account()
+	parent.add_child(fresh)
+	parent.move_child(fresh, at)
 
 
 ## The name field with the nib disc beside it, the rule (or what is wrong) on parchment under it, then the avatars.

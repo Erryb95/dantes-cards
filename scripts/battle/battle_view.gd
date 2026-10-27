@@ -133,8 +133,15 @@ func _ready() -> void:
 	ky = minf(V.y / 1080.0, V.x / 1920.0) # the 16:9 layout fits inside any screen (letterboxed on 16:10)
 	if Game.lesson != "":
 		lesson = Lessons.get_lesson(Game.lesson)
+	if Game.online and Online.in_match():
+		net = DuelSync.new()
+		if not net.setup(Online.start, Online.user_id()):
+			push_warning("Online duel: START unusable (%s)" % net.error)
+			net = null
 	_resolve_arena()
 	_build_scene()
+	if net != null:
+		_build_online()
 	get_viewport().size_changed.connect(_on_resize)
 	Sfx.play_music(arena.get("music", "music_combat"))
 	Sfx.play_ambience(arena.get("ambience", ""), -16.0)
@@ -145,7 +152,10 @@ func _ready() -> void:
 	# A lesson opens with its own title and what it teaches, in place of the arena's name and line.
 	_intro(arena if lesson.is_empty() else {"name": lesson.title, "intro": lesson.learn,
 		"circle": "Lesson %d of %d" % [Lessons.index_of(lesson.id) + 1, Lessons.all().size()]})
-	if lesson.is_empty():
+	if net != null:
+		# Online: the canonical game both players build from the match's START (this player at the bottom).
+		st = net.build(func(ev): queue.append(ev))
+	elif lesson.is_empty():
 		st.start(Game.player_cards, Game.player_hero, Game.enemy_cards, Game.enemy_hero, 0, true, -1)
 	else:
 		# A lesson: its own dealing, opponent and opening (see Lessons.configure).
@@ -594,6 +604,7 @@ func _layout_static() -> void:
 	_flash_rect.size = V
 	ui.get_node("MenuButton").position = Vector2(24, 20)
 	_tips.position = Vector2(400, V.y / 2 - 160)
+	_layout_online()
 
 
 ## Screen position of an arena socket. Sockets follow the painted board (fit to height, centred); without a painted
@@ -683,11 +694,14 @@ func _process(delta: float) -> void:
 		if _shot_t > _shot_every:
 			_shot_t = 0.0
 			_take_shot()
+	if net != null:
+		_net_tick(delta) # the server's messages, the turn clock: also while an animation plays
 	if playing:
 		return
 	# The pause menu holds the match: the animation already under way ends, but no new event plays and the enemy
-	# does not move until it closes (it used to play on, and could even win, under the menu).
-	if _paused():
+	# does not move until it closes (it used to play on, and could even win, under the menu). An online duel cannot
+	# be held: the opponent plays on.
+	if _paused() and net == null:
 		return
 	if not queue.is_empty():
 		_play_next()
@@ -697,7 +711,11 @@ func _process(delta: float) -> void:
 	if _highlight_dirty:
 		_highlight_dirty = false
 		_refresh_highlights()
-	if st.current == 1 or autoplay:
+	if net != null:
+		_net_apply(delta)
+		if autoplay:
+			_net_bot(delta)
+	elif st.current == 1 or autoplay:
 		_ai_delay -= delta
 		if _ai_delay <= 0.0:
 			_ai_step()
@@ -734,7 +752,7 @@ func _ai_step() -> void:
 
 
 func _speed() -> float:
-	return Settings.anim_speed()
+	return Settings.anim_speed() * (6.0 if _ff else 1.0) # a rejoin replays the missed moves quickly
 
 
 func _wait(t: float) -> void:
@@ -1040,6 +1058,8 @@ func _mulligan_wait() -> void:
 	if autoplay:
 		_confirm_mulligan()
 		return
+	if net != null and net.mulligan_held_from(Online.user_id()):
+		return # a rejoin: this choice was made (or timed out) before; the server's stream replays it
 	_mull_waiting = true
 	var dim := ColorRect.new()
 	dim.name = "MulliganDim"
@@ -1111,6 +1131,14 @@ func _confirm_mulligan() -> void:
 	_mull_marks.clear()
 	for c in hand_views[0]:
 		c.modulate = Color.WHITE
+	if net != null:
+		# Online: the choice goes to the server (unless it already decided for us, on a timeout); both choices come
+		# back in order and are applied then. Until the opponent has chosen, a note says we are waiting.
+		if not net.mulligan_held_from(Online.user_id()):
+			Online.send(DuelSync.OP_MULLIGAN, net.mulligan_payload(chosen))
+		_net_note_show("Waiting for %s to choose..." % _opp_name())
+		mulligan_confirmed.emit()
+		return
 	st.finish_mulligan(1, ai.mulligan_choice(st))
 	st.finish_mulligan(0, chosen if not autoplay else ai_self.mulligan_choice(st))
 	_did({"act": "mulligan"})
@@ -1356,6 +1384,14 @@ func _hit_stop(seconds: float) -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0 # never leave a hit-stop behind when the scene changes
+	if net != null:
+		if Online.connection.is_connected(_on_connection):
+			Online.connection.disconnect(_on_connection)
+		if chat != null and Online.chat.is_connected(chat.receive):
+			Online.chat.disconnect(chat.receive)
+		if over or not _end_info.is_empty():
+			Online.leave_match()
+		Game.online = false
 	if _ai_task != -1:
 		ai.abort = true
 		if ai_self != null:
@@ -1644,6 +1680,9 @@ func _on_game_over(ev: Dictionary) -> void:
 		guide.on_turn(1) # Virgil steps aside for the result
 	if not lesson.is_empty():
 		_show_lesson_result(ev.winner) # a lesson never counts in the record
+		return
+	if net != null:
+		_show_online_result(ev.winner) # its own record, never the one against the AI
 		return
 	Game.record_result(ev.winner)
 	_show_result(ev.winner)
@@ -2069,7 +2108,8 @@ func _drop_index(x: float) -> int:
 # ================================================================ highlights
 
 func _my_turn() -> bool:
-	return not over and not autoplay and st.current == 0 and queue.is_empty() and not playing and not st.in_mulligan()
+	return not over and not autoplay and st.current == 0 and queue.is_empty() and not playing and not st.in_mulligan() \
+		and (net == null or (_net_wait < 0.0 and not net.pending() and _end_info.is_empty()))
 
 
 func _refresh_highlights() -> void:
@@ -2300,7 +2340,7 @@ func _on_press(p: Vector2) -> void:
 		if st.can_use_power(0):
 			var tt := BattleState.power_target_type(CardDB.hero(st.sides[0].hero_id))
 			if tt == "":
-				if st.use_power(0):
+				if _act_power(-1):
 					_did({"act": "power", "target": -1})
 			else:
 				mode = Mode.AIM_POWER
@@ -2404,12 +2444,12 @@ func _on_release(p: Vector2) -> void:
 					return
 				drag_card = null
 				mode = Mode.IDLE
-				if st.play_card(0, c.uid, -1, idx):
+				if _act_play(c.uid, -1, idx):
 					_did({"act": "play", "card": c.card_id, "target": -1})
 			else:
 				drag_card = null
 				mode = Mode.IDLE
-				if st.play_card(0, c.uid):
+				if _act_play(c.uid):
 					_did({"act": "play", "card": c.card_id, "target": -1})
 		Mode.AIM_SPELL, Mode.AIM_BATTLECRY, Mode.AIM_ATTACK, Mode.AIM_POWER:
 			if _press_pos.distance_to(p) < 24.0 and not _sticky:
@@ -2480,16 +2520,16 @@ func _finish_aim(p: Vector2) -> void:
 	var done := false
 	match m:
 		Mode.AIM_ATTACK:
-			done = st.attack(0, attacker, target)
+			done = _act_attack(attacker, target)
 		Mode.AIM_POWER:
-			done = st.use_power(0, target)
+			done = _act_power(target)
 		Mode.AIM_SPELL:
 			drag_card = null
-			done = st.play_card(0, card_uid, target)
+			done = _act_play(card_uid, target)
 		Mode.AIM_BATTLECRY:
 			drag_card = null
 			_gap_index = -1
-			done = st.play_card(0, card_uid, target, index)
+			done = _act_play(card_uid, target, index)
 	if done:
 		_did(action, hit)
 
@@ -2533,8 +2573,31 @@ func _end_turn() -> void:
 	_cancel()
 	Sfx.play("ui_confirm", -6.0)
 	_pop(end_btn, 0.9)
-	st.end_turn()
+	if net != null:
+		_net_send(DuelSync.OP_END_TURN, {})
+	else:
+		st.end_turn()
 	_did({"act": "end"})
+
+
+## The player's moves. Offline they apply at once; online they go to the server and are applied when they come back
+## in the match's order (the same moment for both players). True when applied or sent.
+func _act_play(hand_uid: int, target := -1, index := -1) -> bool:
+	if net != null:
+		return _net_send(DuelSync.OP_ACTION, net.play_payload(hand_uid, target, index))
+	return st.play_card(0, hand_uid, target, index)
+
+
+func _act_attack(attacker: int, target: int) -> bool:
+	if net != null:
+		return _net_send(DuelSync.OP_ACTION, net.attack_payload(attacker, target))
+	return st.attack(0, attacker, target)
+
+
+func _act_power(target: int) -> bool:
+	if net != null:
+		return _net_send(DuelSync.OP_ACTION, net.power_payload(target))
+	return st.use_power(0, target)
 
 
 ## Why an action was refused ("Not enough mana"), inked on a small parchment sheet that pops above `pos` and fades.
@@ -2826,6 +2889,8 @@ func _on_back() -> void:
 	if mode != Mode.IDLE:
 		_cancel()
 		return
+	if chat != null and chat.close_if_open():
+		return
 	if not over:
 		_open_pause()
 
@@ -2895,6 +2960,17 @@ func _ask_concede(dim: Control, menu: Control) -> void:
 
 
 func _concede() -> void:
+	if net != null:
+		# Online: the server ends the duel (END, reason "concede") and the result screen follows from that.
+		if is_instance_valid(_pause_dim):
+			_pause_dim.queue_free()
+		Online.send(DuelSync.OP_CONCEDE, {})
+		_net_note_show("Conceding...")
+		await get_tree().create_timer(6.0).timeout
+		if _end_info.is_empty() and is_inside_tree(): # no answer: leave anyway
+			Online.leave_match()
+			Game.go(Game.MENU)
+		return
 	over = true
 	Game.record_result(1)
 	Game.go(Game.MENU)
@@ -2907,6 +2983,408 @@ func _leave_lesson(next: String) -> void:
 		Game.start_lesson(next)
 	else:
 		Game.go(Game.LESSONS)
+
+
+# ================================================================ online duel
+
+var net: DuelSync ## an online duel's shared game, fed by the server's ordered stream (null offline)
+var _net_wait := -1.0 ## seconds since my move went to the server (-1: nothing in flight)
+var _turn_end_ms := 0 ## Time.get_ticks_msec() when the running turn (or the mulligan) times out, 0 for no clock
+var _roped := false ## the server lit the rope for this turn
+var _rope: TurnRope
+var _timer_plate: PanelContainer
+var _timer_label: Label
+var _name_plates: Array = [null, null]
+var _net_note: Control ## a lasting notice in the middle: waiting for the mulligan, a lost connection
+var _end_info := {} ## the server's END: winner, loser, reason
+var _result_sent := false
+var _ff := false ## replaying missed moves after a rejoin (animations run fast)
+var _opp_gone_ms := 0 ## the opponent dropped: when their seat is forfeited (0: they are here)
+var _desync_seen := 0
+var chat: DuelChat ## the online duel's mini chat
+
+
+## An emote as a speech bubble by the hero of `side` (Hearthstone style), inked on parchment, for a few seconds.
+func _emote_bubble(side: int, text: String) -> void:
+	var old := ui.get_node_or_null("Emote%d" % side)
+	if old != null:
+		old.name = "EmoteOld"
+		old.queue_free()
+	var p := UI.parchment_label(text, 30, "italic", UI.INK, 0.0, 30, 14)
+	p.name = "Emote%d" % side
+	ui.add_child(p)
+	p.reset_size()
+	var hp := _hero_pos(side)
+	p.position = Vector2(hp.x + HeroView.W * 0.5 + 120.0, hp.y + (-120.0 if side == 0 else 40.0) * ky)
+	p.pivot_offset = Vector2(0, p.size.y)
+	p.scale = Vector2(0.6, 0.6)
+	var t := p.create_tween()
+	t.tween_property(p, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_interval(2.6)
+	t.tween_property(p, "modulate:a", 0.0, 0.5)
+	t.tween_callback(p.queue_free)
+	Sfx.play("page", -8.0)
+
+
+func _build_online() -> void:
+	_rope = TurnRope.new()
+	_rope.visible = false
+	_rope.z_index = 5
+	board_layer.add_child(_rope)
+	_timer_plate = UI.plaque(18, 4)
+	_timer_plate.name = "TurnTimer"
+	_timer_label = UI.label("", 26, "title", UI.BONE, 4, Color(0.04, 0.01, 0.01))
+	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_timer_label.custom_minimum_size = Vector2(74, 0)
+	_timer_plate.add_child(_timer_label)
+	_timer_plate.visible = false
+	ui.add_child(_timer_plate)
+	for side in 2:
+		var n := net.my_name() if side == 0 else net.opponent_name()
+		if n == "":
+			n = "You" if side == 0 else "Opponent"
+		var p := UI.plaque_label(n, 26, "title", UI.GOLD if side == 0 else Color(1.0, 0.72, 0.6), 300.0, 22, 6)
+		p.name = "Name%d" % side
+		ui.add_child(p)
+		_name_plates[side] = p
+	Online.connection.connect(_on_connection)
+	# The mini chat (Nakama's direct channel between the two players; optional: a refusal only leaves it quiet).
+	chat = DuelChat.new()
+	chat.name = "DuelChat"
+	chat.my_id = Online.user_id()
+	for c in 2:
+		chat.names[str(net.players[c])] = str(net.names[c]) if str(net.names[c]) != "" else "Player %d" % (c + 1)
+	ui.add_child(chat)
+	chat.emote_shown.connect(_emote_bubble)
+	Online.chat.connect(chat.receive)
+	Online.open_chat()
+	var ms := int(Online.start.get("mulligan_ms", 30000))
+	_turn_end_ms = int(Online.start.get("_rx", Time.get_ticks_msec())) + ms
+	_layout_online()
+
+
+func _layout_online() -> void:
+	if net == null or _rope == null:
+		return
+	var y := end_btn.position.y
+	_rope.from = Vector2(V.x * 0.16, y)
+	_rope.to = Vector2(end_btn.position.x - END_OVAL.x * 0.5 + 8.0, y)
+	_rope.queue_redraw()
+	_timer_plate.reset_size()
+	_timer_plate.position = end_btn.position + Vector2(-_timer_plate.size.x / 2, END_OVAL.y * 0.5 + 6.0)
+	for side in 2:
+		var p: Control = _name_plates[side]
+		if p == null:
+			continue
+		p.reset_size()
+		var hp := _hero_pos(side)
+		p.position = Vector2(hp.x - HeroView.W * 0.5 - 40.0 - p.size.x, hp.y - p.size.y / 2 + (30.0 if side == 0 else -30.0) * ky)
+
+
+func _opp_name() -> String:
+	var n := net.opponent_name() if net != null else ""
+	return n if n != "" else "your opponent"
+
+
+## Sends my move to the server; the board waits for it to come back (`_my_turn` is false meanwhile).
+func _net_send(op: int, data: Dictionary) -> bool:
+	if not Online.send(op, data):
+		_toast(V / 2, "Not connected to the server", Color(1.0, 0.6, 0.5))
+		_return_card()
+		return false
+	_net_wait = 0.0
+	return true
+
+
+## Every frame: the server's messages, the turn clock, a move that got no answer.
+func _net_tick(delta: float) -> void:
+	while true:
+		var m := Online.next_message()
+		if m.is_empty():
+			break
+		_net_message(m[0], m[1])
+	if _net_wait >= 0.0:
+		_net_wait += delta
+		if _net_wait > 8.0:
+			_net_wait = -1.0
+			_toast(V / 2, "The server did not answer", Color(1.0, 0.6, 0.5))
+			_return_card()
+	# The server decided the mulligan for us (time ran out): close the choice.
+	if _mull_waiting and net.mulligan_held_from(Online.user_id()):
+		_confirm_mulligan()
+	if _net_note != null and not st.in_mulligan() and _net_note.get_meta("kind", "") == "mulligan":
+		_net_note_hide()
+	if _opp_gone_ms > 0:
+		var left := maxi(0, (_opp_gone_ms - Time.get_ticks_msec()) / 1000)
+		_net_note_show("%s lost the connection. Waiting %d s for them to return..." % [_opp_name(), left], "status")
+	_tick_turn_clock()
+	if _ff and not net.pending() and queue.is_empty() and not playing:
+		_ff = false
+
+
+## Applies the server's next move when the board is idle: the opponent's at the AI's pace, mine at once.
+func _net_apply(delta: float) -> void:
+	if not _end_info.is_empty() or not net.pending():
+		return
+	var nxt := net.peek()
+	var mine := str(nxt[1].get("from", "")) == Online.user_id()
+	if not mine and nxt[0] == DuelSync.S_ACTION and not _ff:
+		_ai_delay -= delta
+		if _ai_delay > 0.0:
+			return
+	var m := net.pop()
+	var was_mull := st.in_mulligan()
+	var why := net.apply(m[0], m[1])
+	if why != "" or net.desyncs.size() > _desync_seen:
+		_desync_seen = net.desyncs.size()
+		push_warning("Online duel out of step: %s" % str(net.desyncs.back()))
+		_toast(V / 2, "Out of step with %s (desync)" % _opp_name(), Color(1.0, 0.5, 0.4))
+	if m[0] == DuelSync.S_TURN:
+		_net_wait = -1.0
+		_roped = false
+		var rx := int(m[1].get("_rx", Time.get_ticks_msec()))
+		_turn_end_ms = rx + int(m[1].get("turn_ms", net.turn_ms)) + int(m[1].get("rope_ms", net.rope_ms))
+		if st.current != 0 and mode != Mode.IDLE:
+			_cancel() # the turn ran out under the player's hand
+	elif m[0] == DuelSync.S_ACTION and mine:
+		_net_wait = -1.0
+	if was_mull and not st.in_mulligan():
+		_turn_end_ms = 0 # until TURN 1 arrives with its clock
+	_ai_delay = 0.45 / Settings.anim_speed()
+	if st.winner != -1 and not _result_sent:
+		_result_sent = true
+		Online.send(DuelSync.OP_RESULT, {"winner": net.winner_id()})
+
+
+func _net_message(op: int, data: Dictionary) -> void:
+	match op:
+		DuelSync.S_ACTION, DuelSync.S_TURN, DuelSync.S_MULLIGAN:
+			net.push(op, data)
+		DuelSync.S_ROPE:
+			_roped = true
+			_turn_end_ms = int(data.get("_rx", Time.get_ticks_msec())) + int(data.get("rope_ms", net.rope_ms))
+		DuelSync.S_STATUS:
+			if str(data.get("user_id", "")) == Online.user_id():
+				return
+			if bool(data.get("connected", true)):
+				_opp_gone_ms = 0
+				_net_note_hide()
+				_toast(V / 2, "%s is back" % _opp_name(), UI.GOLD)
+			else:
+				_opp_gone_ms = Time.get_ticks_msec() + int(data.get("grace_ms", 30000))
+		DuelSync.S_RESYNC:
+			var events := DuelSync.resync_events(data)
+			for e in events:
+				net.push(e[0], e[1])
+			if int(data.get("seq", 0)) > net.last_seq + 2:
+				_ff = true # a rejoin: replay what was missed quickly
+			var rx := int(data.get("_rx", Time.get_ticks_msec()))
+			var rem := int(data.get("remaining_ms", 0))
+			if rem > 0:
+				var roped := bool(data.get("roped", false))
+				var mull := str(data.get("phase", "")) == "mulligan"
+				_turn_end_ms = rx + rem + (0 if roped or mull else net.rope_ms)
+			# A move sent just before a drop may still come back after this: keep waiting for it (or time out).
+			_net_note_hide()
+		DuelSync.S_END:
+			_end_info = data
+			_opp_gone_ms = 0
+			_net_note_hide()
+			_turn_end_ms = 0
+			if st.winner == -1 and not over:
+				# The rules did not end it (a concession, a lost connection, the clock): the server did.
+				var w := 2
+				if str(data.get("winner", "")) == Online.user_id():
+					w = 0
+				elif str(data.get("winner", "")) != "":
+					w = 1
+				_end_aim()
+				_return_card()
+				queue.append({"t": "game_over", "winner": w})
+		DuelSync.S_ERROR:
+			_net_wait = -1.0
+			var code := str(data.get("code", "error"))
+			if code != "already_sent":
+				_toast(V / 2, "The server refused that (%s)" % code.replace("_", " "), Color(1.0, 0.6, 0.5))
+			_return_card()
+
+
+var _bot_t := 0.0
+var _bot: BattleAI
+
+
+## `--autoplay` / `--shots` in an online duel: an Easy AI plays this side through the server (screenshots, tests).
+func _net_bot(delta: float) -> void:
+	if over or st.current != 0 or st.in_mulligan() or _net_wait >= 0.0 or net.pending() or not _end_info.is_empty():
+		return
+	_bot_t += delta
+	if _bot_t < 0.8:
+		return
+	_bot_t = 0.0
+	if _bot == null:
+		_bot = BattleAI.new(0, BattleAI.Level.EASY)
+	var act: Dictionary = _bot.next_action(st)
+	if act.do == "end" or not BattleAI.apply(st.clone(1), 0, act):
+		_net_send(DuelSync.OP_END_TURN, {})
+		return
+	match act.do:
+		"play":
+			_act_play(act.uid, act.target, act.index)
+		"attack":
+			_act_attack(act.attacker, act.target)
+		"power":
+			_act_power(act.target)
+
+
+func _on_connection(up: bool) -> void:
+	if up:
+		_net_note_hide()
+		_toast(V / 2, "Back in the duel", UI.GOLD)
+	else:
+		_net_note_show("Connection lost. Reconnecting...", "status")
+
+
+## The turn clock under End Turn (seconds left), and the burning rope in the last seconds of either player's turn.
+func _tick_turn_clock() -> void:
+	if _timer_plate == null:
+		return
+	var on := _turn_end_ms > 0 and not over and _end_info.is_empty()
+	_timer_plate.visible = on
+	if not on:
+		_rope.visible = false
+		return
+	var left_ms := maxi(0, _turn_end_ms - Time.get_ticks_msec())
+	var s := ceili(left_ms / 1000.0)
+	_timer_label.text = "%d:%02d" % [s / 60, s % 60]
+	var in_mull := st.in_mulligan()
+	var rope := not in_mull and (left_ms <= net.rope_ms or _roped)
+	_timer_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.3) if rope else UI.BONE)
+	_rope.visible = rope
+	if rope:
+		_rope.left = float(left_ms) / maxf(1.0, float(net.rope_ms))
+
+
+## A notice in the middle of the board, inked on parchment, until `_net_note_hide`. `kind` says what it is about.
+func _net_note_show(text: String, kind := "mulligan") -> void:
+	if _net_note != null and is_instance_valid(_net_note):
+		var l := _net_note.find_child("Text", true, false) as Label
+		if l != null and _net_note.get_meta("kind", "") == kind:
+			l.text = text
+			return
+		_net_note.queue_free()
+	var p := UI.parchment_label(text, 30, "italic", UI.INK, minf(1100.0, V.x - 200.0), 44, 16)
+	var holder := CenterContainer.new()
+	holder.size = Vector2(V.x, 0)
+	holder.position = Vector2(0, V.y * 0.36)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(p)
+	holder.set_meta("kind", kind)
+	ui.add_child(holder)
+	_net_note = holder
+
+
+func _net_note_hide() -> void:
+	if _net_note != null and is_instance_valid(_net_note):
+		_net_note.queue_free()
+	_net_note = null
+
+
+## Why the duel ended, as one line for the result screen.
+func _end_reason(won: bool) -> String:
+	var opp := _opp_name()
+	match str(_end_info.get("reason", "result")):
+		"concede":
+			return "%s conceded." % opp if won else "You conceded."
+		"disconnect":
+			return "%s left the duel." % opp if won else "You were away too long and lost the seat."
+		"abandoned":
+			return "The duel was abandoned."
+		"no_show":
+			return "%s never arrived." % opp if won else "You did not arrive in time."
+		"time_limit":
+			return "The duel ran out of time."
+		"desync":
+			return "The two games went out of step, so the server ended the duel."
+		"connection_lost":
+			return "The connection to the server was lost."
+	return "%s has fallen." % opp if won else "%s has the better of you." % opp
+
+
+func _show_online_result(winner: int) -> void:
+	# The rules ended it: the server's END (with its reason) follows the RESULTs within a moment.
+	var t := 0.0
+	while _end_info.is_empty() and t < 3.0:
+		await get_tree().process_frame
+		t += get_process_delta_time()
+	_turn_end_ms = 0
+	_tick_turn_clock()
+	var won := winner == 0
+	Online.record_result("win" if won else ("loss" if winner == 1 else "draw"))
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0)
+	dim.size = V
+	ui.add_child(dim)
+	dim.create_tween().tween_property(dim, "color:a", 0.65, 0.6)
+	var box := VBoxContainer.new()
+	box.name = "OnlineResult"
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.size = V
+	box.add_theme_constant_override("separation", 26)
+	ui.add_child(box)
+	var title := UI.banner("VICTORY" if won else ("DEFEAT" if winner == 1 else "DRAW"), 120,
+		UI.GOLD if won else Color(0.9, 0.3, 0.24), 0.0, 0.0, 1.8)
+	box.add_child(title)
+	var plate := PanelContainer.new()
+	plate.add_theme_stylebox_override("panel", UI.parchment_box(56, 34))
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var pc := CenterContainer.new()
+	pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pc.add_child(plate)
+	box.add_child(pc)
+	var pv := VBoxContainer.new()
+	pv.add_theme_constant_override("separation", 10)
+	pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plate.add_child(pv)
+	var sub := UI.label(_end_reason(won) if winner != 2 else "Neither of you prevails.", 34, "italic", UI.INK)
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	UI.fit_label(sub, minf(1100.0, V.x - 260.0), 22)
+	pv.add_child(sub)
+	var rec := Online.record()
+	var rl := UI.label("Online record:  %d won  ·  %d lost" % [rec.wins, rec.losses], 28, "title", UI.INK_RED)
+	rl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pv.add_child(rl)
+	var reward := Collection.reward_battle(won)
+	Sfx.play("coins", -4.0)
+	var gain := UI.label("+%d Obols" % reward, 28, "title", UI.INK)
+	gain.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pv.add_child(gain)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 30)
+	box.add_child(row)
+	var again := UI.button("Find another duel", 400)
+	again.pressed.connect(func():
+		Online.leave_match()
+		Game.online_requeue = true
+		Game.go(Game.DECK_SELECT))
+	row.add_child(again)
+	var menu := UI.button("Main Menu", 340)
+	menu.pressed.connect(func():
+		Online.leave_match()
+		Game.go(Game.MENU))
+	row.add_child(menu)
+	UI.even_text([again, menu])
+	box.modulate.a = 0.0
+	title.pivot_offset = title.size / 2
+	title.scale = Vector2(1.6, 1.6)
+	var tw := box.create_tween().set_parallel(true)
+	tw.tween_property(box, "modulate:a", 1.0, 0.5)
+	tw.tween_property(title, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if won:
+		Sfx.play("title_sting", -4.0, 1.0, 0.0)
+		Fx.burst(fx_layer, V / 2, UI.GOLD, 120, 800.0, 2.0, 14.0, 300.0)
+	else:
+		Sfx.play("bell_funeral", -6.0, 1.0, 0.0)
 
 
 func _take_shot() -> void:

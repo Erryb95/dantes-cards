@@ -111,6 +111,26 @@ func _ready() -> void:
 	if Lessons.offer_due():
 		# A new player, once: Virgil offers his lessons when the title screen has settled.
 		get_tree().create_timer(1.1).timeout.connect(offer_lessons)
+	_offer_rejoin()
+
+
+## On launch: an online duel this player left running (a crash, a closed window) can be rejoined while the server
+## still holds the seat. Asked once per run; tests and tooling never go online.
+func _offer_rejoin() -> void:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--online-quick="): # debug: straight into an online search with this premade deck
+			var deck := CardDB.deck(a.substr(15))
+			if not deck.is_empty():
+				OnlineOverlay.open.call_deferred(self, CardDB.deck_class(deck), CardDB.deck_list(str(deck.id)))
+			return
+	if Game.debug_run() or not Online.configured() or Online.rejoin_checked or Online.in_match():
+		return
+	Online.rejoin_checked = true
+	var id := await Online.check_rejoin()
+	if id == "" or not is_inside_tree() or get_node_or_null("Dialog") != null:
+		return
+	UI.dialog(self, "Your duel is still on", "You left an online duel before it ended. Go back to it?",
+		[["Rejoin", func(): OnlineOverlay.open(self, "", [], id)], ["Not now", null]])
 
 
 ## Learn to Play as a round medallion: Virgil's face on the bronze disc, its name on a small red ribbon across the

@@ -98,17 +98,53 @@ func authenticate_device(device_id: String) -> Dictionary:
 		return {"error": "The server refused this game's key."}
 	if int(r.code) != 200 or not (r.body is Dictionary) or not r.body.has("token"):
 		return {"error": "Sign-in failed (%d)." % int(r.code)}
-	token = str(r.body.token)
-	refresh_token = str(r.body.get("refresh_token", ""))
+	_take_session(r.body)
+	return {}
+
+
+## Google: sign in with an id_token (a new account when there is none). {} or {"error"}.
+func authenticate_google(id_token: String) -> Dictionary:
+	var r := await http(HTTPClient.METHOD_POST, "/v2/account/authenticate/google?create=true", {"token": id_token}, true)
+	if r.has("error"):
+		return r
+	if int(r.code) != 200 or not (r.body is Dictionary) or not r.body.has("token"):
+		return {"error": "The server refused the Google sign-in (%s)." % str(r.body.get("message", r.code))}
+	_take_session(r.body)
+	return {}
+
+
+## Links Google (or another device id) to the signed-in account. {} or {"error", "code"}.
+func link_google(id_token: String) -> Dictionary:
+	return await _link("/v2/account/link/google", {"token": id_token})
+
+
+func link_device(device_id: String) -> Dictionary:
+	return await _link("/v2/account/link/device", {"id": device_id})
+
+
+func _link(path: String, body: Dictionary) -> Dictionary:
+	var r := await http(HTTPClient.METHOD_POST, path, body)
+	if r.has("error"):
+		return r
+	if int(r.code) != 200:
+		return {"error": str(r.body.get("message", "refused")) if r.body is Dictionary else "refused", "code": int(r.code)}
+	return {}
+
+
+func _take_session(body: Dictionary) -> void:
+	token = str(body.token)
+	refresh_token = str(body.get("refresh_token", ""))
 	token_time = Time.get_unix_time_from_system()
 	var claims := _jwt_claims(token)
 	user_id = str(claims.get("uid", ""))
 	username = str(claims.get("usn", ""))
-	return {}
 
 
-func set_display_name(display_name: String) -> Dictionary:
-	var r := await http(HTTPClient.METHOD_PUT, "/v2/account", {"display_name": display_name})
+func set_display_name(display_name: String, avatar_url := "") -> Dictionary:
+	var body := {"display_name": display_name}
+	if avatar_url != "":
+		body["avatar_url"] = avatar_url
+	var r := await http(HTTPClient.METHOD_PUT, "/v2/account", body)
 	if r.has("error"):
 		return r
 	if int(r.code) != 200:

@@ -215,6 +215,41 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
   that cannot be parsed is copied to `<file>.bad` and the game starts from defaults; a value of the wrong type keeps
   its default and a malformed custom deck is dropped. Test and tooling runs only read them.
 
+## Online duels (1v1 against another player)
+- **Server:** Nakama 3.41, instance "dantes-cards" (modules and protocol in `server/nakama/`). The match
+  `dantes_match` is an authoritative **relay**: it orders and times the players' moves but does not run the rules.
+  Both clients run the same deterministic `BattleState` and apply the same ordered stream.
+- **Client, no SDK:** `scripts/net/nakama_client.gd` (`NakamaClient`: device auth over HTTP, display name and avatar,
+  the realtime socket on Godot's `WebSocketPeer` with Nakama's JSON envelopes: matchmaker, match join / data, RPC,
+  chat). `scripts/net/online_session.gd` (`OnlineSession`, the autoload `Online`): device id, sign-in, search, join,
+  rejoin, reconnect after a drop, the match inbox, the online record (`user://online_record.cfg`, apart from the AI
+  record). `scripts/net/duel_sync.gd` (`DuelSync`): builds the canonical game from START and applies MULLIGAN / TURN /
+  ACTION strictly by `seq`. `scripts/net/online_config.gd`: where the server is (see BUILD.md).
+- **One game, two seats:** side 0 of the canonical game is the match's `players[0]`. Each client still shows itself
+  at the bottom: `BattleState.flip` keeps `sides` in local order (`sides[0]` = me) while `start` deals, shuffles and
+  hands out uids in canonical order, so uids and the random stream match on both machines; every later rule is
+  relative to the acting side. `BattleState.checksum()` fingerprints the game (random state included) in canonical
+  order. Tested by `run_tests.gd` (`_test_online_mirror`: random duels through serialized moves on a flipped and an
+  unflipped client, same checksum after every message, same events once sides are mapped back, same winner).
+- **Moves:** op 1 ACTION `{t: "play", hand_uid, target, index}`, `{t: "attack", attacker, target}`,
+  `{t: "power", target}`, each with `ck` (the sender's checksum just before it: a mismatch is reported as a desync);
+  op 2 END_TURN, op 3 CONCEDE, op 4 RESULT `{winner: user id or ""}` (both clients, when the rules end the game),
+  op 6 MULLIGAN `{replace: [hand indices]}`. A move is not applied when it is made: it is applied when the server's
+  echo (102 / 103 / 108) comes back in order, on both machines at once. The board waits for the echo (about 50 ms on
+  the tailnet) and the opponent's moves animate at the AI's pace.
+- **Flow:** Choose your path > **Play online** (header) plays the selected deck: `OnlineOverlay` (painted search with
+  your name, the time spent and Cancel; errors inked on the same parchment with Try again) > a versus splash (both
+  heroes and names, who goes first) > the battle (the arena is drawn from the match seed, the same for both). The
+  mulligan is simultaneous (30 s, a timer under End Turn). Online battles show both names by the heroes, the turn
+  clock under End Turn and the burning rope (`TurnRope`) along the river for the last 15 s of either turn, the
+  opponent's connection (dropped: a countdown of their 30 s grace; back: a note), Concede in the pause menu (op 3).
+  The pause menu does not hold an online duel. The result names the reason (fallen, conceded, left, time limit,
+  desync) and offers Find another duel / Main Menu; it pays Obols like any battle.
+- **Rejoin:** the title screen asks the server (`dantes_active_match`) once per run and offers Rejoin; a search also
+  goes back into a running duel first. A dropped socket in a duel retries for 40 s and rejoins; the server's RESYNC
+  (107) lists every event since the start, `DuelSync` drops what it already applied, and a fresh battle replays the
+  missed moves at 6x speed.
+
 ## Adding content
 - **Card:** add an entry to `cards.json` and use it in a deck. Run `python tools/cards/art_jobs.py run`
   (it generates only the missing images), then run the tests.

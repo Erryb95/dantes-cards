@@ -204,6 +204,17 @@ static func resync_events(resync: Dictionary) -> Array:
 	return out
 
 
+## The next message in order without taking it ([] when none is ready).
+func peek() -> Array:
+	if not pending():
+		return []
+	if next_seq == -1:
+		var keys := _held.keys()
+		keys.sort()
+		return _held[keys[0]]
+	return _held[next_seq]
+
+
 ## True when a MULLIGAN from `user` is already waiting (a rejoin: that choice was made before the restart).
 func mulligan_held_from(user: String) -> bool:
 	for v in _held.values():

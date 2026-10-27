@@ -21,11 +21,88 @@ var turns_wanted := 6
 var log_resync := true
 
 
+var bot_idle_turn := -1 ## `--bot`: on this turn number of its own, the bot does nothing (the rope burns, it times out)
+
+
 func _ready() -> void:
+	var bot := false
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--turns="):
 			turns_wanted = int(a.substr(8))
-	_run()
+		elif a == "--bot":
+			bot = true
+		elif a.begins_with("--idle-turn="):
+			bot_idle_turn = int(a.substr(12))
+	if bot:
+		_run_bot()
+	else:
+		_run()
+
+
+## `--bot`: one client only, an opponent for a real game window on this PC (`-- --online-profile=N`). It queues,
+## plays Easy-AI moves to the end of the duel (sitting out turn `--idle-turn`, so the rope shows), then quits.
+func _run_bot() -> void:
+	var s := OnlineSession.new(903)
+	s.name = "Bot"
+	add_child(s)
+	clients.append(s)
+	clients.append(s)
+	s.failed.connect(func(m): _fail("bot: %s" % m))
+	var cls: String = CardDB.classes()[1 % CardDB.classes().size()]
+	s.search(cls, CardDB.deck_list(str(CardDB.class_decks(cls)[0].id)))
+	if not await _wait_until(func(): return s.in_match() and not s.start.is_empty(), 90.0, "the bot is matched"):
+		_finish()
+		return
+	syncs[0] = DuelSync.new()
+	syncs[0].setup(s.start, s.user_id())
+	syncs[0].build()
+	print("bot matched against ", syncs[0].opponent_name())
+	await get_tree().create_timer(4.0).timeout
+	s.send(DuelSync.OP_MULLIGAN, {"replace": []})
+	var t := 0.0
+	var idle_turn_seen := -1
+	while ends[0].is_empty() and t < 900.0:
+		await get_tree().process_frame
+		t += maxf(get_process_delta_time(), 0.001)
+		_pump_one(0)
+		var sy := syncs[0]
+		if (sy.st.turn == bot_idle_turn or sy.st.turn == bot_idle_turn + 1) and sy.st.current == 0:
+			idle_turn_seen = sy.st.turn
+			continue
+		if not waiting[0] and sy.st.current == 0 and not sy.st.in_mulligan() and not sy.pending() and sy.st.winner == -1:
+			await get_tree().create_timer(0.7).timeout
+			_maybe_act(0)
+	print("bot END: ", ends[0])
+	_finish()
+
+
+## The bot's version of _pump (one client).
+func _pump_one(k: int) -> void:
+	var s := clients[k]
+	while true:
+		var m := s.next_message()
+		if m.is_empty():
+			break
+		match int(m[0]):
+			DuelSync.S_ACTION, DuelSync.S_TURN, DuelSync.S_MULLIGAN:
+				syncs[k].push(m[0], m[1])
+			DuelSync.S_END:
+				ends[k] = m[1]
+			DuelSync.S_ERROR:
+				waiting[k] = false
+	while true:
+		var n := syncs[k].pop()
+		if n.is_empty():
+			break
+		syncs[k].apply(n[0], n[1])
+		if n[0] == DuelSync.S_TURN or (n[0] == DuelSync.S_ACTION and str(n[1].get("from")) == s.user_id()):
+			waiting[k] = false
+	if syncs[k].st.winner != -1 and not _result_sent:
+		_result_sent = true
+		s.send(DuelSync.OP_RESULT, {"winner": syncs[k].winner_id()})
+
+
+var _result_sent := false
 
 
 func _fail(msg: String) -> void:
@@ -149,9 +226,10 @@ func _pump() -> void:
 					if log_resync:
 						log_resync = false
 						_describe_resync(data)
+					# A move sent just before the drop may still arrive after the RESYNC: keep waiting for its echo
+					# (a lost one times out in _maybe_act).
 					for e in DuelSync.resync_events(data):
 						syncs[k].push(e[0], e[1])
-					waiting[k] = false
 				DuelSync.S_END:
 					ends[k] = data
 				DuelSync.S_ERROR:
@@ -176,8 +254,14 @@ func s_uid(k: int) -> String:
 
 
 ## The acting client picks an Easy-AI move from its own view and sends it (or ends its turn).
+var _sent_at := [0, 0]
+
+
 func _maybe_act(k: int) -> void:
 	var sy := syncs[k]
+	if waiting[k] and Time.get_ticks_msec() - _sent_at[k] > 8000:
+		print("client %d: no echo in 8 s, deciding again" % k)
+		waiting[k] = false
 	if waiting[k] or sy == null or sy.st.winner != -1 or sy.st.in_mulligan() or sy.st.current != 0 or sy.pending():
 		return
 	if not clients[k].in_match() or not clients[k].client.socket_open():
@@ -185,6 +269,7 @@ func _maybe_act(k: int) -> void:
 	var act: Dictionary = BattleAI.new(0, BattleAI.Level.EASY).next_action(sy.st)
 	var probe := sy.st.clone(1)
 	waiting[k] = true
+	_sent_at[k] = Time.get_ticks_msec()
 	if act.do == "end" or not BattleAI.apply(probe, 0, act):
 		clients[k].send(DuelSync.OP_END_TURN, {})
 		return
