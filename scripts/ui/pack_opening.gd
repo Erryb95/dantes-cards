@@ -41,12 +41,28 @@ func _ready() -> void:
 	var title := UI.label("Open Packs", 64, "title", UI.GOLD, 10, Color.BLACK)
 	title.position = Vector2(60, 30)
 	ui.add_child(title)
-	_count_label = UI.label("", 34, "title", UI.BONE, 6, Color.BLACK)
-	_count_label.position = Vector2(64, 110)
-	ui.add_child(_count_label)
-	_obols_label = UI.label("", 30, "body", Color(1.0, 0.85, 0.5), 5, Color.BLACK)
-	_obols_label.position = Vector2(64, 158)
-	ui.add_child(_obols_label)
+	# Packs and Obols on an engraved plaque under the title, the Obols beside their coin.
+	var purse := UI.plaque(28, 8)
+	purse.position = Vector2(56, 118)
+	ui.add_child(purse)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	purse.add_child(row)
+	_count_label = UI.label("", 30, "title", UI.BONE, 4, Color(0.04, 0.01, 0.01))
+	_count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(_count_label)
+	var dot := UI.label("·", 30, "title", Color(0.8, 0.66, 0.45), 4, Color(0.04, 0.01, 0.01))
+	dot.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(dot)
+	if UiSkin.has("icon_obol"):
+		var coin := UiSkin.rect("icon_obol", Vector2(44, 44))
+		coin.custom_minimum_size = coin.size
+		coin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(coin)
+	_obols_label = UI.label("", 30, "title", Color(1.0, 0.85, 0.5), 4, Color(0.04, 0.01, 0.01))
+	_obols_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(_obols_label)
 	_buttons = HBoxContainer.new()
 	_buttons.add_theme_constant_override("separation", 24)
 	_buttons.position = Vector2(V.x / 2 - 520, V.y - 120)
@@ -88,7 +104,7 @@ func _auto() -> void:
 
 func _refresh() -> void:
 	_count_label.text = "Packs: %d" % Collection.packs
-	_obols_label.text = "Obols: %d" % Collection.obols
+	_obols_label.text = "%d Obols" % Collection.obols
 	(_buttons.get_node("Buy") as Button).disabled = Collection.obols < Collection.PACK_PRICE
 	(_buttons.get_node("Next") as Button).visible = _state == "done" and Collection.packs > 0
 
@@ -118,13 +134,22 @@ func _next_pack() -> void:
 func _spawn_pack() -> void:
 	_refresh()
 	if Collection.packs <= 0:
+		if ui.get_node_or_null("Empty") != null:
+			return
+		# The hint on a framed plate in the middle of the table.
+		var holder := CenterContainer.new()
+		holder.name = "Empty"
+		holder.size = V
+		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ui.add_child(holder)
+		var plate := PanelContainer.new()
+		plate.add_theme_stylebox_override("panel", UI.tip_box())
+		plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		holder.add_child(plate)
 		var l := UI.label("No packs left. Win battles to earn Obols." if Collection.obols < Collection.PACK_PRICE
-			else "Buy a pack to continue.", 36, "italic", UI.BONE, 6, Color.BLACK)
-		l.name = "Empty"
+			else "Buy a pack to continue.", 34, "italic", UI.BONE, 3, Color.BLACK)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.size = Vector2(V.x, 60)
-		l.position = Vector2(0, V.y / 2 - 30)
-		ui.add_child(l)
+		plate.add_child(l)
 		return
 	var old := ui.get_node_or_null("Empty")
 	if old:
@@ -148,10 +173,9 @@ func _spawn_pack() -> void:
 	var seal := Shapes.make(Shapes.Kind.ELLIPSE, Vector2(110, 110), UI.CRIMSON, UI.GOLD, 6.0)
 	seal.use_parent_material = false
 	pack.add_child(seal)
-	var hint := UI.label("Tap to open", 40, "title", UI.BONE, 8, Color.BLACK)
-	hint.size = Vector2(500, 60)
-	hint.position = Vector2(-250, 260)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# The call to action on the red ribbon hung under the pack.
+	var hint := UI.ribbon("Tap to open", 540, 40)
+	hint.position += Vector2(0, 300)
 	pack.add_child(hint)
 	pack.scale = Vector2(0.3, 0.3)
 	pack.modulate.a = 0.0
@@ -302,15 +326,17 @@ func _reveal(c: Dictionary) -> void:
 		_refresh()
 
 
+## A small engraved plaque over a revealed card ("NEW", or the Obols a duplicate refunds).
 func _tag(v: Node2D, text: String, color: Color) -> void:
-	var l := UI.label(text, 40, "title", color, 8, Color.BLACK)
-	l.size = Vector2(300, 50)
-	l.position = Vector2(-150, -CardView.H / 2 - 56)
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(l)
-	l.scale = Vector2(0.3, 0.3)
-	l.pivot_offset = l.size / 2
-	l.create_tween().tween_property(l, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK)
+	var holder := CenterContainer.new()
+	holder.size = Vector2(320, 70)
+	holder.position = Vector2(-160, -CardView.H / 2 - 74)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(UI.plaque_label(text, 36, "title", color, 0.0, 26, 6))
+	v.add_child(holder)
+	holder.scale = Vector2(0.3, 0.3)
+	holder.pivot_offset = holder.size / 2
+	holder.create_tween().tween_property(holder, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK)
 
 
 func _banner(text: String, color: Color) -> void:

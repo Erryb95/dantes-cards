@@ -4,6 +4,7 @@ extends Control
 var _grid: GridContainer
 var _filter := "all"
 var _zoom: Control
+var _tabs := {} ## filter -> Button
 
 
 func _ready() -> void:
@@ -33,16 +34,20 @@ func _ready() -> void:
 		if c.get("set", "") != "token":
 			total += 1
 			owned_n += int(Collection.copies(c.id) > 0)
-	var progress := UI.label("%d / %d" % [owned_n, total], 30, "title", UI.BONE, 5, Color.BLACK)
+	# Cards owned out of the whole pool, engraved on a plaque.
+	var progress := UI.plaque_label("%d / %d" % [owned_n, total], 28, "title", UI.BONE, 0.0, 24, 8)
+	progress.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(progress)
 	for f in [["all", "All"], ["pilgrim", "Pilgrim"], ["ferry", "Ferryman"], ["neutral", "Neutral"], ["token", "Tokens"]]:
 		var b := UI.button(f[1], 180, 64)
 		b.add_theme_font_size_override("font_size", 26)
 		b.pressed.connect(_set_filter.bind(f[0]))
 		top.add_child(b)
+		_tabs[f[0]] = b
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	UI.paint_scroll(scroll)
 	root.add_child(scroll)
 	var center := CenterContainer.new()
 	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -61,6 +66,8 @@ func _set_filter(f: String) -> void:
 
 
 func _fill() -> void:
+	for f in _tabs: # the filter that is on is lit, the others dimmed
+		(_tabs[f] as Button).modulate = Color(1.15, 1.05, 0.85) if f == _filter else Color(0.72, 0.66, 0.6)
 	for c in _grid.get_children():
 		c.queue_free()
 	var s := 0.72
@@ -80,8 +87,21 @@ func _fill() -> void:
 			if n == 0:
 				v.modulate = Color(0.32, 0.3, 0.3)
 			else:
-				var badge := UI.label("x%d" % n, 26, "title", UI.GOLD, 6, Color.BLACK)
-				badge.position = Vector2(slot.custom_minimum_size.x - 40, 2)
+				# The copies owned, engraved on a bronze disc pinned to the card's top-right corner.
+				var badge := Control.new()
+				badge.size = Vector2(54, 54)
+				badge.position = Vector2(slot.custom_minimum_size.x - 40, -14)
+				badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				if UiSkin.has("power_disc"):
+					badge.add_child(UiSkin.rect("power_disc", badge.size))
+				var count := UI.label("x%d" % n, 22, "title", UI.GOLD, 5, Color.BLACK)
+				if UiSkin.has("power_disc"):
+					UI.engraved(count)
+				count.size = badge.size
+				count.position.y = 1
+				count.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+				badge.add_child(count)
 				slot.add_child(badge)
 		slot.mouse_entered.connect(func():
 			v.create_tween().tween_property(v, "scale", Vector2(s, s) * 1.06, 0.1)
@@ -107,11 +127,33 @@ func _show_zoom(id: String) -> void:
 	_zoom.add_child(c)
 	c.create_tween().tween_property(c, "scale", Vector2(1.9, 1.9) * minf(1.0, vs.y / 1080.0), 0.18).set_trans(Tween.TRANS_BACK)
 	var card := CardDB.card(id)
-	var info := UI.label("%s\n\n%s" % [card.get("name", ""), card.get("flavor", "")], 30, "italic", UI.BONE, 4, Color.BLACK)
-	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	info.size = Vector2(minf(560.0, vs.x * 0.3), 400)
-	info.position = Vector2(vs.x * 0.62, vs.y / 2 - 150)
-	_zoom.add_child(info)
+	# The name and flavour on a framed plate beside the card.
+	var w := minf(620.0, vs.x * 0.34)
+	var plate := PanelContainer.new()
+	plate.add_theme_stylebox_override("panel", UI.tip_box())
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plate.custom_minimum_size = Vector2(w, 0)
+	var pv := VBoxContainer.new()
+	pv.add_theme_constant_override("separation", 14)
+	pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plate.add_child(pv)
+	var name_l := UI.label(str(card.get("name", "")), 34, "title", UI.GOLD, 4, Color.BLACK)
+	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	pv.add_child(name_l)
+	var flavor := str(card.get("flavor", ""))
+	if flavor != "":
+		var info := UI.label(flavor, 28, "italic", UI.BONE, 3, Color.BLACK)
+		info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		info.custom_minimum_size = Vector2(w - 100, 0)
+		pv.add_child(info)
+	var holder := CenterContainer.new()
+	holder.position = Vector2(vs.x * 0.58, 0)
+	holder.size = Vector2(w + 40, vs.y)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(plate)
+	_zoom.add_child(holder)
 	Sfx.play("page", -6.0)
 	_zoom.gui_input.connect(func(e):
 		if e is InputEventMouseButton and e.pressed:
