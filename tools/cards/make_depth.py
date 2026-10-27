@@ -51,6 +51,10 @@ def jobs() -> list[tuple[str, Path, Path]]:
     return out
 
 
+def save_manifest(manifest: dict) -> None:
+    MANIFEST.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n", newline="\n")  # LF, as in git
+
+
 def sha1(path: Path) -> str:
     return hashlib.sha1(path.read_bytes()).hexdigest()
 
@@ -118,13 +122,13 @@ def main() -> int:
             depth_map(session, Image.open(src)).save(dst, optimize=True)
             manifest[key] = {"src": h, "v": VERSION}
             if (i + 1) % 20 == 0 or i + 1 == len(todo):
-                print(f"  {i + 1}/{len(todo)}  {time.time() - t0:.0f}s")
-                MANIFEST.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
+                print(f"  {i + 1}/{len(todo)}  {time.time() - t0:.0f}s", flush=True)
+                save_manifest(manifest)
     # Forget pictures that were deleted.
     keys = {k for k, _, _ in jobs()}
     for k in [k for k in manifest if k not in keys]:
         del manifest[k]
-    MANIFEST.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
+    save_manifest(manifest)
 
     if a.sheet:
         all_jobs = [(s, d) for _, s, d in jobs() if d.exists()]
