@@ -14,7 +14,8 @@ const TILE_GAP := 14.0
 const FRAME_PAD := 64.0 ## room the bronze frame's ornament takes on each side of a big panel
 const ARROW_SIZE := 62.0
 const PLAQUE_TEXT_H := 116.0 ## hero power + plan text inside the showcase plaque (about 200 px with its margins)
-const FEATURED_SCALE := 0.34 ## the three featured cards in the showcase
+const FEATURED_SCALE := 0.34 ## the three featured cards in the showcase, on a 1080 px tall screen
+const FEATURED_SCALE_MAX := 0.5 ## the most they grow on a taller screen (three still fit the showcase's width)
 const FEATURED_TILT := 0.12 ## radians the two side cards fan out
 const CARD_FX := preload("res://assets/shaders/card_fx.gdshader")
 
@@ -26,6 +27,7 @@ var _scroll: ScrollContainer
 var _tabs := {}
 var _scroll_btns: Array = []
 var _tile_size := TILE ## the library tiles' size, set by _library so whole rows fill the panel
+var _feat_scale := FEATURED_SCALE ## the featured cards' scale, set by _showcase from the room the screen gives
 # Showcase parts, refilled by _show().
 var _portrait: Control
 var _hero: HeroView
@@ -70,9 +72,10 @@ func _ready() -> void:
 
 
 ## Height of the showcase / library row: what the screen leaves under the title banner and header and above Back
-## (those and the gaps take 285 px, so a 1080 px screen keeps a few px of margin). The showcase needs about 780.
+## (those and the gaps take 285 px, so a 1080 px screen keeps a few px of margin). The showcase needs about 780; a
+## taller screen (4:3, 16:10) gets up to 1000, which shows more library rows and bigger featured cards.
 func _row_height() -> float:
-	return minf(800.0, get_viewport_rect().size.y - 300.0)
+	return minf(1000.0, get_viewport_rect().size.y - 300.0)
 
 
 # --- Decks -------------------------------------------------------------------------------------------------------
@@ -209,6 +212,8 @@ func _big_panel(w: float) -> PanelContainer:
 ## the player's own decks).
 func _showcase() -> Control:
 	var inner := SHOW_W - 2.0 * FRAME_PAD
+	# A taller screen (4:3, 16:10) gives the row more height: the featured cards take it.
+	_feat_scale = clampf(FEATURED_SCALE + (_row_height() - 800.0) / CardView.H, FEATURED_SCALE, FEATURED_SCALE_MAX)
 	var p := _big_panel(SHOW_W)
 	var v := VBoxContainer.new()
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -283,7 +288,7 @@ func _featured_y(side: int) -> float:
 ## Half the height a featured card takes on screen, the side ones tilted.
 func _featured_half_h(side: int) -> float:
 	var a := side * FEATURED_TILT
-	return FEATURED_SCALE * (CardView.H / 2.0 * cos(a) + CardView.W / 2.0 * sin(a))
+	return _feat_scale * (CardView.H / 2.0 * cos(a) + CardView.W / 2.0 * sin(a))
 
 
 ## Puts deck `e` in the showcase: hero, name (shrunk to fit the ribbon), hero power and plan (shrunk to fit), the
@@ -332,8 +337,8 @@ func _show(e: Dictionary, step: int) -> void:
 	var mid := inner / 2
 	for i in ids.size():
 		var c := CardView.new().setup(ids[i], -1, true)
-		c.scale = Vector2.ONE * FEATURED_SCALE
-		var at := Vector2(mid + (i - 1) * 120.0, _featured_y(absi(i - 1)))
+		c.scale = Vector2.ONE * _feat_scale
+		var at := Vector2(mid + (i - 1) * 120.0 * _feat_scale / FEATURED_SCALE, _featured_y(absi(i - 1)))
 		c.position = at
 		c.rotation = (i - 1) * FEATURED_TILT
 		_cards.add_child(c)
