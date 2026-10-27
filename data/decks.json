@@ -325,25 +325,24 @@
     "wr_athamas"
    ],
    "cards": {
-    "wr_mud_brawler": 2,
+    "wr_scornful_soul": 2,
     "uh_wrathful_shade": 2,
     "wr_self_gnawing_shade": 2,
-    "wr_rabble_rouser": 2,
     "wr_gnawing_spite": 2,
-    "wr_stirring_the_mud": 1,
+    "wr_stirring_the_mud": 2,
     "wr_tearing_teeth": 2,
     "wr_stygian_brute": 2,
     "wr_tower_watchman": 2,
-    "wr_black_guelph": 1,
     "wr_marsh_warden": 2,
     "wr_drowned_knight": 2,
-    "wr_geri_del_bello": 1,
     "wr_rancorous_shade": 1,
     "wr_red_towers": 1,
     "uh_filippo_argenti": 1,
     "wr_mire_hulk": 2,
     "wr_athamas": 1,
-    "wr_mud_colossus": 1
+    "wr_mud_colossus": 1,
+    "wr_brawl_in_the_mud": 1,
+    "wr_mud_brawler": 2
    }
   },
   {
@@ -395,22 +394,21 @@
    "cards": {
     "wr_adimari_bravo": 2,
     "wr_mud_brawler": 2,
-    "wr_gnawing_spite": 2,
-    "wr_signal_fires": 2,
     "wr_tearing_teeth": 2,
     "wr_florentine_hothead": 2,
     "uh_wrathful_shade": 2,
     "wr_scornful_soul": 2,
     "mc_jason": 2,
-    "wr_rabble_rouser": 1,
+    "wr_rabble_rouser": 2,
     "wr_rinier_pazzo": 2,
     "wr_silver_shod_horse": 1,
     "wr_adimari_captain": 2,
-    "wr_other_dogs": 1,
+    "wr_other_dogs": 2,
     "wr_eternal_fire": 2,
     "uh_filippo_argenti": 1,
     "wr_alberti_brothers": 1,
-    "mc_brutus": 1
+    "mc_brutus": 1,
+    "wr_black_guelph": 2
    }
   }
  ]

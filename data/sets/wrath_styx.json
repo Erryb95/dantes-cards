@@ -7,7 +7,7 @@
    "set": "wrath",
    "type": "spell",
    "rarity": "common",
-   "cost": 0,
+   "cost": 1,
    "effects": [
     {
      "do": "damage",
@@ -155,7 +155,7 @@
    "type": "minion",
    "rarity": "common",
    "cost": 2,
-   "attack": 2,
+   "attack": 1,
    "health": 3,
    "wrath": 3,
    "text": "Wrath: +3 Attack.",
@@ -293,10 +293,10 @@
      "on": "frenzy",
      "do": "armor",
      "target": "own_hero",
-     "amount": 3
+     "amount": 2
     }
    ],
-   "text": "Guard. Frenzy: Gain 3 Armor.",
+   "text": "Guard. Frenzy: Gain 2 Armor.",
    "flavor": "It squats in the mud and lets them break their fists on it.",
    "circle": "wrath",
    "art": "A heavy, mud-caked figure crouched like a boulder in the swamp, arms folded over its head."
@@ -418,7 +418,7 @@
    "type": "minion",
    "rarity": "common",
    "cost": 3,
-   "attack": 3,
+   "attack": 2,
    "health": 4,
    "wrath": 2,
    "text": "Wrath: +2 Attack.",
@@ -500,7 +500,7 @@
    "type": "minion",
    "rarity": "common",
    "cost": 3,
-   "attack": 2,
+   "attack": 1,
    "health": 5,
    "keywords": [
     "guard"
@@ -651,7 +651,7 @@
    "type": "minion",
    "rarity": "common",
    "cost": 4,
-   "attack": 4,
+   "attack": 3,
    "health": 5,
    "wrath": 2,
    "text": "Wrath: +2 Attack.",
@@ -735,7 +735,7 @@
    "type": "minion",
    "rarity": "epic",
    "cost": 4,
-   "attack": 3,
+   "attack": 2,
    "health": 5,
    "keywords": [
     "rebirth"
@@ -845,7 +845,7 @@
    "rarity": "legendary",
    "cost": 5,
    "attack": 3,
-   "health": 7,
+   "health": 6,
    "wrath": 3,
    "effects": [
     {
@@ -873,7 +873,7 @@
    "type": "minion",
    "rarity": "common",
    "cost": 5,
-   "attack": 5,
+   "attack": 4,
    "health": 6,
    "wrath": 3,
    "text": "Wrath: +3 Attack.",
@@ -1030,8 +1030,8 @@
    "type": "minion",
    "rarity": "common",
    "cost": 7,
-   "attack": 5,
-   "health": 9,
+   "attack": 4,
+   "health": 8,
    "keywords": [
     "guard"
    ],
