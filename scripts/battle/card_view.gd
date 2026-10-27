@@ -317,7 +317,7 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	var painted := UiSkin.has(plate)
 	if painted:
 		if is_spell:
-			_face.add_child(UiSkin.rect(plate, Vector2(W - 2, 104), Vector2(1, ry + 54)))
+			_face.add_child(UiSkin.rect(plate, Vector2(W - 2, 116), Vector2(1, ry + 44)))
 		else:
 			_face.add_child(UiSkin.rect(plate, Vector2(W - 18, 104), Vector2(9, ry + 44)))
 	if rarity != "token" and UiSkin.has("rarity_" + rarity):
@@ -331,7 +331,7 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	# Inside the plate; on minions the box narrows so lines stay clear of the attack and health gems in the
 	# lower corners, on spells it stays between the scroll's rolled ends.
 	if painted:
-		txt.position = Vector2(38, ry + 70) if is_spell else Vector2(50, ry + 61)
+		txt.position = Vector2(38, ry + 68) if is_spell else Vector2(50, ry + 61)
 		txt.size = Vector2(W - 76, 72) if is_spell else Vector2(W - 100, 60)
 	else:
 		txt.position = Vector2(20 if is_spell else 44, ry + 58)

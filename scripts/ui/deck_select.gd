@@ -12,6 +12,7 @@ const TILE := Vector2(380, 96)
 const TILE_GAP := 14.0
 const FRAME_PAD := 64.0 ## room the bronze frame's ornament takes on each side of a big panel
 const ARROW_SIZE := 62.0
+const PLAQUE_TEXT_H := 116.0 ## hero power + plan text inside the showcase plaque (144 px with its margins)
 const CARD_FX := preload("res://assets/shaders/card_fx.gdshader")
 
 var _entries: Array = [] ## every deck the library can show (see _all_entries)
@@ -291,6 +292,17 @@ func _show(e: Dictionary, step: int) -> void:
 	_txt.add_theme_color_override("font_color", UI.BONE if e.problem == "" else Color(1.0, 0.55, 0.45))
 	_txt.add_theme_font_size_override("font_size", 24)
 	_fit_wrapped(_txt, room, 3, 17)
+	# Both lines share the plaque's fixed height: a long hero power and a long plan shrink together, so the plaque
+	# never grows into the featured cards and the Play button.
+	while _text_h(_who, room) + _text_h(_txt, room) > PLAQUE_TEXT_H:
+		var wp := _who.get_theme_font_size("font_size")
+		var tp := _txt.get_theme_font_size("font_size")
+		if tp > 16 and tp >= wp:
+			_txt.add_theme_font_size_override("font_size", tp - 1)
+		elif wp > 15:
+			_who.add_theme_font_size_override("font_size", wp - 1)
+		else:
+			break
 	for c in _cards.get_children():
 		c.queue_free()
 	var ids: Array = e.featured
@@ -586,6 +598,12 @@ func _fit_label(l: Label, room: float, min_size: int) -> void:
 	while px > min_size and f.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x > room:
 		px -= 1
 	l.add_theme_font_size_override("font_size", px)
+
+
+## The height a wrapping label's text takes at `room` px wide.
+func _text_h(l: Label, room: float) -> float:
+	return l.get_theme_font("font").get_multiline_string_size(l.text, HORIZONTAL_ALIGNMENT_CENTER, room,
+		l.get_theme_font_size("font_size")).y
 
 
 ## Shrinks a wrapping label until its text takes at most `lines` lines of `room` px.
