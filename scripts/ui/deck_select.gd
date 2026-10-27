@@ -8,11 +8,14 @@ extends Control
 
 const SHOW_W := 640.0 ## the showcase panel
 const LIB_COLS := 2
-const TILE := Vector2(380, 96)
+const TILE := Vector2(380, 96) ## a library tile at its nominal height (_library stretches the rows to fill the panel)
+const TILE_H_MIN := 84.0 ## the shortest a tile may get (its name and subtitle still fit)
 const TILE_GAP := 14.0
 const FRAME_PAD := 64.0 ## room the bronze frame's ornament takes on each side of a big panel
 const ARROW_SIZE := 62.0
-const PLAQUE_TEXT_H := 116.0 ## hero power + plan text inside the showcase plaque (144 px with its margins)
+const PLAQUE_TEXT_H := 116.0 ## hero power + plan text inside the showcase plaque (about 200 px with its margins)
+const FEATURED_SCALE := 0.34 ## the three featured cards in the showcase
+const FEATURED_TILT := 0.12 ## radians the two side cards fan out
 const CARD_FX := preload("res://assets/shaders/card_fx.gdshader")
 
 var _entries: Array = [] ## every deck the library can show (see _all_entries)
@@ -22,6 +25,7 @@ var _grid: GridContainer
 var _scroll: ScrollContainer
 var _tabs := {}
 var _scroll_btns: Array = []
+var _tile_size := TILE ## the library tiles' size, set by _library so whole rows fill the panel
 # Showcase parts, refilled by _show().
 var _portrait: Control
 var _hero: HeroView
@@ -65,25 +69,31 @@ func _ready() -> void:
 	_show(_find(_selected), 0)
 
 
-## Height of the showcase / library row: what the screen leaves under the title banner and header and above Back.
+## Height of the showcase / library row: what the screen leaves under the title banner and header and above Back
+## (those and the gaps take 285 px, so a 1080 px screen keeps a few px of margin). The showcase needs about 780.
 func _row_height() -> float:
-	return minf(800.0, get_viewport_rect().size.y - 320.0)
+	return minf(800.0, get_viewport_rect().size.y - 300.0)
 
 
 # --- Decks -------------------------------------------------------------------------------------------------------
 
-## Every deck as one shape: preconstructed ones first (by class, in file order), then the player's own.
+## Every deck as one shape: preconstructed ones first (by class: the starter, then the premade decks in file order),
+## then the player's own.
 func _all_entries() -> Array:
 	var out := []
 	for cls in CardDB.classes():
-		for d in CardDB.class_decks(cls):
+		var decks: Array = CardDB.class_decks(cls)
+		var ordered := decks.filter(func(d): return d.get("starter", false))
+		ordered.append_array(decks.filter(func(d): return not d.get("starter", false)))
+		for d in ordered:
 			out.append({"key": "pre:" + str(d.id), "own": false, "id": str(d.id), "cls": cls, "name": str(d.name),
-				"hero": str(d.hero), "text": str(d.get("text", "")), "featured": d.get("featured", []), "problem": ""})
+				"hero": str(d.hero), "text": str(d.get("text", "")), "featured": d.get("featured", []), "problem": "",
+				"starter": bool(d.get("starter", false))})
 	for i in Collection.decks.size():
 		var d: Dictionary = Collection.decks[i]
 		out.append({"key": "own:%d" % i, "own": true, "index": i, "cls": str(d.cls), "name": str(d.name),
 			"hero": CardDB.class_hero(d.cls), "text": _own_text(d), "featured": _own_featured(d),
-			"problem": Collection.deck_problem(d)})
+			"problem": Collection.deck_problem(d), "starter": false})
 	return out
 
 
@@ -202,7 +212,7 @@ func _showcase() -> Control:
 	var p := _big_panel(SHOW_W)
 	var v := VBoxContainer.new()
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
-	v.add_theme_constant_override("separation", 6)
+	v.add_theme_constant_override("separation", 4)
 	p.add_child(v)
 	_portrait = Control.new()
 	_portrait.custom_minimum_size = Vector2(inner, 170)
@@ -243,7 +253,8 @@ func _showcase() -> Control:
 	_txt.custom_minimum_size = Vector2(room, 0)
 	pv.add_child(_txt)
 	_cards = Control.new()
-	_cards.custom_minimum_size = Vector2(inner, 130)
+	# Tall enough for the tilted side cards (see _show), so they never reach down onto the Play button.
+	_cards.custom_minimum_size = Vector2(inner, ceilf(_featured_y(1) + _featured_half_h(1)) + 2.0)
 	v.add_child(_cards)
 	var buttons := HBoxContainer.new()
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -261,6 +272,18 @@ func _showcase() -> Control:
 			_edit(e.index, e.cls))
 	buttons.add_child(_edit_btn)
 	return p
+
+
+## Where a featured card's centre sits in the cards row: the middle one (`side` 0) just clear of the plaque above,
+## the tilted side ones (`side` 1) a little lower, fanned.
+func _featured_y(side: int) -> float:
+	return _featured_half_h(0) + 2.0 + side * 5.0
+
+
+## Half the height a featured card takes on screen, the side ones tilted.
+func _featured_half_h(side: int) -> float:
+	var a := side * FEATURED_TILT
+	return FEATURED_SCALE * (CardView.H / 2.0 * cos(a) + CardView.W / 2.0 * sin(a))
 
 
 ## Puts deck `e` in the showcase: hero, name (shrunk to fit the ribbon), hero power and plan (shrunk to fit), the
@@ -309,10 +332,10 @@ func _show(e: Dictionary, step: int) -> void:
 	var mid := inner / 2
 	for i in ids.size():
 		var c := CardView.new().setup(ids[i], -1, true)
-		c.scale = Vector2(0.37, 0.37)
-		var at := Vector2(mid + (i - 1) * 120.0, 66 + absf(i - 1) * 7)
+		c.scale = Vector2.ONE * FEATURED_SCALE
+		var at := Vector2(mid + (i - 1) * 120.0, _featured_y(absi(i - 1)))
 		c.position = at
-		c.rotation = (i - 1) * 0.12
+		c.rotation = (i - 1) * FEATURED_TILT
 		_cards.add_child(c)
 		if step != 0:
 			c.position = at + Vector2(90 * step, 0)
@@ -355,10 +378,15 @@ func _library() -> Control:
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER # wheel, drag and the bronze discs scroll it
-	# Whole rows only, so no tile is cut in half at the bottom edge.
-	var room := _row_height() - 84.0 - 56.0 - ARROW_SIZE - 24.0
-	var rows := maxi(2, int((room + TILE_GAP) / (TILE.y + TILE_GAP)))
-	_scroll.custom_minimum_size = Vector2(inner + 12.0, rows * (TILE.y + TILE_GAP) - TILE_GAP + 8.0)
+	# Whole rows only, so no tile is cut in half at the bottom edge: as many rows as come nearest the nominal tile
+	# height in the room the panel leaves (frame margins, filters, discs, the gaps between them and the scroll's own
+	# 8 px), each tile stretched or squeezed a little so the rows fill that room exactly.
+	var room := _row_height() - 84.0 - 56.0 - ARROW_SIZE - 24.0 - 8.0
+	var rows := maxi(2, roundi((room + TILE_GAP) / (TILE.y + TILE_GAP)))
+	while rows > 2 and (room + TILE_GAP) / rows - TILE_GAP < TILE_H_MIN:
+		rows -= 1
+	_tile_size = Vector2(TILE.x, floorf((room + TILE_GAP) / rows - TILE_GAP))
+	_scroll.custom_minimum_size = Vector2(inner + 12.0, rows * (_tile_size.y + TILE_GAP) - TILE_GAP + 8.0)
 	v.add_child(_scroll)
 	_grid = GridContainer.new()
 	_grid.columns = LIB_COLS
@@ -379,7 +407,8 @@ func _library() -> Control:
 		holder.custom_minimum_size = a.size
 		a.pressed.connect(func():
 			var t := _scroll.create_tween()
-			t.tween_property(_scroll, "scroll_vertical", _scroll.scroll_vertical + dir * int(TILE.y + TILE_GAP) * 2,
+			var two_rows := int(_tile_size.y + TILE_GAP) * 2
+			t.tween_property(_scroll, "scroll_vertical", _scroll.scroll_vertical + dir * two_rows,
 				0.2).set_ease(Tween.EASE_OUT))
 		holder.add_child(a)
 		nav.add_child(holder)
@@ -409,7 +438,7 @@ func _update_scroll_btns() -> void:
 	if _grid == null:
 		return
 	var rows := ceili(float(_grid.get_child_count()) / LIB_COLS)
-	var overflow := rows * (TILE.y + TILE_GAP) - TILE_GAP > _scroll.size.y + 1.0
+	var overflow := rows * (_tile_size.y + TILE_GAP) - TILE_GAP > _scroll.size.y + 1.0
 	for b in _scroll_btns:
 		b.modulate.a = 1.0 if overflow else 0.0
 		b.disabled = not overflow
@@ -431,9 +460,9 @@ func _tile_style(on: bool) -> StyleBox:
 ## A tile's painted body: the dark painted field inside the thin bronze frame, brighter when hovered.
 func _tile_base() -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = TILE
+	b.custom_minimum_size = _tile_size
 	b.focus_mode = Control.FOCUS_NONE
-	b.pivot_offset = TILE / 2
+	b.pivot_offset = _tile_size / 2
 	var fill := UI.box(Color(0.1, 0.05, 0.04, 0.92), UI.GOLD_DARK, 2, 8)
 	b.add_theme_stylebox_override("normal", _tile_style(false))
 	b.add_theme_stylebox_override("hover", UI.frame_box("deck_row", 10, 0, fill, Color(1.35, 1.2, 0.95)))
@@ -446,7 +475,7 @@ func _tile_base() -> Button:
 		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		bg.position = Vector2(5, 5)
-		bg.size = TILE - Vector2(10, 10)
+		bg.size = _tile_size - Vector2(10, 10)
 		bg.show_behind_parent = true
 		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		bg.modulate = TILE_FIELD
@@ -465,7 +494,7 @@ func _tile_portrait(b: Control, hero_id: String, dim: bool) -> void:
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	art.size = Vector2(60, 74)
-	art.position = Vector2(22, (TILE.y - 74) / 2)
+	art.position = Vector2(22, (_tile_size.y - 74) / 2)
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var m := ShaderMaterial.new()
 	m.shader = CARD_FX
@@ -482,9 +511,9 @@ func _tile_portrait(b: Control, hero_id: String, dim: bool) -> void:
 
 ## A label inside a tile, right of the portrait, shrunk to fit.
 func _tile_label(b: Control, text: String, px: int, kind: String, color: Color, y: float, h: float) -> Label:
-	var room := TILE.x - 112.0 - 22.0
+	var room := _tile_size.x - 112.0 - 22.0
 	var l := UI.label(text, px, kind, color, 4 if kind == "title" else 3, Color(0.04, 0.01, 0.01))
-	l.position = Vector2(112, y)
+	l.position = Vector2(112, y + (_tile_size.y - TILE.y) / 2) # `y` is for a nominal tile; other heights centre it
 	l.size = Vector2(room, h)
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	l.clip_text = true
@@ -501,7 +530,7 @@ func _tile(e: Dictionary) -> Button:
 	_tile_portrait(b, e.hero, e.problem != "")
 	_tile_label(b, e.name, 26, "title", UI.BONE if e.problem == "" else Color(0.75, 0.66, 0.6), 12, 40)
 	var cls_name := CardDB.class_title(e.cls)
-	var sub := ("Your deck · " if e.own else "Starter deck · ") + cls_name
+	var sub := ("Your deck · " if e.own else "Starter deck · " if e.starter else "Premade deck · ") + cls_name
 	var col := Color(0.86, 0.72, 0.48)
 	if e.problem != "":
 		sub = "Incomplete · " + e.problem
@@ -526,7 +555,7 @@ func _mark_tile(b: Button, on: bool) -> void:
 	if glow == null:
 		glow = Panel.new()
 		glow.name = "Glow"
-		glow.size = TILE
+		glow.size = _tile_size
 		glow.show_behind_parent = true
 		glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		glow.add_theme_stylebox_override("panel", UI.box(Color(0, 0, 0, 0), Color(1.0, 0.78, 0.35, 0.9), 2, 8,
@@ -551,7 +580,7 @@ func _new_tile(cls: String) -> Button:
 	var b := _tile_base()
 	_tile_portrait(b, CardDB.class_hero(cls), true)
 	var plus := UI.label("+", 54, "title", UI.GOLD, 6, Color.BLACK)
-	plus.position = Vector2(22, (TILE.y - 74) / 2)
+	plus.position = Vector2(22, (_tile_size.y - 74) / 2)
 	plus.size = Vector2(60, 74)
 	plus.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	plus.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

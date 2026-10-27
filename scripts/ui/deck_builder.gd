@@ -235,19 +235,30 @@ func _small_button(text: String, w: float) -> Button:
 ## A cost filter: the painted mana gem with its number raised on it, like the cost on a card.
 func _gem_button(text: String) -> Button:
 	var b := Button.new()
-	b.text = text
+	# "7+": Cinzel's "+" is a hairline cross that vanished under the dark rim on a small window, so the digit is
+	# set a little left and the "+" is drawn as a bold cross beside it (_draw_plus).
+	var plus := text.ends_with("+")
+	b.text = text.trim_suffix("+")
 	b.custom_minimum_size = Vector2(GEM, GEM)
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_font_override("font", UI.font("title"))
-	b.add_theme_font_size_override("font_size", 28 if text.length() == 1 else 24)
+	b.add_theme_font_size_override("font_size", 28)
 	for c in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
 		b.add_theme_color_override(c, UI.NUMBER)
 	b.add_theme_constant_override("outline_size", 7)
 	b.add_theme_color_override("font_outline_color", Color(0, 0.02, 0.08))
+	if plus:
+		var mark := Control.new()
+		mark.size = Vector2(GEM, GEM)
+		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		mark.draw.connect(func(): _draw_plus(mark, Vector2(GEM / 2 + 10, GEM / 2), 6.0, 3.0, 2.0))
+		b.add_child(mark)
 	var fallback := UI.box(Color(0.1, 0.16, 0.32), Color(0.5, 0.65, 0.95), 2, int(GEM / 2))
 	for st in [["normal", Color.WHITE], ["hover", Color(1.25, 1.2, 1.1)], ["pressed", Color(0.8, 0.8, 0.85)]]:
 		var sb := UI.frame_box("gem_mana", 0, 0, fallback, st[1])
 		sb.content_margin_top = 4 # Cinzel's digits sit high in the line box
+		if plus:
+			sb.content_margin_right = 14 # the digit sits left, the drawn "+" right
 		b.add_theme_stylebox_override(st[0], sb)
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	b.pivot_offset = b.custom_minimum_size / 2
@@ -466,11 +477,22 @@ func _draw_curve() -> void:
 		if UiSkin.has("gem_mana"):
 			_curve.draw_texture_rect(UiSkin.tex("gem_mana"), g, false,
 				Color.WHITE if counts[i] > 0 else Color(0.55, 0.55, 0.62))
-		var digit := "7+" if i == 7 else str(i)
-		var fs := 19 if i < 7 else 15
-		var at := Vector2(g.position.x, g.get_center().y + fs * 0.36)
-		_curve.draw_string_outline(f, at, digit, HORIZONTAL_ALIGNMENT_CENTER, gem, fs, 5, Color(0, 0.02, 0.08))
-		_curve.draw_string(f, at, digit, HORIZONTAL_ALIGNMENT_CENTER, gem, fs, UI.NUMBER)
+		# The last gem is "7+": the digit a little left and a bold drawn "+" (Cinzel's own is a hairline).
+		var fs := 19
+		var at := Vector2(g.position.x - (4.0 if i == 7 else 0.0), g.get_center().y + fs * 0.36)
+		_curve.draw_string_outline(f, at, str(i), HORIZONTAL_ALIGNMENT_CENTER, gem, fs, 5, Color(0, 0.02, 0.08))
+		_curve.draw_string(f, at, str(i), HORIZONTAL_ALIGNMENT_CENTER, gem, fs, UI.NUMBER)
+		if i == 7:
+			_draw_plus(_curve, g.get_center() + Vector2(7, 0), 4.0, 2.0, 1.5)
+
+
+## A bold "+" centred at `c` (arms `arm` px from the centre, `thick` px wide) in the gem digits' colour, ringed in
+## their dark outline: Cinzel's own "+" is too thin to read on a small gem.
+static func _draw_plus(ci: CanvasItem, c: Vector2, arm: float, thick: float, rim: float) -> void:
+	for pass_ in [[rim, Color(0, 0.02, 0.08)], [0.0, UI.NUMBER]]:
+		var o: float = pass_[0]
+		ci.draw_rect(Rect2(c.x - arm - o, c.y - thick / 2 - o, 2 * (arm + o), thick + 2 * o), pass_[1])
+		ci.draw_rect(Rect2(c.x - thick / 2 - o, c.y - arm - o, thick + 2 * o, 2 * (arm + o)), pass_[1])
 
 
 func _save() -> void:

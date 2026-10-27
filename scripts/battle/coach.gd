@@ -8,7 +8,7 @@ const TIPS := {
 	"play": "Drag a glowing card from your hand up here to play it. It costs the mana shown in its corner.",
 	"attack": "Your minion is ready. Drag from it to an enemy to attack - each minion attacks once per turn.",
 	"guard": "Guard: while this minion stands, your attacks must hit it first.",
-	"power": "Your hero power: tap it to use it, once per turn.",
+	"power": "Your hero power: {tap} it to use it, once per turn.",
 	"end": "Nothing left to do? End your turn.",
 }
 
@@ -49,13 +49,18 @@ func showing() -> bool:
 	return visible and _id != ""
 
 
+## True on a phone or tablet, where the tips say "tap" (the same test as SkipRing; "click" on desktop).
+static func _touch() -> bool:
+	return DisplayServer.is_touchscreen_available() and OS.has_feature("mobile")
+
+
 ## Shows tip `id` pointing at `target` (screen position) unless it was seen already. Returns true when shown.
 func offer(id: String, target: Vector2) -> bool:
 	if not _enabled or showing() or (Settings.coach_seen.has(id) and not _forced):
 		return false
 	_id = id
 	_target = target
-	_label.text = TIPS[id]
+	_label.text = str(TIPS[id]).format({"tap": "tap" if _touch() else "click"})
 	if not _forced:
 		Settings.coach_seen.append(id)
 		Settings.save()
