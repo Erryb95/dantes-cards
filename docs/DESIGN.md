@@ -209,6 +209,12 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
   from Choose your path without owning their cards). Battles pay Obols (win 100, loss 25); a pack costs 100.
 - A pack holds 5 cards: per slot legendary 1.5%, epic 5.5%, rare 21%; at least one rare; a legendary within
   20 packs. Copies beyond the deck limit refund Obols (5 / 20 / 100 / 400).
+- Pack odds are shown, never typed: `Collection.drop_rates()` (from `ODDS`, common = the rest) feeds the pack screen's
+  "Drop rates" plaque (`DropRatesPanel`, a parchment sheet with the per-slot chances, the pack rules and the pity
+  counter "N / 20") and the small "Rare · 21%" note under each revealed card. Review: `screen_audit --what=packs_rates`.
+- Collection sort: a cycling plaque in the title bar (Cost, Rarity, Low rarity, Name, Owned; tokens always last), kept in
+  `Settings.collection_sort`; applies inside the class filter, and the two rarity orders put a painted divider per
+  rarity. Review: `screen_audit --what=collection_sort --sort=<id> --filter=<set>`.
 - Deck builder: owned cards only; Auto-fill completes a deck along a mana curve. Back asks before dropping unsaved
   changes, Delete asks before removing a deck; a saved deck is the one Choose your path shows next.
 - Saves (`user://collection.cfg`, `progress.cfg`, `settings.cfg`) are read through `scripts/core/save_file.gd`: a file

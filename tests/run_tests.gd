@@ -36,6 +36,7 @@ func _initialize() -> void:
 	_test_easy_guard()
 	_test_saves()
 	_test_lessons()
+	_test_drop_rates()
 	_soak(120)
 	_soak_classes(24)
 	_soak_random(400)
@@ -1233,6 +1234,24 @@ func _test_copy_state() -> void:
 
 ## Rebirth, the Hearthstone Reborn way: a new minion with 1 Health and 1 max Health (not a damaged one), its printed
 ## Attack and keywords minus Rebirth, no buffs; the view gets one summon with those numbers.
+## The drop rates players see come from Collection.ODDS (the panel's own rows are checked in menu_smoke, which can
+## load it: this runner has no autoload names at compile time): common is whatever the others leave, best rarity first.
+func _test_drop_rates() -> void:
+	var col: Node = root.get_node("Collection")
+	var rates: Dictionary = col.drop_rates()
+	ok(rates.keys() == col.RARITY_ORDER, "a drop rate per rarity, best first: %s" % str(rates.keys()))
+	var sum := 0.0
+	for r in rates:
+		sum += float(rates[r])
+		if r != "common":
+			ok(is_equal_approx(float(rates[r]), float(col.ODDS[r])), "%s rate comes from Collection.ODDS" % r)
+	ok(is_equal_approx(sum, 1.0), "the drop rates add up to 100%% (%f)" % sum)
+	var others := float(col.ODDS.legendary) + float(col.ODDS.epic) + float(col.ODDS.rare)
+	ok(is_equal_approx(float(rates.common), 1.0 - others), "common is 1 minus the other chances")
+	ok(col.percent_text(0.015) == "1.5%" and col.percent_text(0.21) == "21%" and col.percent_text(0.72) == "72%",
+		"percent text drops a useless .0")
+
+
 func _test_rebirth() -> void:
 	var st := _blank()
 	var stat := _put(st, 0, "pj_statius") # 3/5 Rebirth

@@ -26,6 +26,7 @@ var player_name := ""
 var player_avatar := ""
 var lessons := {} ## Virgil's lessons: lesson id -> "done" (won once, reward paid) or "skipped" (scripts/tutorial/lessons.gd)
 var lessons_offered := false ## the first-launch question "Shall I show you the way?" was asked once
+var collection_sort := "cost" ## the order of the Collection screen (an id of SORTS in scripts/ui/collection.gd)
 
 
 func _ready() -> void:
@@ -66,6 +67,7 @@ func load_settings(path: String = PATH) -> void:
 	player_avatar = str(SaveFile.value(cfg, "profile", "avatar", ""))
 	lessons = SaveFile.value(cfg, "game", "lessons", lessons)
 	lessons_offered = SaveFile.value(cfg, "game", "lessons_offered", lessons_offered)
+	collection_sort = str(SaveFile.value(cfg, "game", "collection_sort", collection_sort))
 
 
 ## Tests and tooling runs (`Game.debug_run()`) keep their changes in memory: the player's real settings are never written.
@@ -89,6 +91,7 @@ func save() -> void:
 	cfg.set_value("profile", "avatar", player_avatar)
 	cfg.set_value("game", "lessons", lessons)
 	cfg.set_value("game", "lessons_offered", lessons_offered)
+	cfg.set_value("game", "collection_sort", collection_sort)
 	cfg.save(PATH)
 
 

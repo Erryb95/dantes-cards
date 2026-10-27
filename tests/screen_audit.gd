@@ -6,9 +6,11 @@ extends Node
 ## profile_error (an invalid name typed), menu_options, credits, builder, builder_name, builder_long, builder_empty, builder_leave, builder_edit,
 ## builder_delete, builder_tip, collection_zoom, collection_class (the class strip and a keyword chip's tip),
 ## collection_guide, collection_neutral, deck_peek (a key card shown big), deck_list (View cards), deck_list_zoom,
-## deck_guide (the class guide), packs_reveal, packs_empty, deck_tip, battle (several shots),
-## lessons (Virgil's lessons screen), howto (every How to Play chapter), offer (the first-launch question),
-## lesson (`--lesson=<id> [--steps=0,3]`: every line of a lesson played through, and its result), lesson_pause.
+## deck_guide (the class guide), packs_reveal, packs_empty, packs_rates (the drop-rates sheet), collection_sort
+## (`--sort=<id of the collection's SORTS>` on the `--filter=` set, default all, most cards owned), deck_tip,
+## battle (several shots), lessons (Virgil's lessons screen), howto (every How to Play chapter), offer (the
+## first-launch question), lesson (`--lesson=<id> [--steps=0,3]`: every line of a lesson played through, and its
+## result), lesson_pause.
 ## `--cls=` also picks the class of collection_class / collection_guide / deck_guide.
 ## `--cls=<class>`: the class of the deck in the "builder" shot (default Pilgrim).
 
@@ -17,6 +19,8 @@ const LessonDriver := preload("res://tests/lesson_driver.gd")
 var out := "user://audit"
 var what := "battle"
 var cls := "pilgrim"
+var sort_id := "rarity"
+var filter := "all"
 
 
 func _ready() -> void:
@@ -27,6 +31,10 @@ func _ready() -> void:
 			what = a.substr(7)
 		elif a.begins_with("--cls="):
 			cls = a.substr(6)
+		elif a.begins_with("--sort="):
+			sort_id = a.substr(7)
+		elif a.begins_with("--filter="):
+			filter = a.substr(9)
 	DirAccess.make_dir_recursive_absolute(out)
 	Settings.fast_animations = false
 	# `--out=` is not one of the flags that skip the first-launch cinematic: on a fresh profile the main menu would
@@ -103,6 +111,16 @@ func _ready() -> void:
 				ClassInfoPanel.open(s, cls)
 			await _wait(0.6)
 			await _snap(what)
+		"collection_sort":
+			for c in CardDB.all_cards():
+				if c.id.hash() % 3 != 0:
+					Collection.owned[c.id] = 1 + c.id.hash() % 2
+			Settings.collection_sort = sort_id
+			var s := _open("res://scenes/collection.tscn")
+			await _wait(0.5)
+			s._set_filter(filter)
+			await _wait(0.8)
+			await _snap("collection_sort_%s_%s" % [sort_id, filter])
 		"deck_peek", "deck_list", "deck_list_zoom", "deck_guide":
 			Settings.deck_choice = {"selected": "pre:" + (CardDB.class_decks(cls)[1].id if what == "deck_list" else CardDB.class_decks(cls)[0].id)}
 			var s := _open("res://scenes/deck_select.tscn")
@@ -133,6 +151,14 @@ func _ready() -> void:
 			s._banner("MINOS", Color(1.0, 0.6, 0.15))
 			await _wait(0.6)
 			await _snap("packs_reveal")
+		"packs_rates":
+			Collection.packs = maxi(Collection.packs, 1)
+			Collection.packs_since_legendary = 7
+			var s := _open("res://scenes/pack_opening.tscn")
+			await _wait(1.0)
+			DropRatesPanel.open(s)
+			await _wait(0.6)
+			await _snap("packs_rates")
 		"packs_empty":
 			Collection.packs = 0
 			Collection.obols = 0
