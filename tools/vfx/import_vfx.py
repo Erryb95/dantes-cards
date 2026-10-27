@@ -32,7 +32,9 @@ NAMES = ["flame_tongue", "fireball", "lava_crack", "ice_shard", "frost_star", "v
          "leg_ruggieri", "leg_alberigo", "leg_lucifer", "leg_homer", "leg_cato", "leg_beatrice", "leg_achilles",
          "leg_semiramis", "leg_caesar", "leg_francesca", "leg_ugolino", "leg_minos",
          "drain_siphon", "rebirth_flare", "venom_fangs", "ward_shatter", "ice_encase", "silence_lock",
-         "trigger_spark", "draw_glow", "mana_burst", "hero_death", "card_burn", "summon_pillar"]
+         "trigger_spark", "draw_glow", "mana_burst", "hero_death", "card_burn", "summon_pillar",
+         # fourth batch: the Wrathful (Fight clash, Wrath waking, legendary signatures)
+         "mud_splash", "rage_embers", "leg_red_towers", "leg_filippo", "leg_tydeus", "leg_athamas"]
 
 
 def fetch(name: str) -> bytes | None:

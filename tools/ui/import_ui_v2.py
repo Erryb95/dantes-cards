@@ -13,7 +13,9 @@ NAMES = ["minion_frame", "minion_frame_legendary", "hero_frame_oval", "guard_fra
          "icon_drain", "icon_deathrattle", "icon_trigger", "icon_rebirth", "arrow_head", "arrow_segment",
          "target_reticle", "panel_frame", "tooltip_frame", "deck_row", "slider_track", "slider_grabber", "turn_banner",
          # progression art, painted ahead of the features that will use it (crafting currency, quests, ranks)
-         "icon_ash", "icon_quest", "icon_wrath"] + ["rank_%d" % i for i in range(1, 10)]
+         "icon_ash", "icon_quest", "icon_wrath"] + ["rank_%d" % i for i in range(1, 10)] + [
+         # the Wrathful's keyword medallions (icon_wrath is its hero power)
+         "icon_rage", "icon_frenzy", "icon_fight"]
 ## Alternative card backs: saved as jpg next to the default back (assets/cards/card_back.jpg).
 BACKS = ["card_back_dis", "card_back_cocytus", "card_back_paradise"]
 

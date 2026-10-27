@@ -195,6 +195,10 @@
   "src": "d022a7e998b6a2dc0b5a0e8eacf34c7d75decb17",
   "v": 1
  },
+ "hero:filippo": {
+  "src": "4ae4151a9f67021924e8accb3fadd8e7e5733c95",
+  "v": 1
+ },
  "hero:ulysses": {
   "src": "2adf35338ccdc3c8e0b9f86bb1eb2f1f157d5e3a",
   "v": 1
@@ -1053,6 +1057,194 @@
  },
  "virtuous_pagans": {
   "src": "ea3bf13d9bb4bde442c5b0f2912308b02d02325e",
+  "v": 1
+ },
+ "wr_adimari_bravo": {
+  "src": "3b9112c2b3b6eb6def85fd7a207821b4587283d8",
+  "v": 1
+ },
+ "wr_adimari_captain": {
+  "src": "fabf7fcdb4918b9071f5c115b6a019768441f8fe",
+  "v": 1
+ },
+ "wr_alberti_brothers": {
+  "src": "370f507c133db4fa9525e5fffd386e18489f739b",
+  "v": 1
+ },
+ "wr_athamas": {
+  "src": "98a3af2f4f21d1fe8471f0b07df8a0c4416777e7",
+  "v": 1
+ },
+ "wr_black_guelph": {
+  "src": "05d52c2880776aabd333f6f0cf22b69da96dc568",
+  "v": 1
+ },
+ "wr_black_guelph_captain": {
+  "src": "cb6a21e0a3532e1fed00eb27dd6844b710de6053",
+  "v": 1
+ },
+ "wr_boat_rides_low": {
+  "src": "ac21489255242460083dc45c18107523e012fb61",
+  "v": 1
+ },
+ "wr_boiling_spring": {
+  "src": "b1343cde39fbcf66ea04b16ebefa5640344c9615",
+  "v": 1
+ },
+ "wr_brawl_in_the_mud": {
+  "src": "2419ddb1f965ffc924186f8f1711fa27667cc12e",
+  "v": 1
+ },
+ "wr_brawling_shade": {
+  "src": "66441cd8dd6f0213cea17ad399c9a7f670467e18",
+  "v": 1
+ },
+ "wr_butting_heads": {
+  "src": "7670342befd508c00ebbdd08bec672b83dae72e7",
+  "v": 1
+ },
+ "wr_choked_soul": {
+  "src": "2b3dfda78245cb05d2660523a9b0894ee95aeb0c",
+  "v": 1
+ },
+ "wr_drowned_knight": {
+  "src": "ce7e0c5c028d55f0a153ec2a618bde548c7a299e",
+  "v": 1
+ },
+ "wr_erichtho": {
+  "src": "c55cd6a5a587ebe3e20789b72739bec39e85b756",
+  "v": 1
+ },
+ "wr_eternal_fire": {
+  "src": "beb9319c8e7a9e26fbe0690b7bef7dbb51a7c60c",
+  "v": 1
+ },
+ "wr_florentine_hothead": {
+  "src": "787dd3ddaca28a119d801adba218bd9bfd5f78aa",
+  "v": 1
+ },
+ "wr_furies_nails": {
+  "src": "1287bcc74c162c55955adb983553f94f8406c56e",
+  "v": 1
+ },
+ "wr_gate_slams_shut": {
+  "src": "6d80524eab2d977d34fd4dcc641a0ecfe50fb390",
+  "v": 1
+ },
+ "wr_geri_del_bello": {
+  "src": "fa6abd373b0a4c42799ae2bfdd7d62d9798dfebb",
+  "v": 1
+ },
+ "wr_gnawing_spite": {
+  "src": "f0fc67b4b0fff4c4a37d989084b760050f724451",
+  "v": 1
+ },
+ "wr_marsh_champion": {
+  "src": "1d17c662314bd6c4a0c1fb3b9ef5e6f83ffcf937",
+  "v": 1
+ },
+ "wr_marsh_warden": {
+  "src": "281dbcabada7a677a8822e5f199d2b17b7c2ec3a",
+  "v": 1
+ },
+ "wr_mire_hulk": {
+  "src": "a1bd7ce5912441ea76dddbb30d00c6830a42e916",
+  "v": 1
+ },
+ "wr_mob_turns": {
+  "src": "98a0f988f47db4ef2ed13662395ac3045c5c7b5d",
+  "v": 1
+ },
+ "wr_mud_brawler": {
+  "src": "4ab44542c575b29c606a7d4f92f1981d81978514",
+  "v": 1
+ },
+ "wr_mud_caked_sinner": {
+  "src": "ed10075f197d7eb43d5ae1eea8d457cd9626bd91",
+  "v": 1
+ },
+ "wr_mud_colossus": {
+  "src": "24e0241ab12f09a90b22e7f3ae9351117f76c869",
+  "v": 1
+ },
+ "wr_mud_dweller": {
+  "src": "fc788def2e390b3b2276e353400151cdf92004f3",
+  "v": 1
+ },
+ "wr_mud_soul": {
+  "src": "d3f4f68d7b74aa9f86306bc772cf07f88d703d16",
+  "v": 1
+ },
+ "wr_mud_wrestler": {
+  "src": "102a190a207ecbc4171b90740cbc53e24fbcd916",
+  "v": 1
+ },
+ "wr_muddy_mob": {
+  "src": "a86c2f63177535cf72199c9db762d46b53befb31",
+  "v": 1
+ },
+ "wr_other_dogs": {
+  "src": "db1688ea6525683bd8ea3e5ad48d19416c4d3e76",
+  "v": 1
+ },
+ "wr_rabble_rouser": {
+  "src": "d11fdc9a3f47882b4532130640661ea46769dfe1",
+  "v": 1
+ },
+ "wr_rancorous_shade": {
+  "src": "7ac23e471c4153ac73884387165f921987092093",
+  "v": 1
+ },
+ "wr_red_towers": {
+  "src": "a5ca13eefab9dd3eecc5e51d87ae6f3af80872a3",
+  "v": 1
+ },
+ "wr_rinier_pazzo": {
+  "src": "590b8958d9f7ffe841ff2a5995f328c223a76c9f",
+  "v": 1
+ },
+ "wr_scornful_soul": {
+  "src": "365b22b681e1c591b44bfc33aa533d8fd5004a1c",
+  "v": 1
+ },
+ "wr_self_gnawing_shade": {
+  "src": "edaeea68fe774483666f124f96cfd141152fcf07",
+  "v": 1
+ },
+ "wr_signal_fires": {
+  "src": "b43d7d8db2394dd445c7931326e73dfb78af99cb",
+  "v": 1
+ },
+ "wr_silver_shod_horse": {
+  "src": "a7b3e05b0dd1f62424e1abd72e08a9dd1faa95ee",
+  "v": 1
+ },
+ "wr_stirring_the_mud": {
+  "src": "1b0c255e5de960ada6dfff9857f9bcc3ad6f4723",
+  "v": 1
+ },
+ "wr_storm_across_styx": {
+  "src": "5577c49de6309d54d2110bbf2934fb6cf93858c5",
+  "v": 1
+ },
+ "wr_stygian_brute": {
+  "src": "bffd01711ac1aa98b776d5f0be956518a57b615e",
+  "v": 1
+ },
+ "wr_tearing_teeth": {
+  "src": "d1bae6d9098e7c0fc1adbc512489f749e487f1f6",
+  "v": 1
+ },
+ "wr_tower_watchman": {
+  "src": "cb84ff7121b63dbcb62a2048483b0d5786e847af",
+  "v": 1
+ },
+ "wr_tydeus": {
+  "src": "4363f2f6d3aa1f451ae9dbfa844ff0c0497e6b10",
+  "v": 1
+ },
+ "wr_wrathful_throng": {
+  "src": "f39f9dcc82bd4cb7ac5775592226486b596c3432",
   "v": 1
  }
 }

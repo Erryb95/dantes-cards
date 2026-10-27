@@ -4,6 +4,7 @@
  "assets": [
   {
    "id": "deck_box_frame",
+   "unused": "2026-10-27: painted, compared on Choose your path and not installed: in the deck cell its narrow window shrinks the face art to a sliver and the name plaque hides the box's foot; the carved card border reads better. The original is kept in art_src/ui/pieces/.",
    "size": [512, 720],
    "alpha": true,
    "replaces": "the stacked card borders of a deck in the library (_stack_card / _border): the face art shows through the open window",

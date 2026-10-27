@@ -48,13 +48,20 @@ static func power_disc(info: Dictionary, px: float) -> Control:
 	c.custom_minimum_size = Vector2(px, px)
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var icon := str(info.get("power_icon", ""))
+	var framed := UiSkin.has("class_emblem_frame")
 	if UiSkin.has("power_disc"):
-		c.add_child(UiSkin.rect("power_disc", Vector2(px, px)))
+		# Under the painted emblem frame (art_src/deck_ui_art.json) the bronze disc only fills its open centre.
+		var d := px * (0.66 if framed else 1.0)
+		c.add_child(UiSkin.rect("power_disc", Vector2(d, d), Vector2(px - d, px - d) / 2.0))
 	if UiSkin.has(icon):
 		var k := px * 0.57
 		var r := UiSkin.rect(icon, Vector2(k, k), Vector2(px - k, px - k) / 2.0)
 		r.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		c.add_child(r)
+	if framed:
+		var f := UiSkin.rect("class_emblem_frame", Vector2(px, px) * 1.12, -Vector2(px, px) * 0.06)
+		f.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		c.add_child(f)
 	var g := px * 0.42
 	var gem := Control.new()
 	gem.size = Vector2(g, g)

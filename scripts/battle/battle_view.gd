@@ -1359,7 +1359,8 @@ func _on_fight(ev: Dictionary) -> void:
 		_hit_stop(0.08)
 	Vfx.strike(self, a, b, dir, int(a.attack))
 	Vfx.strike(self, b, a, -dir, int(b.attack))
-	# The mud flies: a dark spray and dust where they meet.
+	# The mud flies: a painted splash, a dark spray and dust where they meet.
+	Fx.flash(fx_layer, "vfx_mud_splash", mid, 340.0, 0.6, Color.WHITE, 0.0)
 	Fx.burst(fx_layer, mid, Color(0.32, 0.22, 0.12), 28, 360.0, 0.7, 12.0, 700.0, 70.0, "k_dirt_02")
 	Fx.dust(fx_layer, mid + Vector2(0, 40), 220.0, 22, Color(0.28, 0.22, 0.16, 0.5))
 	for m in [a, b]:

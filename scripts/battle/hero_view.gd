@@ -130,7 +130,9 @@ func _build_power(def: Dictionary) -> void:
 	var icon_name := str(CardDB.hero(hero_id).get("power_icon", "icon_trigger"))
 	if UiSkin.has("power_disc") and UiSkin.has(icon_name):
 		_power_face.add_child(UiSkin.sprite("power_disc", Vector2(106, 106)))
-		_power_face.add_child(UiSkin.sprite(icon_name, Vector2(60, 60)))
+		var ic := UiSkin.sprite(icon_name, Vector2(60, 60))
+		ic.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS # some icons are 512 px medallions
+		_power_face.add_child(ic)
 	else:
 		var disc := Shapes.make(Shapes.Kind.ELLIPSE, Vector2(98, 98), Color(0.3, 0.07, 0.05), UI.GOLD, 5.0)
 		_power_face.add_child(disc)

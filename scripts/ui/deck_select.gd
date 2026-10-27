@@ -1036,6 +1036,23 @@ func _split_name(t: String) -> Array:
 
 ## The corner tag of a deck: Starter, Premade or Custom on a small engraved plaque hung over the face's top edge.
 func _tag(body: Control, face: Rect2, kind: String) -> void:
+	var seal := "deck_seal_custom" if kind == "custom" else "deck_seal_starter"
+	if UiSkin.has(seal):
+		# The painted plate (gold for the game's decks, red enamel for the player's), the word set on it in code.
+		var t := UiSkin.rect(seal, Vector2(96, 48))
+		t.name = "Tag"
+		t.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		t.position = Vector2(face.end.x - t.size.x + 14.0, face.position.y - 19.0)
+		var w := UI.label(str(TAGS[kind][0]).to_upper(), 13, "title",
+			Color(0.25, 0.1, 0.03) if kind != "custom" else Color(1.0, 0.86, 0.6), 0 if kind != "custom" else 3, SHADE)
+		w.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		w.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		w.size = Vector2(t.size.x - (18.0 if kind == "custom" else 8.0), t.size.y)
+		w.position.y = 1.0
+		w.use_parent_material = false
+		t.add_child(w)
+		body.add_child(t)
+		return
 	var p := PanelContainer.new()
 	p.name = "Tag"
 	p.add_theme_stylebox_override("panel", UI.plaque_box(9, 1))

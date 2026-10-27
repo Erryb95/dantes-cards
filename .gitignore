@@ -8,3 +8,4 @@ __pycache__/
 art_src/dore_cards_v2/
 config/online.local.cfg
 *.local.cfg
+art_src/cards/names/
