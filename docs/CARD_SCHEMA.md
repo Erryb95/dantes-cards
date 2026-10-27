@@ -8,7 +8,7 @@ Cards live in `data/cards.json` (core set) and `data/sets/*.json` (expansions). 
 |---|---|
 | `id` | unique snake_case, ascii, e.g. `brunetto_latini` |
 | `name` | modern English, max 28 chars (e.g. "Brunetto Latini", "Capaneus, the Defiant") |
-| `set` | class: `pilgrim` (Dante's class), `ferry` (Charon's class), `neutral` (anyone), `token` (only summoned) |
+| `set` | class: `pilgrim` (Dante's class), `ferry` (Charon's class), `ulysses` (Ulysses' class), `neutral` (anyone), `token` (only summoned). A class is any hero's `class` in `data/cards.json` |
 | `type` | `minion` or `spell` |
 | `rarity` | `common`, `rare`, `epic`, `legendary` (`token` for tokens) |
 | `cost` | 0..10 |
@@ -47,6 +47,8 @@ Cards live in `data/cards.json` (core set) and `data/sets/*.json` (expansions). 
 | `ramp` | `amount` | gain empty mana crystals (no target) |
 | `give_card` | `card`, `count` | add copies of a card id to your hand (no target) |
 | `mana` | `amount` | gain mana this turn only, up to 10 (no target; Charon's Obol) |
+| `copy` | `from` (`enemy_hand` / `enemy_deck`, random cards) or a minion target; `count`; `steal` (the cards leave the enemy: the top of the deck, or a random hand card); `to`: `hand` (default) or `board` (summon the copy) | add copies to your hand. Hand limit applies; nothing is stolen into a full hand. Text: "Copy ... into your hand", "Steal ...", "Summon a copy of ..." |
+| `transform` | `card` (a minion id) | the target becomes a fresh copy of that card in the same place: no Last Breath, Ward does not stop it |
 
 **Targets**
 - **Picked by the player:** `choose_any`, `choose_enemy` (enemy hero or minion), `choose_minion`,
@@ -54,7 +56,12 @@ Cards live in `data/cards.json` (core set) and `data/sets/*.json` (expansions). 
 - **Automatic:** `own_hero`, `enemy_hero`, `self` (the minion itself), `all_minions`, `all_enemy_minions`,
   `all_friendly_minions`, `other_friendly_minions`, `all_enemies` (enemy hero + minions), `random_enemy`,
   `random_enemy_minion`, `random_friendly_minion`.
-- `draw`, `summon`, `ramp`, `give_card` and `mana` take no target.
+- `draw`, `summon`, `ramp`, `give_card`, `mana` and `copy` with `from` take no target.
+
+**Ruse** (Ulysses): an effect with `"ruse": true` (on `play` only) resolves only when its owner already played another
+card this turn (the hero power does not count; the Obol does). Text: `Ruse: Draw a card.` (minions too: no `On Play:`).
+A Ruse effect may share the card's `choose_*` target (`Deal 1 damage. Ruse: Deal 2 more.`), otherwise it uses an
+automatic target, so the player is never asked to aim at something that will not happen.
 
 **Rules**
 - At most **one** `choose_*` target per card, and only on `play` effects.
@@ -77,6 +84,6 @@ A vanilla minion has attack + health ≈ 2 x cost + 1 (1-mana 2/1, 2-mana 2/3 or
   - rarity 15 common / 8 rare / 4 epic / 3 legendary.
 
 ## Text style
-- **Prefixes:** `On Play: Deal 2 damage.`, `Last Breath: Summon a 2/2 Shade.`, `End of Turn: Gain +1 Attack.`
+- **Prefixes:** `On Play: Deal 2 damage.`, `Last Breath: Summon a 2/2 Shade.`, `End of Turn: Gain +1 Attack.`, `Ruse: Gain +1/+1.`
 - **Capitals:** keywords capitalised (Guard, Swift, Ward, Drain, Venom, Rebirth, Freeze, Silence).
 - **Keyword-only cards:** the text is just the keywords: `Guard. Drain.`

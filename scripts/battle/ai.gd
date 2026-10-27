@@ -274,8 +274,18 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 	var score := float(card.cost) * 10.0
 	var target := -1
 	var tt := BattleState.target_type(card)
-	for e in card.get("effects", []):
+	var ruse := st.ruse_active(side)
+	var effects: Array = card.get("effects", [])
+	if not ruse and effects.any(func(e): return e.get("ruse", false)):
+		# Ruse: play something else first when there is anything else to play.
+		for o in me.hand:
+			if o.uid != c.uid and st.can_play(side, o.uid) and int(CardDB.card(o.id).cost) + int(card.cost) <= me.mana:
+				score -= 40.0
+				break
+	for e in effects:
 		if e.get("on", "play") != "play":
+			continue
+		if e.get("ruse", false) and not ruse:
 			continue
 		match e.do:
 			"damage":
@@ -302,6 +312,33 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 						return {}
 				elif e.target == "other_friendly_minions" and me.board.size() < 2:
 					score -= 15.0
+			"bounce" when tt == "choose_friendly_minion":
+				# Bounce to replay: the friendly minion with the best On Play effect.
+				var best := -1
+				var best_cost := 0
+				for u in me.board:
+					var uc := CardDB.card(u.id)
+					var replay: bool = uc.get("effects", []).any(func(x): return x.get("on", "play") == "play")
+					if replay and int(uc.cost) > best_cost and int(uc.cost) <= me.mana - int(card.cost):
+						best_cost = int(uc.cost)
+						best = u.uid
+				if best == -1:
+					return {}
+				target = best
+				score = best_cost * 10.0 + 5.0
+			"bounce" when tt == "":
+				# Board-wide bounce: only when it costs the enemy more than us.
+				var mine := 0.0
+				var theirs := 0.0
+				for u in me.board:
+					mine += _value(u)
+				for u in foe.board:
+					theirs += _value(u)
+				if e.target in ["all_enemy_minions", "random_enemy_minion"]:
+					if foe.board.is_empty() and card.type == "spell":
+						return {}
+				elif theirs < mine + 6.0:
+					return {}
 			"bounce":
 				var best := -1
 				var best_cost := 2
@@ -320,8 +357,10 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 					if o.uid != c.uid and int(oc.cost) == me.mana + int(e.amount):
 						unlock = maxi(unlock, int(oc.cost))
 				if unlock == 0:
-					return {}
-				score = unlock * 10.0 - 1.0
+					if card.type == "spell" and effects.size() == 1:
+						return {}
+				else:
+					score = unlock * 10.0 - 1.0
 			"summon":
 				if card.type == "spell" and me.board.size() >= BattleState.MAX_BOARD:
 					return {}
@@ -340,6 +379,24 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 						threat += u.attack
 					if threat < 5:
 						return {}
+			"transform":
+				if tt != "":
+					target = _best_transform(st, str(e.card))
+					if target == -1 and card.type == "spell":
+						return {}
+				elif card.type == "spell":
+					var worth := 0.0
+					for u in foe.board:
+						worth += _value(u)
+					if worth < 10.0:
+						return {}
+			"copy":
+				if tt == "choose_enemy_minion" or tt == "choose_minion":
+					target = _best_copy(st, tt)
+					if target == -1 and card.type == "spell":
+						return {}
+				elif card.type == "spell" and me.hand.size() >= 9:
+					return {}
 			"silence":
 				if tt != "":
 					target = _best_silence(st)
@@ -416,6 +473,33 @@ func _best_silence(st: BattleState) -> int:
 		if v > best_v:
 			best_v = v
 			best = u.uid
+	return best
+
+
+## The enemy minion most worth turning into `into` (the biggest gap in value), if worth a card.
+func _best_transform(st: BattleState, into: String) -> int:
+	var c := CardDB.card(into)
+	var base := float(c.get("attack", 0)) * 1.2 + float(c.get("health", 1))
+	var best := -1
+	var best_v := 4.0
+	for u in st.sides[1 - side].board:
+		var v := _value(u) - base + (_silence_value(u) * 0.5)
+		if v > best_v:
+			best_v = v
+			best = u.uid
+	return best
+
+
+## The minion most worth copying: the most expensive card.
+func _best_copy(st: BattleState, tt: String) -> int:
+	var best := -1
+	var best_cost := -1
+	for uid in st.valid_targets(side, tt):
+		var u = st.units[uid]
+		var cost := int(CardDB.card(u.id).get("cost", 0))
+		if cost > best_cost:
+			best_cost = cost
+			best = uid
 	return best
 
 

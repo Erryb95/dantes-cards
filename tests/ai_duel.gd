@@ -5,9 +5,12 @@ extends SceneTree
 ## --levels=A,B: the levels that meet (0 Easy, 1 Medium, 2 Hard); the report is A's win rate. Default Hard vs Easy.
 ## --medium=R,N: overrides Medium's rollouts and noise (tuning). --first=N: start at deal N (split a run in shards).
 ## --matchup: both sides Hard; reports the starter decks against each other instead.
+## --classes=A,B: the two classes that meet in the modes above (default: the first two classes, Pilgrim and Ferryman).
 ## Preconstructed deck balance (both sides Hard, every deal played from both seats):
 ##   --decks=<a>,<b>   any two decks of data/decks.json, with per-card win rates (a:/b: = the deck that played it)
-##   --matrix          every Pilgrim deck against every Ferryman deck (the Pilgrim deck's win rate)
+##   --matrix          for every pair of classes, every deck of one against every deck of the other (the row deck's
+##                     win rate); --classes=A,B keeps one pair, --class=A only the pairs with class A
+##   --deck=<id>       one deck against every deck of the other classes (handy to split a matrix over processes)
 
 const RunTests := preload("res://tests/run_tests.gd")
 const NAMES := ["easy", "medium", "hard"]
@@ -20,11 +23,14 @@ func _initialize() -> void:
 	var matchup := false
 	var levels := [2, 0]
 	var medium := []
-	var pilgrim_wins := 0
+	var first_wins := 0
 	var plays := {} ## matchup: card id -> [games it was played in, games its side won]
 	var power_uses := [0, 0]
 	var pair := PackedStringArray()
 	var matrix := false
+	var cls_pair: Array[String] = [CardDB.classes()[0], CardDB.classes()[1]]
+	var only_cls := ""
+	var one_deck := ""
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--games="):
 			games = int(a.substr(8))
@@ -42,9 +48,27 @@ func _initialize() -> void:
 			pair = a.substr(8).split(",")
 		if a == "--matrix":
 			matrix = true
+		if a.begins_with("--classes="):
+			cls_pair.assign(a.substr(10).split(","))
+			only_cls = "*"
+		if a.begins_with("--class="):
+			only_cls = a.substr(8)
+		if a.begins_with("--deck="):
+			one_deck = a.substr(7)
+	if one_deck != "":
+		_deck_row(one_deck, games)
+		quit()
+		return
 	if matrix or pair.size() == 2:
 		if matrix:
-			_matrix(games)
+			var all := CardDB.classes()
+			for i in all.size():
+				for j in range(i + 1, all.size()):
+					if only_cls == "*" and not (all[i] in cls_pair and all[j] in cls_pair):
+						continue
+					if only_cls not in ["", "*"] and only_cls != all[i] and only_cls != all[j]:
+						continue
+					_matrix(games, all[i], all[j])
 		else:
 			_report(pair[0], pair[1], _decks_duel(pair[0], pair[1], games))
 		quit()
@@ -61,9 +85,13 @@ func _initialize() -> void:
 		var rng := RandomNumberGenerator.new()
 		rng.seed = 7 + deal
 		var st := BattleState.new()
-		var d0: Array[String] = RunTests.random_deck("pilgrim", rng) if random_decks else CardDB.deck_list("pilgrim")
-		var d1: Array[String] = RunTests.random_deck("ferry", rng) if random_decks else CardDB.deck_list("ferry")
-		st.start(d0, "dante", d1, "charon", 300 + deal, false, -1)
+		var c0: String = cls_pair[0]
+		var c1: String = cls_pair[1]
+		var d0: Array[String] = RunTests.random_deck(c0, rng) if random_decks \
+			else CardDB.deck_list(CardDB.class_decks(c0)[0].id)
+		var d1: Array[String] = RunTests.random_deck(c1, rng) if random_decks \
+			else CardDB.deck_list(CardDB.class_decks(c1)[0].id)
+		st.start(d0, CardDB.class_hero(c0), d1, CardDB.class_hero(c1), 300 + deal, false, -1)
 		# Level A plays side g % 2: each deal is played from both seats.
 		var aside := g % 2
 		var ais := []
@@ -91,7 +119,7 @@ func _initialize() -> void:
 			if act.do == "end" or not BattleAI.apply(st, st.current, act):
 				st.end_turn()
 		if st.winner == 0:
-			pilgrim_wins += 1
+			first_wins += 1
 		for side in 2:
 			for id in seen[side]:
 				var p: Array = plays.get(id, [0, 0])
@@ -103,8 +131,8 @@ func _initialize() -> void:
 		elif st.winner == 2:
 			draws += 1
 	if matchup:
-		print("MATCHUP: pilgrim %d / ferry %d of %d, hero power uses %d / %d" % [pilgrim_wins,
-			games - pilgrim_wins - draws, games, power_uses[0], power_uses[1]])
+		print("MATCHUP: %s %d / %s %d of %d, hero power uses %d / %d" % [cls_pair[0], first_wins, cls_pair[1],
+			games - first_wins - draws, games, power_uses[0], power_uses[1]])
 		var rows := []
 		for id in plays:
 			rows.append([float(plays[id][1]) / plays[id][0], id, plays[id][0]])
@@ -179,11 +207,11 @@ func _report(id_a: String, id_b: String, r: Dictionary) -> void:
 		print("  %.2f  %-28s %4d" % [row[0], row[1], row[2]])
 
 
-## Every Pilgrim deck against every Ferryman deck: the Pilgrim deck's win rate.
-func _matrix(games: int) -> void:
-	var ps := CardDB.class_decks("pilgrim")
-	var fs := CardDB.class_decks("ferry")
-	var head := "%-16s" % "pilgrim \\ ferry"
+## Every deck of class `ca` against every deck of class `cb`: the row deck's win rate.
+func _matrix(games: int, ca: String, cb: String) -> void:
+	var ps := CardDB.class_decks(ca)
+	var fs := CardDB.class_decks(cb)
+	var head := "%-16s" % ("%s \\ %s" % [ca, cb])
 	for f in fs:
 		head += " %14s" % f.id
 	print(head)
@@ -193,3 +221,18 @@ func _matrix(games: int) -> void:
 			var r := _decks_duel(p.id, f.id, games)
 			line += " %13.0f%%" % (100.0 * r.wins[0] / maxi(games, 1))
 		print(line)
+
+
+## One deck against every deck of every other class: one line per opponent (the deck's win rate).
+func _deck_row(id: String, games: int) -> void:
+	var cls := CardDB.deck_class(CardDB.deck(id))
+	var total := 0
+	var won := 0
+	for other in CardDB.other_classes(cls):
+		for d in CardDB.class_decks(other):
+			var r := _decks_duel(id, d.id, games)
+			total += games
+			won += r.wins[0]
+			print("ROW %s vs %s: %.0f%% (%d of %d, draws %d)" % [id, d.id, 100.0 * r.wins[0] / maxi(games, 1), r.wins[0],
+				games, r.draws])
+	print("ROW %s overall: %.1f%%" % [id, 100.0 * won / maxi(total, 1)])
