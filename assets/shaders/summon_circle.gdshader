@@ -1,5 +1,5 @@
 shader_type canvas_item;
-render_mode blend_add;
+render_mode blend_add, unshaded;
 // Summoning circle drawn on the board under a minion that lands: a burst of light at the centre, two rune rings
 // turning in opposite directions (procedural glyph strokes), radial rays and a shock ring that races outward,
 // all driven by `t` (0 -> 1 over the effect). The node is squashed vertically to lie flat on the table.
