@@ -38,8 +38,13 @@ func _ready() -> void:
 	var progress := UI.plaque_label("%d / %d" % [owned_n, total], 28, "title", UI.BONE, 0.0, 24, 8)
 	progress.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(progress)
-	for f in [["all", "All"], ["pilgrim", "Pilgrim"], ["ferry", "Ferryman"], ["neutral", "Neutral"], ["token", "Tokens"]]:
-		var b := UI.button(f[1], 180, 64)
+	var filters := [["all", "All"]]
+	for cls in CardDB.classes():
+		filters.append([cls, CardDB.class_title(cls)])
+	filters.append_array([["neutral", "Neutral"], ["token", "Tokens"]])
+	var fw := 180.0 if filters.size() <= 5 else maxf(130.0, 900.0 / filters.size())
+	for f in filters:
+		var b := UI.button(f[1], fw, 64)
 		b.add_theme_font_size_override("font_size", 26)
 		b.pressed.connect(_set_filter.bind(f[0]))
 		top.add_child(b)

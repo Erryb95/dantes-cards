@@ -121,14 +121,14 @@ func _build_power(def: Dictionary) -> void:
 	power.add_child(_power_glow)
 	_power_face = Node2D.new()
 	power.add_child(_power_face)
-	var icon_name := "icon_shield" if hero_id == "dante" else "icon_obol"
+	var icon_name := str(CardDB.hero(hero_id).get("power_icon", "icon_trigger"))
 	if UiSkin.has("power_disc") and UiSkin.has(icon_name):
 		_power_face.add_child(UiSkin.sprite("power_disc", Vector2(106, 106)))
 		_power_face.add_child(UiSkin.sprite(icon_name, Vector2(60, 60)))
 	else:
 		var disc := Shapes.make(Shapes.Kind.ELLIPSE, Vector2(98, 98), Color(0.3, 0.07, 0.05), UI.GOLD, 5.0)
 		_power_face.add_child(disc)
-		var icon_kind := Shapes.Kind.SHIELD if hero_id == "dante" else Shapes.Kind.DIAMOND
+		var icon_kind := Shapes.Kind.SHIELD if icon_name == "icon_shield" else Shapes.Kind.DIAMOND
 		var icon := Shapes.make(icon_kind, Vector2(44, 50), UI.GOLD.darkened(0.1), Color(0.25, 0.12, 0.03), 3.0)
 		_power_face.add_child(icon)
 	var cost: Node2D

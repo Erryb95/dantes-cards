@@ -37,7 +37,7 @@ func _ready() -> void:
 		deck = Collection.decks[_index].duplicate(true)
 	else:
 		_index = -1
-		var cls_title := "Pilgrim" if Game.new_deck_cls == "pilgrim" else "Ferryman"
+		var cls_title := CardDB.class_title(Game.new_deck_cls)
 		var mine := Collection.decks.filter(func(d): return d.cls == Game.new_deck_cls).size()
 		deck = {"name": "%s Deck %d" % [cls_title, mine + 1], "cls": Game.new_deck_cls, "cards": {}}
 
@@ -61,7 +61,7 @@ func _ready() -> void:
 	var back := UI.button("Back", 170, 60)
 	back.pressed.connect(func(): Game.go(Game.DECK_SELECT))
 	top.add_child(back)
-	var cls_name := "Pilgrim" if deck.cls == "pilgrim" else "Ferryman"
+	var cls_name := CardDB.class_title(deck.cls)
 	for f in [["all", "All"], ["class", cls_name], ["neutral", "Neutral"]]:
 		var b := _small_button(f[1], 190)
 		b.pressed.connect(func():
@@ -145,7 +145,7 @@ func _ready() -> void:
 		_name.grab_focus()
 		_name.select_all())
 	nr.add_child(ren)
-	var hero := CardDB.hero(Collection.CLASS_HERO[deck.cls])
+	var hero := CardDB.hero(CardDB.class_hero(deck.cls))
 	# Hero line with the card count on its right, so the count never crowds the bottom of the deck list.
 	var hr := HBoxContainer.new()
 	rv.add_child(hr)
@@ -205,8 +205,7 @@ func _ready() -> void:
 	_play = UI.button("Play", 220, 70)
 	_play.pressed.connect(func():
 		_save()
-		Game.start_with(Collection.deck_cards(deck.cards), Collection.CLASS_HERO[deck.cls],
-			"ferry" if deck.cls == "pilgrim" else "pilgrim"))
+		Game.start_with(Collection.deck_cards(deck.cards), CardDB.class_hero(deck.cls)))
 	r2.add_child(_play)
 
 	resized.connect(_fill)

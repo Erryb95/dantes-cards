@@ -1333,8 +1333,8 @@ func _show_result(winner: int) -> void:
 		UI.GOLD if won else Color(0.8, 0.25, 0.2), 18, Color(0.1, 0.0, 0.0))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
-	var line := "Charon steps aside. The river can be crossed." if won and Game.enemy_deck == "ferry" else (
-		"The pilgrim falls silent on the shore." if won else "The shades close in. Try again.")
+	var line: String = str(CardDB.hero(Game.enemy_hero).get("defeat_line", "The way lies open.")) if won else (
+		"The shades close in. Try again.")
 	# The verdict and the reward on a framed plate under the title, the Obols beside their coin.
 	var plate := PanelContainer.new()
 	plate.add_theme_stylebox_override("panel", UI.tip_box())
