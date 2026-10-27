@@ -1,0 +1,27 @@
+{
+ "_doc": "Optional painted pieces for the parchment tips, the profile and the title screen (scripts/ui/ui.gd, scripts/ui/profile_panel.gd, scripts/ui/main_menu.gd). Everything looks finished without them: each one replaces a piece built from existing art (noted in 'replaces'). One take each, no text in the image. Install as assets/ui/<id>.png and wire it where 'replaces' says.",
+ "style": "hand-tinted 19th century wood engraving in the style of Gustave Dore, dense fine crosshatching, aged bronze and dark iron, warm parchment, glowing ember orange and deep crimson highlights, game UI asset, centered, no text, no letters, no symbols",
+ "assets": [
+  {
+   "id": "tip_parchment",
+   "size": [512, 320],
+   "alpha": true,
+   "replaces": "the half-size plate_parchment_wide behind every tip (UI.tip_box / UI.parchment_box): a squarer sheet whose fibres keep their scale on tall tips; 9-slice margin about 36 px",
+   "prompt": "A flat sheet of aged cream parchment with softly darkened, slightly torn edges, framed by a thin engraved gold and bronze rule set a little inside the edge with tiny corner flourishes, the centre left plain and evenly lit for writing, isolated on a transparent background"
+  },
+  {
+   "id": "profile_plaque",
+   "size": [768, 192],
+   "alpha": true,
+   "replaces": "the deck_row plaque of the title screen's player plaque (main_menu.gd _add_profile_plaque): an oval socket at the left for the avatar, a plain band for the name",
+   "prompt": "A horizontal nameplate of dark iron in a riveted aged bronze frame, a small empty oval socket with a gilded rim on its left end, the long band to the right left smooth and plain, a small pen nib engraved at the far right, isolated on a transparent background"
+  },
+  {
+   "id": "lessons_medallion",
+   "size": [256, 256],
+   "alpha": true,
+   "replaces": "the power_disc behind Virgil's face on Learn to Play (main_menu.gd _learn_medallion): the round centre stays empty for the face",
+   "prompt": "A round medallion frame of aged bronze with a laurel wreath engraved around its rim and a thin ember-red enamel ring inside it, the inner circle left empty and transparent, isolated on a transparent background"
+  }
+ ]
+}

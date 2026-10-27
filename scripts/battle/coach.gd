@@ -35,7 +35,7 @@ func _ready() -> void:
 	_bubble = PanelContainer.new()
 	_bubble.add_theme_stylebox_override("panel", UI.tip_box())
 	_bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_label = UI.label("", 26, "body", UI.BONE)
+	_label = UI.label("", 26, "body", UI.INK) # inked on the parchment tip sheet
 	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_label.custom_minimum_size = Vector2(380, 0)
 	_bubble.add_child(_label)

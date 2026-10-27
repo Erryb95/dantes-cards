@@ -182,6 +182,25 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
 - Optional painted pieces (Virgil's portrait, the headings as painted words) are listed in `art_src/tutorial_art.json`.
 - Review: `tests/screen_audit.tscn -- --what=lessons|howto|offer|lesson|lesson_pause [--lesson=<id>] [--steps=0,3]`.
 
+## Title screen, info surfaces and the profile
+- **Title screen**: the stack is Play, Collection, Open Packs, Options, Quit. Learn to Play is Virgil's round medallion
+  (his face on the bronze disc, its name on a red ribbon) beside Play. The player plaque in the top-right corner shows
+  the avatar, the name ("Choose your name" before there is one) and the record, and opens the profile.
+- **Info is inked on parchment**: every tooltip and info bubble (keyword tips, the engine's tooltips, the card zoom,
+  the coach, Credits, a refused action, the result, dialog texts, deck hints) sits on the painted parchment with its
+  thin bronze rule (`UI.tip_box` / `UI.parchment_box` / `UI.parchment_label`), in dark-brown ink (`UI.INK`) with
+  keyword names and headings in dark crimson (`UI.INK_RED`). Never bone letters on a black box. Combat callouts on the
+  board (damage numbers, the Wrath / Frenzy / Ruse plaques) keep their own look.
+- **Profile** (`ProfilePanel`, rules in `Profile`): the display name (3-16 characters: letters of any alphabet,
+  digits, spaces, `_`, `-`; trimmed to single spaces; no word filter), checked live with
+  the rule or the error inked under the field; the avatar, one hero per class; the record (victories, defeats,
+  favourite class = most matches finished, `Game.class_games`). Save / Back; Esc and the back gesture close it without
+  saving. A new player is offered "Pilgrim1234"; offline play never asks for a name. Saved as `Settings.player_name` /
+  `player_avatar` (`[profile]` in settings.cfg); `Profile.online()` is what the coming Nakama client syncs as
+  display_name / avatar_url. On a phone the panel slides up above the on-screen keyboard.
+- Review: `tests/screen_audit.tscn -- --what=menu|profile|profile_error [--named]`; optional painted pieces in
+  `art_src/profile_ui_art.json`.
+
 ## Collection and packs (v0.2)
 - 296 cards: core 27 + Pilgrim's Journey 35 + Infernal Host 35 + Upper Hell (33: Filippo Argenti and the Wrathful
   Shade moved to the Wrathful), City of Dis (35 neutral), Malebolge and Cocytus (34 neutral: Ulysses, the Schemer moved
