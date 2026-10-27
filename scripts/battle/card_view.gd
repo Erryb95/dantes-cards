@@ -410,23 +410,28 @@ static func _fit_size(text: String, width: float, max_size: int, kind: String) -
 
 
 func _build_back() -> void:
-	var frame := UI.panel(Vector2(W, H), UI.box(Color(0.25, 0.04, 0.04), UI.GOLD_DARK, 5, 20), Vector2.ZERO)
-	frame.use_parent_material = true
-	_back.add_child(frame)
 	var tex: Texture2D = null
 	if ResourceLoader.exists("res://assets/cards/card_back.jpg"):
 		tex = load("res://assets/cards/card_back.jpg")
+	# The painted back inside the same carved border as the card faces (the deck pile, the enemy hand, a card being
+	# flipped). The flat red frame and gold line are only the fallback when either painting is missing.
+	var painted := tex != null and UiSkin.has("card_border_minion")
+	if not painted:
+		var frame := UI.panel(Vector2(W, H), UI.box(Color(0.25, 0.04, 0.04), UI.GOLD_DARK, 5, 20), Vector2.ZERO)
+		frame.use_parent_material = true
+		_back.add_child(frame)
 	if tex != null:
 		var img := TextureRect.new()
 		img.texture = tex
 		img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		img.position = Vector2(10, 10)
-		img.size = Vector2(W - 20, H - 20)
+		var inset := 5.0 if painted else 10.0
+		img.position = Vector2(inset, inset)
+		img.size = Vector2(W, H) - Vector2(inset, inset) * 2.0
 		var m := ShaderMaterial.new()
 		m.shader = CARD_FX
 		m.set_shader_parameter("mask_mode", 2)
-		m.set_shader_parameter("corner", 0.1)
+		m.set_shader_parameter("corner", 0.07 if painted else 0.1)
 		img.material = m
 		img.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_back.add_child(img)
@@ -436,6 +441,9 @@ func _build_back() -> void:
 				UI.GOLD.darkened(i * 0.07), 3.0)
 			r.position = Vector2(W / 2, H / 2)
 			_back.add_child(r)
+	if painted:
+		_back.add_child(UiSkin.rect("card_border_minion", Vector2(W, H)))
+		return
 	var rim := UI.panel(Vector2(W - 20, H - 20), UI.box(Color(0, 0, 0, 0), UI.GOLD, 3, 14), Vector2(10, 10))
 	rim.use_parent_material = true
 	_back.add_child(rim)
