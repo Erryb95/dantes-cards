@@ -1,16 +1,24 @@
 extends "res://tests/ui_smoke.gd"
 ## Plays the real battle through the input path like a person would, and saves a screenshot at each key moment
 ## (mulligan, hover, drag, aim, inspect, end turn, result) for a visual review.
-##   Godot --path . res://tests/play_shots.tscn -- --out=<dir>
+##   Godot --path . res://tests/play_shots.tscn -- --out=<dir> [--class=<cls>]
+## --class plays that class's first preconstructed deck (with a Ruse class, it also films a gold Ruse glow in hand and
+## the inspect tips of a Ruse minion).
 
 var out := "user://play_shots"
 var _n := 0
+var _ruse_shot := false
+var _ruse_tip := false
 
 
 func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out = a.substr(6)
+		elif a.begins_with("--class="):
+			var cls := a.substr(8)
+			Game.player_cards = CardDB.deck_list(CardDB.class_decks(cls)[0].id)
+			Game.player_hero = CardDB.class_hero(cls)
 	DirAccess.make_dir_recursive_absolute(out)
 	battle = load("res://scenes/battle.tscn").instantiate()
 	add_child(battle)
@@ -72,6 +80,10 @@ func _play() -> void:
 			if turn == 2:
 				await _snap("summon")
 			await _idle()
+			if not _ruse_shot and battle.hand_views[0].any(func(h): return h.ruse and h.playable):
+				_ruse_shot = true
+				await get_tree().create_timer(0.4).timeout
+				await _snap("ruse_glow")
 		for m in battle.board_views[0].duplicate():
 			var u = st.units.get(m.uid)
 			if u == null or not st.can_attack(u):
@@ -88,6 +100,15 @@ func _play() -> void:
 			_mouse(tp, false)
 			await get_tree().create_timer(0.25).timeout
 			await _idle()
+		# Inspect one of your Ruse minions (its tip explains the Ruse instead of "On Play").
+		for m in battle.board_views[0]:
+			if not _ruse_tip and battle._has_ruse(m.card_id):
+				_ruse_tip = true
+				_move(m.position)
+				await get_tree().create_timer(0.9).timeout
+				await _snap("inspect_ruse")
+				_move(Vector2(10, 10))
+				await get_tree().create_timer(0.2).timeout
 		# Inspect an enemy minion by hovering it.
 		if turn == 3 and not battle.board_views[1].is_empty():
 			_move(battle.board_views[1][0].position)

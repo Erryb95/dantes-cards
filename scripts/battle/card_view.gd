@@ -18,6 +18,11 @@ var selected := false:
 	set(v):
 		selected = v
 		_update_glow()
+## The card's Ruse would go off if it were played now: its playable glow turns gold.
+var ruse := false:
+	set(v):
+		ruse = v
+		_update_glow()
 
 ## Animation helpers driven by the board.
 var home := Vector2.ZERO
@@ -454,7 +459,8 @@ func set_cost(cost: int) -> void:
 func _update_glow() -> void:
 	if _glow == null:
 		return
-	_glow.set_on(face_up and (playable or selected), Aura.SELECTED if selected else Aura.PLAYABLE)
+	var preset: Array = Aura.SELECTED if selected else (Aura.RUSE if ruse else Aura.PLAYABLE)
+	_glow.set_on(face_up and (playable or selected), preset)
 
 
 func _process(delta: float) -> void:

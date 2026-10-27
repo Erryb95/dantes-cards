@@ -39,6 +39,10 @@ var board_views: Array = [[], []]
 var heroes: Array = [null, null]
 var unit_views := {}
 var _pending_card := {} ## hand uid -> CardView waiting for its summon
+var _copy_start := {} ## where the next drawn card flies in from (a copy or a stolen card): pos, rot, scl
+var _stolen: Array[Dictionary] = [] ## where each stolen card was handed over; its copy event picks it up there
+var _morph := {} ## the minion being transformed (uid, side, view): it keeps its slot for its new form
+var _ruse_cast := false ## the Ruse flash was already shown on the spell being cast
 
 var cam: Camera2D
 var bg_layer: Node2D
@@ -739,6 +743,10 @@ func _present(ev: Dictionary) -> void:
 				t.tween_property(h, "modulate:a", 1.0, 0.4)
 		"turn":
 			_last_aoe = ""
+			for w in _stolen: # never left behind (each is normally picked up by its copy event)
+				if is_instance_valid(w.node):
+					w.node.queue_free()
+			_stolen.clear()
 			_set_end_button(ev.side)
 			if ev.side == 0:
 				_show_banner("YOUR TURN", UI.GOLD)
@@ -757,6 +765,17 @@ func _present(ev: Dictionary) -> void:
 					unit_views[uid].set_sleeping(false)
 		"draw":
 			await _on_draw(ev)
+		"steal":
+			await _on_steal(ev)
+		"copy":
+			_on_copy(ev)
+		"ruse":
+			if ev.uid == -1 and _ruse_cast:
+				_ruse_cast = false # already shown on the card while it was cast
+			else:
+				await _show_ruse(unit_views.get(ev.uid, heroes[ev.side]))
+		"transform":
+			await _on_transform(ev)
 		"burn":
 			var c := CardView.new().setup(ev.id, -1, true)
 			c.position = deck_views[ev.side].position
@@ -891,9 +910,14 @@ func _present(ev: Dictionary) -> void:
 func _on_draw(ev: Dictionary) -> void:
 	var side: int = ev.side
 	var c := CardView.new().setup(ev.id, ev.uid, false)
-	c.position = deck_views[side].position
-	c.rotation = PI / 2
-	c.scale = Vector2(0.36, 0.36)
+	# From the deck, or from wherever a copied or stolen card was taken (see _on_copy).
+	var from := _copy_start
+	_copy_start = {}
+	if is_instance_valid(from.get("node")):
+		from.node.queue_free() # the stolen card waiting at the handoff: the drawn copy takes its place
+	c.position = from.get("pos", deck_views[side].position)
+	c.rotation = from.get("rot", PI / 2)
+	c.scale = Vector2.ONE * float(from.get("scl", 0.36))
 	hand_layer.add_child(c)
 	hand_views[side].append(c)
 	_set_deck_count(side, ev.deck)
@@ -1089,6 +1113,9 @@ func _on_play(ev: Dictionary) -> void:
 		t.tween_property(c, "scale", Vector2(0.85, 0.85), 0.2 / _speed())
 		t.tween_property(c, "rotation", 0.0, 0.2 / _speed())
 		await t.finished
+		if _ruse_follows(side):
+			_ruse_cast = true
+			_show_ruse(c)
 		await Vfx.cast(self, c, ev.id, side)
 		c.burn_away(0.9 / _speed())
 		await _wait(0.25)
@@ -1100,6 +1127,14 @@ func _on_summon(ev: Dictionary) -> void:
 	var m := MinionView.new().setup(snap)
 	board_layer.add_child(m)
 	unit_views[m.uid] = m
+	var old: MinionView = _take_morph(side)
+	if old != null:
+		# A transformed minion's new form takes its slot (see _on_transform).
+		board_views[side][board_views[side].find(old)] = m
+		old.queue_free()
+		_layout_board(side, m)
+		await _morph_in(m)
+		return
 	var idx := clampi(int(ev.index), 0, board_views[side].size())
 	board_views[side].insert(idx, m)
 	_gap_index = -1
@@ -1246,6 +1281,8 @@ func _on_death(ev: Dictionary) -> void:
 	unit_views.erase(ev.uid)
 	if m == null:
 		return
+	if _morph.get("uid", -1) == ev.uid:
+		return # transformed, not killed: the swirl already took it and its new form keeps the slot
 	board_views[ev.side].erase(m)
 	Sfx.play("moan", -14.0, 1.0, 0.12)
 	Sfx.play("creature_die", -12.0, 1.1)
@@ -1281,6 +1318,171 @@ func _on_bounce(ev: Dictionary) -> void:
 	hand_views[ev.side].append(c)
 	_layout_hand(ev.side)
 	await _wait(0.25)
+
+
+## A card stolen from the victim's hand (or off the top of their deck) flies across the river to the thief and waits
+## there; the thief's copy then arrives from that point through its copy + draw events (it replaces the waiting card).
+func _on_steal(ev: Dictionary) -> void:
+	var from: int = ev.from
+	var c: CardView = null
+	if ev.zone == "hand":
+		for v in hand_views[from]:
+			if v.uid == ev.uid:
+				c = v
+		if c == null:
+			return
+		hand_views[from].erase(c)
+		if hover_card == c:
+			hover_card = null
+		_layout_hand(from)
+	else:
+		_set_deck_count(from, ev.deck)
+		c = CardView.new().setup(ev.id, -1, false)
+		c.position = deck_views[from].position
+		c.rotation = PI / 2
+		c.scale = Vector2(0.36, 0.36)
+		hand_layer.add_child(c)
+	if c.has_meta("tw"):
+		(c.get_meta("tw") as Tween).kill() # the hand layout must not pull it back
+	c.z_index = 40
+	c.look = false
+	Vfx.pilfer(self, c.position)
+	var to := _handoff(ev.side)
+	to.pos = to.pos + Vector2(-90.0 if ev.side == 0 else 90.0, 0) * _stolen.size()
+	var k := _speed()
+	var t := c.create_tween()
+	t.tween_property(c, "position", c.position + Vector2(0, 60 if from == 1 else -60), 0.12 / k)
+	t.tween_property(c, "position", to.pos, 0.38 / k).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_CUBIC)
+	t.parallel().tween_property(c, "rotation", to.rot, 0.38 / k)
+	t.parallel().tween_property(c, "scale", Vector2.ONE * to.scl, 0.38 / k)
+	await t.finished
+	if c.face_up:
+		# Your card turns its back as it goes over to the enemy.
+		var f := c.create_tween()
+		f.tween_property(c, "scale:x", 0.0, 0.08 / k)
+		f.tween_callback(c.set_face_up.bind(false))
+		f.tween_property(c, "scale:x", to.scl, 0.08 / k)
+		await f.finished
+	# It waits there (a second stolen card beside the first) until its copy is drawn from that spot.
+	_stolen.append({"pos": c.position, "rot": c.rotation, "scl": c.scale.y, "node": c})
+
+
+## Where a stolen card changes hands: on the thief's side of the river.
+func _handoff(thief: int) -> Dictionary:
+	if thief == 0:
+		return {"pos": Vector2(V.x * 0.62, V.y * 0.52), "rot": 0.0, "scl": 0.6}
+	return {"pos": Vector2(V.x * 0.38, V.y * 0.3), "rot": PI, "scl": 0.5}
+
+
+## A copy is about to be drawn: it flies in from where it was taken (the handed-over stolen card, a card in the enemy
+## hand, the enemy deck or the copied minion) instead of from its owner's deck.
+func _on_copy(ev: Dictionary) -> void:
+	if not _stolen.is_empty():
+		_copy_start = _stolen.pop_front()
+		return
+	var foe: int = 1 - int(ev.side)
+	var from := {}
+	match ev.from:
+		"enemy_hand":
+			var src: CardView = null
+			for v in hand_views[foe]:
+				if v.card_id == ev.id:
+					src = v
+			if src == null and not hand_views[foe].is_empty():
+				src = hand_views[foe][randi() % hand_views[foe].size()]
+			if src != null:
+				from = {"pos": src.position, "rot": src.rotation, "scl": src.scale.y}
+		"enemy_deck":
+			from = {"pos": deck_views[foe].position, "rot": PI / 2, "scl": 0.36}
+		_:
+			for m in board_views[foe] + board_views[int(ev.side)]:
+				if m.card_id == ev.id:
+					from = {"pos": m.position, "rot": 0.0, "scl": 0.45}
+					break
+	if not from.is_empty():
+		Vfx.pilfer(self, from.pos)
+		_copy_start = from
+
+
+## A Ruse going off: a golden flash and its name over the minion, or over the spell as it is cast.
+func _show_ruse(n: Node2D) -> void:
+	if not is_instance_valid(n):
+		return
+	Vfx.keyword(self, n, "ruse")
+	_toast(n.position + Vector2(0, -(MinionView.H / 2 + 24) if n is MinionView else -150.0), "Ruse", UI.GOLD)
+	if n is MinionView:
+		_pop(n, 1.12)
+	await _wait(0.3)
+
+
+## True when this play's Ruse goes off (its "ruse" event is queued before the next action).
+func _ruse_follows(side: int) -> bool:
+	for e in queue:
+		if e.t == "ruse":
+			return e.side == side and e.uid == -1
+		if e.t in ["play", "attack", "power", "turn_end"]:
+			return false
+	return false
+
+
+static func _has_ruse(id: String) -> bool:
+	return CardDB.card(id).get("effects", []).any(func(e): return e.get("ruse", false))
+
+
+## Circe's swine: the minion spins down into a swirl and a puff of smoke, and its new form pops up in the same slot
+## (the death event that follows is skipped, the summon replaces the view: see _on_summon).
+func _on_transform(ev: Dictionary) -> void:
+	var m = unit_views.get(ev.uid)
+	if not (m is MinionView):
+		return
+	_morph = {"uid": ev.uid, "side": ev.side, "view": m}
+	m.busy = true
+	m.z_index = 12
+	var tint: Color = VfxData.school(VfxData.profile(ev.src)).hot
+	Vfx.morph(self, m.position, ev.src)
+	var k := _speed()
+	var t: Tween = m.create_tween().set_parallel(true)
+	t.tween_property(m, "rotation", 1.6, 0.32 / k).set_ease(Tween.EASE_IN)
+	t.tween_property(m, "scale", Vector2(0.15, 0.15), 0.32 / k).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
+	t.tween_property(m, "modulate", Color(tint.r, tint.g, tint.b, 0.0), 0.32 / k)
+	await t.finished
+	m.visible = false
+
+
+## The view of the minion transformed on `side`, whose new form is being summoned (null when there is none).
+func _take_morph(side: int) -> MinionView:
+	if _morph.is_empty():
+		return null
+	var old = _morph.view
+	var was: int = _morph.side
+	_morph = {}
+	if not is_instance_valid(old):
+		return null
+	if was == side and board_views[side].has(old):
+		return old
+	board_views[was].erase(old) # never leave a stale slot behind
+	old.queue_free()
+	_layout_board(was)
+	return null
+
+
+## The new form pops out of the swirl (no slam: it was not played).
+func _morph_in(m: MinionView) -> void:
+	var k := _speed()
+	m.position = m.home
+	m.scale = Vector2(0.2, 0.2)
+	m.rotation = -1.2
+	m.modulate.a = 0.0
+	Fx.flash(fx_layer, "k_twirl_01", m.home, 300.0, 0.45, Vfx.summon_tint(m.card_id), -3.0)
+	Fx.burst(fx_layer, m.home, Vfx.summon_tint(m.card_id), 18, 220.0, 0.5, 9.0, 0.0)
+	Sfx.play("card_place", -8.0, 1.2)
+	var t := m.create_tween().set_parallel(true)
+	t.tween_property(m, "scale", Vector2.ONE, 0.3 / k).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	t.tween_property(m, "rotation", 0.0, 0.3 / k).set_ease(Tween.EASE_OUT)
+	t.tween_property(m, "modulate:a", 1.0, 0.12 / k)
+	await t.finished
+	shake(3.0)
+	await _wait(0.12)
 
 
 ## Board-wide effects are staged by Vfx from the card's profile (data/vfx.json). A second sweep by the same card in
@@ -1611,8 +1813,10 @@ func _my_turn() -> bool:
 func _refresh_highlights() -> void:
 	var mine := _my_turn()
 	var any := false
+	var ruse := mine and st.ruse_active(0)
 	for c in hand_views[0]:
 		c.playable = mine and st.can_play(0, c.uid)
+		c.ruse = ruse and _has_ruse(c.card_id)
 		any = any or c.playable
 	for m in board_views[0]:
 		var u = st.units.get(m.uid)
@@ -2041,9 +2245,11 @@ func _show_inspect(u) -> void:
 	inspect.create_tween().tween_property(inspect, "scale", Vector2(0.95, 0.95), 0.12)
 	var kws: Array = CardDB.card(id).get("keywords", []).duplicate() # a copy: appending must not touch the card data
 	for e in CardDB.card(id).get("effects", []):
-		if e.get("on", "") in ["death", "play", "turn_end", "turn_start"] and not kws.has(e.on) \
+		# A Ruse bonus is an On Play effect too, but its tip explains the Ruse.
+		var on: String = "ruse" if e.get("ruse", false) else str(e.get("on", ""))
+		if on in ["death", "play", "turn_end", "turn_start", "ruse"] and not kws.has(on) \
 				and CardDB.card(id).get("type") == "minion":
-			kws.append(e.on)
+			kws.append(on)
 	for k in kws:
 		if UI.KEYWORD_HELP.has(k):
 			_add_tip(UI.KEYWORD_HELP[k][0], UI.KEYWORD_HELP[k][1])

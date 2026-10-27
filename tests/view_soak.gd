@@ -8,6 +8,8 @@ var games := 10
 var only := ""
 var done := 0
 var stalls := 0
+var desyncs := 0 ## the view's hands or boards disagreeing with the rules state while nothing is animating
+var seen := {"steal": 0, "copy": 0, "transform": 0, "ruse": 0} ## how often the rarer view hooks were exercised
 
 
 func _ready() -> void:
@@ -36,6 +38,7 @@ func _loop() -> void:
 		var battle: Node = load(Game.BATTLE).instantiate()
 		battle.autoplay = true
 		add_child(battle)
+		battle.st.event.connect(_tally)
 		var last_sig := ""
 		var still := 0.0
 		while not battle.over:
@@ -43,6 +46,7 @@ func _loop() -> void:
 			# Mulligan: autoplay keeps the opening hand.
 			if battle.get("_mull_waiting"):
 				battle._confirm_mulligan()
+			_check_sync(battle, g)
 			var sig := "%d|%d|%d|%d" % [battle.st.turn if "turn" in battle.st else 0, battle.queue.size(),
 				battle.st.sides[0].hero.health, battle.st.sides[1].hero.health]
 			sig += "|%d|%d" % [battle.st.sides[0].hand.size(), battle.st.sides[1].hand.size()]
@@ -58,5 +62,23 @@ func _loop() -> void:
 		battle.queue_free()
 		await get_tree().process_frame
 	Engine.time_scale = 1.0
-	print("VIEW SOAK: %d games, %d stalls" % [done, stalls])
+	print("VIEW SOAK: %d games, %d stalls, %d desyncs; events %s" % [done, stalls, desyncs, seen])
 	get_tree().quit()
+
+
+func _tally(ev: Dictionary) -> void:
+	if seen.has(ev.t):
+		seen[ev.t] += 1
+
+
+## A stolen card left in its old hand, or a transformed minion's slot lost, shows up as a count mismatch.
+func _check_sync(battle: Node, g: int) -> void:
+	if battle.playing or not battle.queue.is_empty() or battle.st.in_mulligan():
+		return
+	for i in 2:
+		var hand: int = battle.st.sides[i].hand.size()
+		var board: int = battle.st.sides[i].board.size()
+		if battle.hand_views[i].size() != hand or battle.board_views[i].size() != board:
+			desyncs += 1
+			printerr("SOAK DESYNC game %d side %d: hand %d/%d board %d/%d" % [g, i, battle.hand_views[i].size(), hand,
+				battle.board_views[i].size(), board])
