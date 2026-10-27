@@ -46,9 +46,7 @@ func _ready() -> void:
 	root.alignment = BoxContainer.ALIGNMENT_CENTER
 	root.add_theme_constant_override("separation", 10)
 	add_child(root)
-	var title := UI.label("Choose your path", 58, "title", UI.GOLD, 10, Color.BLACK)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(title)
+	root.add_child(UI.banner("Choose your path", 46, UI.GOLD, 0.0, 0.0, 1.8)) # the heading on the charred banner
 	root.add_child(_header())
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -66,9 +64,9 @@ func _ready() -> void:
 	_show(_find(_selected), 0)
 
 
-## Height of the showcase / library row: what the screen leaves under the title and header and above Back.
+## Height of the showcase / library row: what the screen leaves under the title banner and header and above Back.
 func _row_height() -> float:
-	return minf(800.0, get_viewport_rect().size.y - 270.0)
+	return minf(800.0, get_viewport_rect().size.y - 320.0)
 
 
 # --- Decks -------------------------------------------------------------------------------------------------------
@@ -365,7 +363,6 @@ func _library() -> Control:
 	for dir in [-1, 1]:
 		var a := _arrow_button(dir)
 		a.rotation = PI / 2 # containers reset rotation, so the disc sits in a plain holder
-		a.tooltip_text = "Scroll up" if dir < 0 else "Scroll down"
 		var holder := Control.new()
 		holder.custom_minimum_size = a.size
 		a.pressed.connect(func():
@@ -404,6 +401,9 @@ func _update_scroll_btns() -> void:
 	for b in _scroll_btns:
 		b.modulate.a = 1.0 if overflow else 0.0
 		b.disabled = not overflow
+		# A hidden disc neither takes the pointer nor shows its tooltip.
+		b.mouse_filter = Control.MOUSE_FILTER_STOP if overflow else Control.MOUSE_FILTER_IGNORE
+		b.tooltip_text = ("Scroll up" if b == _scroll_btns[0] else "Scroll down") if overflow else ""
 
 
 const TILE_FIELD := Color(0.55, 0.45, 0.4)

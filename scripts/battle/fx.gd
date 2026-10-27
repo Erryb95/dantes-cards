@@ -128,19 +128,39 @@ static func dust(parent: Node, pos: Vector2, width: float = 140.0, amount: int =
 	p.finished.connect(p.queue_free)
 
 
-## A splat with a number that pops and fades (damage red, heal green).
+## A number that pops and fades on a painted burst: the blood splash for damage (`splat`), the holy light for
+## heals. Without the paintings it falls back to the drawn splat (damage) or the bare number.
 static func number(parent: Node, pos: Vector2, text: String, color: Color, splat: bool = true) -> void:
 	var root := Node2D.new()
 	root.position = pos
 	root.z_index = 80
 	parent.add_child(root)
-	if splat:
+	var paint := "blood_splat" if splat else "holy_light"
+	var painted := UiSkin.has(paint)
+	if painted:
+		# A soft shadow under the burst (the painting glows additively), so the number reads on bright portraits.
+		var shade := Sprite2D.new()
+		shade.texture = UI.dot_texture()
+		shade.modulate = Color(0.06, 0.0, 0.0, 0.9) if splat else Color(0.0, 0.05, 0.0, 0.85)
+		shade.scale = Vector2.ONE * 2.1
+		root.add_child(shade)
+		var s := Sprite2D.new()
+		s.texture = UiSkin.tex(paint)
+		s.material = live(paint)
+		s.modulate = Color(1.0, 0.75, 0.7) if splat else Color(0.6, 1.0, 0.55)
+		s.rotation = randf() * TAU
+		s.scale = Vector2.ONE * (190.0 if splat else 170.0) / s.texture.get_size().x
+		root.add_child(s)
+	elif splat:
 		var s := Shapes.make(Shapes.Kind.SPLAT, Vector2(118, 110), color, color.darkened(0.6), 3.0)
 		s.shade = false
 		s.use_parent_material = false
 		s.rotation = randf() * TAU
 		root.add_child(s)
-	var l := UI.label(text, 54, "title", Color.WHITE if splat else color, 10, Color(0.08, 0.02, 0.02))
+	var l := UI.label(text, 58 if painted else 54, "title", Color.WHITE if splat else color, 12 if painted else 10,
+		Color(0.25, 0.0, 0.0) if painted and splat else (Color(0.0, 0.12, 0.02) if painted else Color(0.08, 0.02, 0.02)))
+	if painted and not splat:
+		l.add_theme_color_override("font_color", Color(0.85, 1.0, 0.8))
 	l.size = Vector2(140, 80)
 	l.position = -l.size / 2
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

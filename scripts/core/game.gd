@@ -40,6 +40,7 @@ const FPS_BACKGROUND := 10
 func _ready() -> void:
 	if DisplayServer.get_name() != "headless": # tests run the frames as fast as they can
 		Engine.max_fps = FPS_ACTIVE
+	UI.paint_tooltips()
 	_layer = CanvasLayer.new()
 	_layer.layer = 100
 	add_child(_layer)

@@ -25,9 +25,12 @@ func _ready() -> void:
 	var back := UI.button("Back", 200, 64)
 	back.pressed.connect(func(): Game.go(Game.MENU))
 	top.add_child(back)
-	var title := UI.label("Collection", 56, "title", UI.GOLD, 8, Color.BLACK)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# The heading on the charred banner (it overhangs the bar a little, so the bar keeps the buttons' height).
+	var title := UI.banner("Collection", 38, UI.GOLD, 0.0, 64.0, 1.8)
 	top.add_child(title)
+	var gap := Control.new()
+	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(gap)
 	var owned_n := 0
 	var total := 0
 	for c in CardDB.all_cards():
@@ -43,6 +46,11 @@ func _ready() -> void:
 		filters.append([cls, CardDB.class_title(cls)])
 	filters.append_array([["neutral", "Neutral"], ["token", "Tokens"]])
 	var fw := 180.0 if filters.size() <= 5 else maxf(130.0, 900.0 / filters.size())
+	# Narrower plates when the bar would run off a narrow screen (the banner, Back and the count take their room).
+	progress.reset_size()
+	var bar := get_viewport_rect().size.x - 80.0 - back.custom_minimum_size.x - title.custom_minimum_size.x \
+		- progress.get_combined_minimum_size().x - 20.0 * (filters.size() + 3)
+	fw = clampf(bar / filters.size(), 120.0, fw)
 	for f in filters:
 		var b := UI.button(f[1], fw, 64)
 		b.add_theme_font_size_override("font_size", 26)
@@ -54,9 +62,14 @@ func _ready() -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	UI.paint_scroll(scroll)
 	root.add_child(scroll)
+	# A little room above the first row, so the copies discs pinned over the cards' corners are not cut off.
+	var pad := MarginContainer.new()
+	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pad.add_theme_constant_override("margin_top", 18)
+	scroll.add_child(pad)
 	var center := CenterContainer.new()
 	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(center)
+	pad.add_child(center)
 	_grid = GridContainer.new()
 	_grid.add_theme_constant_override("h_separation", 26)
 	_grid.add_theme_constant_override("v_separation", 26)
