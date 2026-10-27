@@ -13,7 +13,7 @@ const END_OVAL := Vector2(236, 150) ## the end-turn seal's visible oval, px
 const MINION_GAP := 40.0
 const PLAY_LINE := 0.70 ## releasing a dragged card above this fraction of the screen height plays it
 const INSPECT_SCALE := 0.95 ## the enlarged card shown beside a hovered minion
-const TIP_W := 400.0 ## a keyword tip plate's width (UI.tip_plate: a 320 px text column inside the frame)
+const TIP_W := 400.0 ## a keyword tip sheet's width (UI.tip_plate: a 300 px text column inside UI.TIP_PAD_X each side)
 const TIP_GAP := 8
 
 enum Mode { IDLE, DRAG_CARD, AIM_SPELL, AIM_BATTLECRY, AIM_ATTACK, AIM_POWER }
@@ -843,7 +843,7 @@ func _present(ev: Dictionary) -> void:
 		"fatigue":
 			var h: HeroView = heroes[ev.side]
 			# Left of the portrait: above it the plaque sat on the row of minions and hid their numbers.
-			_toast(h.position + Vector2(-340, 0), "Fatigue: %d damage" % ev.amount, Color(0.85, 0.75, 1.0))
+			_toast(h.position + Vector2(-340, 0), "Fatigue: %d damage" % ev.amount, UI.INK_RED, true)
 			await _wait(0.4)
 		"play":
 			_last_aoe = ""
@@ -1059,14 +1059,14 @@ func _mulligan_wait() -> void:
 	title.position = Vector2((V.x - title.size.x) / 2, V.y * 0.12)
 	_mull_ui.add_child(title)
 	var order := "You go first." if _first_side == 0 else "You go second, with an extra card and Charon's Obol."
-	# The instructions on an engraved plaque under the title.
+	# The instructions inked on a parchment sheet under the title.
 	var sub_row := CenterContainer.new()
 	sub_row.size = Vector2(V.x, 64)
 	sub_row.position = Vector2(0, V.y * 0.12 + 84)
 	sub_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# "Click" with a mouse, "Tap" on a touch screen.
 	var how := "   %s the cards you want to replace." % UI.tap_word()
-	sub_row.add_child(UI.plaque_label(order + how, 28, "italic", UI.BONE, minf(1300.0, V.x - 160.0), 36, 10))
+	sub_row.add_child(UI.parchment_label(order + how, 28, "italic", UI.INK, minf(1300.0, V.x - 160.0), 40, 12))
 	_mull_ui.add_child(sub_row)
 	var ok := UI.button("Confirm", 340, 84)
 	ok.position = Vector2(V.x / 2 - 170, V.y * 0.78)
@@ -1667,7 +1667,7 @@ func _show_result(winner: int) -> void:
 	box.add_child(title)
 	var line: String = str(CardDB.hero(Game.enemy_hero).get("defeat_line", "The way lies open.")) if won else (
 		"The shades close in. Try again.")
-	# The verdict and the reward on a framed plate under the title, the Obols beside their coin.
+	# The verdict and the reward inked on a parchment sheet under the title, the Obols beside their coin.
 	var plate := PanelContainer.new()
 	plate.add_theme_stylebox_override("panel", UI.parchment_box(56, 34)) # Virgil's words in dark ink on parchment
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1679,7 +1679,7 @@ func _show_result(winner: int) -> void:
 	pv.add_theme_constant_override("separation", 10)
 	pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	plate.add_child(pv)
-	var sub := UI.label(line, 34, "italic", UI.BONE, 3, Color.BLACK)
+	var sub := UI.label(line, 34, "italic", UI.INK)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	UI.fit_label(sub, minf(1100.0, V.x - 260.0), 22)
 	pv.add_child(sub)
@@ -1695,8 +1695,7 @@ func _show_result(winner: int) -> void:
 		coin.custom_minimum_size = coin.size
 		coin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		gain_row.add_child(coin)
-	var gain := UI.label("+%d Obols   ·   a pack costs %d" % [reward, Collection.PACK_PRICE], 30, "title",
-		Color(1.0, 0.85, 0.5), 3, Color.BLACK)
+	var gain := UI.label("+%d Obols   ·   a pack costs %d" % [reward, Collection.PACK_PRICE], 30, "title", UI.INK_RED)
 	gain.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	gain_row.add_child(gain)
 	var row := HBoxContainer.new()
@@ -2538,19 +2537,26 @@ func _end_turn() -> void:
 	_did({"act": "end"})
 
 
-## Why an action was refused ("Not enough mana"), on a small plaque that pops above `pos` and fades.
+## Why an action was refused ("Not enough mana"), inked on a small parchment sheet that pops above `pos` and fades.
 func _nope(pos: Vector2, text: String) -> void:
 	Sfx.play("ui_back", -8.0)
-	_toast(pos + Vector2(0, -110), text, Color(1.0, 0.86, 0.7))
+	_toast(pos + Vector2(0, -110), text, UI.INK, true)
 
 
-## A short message on an engraved plaque centred on board point `pos`: pops in, holds, fades. One at a time.
-func _toast(pos: Vector2, text: String, color: Color) -> void:
+## A short message centred on board point `pos` (on parchment when `note`, else on an engraved plaque): pops in,
+## holds, fades. One at a time.
+func _toast(pos: Vector2, text: String, color: Color, note: bool = false) -> void:
 	var old := ui.get_node_or_null("Toast")
 	if old != null:
 		old.name = "ToastOld"
 		old.queue_free()
-	var plate := UI.plaque_label(text, 30, "title", color, 0.0, 30, 10)
+	# A note (a refused action, fatigue) is inked on parchment; a keyword waking (Wrath, Frenzy, Ruse) stays a callout
+	# on the engraved plaque in its own colour.
+	var plate: PanelContainer
+	if note:
+		plate = UI.parchment_label(text, 30, "title", color, 0.0, 34, 12)
+	else:
+		plate = UI.plaque_label(text, 30, "title", color, 0.0, 30, 10)
 	plate.name = "Toast"
 	ui.add_child(plate)
 	plate.reset_size()
@@ -2682,8 +2688,8 @@ func _tips_size(tips: Array, cols: int) -> Vector2:
 	var hs: Array[float] = []
 	var title_h := UI.font("title").get_height(24)
 	for t in tips:
-		hs.append(78.0 + 4.0 + title_h + UI.font("body").get_multiline_string_size(str(t[1]), HORIZONTAL_ALIGNMENT_LEFT,
-			TIP_W - 100.0, 22).y + 6.0)
+		hs.append(2.0 * UI.TIP_PAD_Y + 2.0 + 4.0 + title_h + UI.font("body").get_multiline_string_size(str(t[1]),
+			HORIZONTAL_ALIGNMENT_LEFT, TIP_W - 2.0 * UI.TIP_PAD_X, 22).y + 6.0)
 	var h := 0.0
 	for i in range(0, hs.size(), cols):
 		var row := hs[i]
@@ -2873,7 +2879,7 @@ func _ask_concede(dim: Control, menu: Control) -> void:
 	dim.add_child(box)
 	box.add_child(UI.banner("Concede this match?", 60))
 	var note := CenterContainer.new()
-	note.add_child(UI.plaque_label("It counts as a loss.", 30, "italic", UI.BONE, 0.0, 36, 10))
+	note.add_child(UI.parchment_label("It counts as a loss.", 30, "italic", UI.INK, 0.0, 40, 12))
 	box.add_child(note)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER

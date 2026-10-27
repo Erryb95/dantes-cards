@@ -19,7 +19,7 @@ static func open(parent: Node, id: String) -> Control:
 	zoom.add_child(c)
 	c.create_tween().tween_property(c, "scale", Vector2(1.9, 1.9) * minf(1.0, vs.y / 1080.0), 0.18).set_trans(Tween.TRANS_BACK)
 	var card := CardDB.card(id)
-	# The name and flavour on a framed plate beside the card.
+	# The name and flavour inked on a parchment sheet beside the card.
 	var w := minf(620.0, vs.x * 0.34)
 	var plate := PanelContainer.new()
 	plate.add_theme_stylebox_override("panel", UI.tip_box())
@@ -29,13 +29,13 @@ static func open(parent: Node, id: String) -> Control:
 	pv.add_theme_constant_override("separation", 14)
 	pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	plate.add_child(pv)
-	var name_l := UI.label(str(card.get("name", "")), 34, "title", UI.GOLD, 4, Color.BLACK)
+	var name_l := UI.label(str(card.get("name", "")), 34, "title", UI.INK_RED)
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	pv.add_child(name_l)
 	var flavor := str(card.get("flavor", ""))
 	if flavor != "":
-		var info := UI.label(flavor, 28, "italic", UI.BONE, 3, Color.BLACK)
+		var info := UI.label(flavor, 28, "italic", UI.INK)
 		info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		info.custom_minimum_size = Vector2(w - 100, 0)

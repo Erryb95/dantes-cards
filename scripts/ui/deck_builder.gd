@@ -122,26 +122,9 @@ func _ready() -> void:
 	var nr := HBoxContainer.new()
 	nr.add_theme_constant_override("separation", 8)
 	rv.add_child(nr)
-	_name = LineEdit.new()
-	_name.text = deck.name
-	_name.placeholder_text = "Name your deck"
-	_name.max_length = 24
-	_name.select_all_on_focus = true
+	# An engraved name plate (UI.name_field): the bronze frame around the painted field, lit while it is being edited.
+	_name = UI.name_field(deck.name, "Name your deck", 24)
 	_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_name.add_theme_font_override("font", UI.font("title"))
-	_name.add_theme_font_size_override("font_size", 26)
-	_name.add_theme_color_override("font_color", UI.GOLD)
-	_name.add_theme_color_override("font_placeholder_color", UI.BONE.darkened(0.45))
-	# Selected letters light up (the selection is a gold ink underline, the caret a stroke of gold ink: InkCaret).
-	_name.add_theme_color_override("font_selected_color", Color(1.0, 0.97, 0.86))
-	_name.add_theme_constant_override("outline_size", 4)
-	_name.add_theme_color_override("font_outline_color", Color(0.04, 0.01, 0.01))
-	InkCaret.attach(_name)
-	# An engraved name plate: the bronze frame around the painted field, lit while it is being edited.
-	_name.add_theme_stylebox_override("normal", UI.plaque_box(18, 8))
-	_name.add_theme_stylebox_override("focus", UI.plaque_box(18, 8, Color(1.45, 1.25, 0.9)))
-	_name.custom_minimum_size = Vector2(0, 60)
-	UI.add_field(_name)
 	_name.text_changed.connect(func(t: String):
 		deck.name = t
 		_fit_name())
@@ -184,11 +167,13 @@ func _ready() -> void:
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 4)
 	ls.add_child(_list)
-	# Why the deck cannot be played yet, on a plaque shown only while there is a reason.
-	_problem_plate = UI.plaque(18, 4)
+	# Why the deck cannot be played yet, inked in red on a parchment sheet shown only while there is a reason.
+	_problem_plate = PanelContainer.new()
+	_problem_plate.add_theme_stylebox_override("panel", UI.parchment_box(26, 12))
+	_problem_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_problem_plate.visible = false
 	rv.add_child(_problem_plate)
-	_problem = UI.label("", 20, "italic", Color(1.0, 0.6, 0.45), 3, Color.BLACK)
+	_problem = UI.label("", 21, "italic", UI.INK_RED)
 	_problem.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_problem.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_problem.custom_minimum_size = Vector2(400, 0)
@@ -272,35 +257,9 @@ func go_back() -> void:
 	_leave()
 
 
-## A round button: the painted bronze disc (like Choose your path's scroll discs) with a glyph engraved on it by
-## `glyph` (a static drawing function taking the canvas item and the disc's centre), `tip` as its tooltip.
+## A round button: the painted bronze disc with `icon` (or a glyph drawn by `glyph`) engraved on it (UI.disc).
 func _disc(tip: String, glyph: Callable, icon: String = "") -> Button:
-	var b := Button.new()
-	b.custom_minimum_size = Vector2(60, 60)
-	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	b.focus_mode = Control.FOCUS_NONE
-	b.tooltip_text = tip
-	b.pivot_offset = b.custom_minimum_size / 2
-	for st in [["normal", Color(0.95, 0.9, 0.82)], ["hover", Color(1.2, 1.08, 0.9)], ["pressed", Color(0.75, 0.62, 0.5)]]:
-		b.add_theme_stylebox_override(st[0], UI.frame_box("power_disc", 0, 0,
-			UI.box(Color(0.1, 0.04, 0.03, 0.88), UI.GOLD_DARK, 3, 30), st[1]))
-	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	if UiSkin.has(icon): # the painted icon (a nib, a broken seal), else the glyph engraved in code
-		var r := UiSkin.rect(icon, Vector2(42, 42), Vector2(9, 9))
-		r.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-		b.add_child(r)
-	else:
-		var nib := Control.new()
-		nib.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		nib.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		nib.draw.connect(func(): glyph.call(nib, Vector2(30, 30)))
-		b.add_child(nib)
-	b.mouse_entered.connect(func():
-		Sfx.play("ui_hover", -10.0)
-		b.create_tween().tween_property(b, "scale", Vector2.ONE * 1.08, 0.08))
-	b.mouse_exited.connect(func(): b.create_tween().tween_property(b, "scale", Vector2.ONE, 0.08))
-	b.pressed.connect(func(): Sfx.play("ui_confirm", -8.0))
-	return b
+	return UI.disc(tip, glyph, icon)
 
 
 ## A pen nib engraved at `c`, its point down-left: dark ink with a thin light edge below (like the discs' arrows).
@@ -590,17 +549,19 @@ func _refresh() -> void:
 
 ## An empty deck's list: how to fill it, engraved on a plaque (instead of a bare dark well).
 func _empty_hint() -> Control:
-	var p := UI.plaque(24, 14)
+	var p := PanelContainer.new() # the hint inked on a parchment sheet
+	p.add_theme_stylebox_override("panel", UI.parchment_box(30, 18))
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var v := VBoxContainer.new()
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_theme_constant_override("separation", 6)
 	p.add_child(v)
-	var t := UI.label("Your deck is empty", 26, "title", UI.GOLD, 4, Color(0.04, 0.01, 0.01))
+	var t := UI.label("Your deck is empty", 26, "title", UI.INK_RED)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	var tap := UI.tap_word()
 	var how := UI.label("%s a card on the left to add it, or let Auto-fill choose. %s a card in this list to take it out."
-		% [tap, tap], 21, "italic", UI.BONE, 3, Color(0.04, 0.01, 0.01))
+		% [tap, tap], 21, "italic", UI.INK)
 	how.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	how.custom_minimum_size = Vector2(360, 0)

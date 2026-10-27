@@ -153,7 +153,7 @@ func _spawn_pack() -> void:
 	if Collection.packs <= 0:
 		if ui.get_node_or_null("Empty") != null:
 			return
-		# The hint on a framed plate in the middle of the table.
+		# The hint inked on a parchment sheet in the middle of the table.
 		var holder := CenterContainer.new()
 		holder.name = "Empty"
 		holder.size = V
@@ -164,7 +164,7 @@ func _spawn_pack() -> void:
 		plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		holder.add_child(plate)
 		var l := UI.label("No packs left. Win battles to earn Obols." if Collection.obols < Collection.PACK_PRICE
-			else "Buy a pack to continue.", 34, "italic", UI.BONE, 3, Color.BLACK)
+			else "Buy a pack to continue.", 34, "italic", UI.INK)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		plate.add_child(l)
 		return

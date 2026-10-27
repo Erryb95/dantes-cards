@@ -14,6 +14,9 @@ extends Node
 ## - Virgil's lessons: a plaque per lesson, How to Play opens from it with every chapter (the classes as their guides)
 ##   and Esc closes it; the first-launch question marks itself asked; a lesson played as Virgil teaches is won through
 ##   the battle scene (a wrong move refused) and ends on its result; a lesson's pause menu restarts, skips or leaves it.
+## - the profile: the name rules (length, characters, spaces cleaned); the title screen has the
+##   player plaque and Virgil's medallion; the plaque opens the profile, an invalid name is refused with a red error,
+##   a valid one saves (cleaned) with the avatar picked and redraws the plaque, Back and Esc close without saving.
 
 const LessonDriver := preload("res://tests/lesson_driver.gd")
 
@@ -31,6 +34,8 @@ func _ready() -> void:
 	await _collection_class()
 	await _lessons_screen()
 	await _lesson_offer()
+	_profile_rules()
+	await _profile()
 	await _lesson_battle()
 	print("MENU SMOKE: %d failures" % fails)
 	get_tree().quit(1 if fails > 0 else 0)
@@ -288,6 +293,88 @@ func _lesson_offer() -> void:
 	var d := m.get_node_or_null("Dialog")
 	if d != null and not d.is_queued_for_deletion():
 		_fail("Esc did not close the first-launch question")
+	m.queue_free()
+	await _frames()
+
+
+func _profile_rules() -> void:
+	for bad in ["", "ab", "  ab  ", "Seventeen chars xx", "Dante!", "a.b.c", "x@y"]:
+		if Profile.valid(bad):
+			_fail("the name '%s' was accepted" % bad)
+	for good in ["Dan", "Niccolò", "Pier_della-Vigna", "Assassin 9", "Nazione", "Troia", "Sixteen chars ab"]:
+		if not Profile.valid(good):
+			_fail("the name '%s' was refused: %s" % [good, Profile.problem(good)])
+	if Profile.clean("  Beatrice   Portinari ") != "Beatrice Portinari":
+		_fail("names are not trimmed to single spaces: '%s'" % Profile.clean("  Beatrice   Portinari "))
+	if not Profile.valid(Profile.suggestion()):
+		_fail("the suggested name %s breaks the rules" % Profile.suggestion())
+	if Profile.avatars().size() != CardDB.classes().size():
+		_fail("expected an avatar per class, got %d" % Profile.avatars().size())
+
+
+func _profile() -> void:
+	var keep_name := Settings.player_name
+	var keep_avatar := Settings.player_avatar
+	Settings.player_name = ""
+	var m := _open(Game.MENU)
+	await _frames()
+	if m.find_child("LearnToPlay", true, false) == null:
+		_fail("the title screen has no Learn to Play medallion")
+	var plaque: Button = m.find_child("ProfilePlaque", true, false)
+	if plaque == null:
+		_fail("the title screen has no profile plaque")
+		m.queue_free()
+		return
+	plaque.pressed.emit()
+	await _frames()
+	var p := m.get_node_or_null("Dialog") as ProfilePanel
+	if p == null:
+		_fail("the profile plaque did not open the profile")
+		m.queue_free()
+		return
+	if not Profile.valid(p.field.text):
+		_fail("a new player was not offered a valid name: '%s'" % p.field.text)
+	# Invalid: refused, the red error shown, nothing saved.
+	p.field.text = "x!"
+	p.field.text_changed.emit(p.field.text)
+	if p.save():
+		_fail("an invalid name was saved")
+	if Settings.player_name != "" or not is_instance_valid(p) or p.is_queued_for_deletion():
+		_fail("an invalid name changed the profile or closed it")
+	var hint: Label = p.find_child("Hint", true, false)
+	if hint == null or hint.text == ProfilePanel.HINT:
+		_fail("an invalid name shows no error")
+	# Valid: cleaned, saved with the avatar picked, the panel closes and the plaque shows the name.
+	var hero: String = Profile.avatars()[-1]
+	p.pick(hero)
+	p.field.text = "  Smoke   Shade "
+	p.field.text_changed.emit(p.field.text)
+	if not p.save():
+		_fail("a valid name was refused: %s" % hint.text)
+	await _frames()
+	if Settings.player_name != "Smoke Shade" or Settings.player_avatar != hero:
+		_fail("the profile saved '%s' / %s" % [Settings.player_name, Settings.player_avatar])
+	if is_instance_valid(p) and not p.is_queued_for_deletion():
+		_fail("Save did not close the profile")
+	var shown: Node = m.find_child("ProfilePlaque", true, false)
+	if shown == null or (shown.find_child("Name", true, false) as Label).text != "Smoke Shade":
+		_fail("the plaque does not show the saved name")
+	# Back and Esc close without saving.
+	for how in ["back", "esc"]:
+		p = m.open_profile()
+		await _frames()
+		p.field.text = "Other Name"
+		if how == "back":
+			(p.find_child("Back", true, false) as Button).pressed.emit()
+		elif not UI.cancel_dialog(m):
+			_fail("Esc found no profile to close")
+		await _frames()
+		if is_instance_valid(p) and not p.is_queued_for_deletion():
+			_fail("%s did not close the profile" % how)
+		if Settings.player_name != "Smoke Shade":
+			_fail("%s saved the name" % how)
+	Settings.player_name = keep_name
+	Settings.player_avatar = keep_avatar
 	m.queue_free()
 	await _frames()
 

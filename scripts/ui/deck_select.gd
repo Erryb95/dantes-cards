@@ -30,8 +30,8 @@ const FEATURED_SCALE := 0.34 ## the three featured cards in the showcase, on a 1
 const FEATURED_SCALE_MAX := 0.5 ## the most they grow on a taller screen (three still fit the showcase's width)
 const FEATURED_TILT := 0.12 ## radians the two side cards fan out
 const PEEK_SCALE := 1.2 ## a key card shown big beside the showcase (on a 1080 px tall screen)
-const INK := Color(0.2, 0.1, 0.04)
-const INK_RED := Color(0.5, 0.08, 0.04)
+const INK := UI.INK
+const INK_RED := UI.INK_RED
 const SHADE := Color(0.04, 0.01, 0.01)
 const TAGS := {"starter": ["Starter", Color(0.98, 0.78, 0.4)], "premade": ["Premade", Color(0.9, 0.85, 0.76)],
 	"custom": ["Custom", Color(1.0, 0.55, 0.3)]}

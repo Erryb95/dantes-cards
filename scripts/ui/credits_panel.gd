@@ -95,7 +95,7 @@ func _close() -> void:
 	queue_free()
 
 
-## One section: its heading in gold over the text, on the framed dark tip plate.
+## One section: its heading in dark crimson over the text in ink, on the parchment tip sheet.
 func _section(title: String, text: String, w: float) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", UI.tip_box())
@@ -105,8 +105,8 @@ func _section(title: String, text: String, w: float) -> PanelContainer:
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_theme_constant_override("separation", 6)
 	p.add_child(col)
-	col.add_child(UI.label(title, 28, "title", UI.GOLD, 4, Color(0.04, 0.01, 0.01)))
-	var body := UI.label(text, 24, "body", UI.BONE, 3, Color(0.04, 0.01, 0.01))
+	col.add_child(UI.label(title, 28, "title", UI.INK_RED))
+	var body := UI.label(text, 24, "body", UI.INK)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.custom_minimum_size = Vector2(w - 110.0, 0)
 	col.add_child(body)

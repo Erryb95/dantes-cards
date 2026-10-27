@@ -6,3 +6,5 @@ art_src/cards/run.log
 __pycache__/
 .claude/worktrees/
 art_src/dore_cards_v2/
+config/online.local.cfg
+*.local.cfg

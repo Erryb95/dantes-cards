@@ -6,7 +6,10 @@ const GOLD_DARK := Color(0.45, 0.30, 0.12)
 const CRIMSON := Color(0.55, 0.06, 0.05)
 const EMBER := Color(1.0, 0.5, 0.15)
 const BONE := Color(0.94, 0.89, 0.78)
-const INK := Color(0.06, 0.04, 0.035)
+## Dark-brown ink for text on parchment (tips, notes, descriptions) and a dark crimson for the keyword names and
+## headings inked on it (also errors). Both read at about 7:1 and 6:1 against the painted sheet.
+const INK := Color(0.2, 0.1, 0.04)
+const INK_RED := Color(0.5, 0.08, 0.04)
 const MANA := Color(0.25, 0.55, 1.0)
 const HEAL := Color(0.45, 1.0, 0.45)
 const PLAYABLE := Color(0.35, 1.0, 0.45)
@@ -234,15 +237,15 @@ static func frame_box(name: String, tex_margin: float, content_margin: float, fa
 	return s
 
 
-## The painted tooltip plate (dark field inside a bronze frame). Its content margins clear the frame's scrollwork
-## (about 40 px of ornament per side), so text always sits on the dark field, never on the border.
+## The tip sheet: painted parchment inside its thin engraved bronze rule (parchment_box), for every tooltip, keyword
+## tip and info bubble. Set dark ink on it (INK, INK_RED for the keyword name or heading), never bone letters.
+## Its text sits TIP_PAD_X px in from the sides and TIP_PAD_Y px from the top (TIP_PAD_Y + 2 from the bottom), well
+## inside the rule.
+const TIP_PAD_X := 50.0
+const TIP_PAD_Y := 28.0
 static func tip_box() -> StyleBox:
-	var s := frame_box("tooltip_frame_filled", 40, 0, box(Color(0.08, 0.05, 0.04, 0.94), GOLD_DARK, 2, 8))
-	if s is StyleBoxTexture:
-		s.content_margin_left = 50
-		s.content_margin_right = 50
-		s.content_margin_top = 38
-		s.content_margin_bottom = 40
+	var s := parchment_box(TIP_PAD_X, TIP_PAD_Y)
+	s.content_margin_bottom = TIP_PAD_Y + 2.0
 	return s
 
 
@@ -336,6 +339,80 @@ static func plaque_label(text: String, size: int, kind: String = "italic", color
 		room: float = 0.0, pad: float = 30.0, pad_y: float = 10.0) -> PanelContainer:
 	var p := plaque(pad, pad_y)
 	var l := label(text, size, kind, color, 4, Color(0.04, 0.01, 0.01))
+	l.name = "Text"
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	if room > 0.0:
+		fit_label(l, room, maxi(14, size - 12))
+	p.add_child(l)
+	return p
+
+
+## A name field: gold letters engraved on a bronze plaque (lit while it is being edited), the caret a stroke of gold
+## ink and the selection a gilded underline (InkCaret). Used for a deck's name and the player's display name.
+static func name_field(text: String, placeholder: String, max_len: int, px: int = 26) -> LineEdit:
+	var le := LineEdit.new()
+	le.text = text
+	le.placeholder_text = placeholder
+	le.max_length = max_len
+	le.select_all_on_focus = true
+	le.add_theme_font_override("font", font("title"))
+	le.add_theme_font_size_override("font_size", px)
+	le.add_theme_color_override("font_color", GOLD)
+	le.add_theme_color_override("font_placeholder_color", BONE.darkened(0.45))
+	# Selected letters light up (the selection is a gold ink underline, the caret a stroke of gold ink: InkCaret).
+	le.add_theme_color_override("font_selected_color", Color(1.0, 0.97, 0.86))
+	le.add_theme_constant_override("outline_size", 4)
+	le.add_theme_color_override("font_outline_color", Color(0.04, 0.01, 0.01))
+	InkCaret.attach(le)
+	le.add_theme_stylebox_override("normal", plaque_box(18, 8))
+	le.add_theme_stylebox_override("focus", plaque_box(18, 8, Color(1.45, 1.25, 0.9)))
+	le.custom_minimum_size = Vector2(0, 60)
+	add_field(le)
+	return le
+
+
+## A round button: the painted bronze disc (like Choose your path's scroll discs), `px` wide, with the painted `icon`
+## on it, or else a glyph engraved by `glyph` (a static drawing function taking the canvas item and the disc's centre;
+## may be empty), `tip` as its tooltip.
+static func disc(tip: String, glyph: Callable, icon: String = "", px: float = 60.0) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(px, px)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	b.focus_mode = Control.FOCUS_NONE
+	b.tooltip_text = tip
+	b.pivot_offset = b.custom_minimum_size / 2
+	for st in [["normal", Color(0.95, 0.9, 0.82)], ["hover", Color(1.2, 1.08, 0.9)], ["pressed", Color(0.75, 0.62, 0.5)]]:
+		b.add_theme_stylebox_override(st[0], frame_box("power_disc", 0, 0,
+			box(Color(0.1, 0.04, 0.03, 0.88), GOLD_DARK, 3, int(px / 2)), st[1]))
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	if UiSkin.has(icon): # the painted icon (a nib, a broken seal), else the glyph engraved in code
+		var r := UiSkin.rect(icon, Vector2(px, px) * 0.7, Vector2(px, px) * 0.15)
+		r.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		b.add_child(r)
+	else:
+		var nib := Control.new()
+		nib.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		nib.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if glyph.is_valid():
+			nib.draw.connect(func(): glyph.call(nib, Vector2(px, px) / 2.0))
+		b.add_child(nib)
+	b.mouse_entered.connect(func():
+		Sfx.play("ui_hover", -10.0)
+		b.create_tween().tween_property(b, "scale", Vector2.ONE * 1.08, 0.08))
+	b.mouse_exited.connect(func(): b.create_tween().tween_property(b, "scale", Vector2.ONE, 0.08))
+	b.pressed.connect(func(): Sfx.play("ui_confirm", -8.0))
+	return b
+
+
+## A line of info text inked on a parchment sheet (a note, a refused action, a hint): dark ink (or `color`), no
+## outline, shrunk to `room` px when given. The label is the child "Text".
+static func parchment_label(text: String, size: int, kind: String = "italic", color: Color = INK,
+		room: float = 0.0, pad: float = 36.0, pad_y: float = 14.0) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", parchment_box(pad, pad_y))
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var l := label(text, size, kind, color)
 	l.name = "Text"
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -503,22 +580,15 @@ static func _banner_tex(h: int) -> Texture2D:
 	return _scaled[key]
 
 
-## The painted look for what Godot draws on its own: tooltips sit on the bronze tooltip plate in the body face.
+## The painted look for what Godot draws on its own: tooltips sit on the parchment tip sheet, inked in the body face.
 ## Written into the engine's default theme (Game does it once), the fallback every control's tooltip looks up.
 static func paint_tooltips() -> void:
 	var t := ThemeDB.get_default_theme()
-	var tip := frame_box("tooltip_frame_filled", 40, 0, box(Color(0.08, 0.05, 0.04, 0.94), GOLD_DARK, 2, 8))
-	if tip is StyleBoxTexture:
-		tip.content_margin_left = 46
-		tip.content_margin_right = 46
-		tip.content_margin_top = 30
-		tip.content_margin_bottom = 32
-	t.set_stylebox("panel", "TooltipPanel", tip)
+	t.set_stylebox("panel", "TooltipPanel", parchment_box(36, 20))
 	t.set_font("font", "TooltipLabel", font("body"))
 	t.set_font_size("font_size", "TooltipLabel", 24)
-	t.set_color("font_color", "TooltipLabel", BONE)
-	t.set_color("font_outline_color", "TooltipLabel", Color(0.04, 0.01, 0.01))
-	t.set_constant("outline_size", "TooltipLabel", 3)
+	t.set_color("font_color", "TooltipLabel", INK)
+	t.set_constant("outline_size", "TooltipLabel", 0)
 	t.set_color("font_shadow_color", "TooltipLabel", Color(0, 0, 0, 0))
 
 
@@ -704,7 +774,7 @@ static func card_tips(card: Dictionary, on_board: bool = false) -> Array:
 	return out
 
 
-## One keyword tip on the painted tip plate: the keyword in gold over its explanation.
+## One keyword tip on the parchment tip sheet: the keyword's name in dark crimson over its explanation in ink.
 static func tip_plate(title: String, text: String, width: float = 320.0) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", tip_box())
@@ -713,8 +783,8 @@ static func tip_plate(title: String, text: String, width: float = 320.0) -> Pane
 	var v := VBoxContainer.new()
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(v)
-	v.add_child(label(title, 24, "title", GOLD))
-	var b := label(text, 22, "body", BONE)
+	v.add_child(label(title, 24, "title", INK_RED))
+	var b := label(text, 22, "body", INK)
 	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	b.custom_minimum_size = Vector2(width - 20.0, 0)
 	v.add_child(b)
@@ -734,7 +804,7 @@ static func tip_column(card: Dictionary, on_board: bool = false, width: float = 
 	return col
 
 
-## A modal question on the big bronze-framed panel over a dim veil: `title` in gold, `text` under it, then one plate
+## A modal question on the big bronze-framed panel over a dim veil: `title` in gold, `text` under it on parchment, then one plate
 ## per choice ([label, callable]; the callable may be null). Any choice closes the dialog first; Esc / the Android back
 ## gesture picks the last choice (keep it the harmless one, e.g. "Keep it"). Returns the dialog (added to `parent`).
 static func dialog(parent: Node, title: String, text: String, choices: Array) -> Control:
@@ -765,12 +835,16 @@ static func dialog(parent: Node, title: String, text: String, choices: Array) ->
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	fit_label(t, 760.0, 30)
 	v.add_child(t)
-	if text != "":
-		var b := label(text, 28, "italic", BONE, 3, Color.BLACK)
+	if text != "": # the question's detail inked on a parchment sheet under the gilded title
+		var sheet := PanelContainer.new()
+		sheet.add_theme_stylebox_override("panel", parchment_box(40, 20))
+		sheet.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var b := label(text, 28, "italic", INK)
 		b.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.custom_minimum_size = Vector2(minf(760.0, maxf(420.0, t.get_minimum_size().x)), 0)
-		v.add_child(b)
+		sheet.add_child(b)
+		v.add_child(sheet)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 20)

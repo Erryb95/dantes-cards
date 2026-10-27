@@ -52,16 +52,19 @@ func _ready() -> void:
 	spacer.custom_minimum_size = Vector2(0, 16)
 	col.add_child(spacer)
 
+	# Play, with Virgil's medallion (Learn to Play) beside it: the lessons are one press away without a sixth plate.
+	var play_row := HBoxContainer.new()
+	play_row.add_theme_constant_override("separation", 18)
+	play_row.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	col.add_child(play_row)
 	var play := UI.button("Play", 460, 96)
-	play.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	play.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	play.add_theme_font_size_override("font_size", 44)
 	play.pressed.connect(func(): Game.go(Game.DECK_SELECT))
-	col.add_child(play)
-	var learn := UI.button("Learn to Play", 460)
-	learn.name = "LearnToPlay"
-	learn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	play_row.add_child(play)
+	var learn := _learn_medallion()
 	learn.pressed.connect(func(): Game.go(Game.LESSONS))
-	col.add_child(learn)
+	play_row.add_child(learn)
 	var coll := UI.button("Collection", 460)
 	coll.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	coll.pressed.connect(func(): Game.go(Game.COLLECTION))
@@ -79,13 +82,8 @@ func _ready() -> void:
 		quit.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		quit.pressed.connect(func(): get_tree().quit())
 		col.add_child(quit)
-	# The record, engraved on a plaque as wide as the buttons.
-	var stats := UI.plaque_label("Victories %d   ·   Defeats %d" % [Game.stats.wins, Game.stats.losses], 26, "title",
-		Color(0.95, 0.86, 0.68), 400.0)
-	stats.name = "Record"
-	stats.custom_minimum_size = Vector2(460, 64)
-	stats.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	col.add_child(stats)
+	# The player's plaque in the top-right corner: avatar, name, record; it opens the profile.
+	_add_profile_plaque()
 
 	# The version engraved on a small plaque in the bottom-right corner (what made the art and the music is in the credits).
 	var credit := UI.plaque_label("v%s" % ProjectSettings.get_setting("application/config/version"), 20, "body",
@@ -113,6 +111,131 @@ func _ready() -> void:
 	if Lessons.offer_due():
 		# A new player, once: Virgil offers his lessons when the title screen has settled.
 		get_tree().create_timer(1.1).timeout.connect(offer_lessons)
+
+
+## Learn to Play as a round medallion: Virgil's face on the bronze disc, its name on a small red ribbon across the
+## foot. A button as tall as the Play plate.
+func _learn_medallion() -> Button:
+	const D := 108.0 ## the disc
+	const W := 290.0 ## the ribbon
+	var b := Button.new()
+	b.name = "LearnToPlay"
+	b.tooltip_text = "Virgil's lessons and How to Play"
+	b.focus_mode = Control.FOCUS_NONE
+	b.custom_minimum_size = Vector2(W, D + 26.0)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	for st in ["normal", "hover", "pressed", "disabled", "focus"]:
+		b.add_theme_stylebox_override(st, StyleBoxEmpty.new())
+	var x := (W - D) / 2.0
+	var glow := TextureRect.new() # warm lamplight behind the medallion
+	glow.texture = UI.dot_texture()
+	glow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	glow.size = Vector2(D, D) * 1.7
+	glow.position = Vector2(x, 0) + (Vector2(D, D) - glow.size) / 2.0
+	glow.modulate = Color(1.0, 0.62, 0.25, 0.3)
+	glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(glow)
+	if UiSkin.has("power_disc"):
+		b.add_child(UiSkin.rect("power_disc", Vector2(D, D), Vector2(x, 0)))
+	var face := TextureRect.new() # his face in a circle inside the disc's bronze rim
+	face.texture = Virgil.art(1.0)
+	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	face.size = Vector2(D, D) * 0.84
+	face.position = Vector2(x, 0) + Vector2(D, D) * 0.08
+	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var m := ShaderMaterial.new()
+	m.shader = Virgil.CARD_FX
+	m.set_shader_parameter("mask_mode", 1)
+	face.material = m
+	b.add_child(face)
+	var rib := UI.ribbon("Learn to Play", W, 30, UI.GOLD)
+	rib.position = Vector2(0, D - rib.size.y * 0.45)
+	b.add_child(rib)
+	b.resized.connect(func(): b.pivot_offset = b.size / 2)
+	b.mouse_entered.connect(func():
+		Sfx.play("ui_hover", -10.0)
+		b.create_tween().tween_property(b, "scale", Vector2.ONE * 1.05, 0.08))
+	b.mouse_exited.connect(func(): b.create_tween().tween_property(b, "scale", Vector2.ONE, 0.08))
+	b.button_down.connect(func(): b.create_tween().tween_property(b, "scale", Vector2.ONE * 0.96, 0.06))
+	b.pressed.connect(func(): Sfx.play("ui_confirm", -6.0))
+	return b
+
+
+## The player's plaque: the avatar in its ring, the name (or "Choose your name" before there is one) over the record,
+## and the pen nib. A press opens the profile; a save there redraws the plaque.
+func _add_profile_plaque() -> void:
+	var old := get_node_or_null("ProfilePlaque")
+	if old != null:
+		old.queue_free()
+		remove_child(old)
+	var b := Button.new()
+	b.name = "ProfilePlaque"
+	b.tooltip_text = "Your profile"
+	b.focus_mode = Control.FOCUS_NONE
+	for st in [["normal", Color.WHITE], ["hover", Color(1.35, 1.18, 0.9)], ["pressed", Color(0.85, 0.75, 0.65)]]:
+		b.add_theme_stylebox_override(st[0], UI.plaque_box(18, 8, st[1]))
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	UI.add_field(b)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 20
+	row.offset_right = -16
+	row.offset_top = 10
+	row.offset_bottom = -10
+	b.add_child(row)
+	var pm := MarginContainer.new() # room for the ring, which overhangs the oval
+	pm.add_theme_constant_override("margin_left", 6)
+	pm.add_theme_constant_override("margin_right", 6)
+	pm.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pm.add_child(ClassInfoPanel.portrait(Profile.avatar(), Vector2(56, 70)))
+	row.add_child(pm)
+	var v := VBoxContainer.new()
+	v.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_theme_constant_override("separation", 0)
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.custom_minimum_size.x = 250
+	row.add_child(v)
+	var name_l: Label
+	if Profile.has_name():
+		name_l = ClassInfoPanel.gilded(Profile.display_name(), 30, 250.0)
+	else:
+		name_l = UI.label("Choose your name", 26, "italic", UI.BONE, 3, ClassInfoPanel.SHADE)
+		UI.fit_label(name_l, 250.0, 16)
+	name_l.name = "Name"
+	v.add_child(name_l)
+	var rec := UI.label("Victories %d  ·  Defeats %d" % [Game.stats.wins, Game.stats.losses], 20, "italic",
+		Color(0.95, 0.82, 0.55), 3, ClassInfoPanel.SHADE)
+	rec.name = "Record"
+	UI.fit_label(rec, 250.0, 14)
+	v.add_child(rec)
+	if UiSkin.has("icon_rename"):
+		var nib := UiSkin.rect("icon_rename", Vector2(40, 40))
+		nib.custom_minimum_size = nib.size
+		nib.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		nib.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		row.add_child(nib)
+	b.custom_minimum_size = Vector2(440, 96) # portrait 68 + name 250 + nib 40, the gaps and the frame
+	b.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	b.offset_right = -24
+	b.offset_top = 20
+	b.offset_left = b.offset_right - b.custom_minimum_size.x
+	b.offset_bottom = b.offset_top + b.custom_minimum_size.y
+	b.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	b.mouse_entered.connect(func(): Sfx.play("ui_hover", -10.0))
+	b.pressed.connect(func():
+		Sfx.play("ui_confirm", -6.0)
+		open_profile())
+	add_child(b)
+
+
+## Opens the profile panel over the title screen (Esc, back and Back close it).
+func open_profile() -> ProfilePanel:
+	var p := ProfilePanel.open(self)
+	p.saved.connect(_add_profile_plaque)
+	return p
 
 
 ## The first-launch question: Virgil offers to teach the game. Asked once ever (a skip or Esc counts as an answer);

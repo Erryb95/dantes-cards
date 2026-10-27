@@ -2,7 +2,8 @@ extends Node
 ## Screenshots of the screens and overlays the plain `--snap` cannot reach (options, pause, banners, damage numbers,
 ## the legendary cut-in, the result, the collection zoom, the pack reveal, a filled deck), for the painted-UI audit.
 ##   Godot --path . res://tests/screen_audit.tscn --resolution 1920x1080 -- --out=<dir> --what=<mode>
-## Modes: menu_options, credits, builder, builder_name, builder_long, builder_empty, builder_leave, builder_edit,
+## Modes: menu (the title screen; `--named` with a player name), profile (the profile panel; `--named`),
+## profile_error (an invalid name typed), menu_options, credits, builder, builder_name, builder_long, builder_empty, builder_leave, builder_edit,
 ## builder_delete, builder_tip, collection_zoom, collection_class (the class strip and a keyword chip's tip),
 ## collection_guide, collection_neutral, deck_peek (a key card shown big), deck_list (View cards), deck_list_zoom,
 ## deck_guide (the class guide), packs_reveal, packs_empty, deck_tip, battle (several shots),
@@ -32,6 +33,24 @@ func _ready() -> void:
 	# jump to the intro and the menu shots would hang.
 	Game.intro_played = true
 	match what:
+		"menu", "profile", "profile_error":
+			Settings.player_name = "Farinata" if "--named" in OS.get_cmdline_user_args() else ""
+			var s: Node = load("res://scenes/main_menu.tscn").instantiate()
+			get_tree().root.add_child.call_deferred(s)
+			await get_tree().process_frame
+			get_tree().current_scene = s
+			await _wait(1.6)
+			if what != "menu":
+				var p: ProfilePanel = s.open_profile()
+				await _wait(0.4)
+				if what == "profile_error":
+					p.field.grab_focus()
+					p.field.text = "No!"
+					p.field.text_changed.emit(p.field.text)
+					p.field.caret_column = 3
+					p.save()
+				await _wait(0.4)
+			await _snap(what)
 		"menu_options", "credits":
 			# The title screen as the current scene, so Options shows its title-screen row (Watch intro, Credits).
 			var s: Node = load("res://scenes/main_menu.tscn").instantiate()
@@ -287,7 +306,7 @@ func _battle() -> void:
 	var h: Node2D = b.heroes[1]
 	Fx.number(b.fx_layer, h.position, "-7", Color(0.75, 0.05, 0.03), true)
 	Fx.number(b.fx_layer, b.heroes[0].position, "+4", UI.HEAL, false)
-	b._toast(b.heroes[0].position + Vector2(-420, 0), "Not enough mana", Color(1.0, 0.86, 0.7))
+	b._nope(b.heroes[0].position + Vector2(-420, 110), "Not enough mana")
 	await _wait(0.25)
 	await _snap("b_numbers")
 	await _wait(1.5)

@@ -28,6 +28,7 @@ var force_arena := "" ## debug / tests: always open this arena, even before its 
 var arena_forced := false ## the current battle's arena was forced (it may be shown on the Acheron stand-in)
 var last_winner := -1
 var stats := {"wins": 0, "losses": 0}
+var class_games := {} ## class -> finished matches played with it (the profile's favourite class)
 var intro_played := false ## the cinematic has played in this run (so `--intro` does not loop)
 var lesson := "" ## the lesson (data/lessons.json id) the next / current battle is, "" for a real match
 var online := false ## the next / current battle is an online duel (the match is in the `Online` autoload)
@@ -72,6 +73,21 @@ func load_progress(path: String) -> void:
 		if typeof(saved.get(k)) in [TYPE_INT, TYPE_FLOAT]:
 			stats[k] = maxi(0, int(saved[k]))
 	last_arena = str(SaveFile.value(cfg, "run", "last_arena", ""))
+	class_games = {}
+	var games: Dictionary = SaveFile.value(cfg, "run", "class_games", {})
+	for k in games:
+		if typeof(games[k]) in [TYPE_INT, TYPE_FLOAT] and int(games[k]) > 0:
+			class_games[str(k)] = int(games[k])
+
+
+## The class the player has finished the most matches with ("" before the first one); a tie goes to the class
+## listed first.
+func favourite_class() -> String:
+	var best := ""
+	for c in CardDB.classes():
+		if int(class_games.get(c, 0)) > int(class_games.get(best, 0)):
+			best = c
+	return best
 
 
 ## The first match keeps the intro's promise ("At the river Acheron, Charon is waiting."): on a fresh profile the
@@ -240,6 +256,9 @@ func record_result(winner: int) -> void:
 		stats.wins += 1
 	elif winner == 1:
 		stats.losses += 1
+	if winner in [0, 1] and player_deck != "":
+		class_games[player_deck] = int(class_games.get(player_deck, 0)) + 1
+		_save_progress("class_games", class_games)
 	_save_progress("stats", stats)
 
 

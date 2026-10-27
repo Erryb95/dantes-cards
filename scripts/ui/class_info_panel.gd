@@ -13,7 +13,7 @@ const NOTES := {
 	"neutral": ["Neutral", "Neutral cards fit in a deck of any class."],
 	"token": ["Tokens", "Tokens are made by other cards during a match. You can't collect them or put them in a deck."],
 }
-const INK := Color(0.2, 0.1, 0.04) ## dark ink on parchment
+const INK := UI.INK ## dark ink on parchment
 const SHADE := Color(0.04, 0.01, 0.01) ## the dark edge of bone letters on the iron field
 const CARD_FX := preload("res://assets/shaders/card_fx.gdshader")
 

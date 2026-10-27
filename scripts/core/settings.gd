@@ -3,6 +3,7 @@ extends Node
 
 const PATH := "user://settings.cfg"
 const SaveFile := preload("res://scripts/core/save_file.gd")
+const ProfileRules := preload("res://scripts/core/profile.gd")
 const DIFFICULTY_NAMES := ["Easy", "Medium", "Hard"]
 const FRAME_LIMITS := [30, 60, 90, 120, 144, 240, 0] ## Engine.max_fps choices; 0 is no limit of our own
 const FRAME_LIMIT_NAMES := ["30", "60", "90", "120", "144", "240", "No limit"]
@@ -19,6 +20,10 @@ var intro_seen := false ## the opening cinematic has been played (or skipped) on
 var difficulty := 0 ## the opponent's BattleAI.Level: 0 Easy, 1 Medium, 2 Hard (new players start on Easy)
 var coach_seen: Array = [] ## ids of the first-game tips already shown (scripts/battle/coach.gd)
 var deck_choice := {} ## class -> id of the preconstructed deck last picked on Choose your path
+## The player's display name ("" until they choose one: offline play never asks; online play will) and avatar (a
+## class hero's id). Profile holds the rules; the online client will sync them as display_name / avatar_url.
+var player_name := ""
+var player_avatar := ""
 var lessons := {} ## Virgil's lessons: lesson id -> "done" (won once, reward paid) or "skipped" (scripts/tutorial/lessons.gd)
 var lessons_offered := false ## the first-launch question "Shall I show you the way?" was asked once
 
@@ -54,6 +59,11 @@ func load_settings(path: String = PATH) -> void:
 	difficulty = clampi(SaveFile.value(cfg, "game", "difficulty", difficulty), 0, DIFFICULTY_NAMES.size() - 1)
 	coach_seen = SaveFile.value(cfg, "game", "coach_seen", coach_seen)
 	deck_choice = SaveFile.value(cfg, "game", "deck_choice", deck_choice)
+	# A hand-edited name that breaks the rules is dropped (the player is offered a new one); an unknown avatar falls
+	# back to the first class's hero when read (Profile.avatar).
+	var saved_name := ProfileRules.clean(str(SaveFile.value(cfg, "profile", "name", "")))
+	player_name = saved_name if ProfileRules.valid(saved_name) else ""
+	player_avatar = str(SaveFile.value(cfg, "profile", "avatar", ""))
 	lessons = SaveFile.value(cfg, "game", "lessons", lessons)
 	lessons_offered = SaveFile.value(cfg, "game", "lessons_offered", lessons_offered)
 
@@ -75,6 +85,8 @@ func save() -> void:
 	cfg.set_value("game", "difficulty", difficulty)
 	cfg.set_value("game", "coach_seen", coach_seen)
 	cfg.set_value("game", "deck_choice", deck_choice)
+	cfg.set_value("profile", "name", player_name)
+	cfg.set_value("profile", "avatar", player_avatar)
 	cfg.set_value("game", "lessons", lessons)
 	cfg.set_value("game", "lessons_offered", lessons_offered)
 	cfg.save(PATH)
