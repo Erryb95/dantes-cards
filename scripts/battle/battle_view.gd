@@ -1669,7 +1669,7 @@ func _show_result(winner: int) -> void:
 		"The shades close in. Try again.")
 	# The verdict and the reward on a framed plate under the title, the Obols beside their coin.
 	var plate := PanelContainer.new()
-	plate.add_theme_stylebox_override("panel", UI.tip_box())
+	plate.add_theme_stylebox_override("panel", UI.parchment_box(56, 34)) # Virgil's words in dark ink on parchment
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var pc := CenterContainer.new()
 	pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1748,7 +1748,7 @@ func _show_lesson_result(winner: int) -> void:
 		UI.GOLD if won else Color(0.9, 0.3, 0.24), 0.0, 0.0, 1.8)
 	box.add_child(title)
 	var plate := PanelContainer.new()
-	plate.add_theme_stylebox_override("panel", UI.tip_box())
+	plate.add_theme_stylebox_override("panel", UI.parchment_box(56, 34)) # Virgil's words in dark ink on parchment
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var pc := CenterContainer.new()
 	pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1768,12 +1768,12 @@ func _show_lesson_result(winner: int) -> void:
 	pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	prow.add_child(pv)
 	var line := str(lesson.get("outro", "")) if won else "Even the bravest stumble here. Try again: I will be at your side."
-	var sub := UI.label(line, 32, "italic", UI.BONE, 3, Color.BLACK)
+	var sub := UI.label(line, 32, "italic", UI.INK, 0)
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sub.custom_minimum_size = Vector2(minf(820.0, V.x - 700.0), 0)
 	pv.add_child(sub)
 	if not paid.is_empty():
-		pv.add_child(LessonsScreen.reward_badge(paid, "Reward:  "))
+		pv.add_child(LessonsScreen.reward_badge(paid, "Reward:  ", true))
 		Sfx.play("coins", -4.0)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER

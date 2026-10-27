@@ -16,6 +16,7 @@
 | `scripts/battle/{card,minion,hero}_view.gd` | the pieces; `fx.gd`, `shapes.gd`, `target_arrow.gd` for the juice |
 | `scripts/battle/vfx.gd`, `vfx_data.gd`, `data/vfx.json` | per-card spell looks: 15 schools (colours, textures, sounds; default from the card's circle) x single-target "hit" patterns x board-wide "mass" patterns; every spell has a profile (tested). Staged as anticipation, travel, impact (shake, hit-stop), aftermath. Painted sprites `assets/vfx/vfx_*.png` via `tools/vfx/import_vfx.py`; review with `tests/vfx_preview.tscn -- --out=<dir> --spells` + `tools/vfx/contact_sheet.py` |
 | `scripts/ui/` | main menu, deck select, deck builder, pack opening, collection, options, credits (`credits_panel.gd`, from Options; keep it in step with `assets/CREDITS.md`), shared look (`ui.gd`, incl. the painted `UI.dialog`), the deck name's gold-ink caret (`ink_caret.gd`), painted skin loader (`ui_skin.gd`), the class plaque / class guide (`class_info_panel.gd`, from `CardDB.class_info`), a card shown big (`card_zoom.gd`), the mana curve (`mana_curve.gd`) |
+| `data/lessons.json`, `scripts/tutorial/` | Virgil's lessons: the lesson data (schema at its top), `Lessons` (progress, rewards, setting a lesson's match up), `LessonAI` (the opponent's scripted turns), `LessonGuide` (Virgil's lines, pointer and arrows on the board, which actions a step allows), `Virgil` (his portrait, his dialog); the screen is `scripts/ui/lessons.gd`, How to Play `scripts/ui/how_to_play.gd` |
 | `scripts/intro/`, `scenes/intro.tscn` | the opening cinematic (see "Opening cinematic" below) |
 | `assets/shaders/` | `card_fx` (art mask, hit flash, burn-away dissolve, legendary foil), `river`, `fog`, `crack` (Dis embers / Cocytus frost), `wind` (Lust), `heat_haze` |
 | `tools/cards/art_jobs.py` | builds the ComfyUI jobs from the data and imports the results |
@@ -157,6 +158,30 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
 - Review: `tests/screen_audit.tscn -- --what=deck_peek|deck_list|deck_list_zoom|deck_guide|collection_class|collection_guide|collection_neutral --cls=<class>`;
   optional painted pieces are listed in `art_src/deck_ui_art.json`.
 
+## Learning the game: Virgil's lessons and How to Play
+- **Virgil's lessons** (Learn to Play on the title screen, `scenes/lessons.tscn`): four short scripted matches, Virgil
+  as the guide. 1 The Ferryman (mana, playing minions, attacking, ending the turn), 2 The Wrathful Knight (spells, hero
+  power, Armor, Guard), 3 The Two-Horned Flame (Ward, Drain, Venom, Rebirth, Swift, reading card text), 4 The Trial (a
+  real match against the Easy AI with the starter deck, opening-hand choice, light coach hints). Lessons 1-3 use fixed
+  hands dealt in order, a weakened opponent hero and an opponent that plays a script (`LessonAI`, then passes or plays
+  as Easy), so each plays out as taught.
+- Each line of Virgil sits on a painted plate beside his portrait, placed where it covers the fewest pieces; a gold
+  ring marks what he points at, a red one the target, and a ghost arrow shows the drag. A step either waits for a tap,
+  asks for one action (only that action is allowed; anything else gets "Not yet" and the line comes back), or leaves
+  free play until the turn ends or the match is won. Text may say `{tap}`: tap or click by device.
+- Any lesson can be played again, in any order; the pause menu restarts it, skips it (on to the next one; its reward
+  stays to be won) or leaves it. The first win pays a small reward (50 Obols each, a pack for the Trial). Lessons never
+  count in the win record. Progress: `Settings.lessons` (id → done / skipped).
+- **First launch**: after the intro, on the first title screen of a new player (no match played, never asked), Virgil
+  asks "New to Hell?": Begin the lessons or Not now (asked once; `Settings.lessons_offered`).
+- **How to Play** (`HowToPlayPanel`): the rules reference, from the title screen's lessons, Options and the battle's
+  pause menu. Chapters: The Goal, Your Turn, Combat, Keywords (every keyword with a minion that has it, from
+  `UI.KEYWORD_HELP`), Classes (`ClassInfoPanel.guide()` for every class in `CardDB.classes()`), Decks.
+- **In normal matches** the first time a keyword shows up on the board its tip shows once, coach style (coach ids
+  `kw_<keyword>`).
+- Optional painted pieces (Virgil's portrait, the headings as painted words) are listed in `art_src/tutorial_art.json`.
+- Review: `tests/screen_audit.tscn -- --what=lessons|howto|offer|lesson|lesson_pause [--lesson=<id>] [--steps=0,3]`.
+
 ## Collection and packs (v0.2)
 - 296 cards: core 27 + Pilgrim's Journey 35 + Infernal Host 35 + Upper Hell (33: Filippo Argenti and the Wrathful
   Shade moved to the Wrathful), City of Dis (35 neutral), Malebolge and Cocytus (34 neutral: Ulysses, the Schemer moved
@@ -183,7 +208,7 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
   Right-click cancels. Hover a minion to inspect it.
 - **Touch:** the same with your finger. A card you hold over the hand is shown at full size above your finger;
   tap-tap aiming works for attacks and targets.
-- **Back:** Esc (desktop) or the Android back gesture closes an open dialog, Credits or Options, else steps back one
+- **Back:** Esc (desktop) or the Android back gesture closes an open dialog, Credits, Options or How to Play, else steps back one
   menu screen (`go_back()` on the scene, routed by `Game.back()`); on the title screen a phone leaves the game. The
   battle and the intro ignore it.
 

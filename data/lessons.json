@@ -10,7 +10,7 @@
   "steps: Virgil's lines, in order. 'say' text, 'point' / 'mark' (hand:<id>, mine:<id>, foe:<id>, my_hero, foe_hero,",
   "  power, end, mana), and how the step ends: 'wait': 'tap' (tap to continue, the board waits), 'do': an action the player",
   "  must take (act: play|attack|power|end|inspect, card, target), 'until': 'end_turn'|'win'|'act'|'mulligan' (free play).",
-  "  'when': 'mulligan' shows the step during the opening-hand choice."
+  "  'when': 'mulligan' shows the step during the opening-hand choice. In 'say', {tap} / {Tap} reads tap or click by device."
  ],
  "lessons": [
   {
@@ -188,7 +188,7 @@
    "enemy": {"hero": "random", "deck": "starter"},
    "outro": "You walk the rest of the way on your own now. Hell is wide: go and see it.",
    "steps": [
-    {"say": "Now a real match against an easy opponent. First, your opening hand: tap any card you want to swap, then press Confirm. Cheap cards help most early on.",
+    {"say": "Now a real match against an easy opponent. First, your opening hand: {tap} any card you want to swap, then press Confirm. Cheap cards help most early on.",
      "when": "mulligan", "until": "mulligan"},
     {"say": "From here you play on your own. I will only whisper a hint now and then. Good luck, pilgrim.",
      "until": "act"},

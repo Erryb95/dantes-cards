@@ -10,7 +10,12 @@ extends Node
 ##   guide and Esc closes it, View cards lists the deck and Esc closes a zoomed card before the list, a key card
 ##   shown big closes on Esc without leaving the screen;
 ## - the collection shows the class strip on a class filter (a note on Neutral, nothing on All), and its Class guide
-##   button opens the guide.
+##   button opens the guide;
+## - Virgil's lessons: a plaque per lesson, How to Play opens from it with every chapter (the classes as their guides)
+##   and Esc closes it; the first-launch question marks itself asked; a lesson played as Virgil teaches is won through
+##   the battle scene (a wrong move refused) and ends on its result; a lesson's pause menu restarts, skips or leaves it.
+
+const LessonDriver := preload("res://tests/lesson_driver.gd")
 
 var fails := 0
 
@@ -24,6 +29,9 @@ func _ready() -> void:
 	_problem_text()
 	await _deck_select()
 	await _collection_class()
+	await _lessons_screen()
+	await _lesson_offer()
+	await _lesson_battle()
 	print("MENU SMOKE: %d failures" % fails)
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -228,4 +236,95 @@ func _collection_class() -> void:
 	if not s.find_children("ClassStrip", "", true, false).filter(func(n): return not n.is_queued_for_deletion()).is_empty():
 		_fail("All shows a class strip")
 	s.queue_free()
+	await _frames()
+
+
+func _lessons_screen() -> void:
+	var s := _open(Game.LESSONS)
+	await _frames()
+	for l in Lessons.all():
+		if s.find_child("Lesson_%s" % l.id, true, false) == null:
+			_fail("the lessons screen has no plaque for %s" % l.id)
+	(s.find_child("HowToPlay", true, false) as Button).pressed.emit()
+	await _frames()
+	var how := s.find_children("*", "HowToPlayPanel", true, false)
+	if how.size() != 1:
+		_fail("How to Play did not open from the lessons screen")
+	else:
+		var h: HowToPlayPanel = how[0]
+		for i in HowToPlayPanel.CHAPTERS.size():
+			h.show_chapter(i)
+			await _frames(2)
+			var pages := h._list.get_children().filter(func(n): return not n.is_queued_for_deletion())
+			if pages.is_empty():
+				_fail("How to Play chapter %s is empty" % HowToPlayPanel.CHAPTERS[i])
+		h.show_chapter(HowToPlayPanel.CHAPTERS.find("Classes"))
+		await _frames(2)
+		var guides := h.find_children("ClassGuide", "", true, false).filter(func(n): return not n.is_queued_for_deletion())
+		if guides.size() != CardDB.classes().size():
+			_fail("How to Play shows %d class guides for %d classes" % [guides.size(), CardDB.classes().size()])
+		Game.back() # Esc / the back gesture: the panel closes, the screen stays
+		await _frames()
+		if is_instance_valid(h) and not h.is_queued_for_deletion():
+			_fail("Esc did not close How to Play")
+		if not s.is_inside_tree():
+			_fail("Esc on How to Play left the lessons screen")
+	s.queue_free()
+	await _frames()
+
+
+func _lesson_offer() -> void:
+	Settings.lessons_offered = false
+	var m := _open(Game.MENU)
+	await _frames()
+	m.offer_lessons()
+	await _frames()
+	if m.get_node_or_null("Dialog") == null:
+		_fail("the first-launch question did not open")
+	if not Settings.lessons_offered:
+		_fail("the first-launch question was not marked as asked")
+	UI.cancel_dialog(m) # "Not now"
+	await _frames()
+	var d := m.get_node_or_null("Dialog")
+	if d != null and not d.is_queued_for_deletion():
+		_fail("Esc did not close the first-launch question")
+	m.queue_free()
+	await _frames()
+
+
+func _lesson_battle() -> void:
+	var first := str(Lessons.all()[0].id)
+	if not Game.prepare_lesson(first):
+		_fail("the first lesson could not be prepared")
+		return
+	var b: Node2D = _open(Game.BATTLE)
+	var r: Dictionary = await LessonDriver.run(get_tree(), b, Callable(), 240.0)
+	if not r.won:
+		_fail("lesson %s was not won as taught: %s" % [first, r])
+	if not r.refused:
+		_fail("lesson %s let End Turn through while Virgil was talking" % first)
+	var wait := 0.0 # the result follows the death throes of the last hero
+	while b.find_child("LessonResult", true, false) == null and wait < 10.0:
+		await get_tree().process_frame
+		wait += get_process_delta_time()
+	if b.find_child("LessonResult", true, false) == null:
+		_fail("lesson %s ended without its result" % first)
+	b.queue_free()
+	await _frames()
+	# The pause menu of a lesson: no Concede, but Restart, Skip and Leave.
+	Game.prepare_lesson(first)
+	b = _open(Game.BATTLE)
+	await _frames(30)
+	b._open_pause()
+	await _frames()
+	var names: Array = []
+	if b._pause_dim != null:
+		names = b._pause_dim.find_children("*", "Button", true, false).map(func(n): return n.text)
+	for want in ["Restart Lesson", "Skip Lesson", "Leave Lesson", "How to Play"]:
+		if not want in names:
+			_fail("a lesson's pause menu has no %s (%s)" % [want, names])
+	if "Concede" in names:
+		_fail("a lesson's pause menu offers Concede")
+	b.queue_free()
+	Game.lesson = ""
 	await _frames()

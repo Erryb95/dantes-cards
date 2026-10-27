@@ -1,0 +1,47 @@
+{
+ "_doc": "Optional painted pieces for Virgil's lessons, How to Play and the first-launch question (scripts/tutorial/*.gd, scripts/ui/lessons.gd, scripts/ui/how_to_play.gd). Everything looks finished without them: each one replaces a piece built from existing art (noted in 'replaces'). One take each. 'kind': 'portrait' installs as assets/ui/<id>.png and is picked up by name (UiSkin); 'word' is gilded lettering painted on flat black, keyed with `python tools/ui/make_words.py <painted.png> <id>` into assets/ui/words/<id>.png, which UI.banner / UI.word_tex use for that heading on their own. The words are the only images with text in them.",
+ "style": "hand-tinted 19th century wood engraving in the style of Gustave Dore, dense fine crosshatching, aged bronze and dark iron, glowing ember orange and deep crimson highlights",
+ "word_style": "the words in heavy classical Roman capital letters of hammered gold leaf, engraved fine hatching inside the strokes, a dark bronze bevel and a soft hatched drop shadow, centred on one line on a perfectly flat pure black background, nothing else in the image",
+ "assets": [
+  {
+   "id": "virgil_portrait",
+   "kind": "portrait",
+   "size": [768, 960],
+   "alpha": false,
+   "replaces": "Virgil's face in his oval frame (lesson lines, lessons screen, first-launch question, lesson result): today the art of the card virgil_guide, cropped (Virgil.art)",
+   "prompt": "Head and shoulders portrait of the Roman poet Virgil as Dante's guide in Hell, an older calm bearded man crowned with a laurel wreath, wise kind eyes looking slightly to the left at the viewer, a white and ochre toga with a deep red mantle over one shoulder, one hand raised at chest height as if explaining, warm ember light on one side of the face, dark smoky cavern background fading to black at the edges, face centred in the upper half of the frame, no text, no letters"
+  },
+  {
+   "id": "virgils_lessons",
+   "kind": "word",
+   "size": [1664, 480],
+   "alpha": false,
+   "replaces": "the heading of the lessons screen, today set in the title font with the gilded shader",
+   "prompt": "The words \"VIRGIL'S LESSONS\""
+  },
+  {
+   "id": "how_to_play",
+   "kind": "word",
+   "size": [1664, 480],
+   "alpha": false,
+   "replaces": "the heading of the How to Play panel, today set in the title font with the gilded shader",
+   "prompt": "The words \"HOW TO PLAY\""
+  },
+  {
+   "id": "lesson_complete",
+   "kind": "word",
+   "size": [1664, 480],
+   "alpha": false,
+   "replaces": "the banner of a won lesson's result, today set in the title font with the gilded shader",
+   "prompt": "The words \"LESSON COMPLETE\""
+  },
+  {
+   "id": "new_to_hell",
+   "kind": "word",
+   "size": [1664, 480],
+   "alpha": false,
+   "replaces": "the heading of the first-launch question (Virgil.dialog), today set in the title font",
+   "prompt": "The words \"NEW TO HELL?\""
+  }
+ ]
+}

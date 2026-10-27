@@ -150,10 +150,10 @@ func show_chapter(i: int) -> void:
 	_scroll.scroll_vertical = 0
 
 
-## One page: its heading in gold (none when "") over the text, on the framed dark tip plate.
+## One page: its heading in red ink (none when "") over the text in dark ink, on parchment.
 func _page(title: String, text: String) -> void:
 	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", UI.tip_box())
+	p.add_theme_stylebox_override("panel", UI.parchment_box(50, 28))
 	p.custom_minimum_size = Vector2(_w, 0)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var col := VBoxContainer.new()
@@ -161,8 +161,8 @@ func _page(title: String, text: String) -> void:
 	col.add_theme_constant_override("separation", 6)
 	p.add_child(col)
 	if title != "":
-		col.add_child(UI.label(title, 30, "title", UI.GOLD, 4, Color(0.04, 0.01, 0.01)))
-	var body := UI.label(text, 26, "body" if title != "" else "italic", UI.BONE, 3, Color(0.04, 0.01, 0.01))
+		col.add_child(UI.label(title, 30, "title", Virgil.RED_INK, 0))
+	var body := UI.label(text, 26, "body" if title != "" else "italic", UI.INK, 0)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.custom_minimum_size = Vector2(_w - 110.0, 0)
 	col.add_child(body)
@@ -182,7 +182,7 @@ func _group_title(text: String) -> Control:
 func _keyword(k: String, w: float) -> PanelContainer:
 	var help: Array = UI.KEYWORD_HELP[k]
 	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", UI.tip_box())
+	p.add_theme_stylebox_override("panel", UI.parchment_box(40, 22))
 	p.custom_minimum_size = Vector2(w, 0)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var row := HBoxContainer.new()
@@ -211,13 +211,13 @@ func _keyword(k: String, w: float) -> PanelContainer:
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_theme_constant_override("separation", 4)
 	row.add_child(col)
-	col.add_child(UI.label(str(help[0]), 28, "title", UI.GOLD, 4, Color(0.04, 0.01, 0.01)))
-	var body := UI.label(str(help[1]), 24, "body", UI.BONE, 3, Color(0.04, 0.01, 0.01))
+	col.add_child(UI.label(str(help[0]), 28, "title", Virgil.RED_INK, 0))
+	var body := UI.label(str(help[1]), 24, "body", UI.INK, 0)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.custom_minimum_size = Vector2(maxf(200.0, text_w), 0)
 	col.add_child(body)
 	if ex != "":
-		var who := UI.label(str(CardDB.card(ex).get("name", "")), 20, "italic", Color(0.8, 0.72, 0.6), 3, Color.BLACK)
+		var who := UI.label(str(CardDB.card(ex).get("name", "")), 20, "italic", Color(0.36, 0.24, 0.14), 0)
 		col.add_child(who)
 	return p
 
@@ -249,62 +249,23 @@ static func example_card(k: String) -> String:
 	return best
 
 
-## A class's page: its hero's portrait, the class and hero names, its tagline, how it plays, its hero power, the
-## keywords it leans on and a few tips (CardDB.class_info: the one source of class text).
-func _class_page(cls: String) -> PanelContainer:
-	var info := CardDB.class_info(cls)
-	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", UI.tip_box())
-	p.custom_minimum_size = Vector2(_w, 0)
+## A class's page: ClassInfoPanel's whole guide to it (portrait, tagline, hero power, playstyle, keywords, tips; from
+## CardDB.class_info, the one source of class text), set straight on the panel as in the guide's own modal, under a
+## bronze rod that parts it from the class before.
+func _class_page(cls: String) -> Control:
+	var p := VBoxContainer.new()
+	p.name = "Class_%s" % cls
+	p.add_theme_constant_override("separation", 18)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 26)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	p.add_child(row)
-	var holder := Control.new()
-	holder.custom_minimum_size = Vector2(150, 190)
-	holder.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var hero := HeroView.new().setup({"uid": -1, "side": 0, "id": str(info.hero), "health": 30, "max_health": 30})
-	hero.scale = Vector2(0.72, 0.72)
-	hero.position = Vector2(70, 92)
-	hero.set_process(false)
-	if hero.power != null:
-		hero.power.visible = false
-	holder.add_child(hero)
-	row.add_child(holder)
-	var col := VBoxContainer.new()
-	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_theme_constant_override("separation", 6)
-	row.add_child(col)
-	var tw := _w - 110.0 - 176.0
-	col.add_child(UI.label("%s  ·  %s" % [info.title, info.hero_name], 30, "title", UI.GOLD, 4, Color(0.04, 0.01, 0.01)))
-	for part in [[str(info.tagline), "italic", Color(0.98, 0.82, 0.55)], [str(info.style), "body", UI.BONE]]:
-		if part[0] == "":
-			continue
-		var l := UI.label(part[0], 25, part[1], part[2], 3, Color(0.04, 0.01, 0.01))
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size = Vector2(tw, 0)
-		col.add_child(l)
-	var pw: Dictionary = info.get("power", {})
-	if not pw.is_empty():
-		var l := UI.label("Hero power: %s (%d mana). %s" % [pw.get("name", ""), int(pw.get("cost", 2)), pw.get("text", "")],
-			24, "body", Color(0.85, 0.9, 1.0), 3, Color(0.04, 0.01, 0.01))
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size = Vector2(tw, 0)
-		col.add_child(l)
-	var kws: Array[String] = []
-	for k in info.get("keywords", []):
-		if UI.KEYWORD_HELP.has(k):
-			kws.append(str(UI.KEYWORD_HELP[k][0]))
-	if not kws.is_empty():
-		var l := UI.label("Leans on: " + ", ".join(kws), 24, "italic", Color(0.95, 0.78, 0.45), 3, Color(0.04, 0.01, 0.01))
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size = Vector2(tw, 0)
-		col.add_child(l)
-	for tip in info.get("tips", []):
-		var l := UI.label("·  " + str(tip), 23, "body", Color(0.9, 0.85, 0.76), 3, Color(0.04, 0.01, 0.01))
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size = Vector2(tw, 0)
-		col.add_child(l)
+	if UiSkin.has("slider_track"):
+		var rod := UiSkin.rect("slider_track", Vector2(_w, 8))
+		rod.custom_minimum_size = Vector2(_w, 8)
+		rod.modulate = Color(0.85, 0.75, 0.6)
+		p.add_child(rod)
+	var m := MarginContainer.new()
+	m.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	m.add_theme_constant_override("margin_left", 20)
+	m.add_theme_constant_override("margin_bottom", 14)
+	m.add_child(ClassInfoPanel.guide(cls, _w - 40.0))
+	p.add_child(m)
 	return p

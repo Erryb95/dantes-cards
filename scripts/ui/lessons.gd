@@ -68,7 +68,7 @@ func _virgil() -> Control:
 	col.add_child(holder)
 	var plate := PanelContainer.new()
 	plate.name = "Speech"
-	plate.add_theme_stylebox_override("panel", UI.tip_box())
+	plate.add_theme_stylebox_override("panel", UI.parchment_box(40, 26))
 	var done := Lessons.done_count()
 	var n := Lessons.all().size()
 	var count: String = ["A few", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"][n if n <= 8 else 0]
@@ -77,7 +77,7 @@ func _virgil() -> Control:
 		say = "You have learned all I can teach. Play any lesson again whenever you like. Hell is wide: go and see it."
 	elif done > 0 or not Settings.lessons.is_empty():
 		say = "Welcome back, pilgrim. %s is waiting for you." % str(Lessons.get_lesson(_next).get("title", ""))
-	var l := UI.label(say, 27, "italic", UI.BONE, 3, Color(0.04, 0.01, 0.01))
+	var l := UI.label(say, 27, "italic", UI.INK, 0)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(340, 0)
 	plate.add_child(l)
@@ -137,8 +137,8 @@ func _tile(l: Dictionary, i: int) -> Button:
 	var right := VBoxContainer.new()
 	right.alignment = BoxContainer.ALIGNMENT_CENTER
 	right.add_theme_constant_override("separation", 6)
-	right.position = Vector2(TILE.x - right_w - 26.0, 10)
-	right.size = Vector2(right_w, TILE.y - 20.0)
+	right.position = Vector2(TILE.x - right_w - 26.0, 4 if next else 10) # room under it for the ribbon
+	right.size = Vector2(right_w, TILE.y - (44.0 if next else 20.0))
 	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(right)
 	if Lessons.status(l.id) == Lessons.DONE:
@@ -172,8 +172,9 @@ func _process(delta: float) -> void:
 			b.self_modulate = Color(k, k * 0.97, k * 0.9)
 
 
-## A reward as a row: the Obol (or a little pack) beside "50 Obols" / "1 pack", after `prefix`.
-static func reward_badge(r: Dictionary, prefix: String = "") -> HBoxContainer:
+## A reward as a row: the Obol (or a little pack) beside "50 Obols" / "1 pack", after `prefix`; in red ink on
+## parchment when `ink`, else in gold on the iron plaques.
+static func reward_badge(r: Dictionary, prefix: String = "", ink: bool = false) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 10)
@@ -188,7 +189,8 @@ static func reward_badge(r: Dictionary, prefix: String = "") -> HBoxContainer:
 		coin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(coin)
 	var text := ("%d pack" % packs if packs == 1 else "%d packs" % packs) if packs > 0 else "%d Obols" % obols
-	var l := UI.label(prefix + text, 30, "title", Color(1.0, 0.85, 0.5), 3, Color.BLACK)
+	var l := UI.label(prefix + text, 30, "title", Virgil.RED_INK, 0) if ink \
+		else UI.label(prefix + text, 30, "title", Color(1.0, 0.85, 0.5), 3, Color.BLACK)
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(l)
 	return row

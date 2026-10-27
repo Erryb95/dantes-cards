@@ -69,7 +69,7 @@ func _ready() -> void:
 	_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_box)
 	_plate = PanelContainer.new()
-	_plate.add_theme_stylebox_override("panel", UI.tip_box())
+	_plate.add_theme_stylebox_override("panel", UI.parchment_box(48, 30)) # dark ink on parchment
 	_plate.mouse_filter = Control.MOUSE_FILTER_STOP
 	_plate.gui_input.connect(_on_box_input)
 	_box.add_child(_plate)
@@ -77,12 +77,12 @@ func _ready() -> void:
 	v.add_theme_constant_override("separation", 6)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_plate.add_child(v)
-	_text = UI.label("", TEXT_PX, "body", UI.BONE, 3, Color(0.04, 0.01, 0.01))
+	_text = UI.label("", TEXT_PX, "body", UI.INK, 0)
 	_text.name = "Text"
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_text.custom_minimum_size = Vector2(PLATE_W - 100.0, 0)
 	v.add_child(_text)
-	_hint = UI.label("", 22, "italic", Color(0.95, 0.78, 0.45), 3, Color(0.04, 0.01, 0.01))
+	_hint = UI.label("", 22, "italic", Virgil.RED_INK, 0)
 	_hint.name = "Hint"
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	v.add_child(_hint)
@@ -227,7 +227,7 @@ func on_press() -> void:
 	if _shown and not _complete and str(current().get("until", "")) == "act":
 		_complete = true
 		_hide_box()
-		_advance()
+		on_idle() # the next step now, even when the press does nothing that refreshes the board
 
 
 ## Virgil's line is on screen (the coach waits for him).
@@ -270,7 +270,7 @@ func _show_step() -> void:
 		return
 	_shown = true
 	_collapsed = false
-	var say := str(s.get("say", ""))
+	var say := str(s.get("say", "")).replace("{tap}", UI.tap_word().to_lower()).replace("{Tap}", UI.tap_word())
 	if say == "":
 		_hide_box()
 	else:

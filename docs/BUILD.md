@@ -4,8 +4,9 @@
 
 ```sh
 timeout 300 $G --headless --path . -s res://tests/run_tests.gd        # rules + AI soak
+timeout 120 $G --headless --path . -s res://tests/run_tests.gd -- --only=lessons   # just Virgil's lessons
 timeout 240 $G --headless --path . res://tests/ui_smoke.tscn          # input smoke test
-timeout 300 $G --headless --path . res://tests/menu_smoke.tscn        # menu dialogs, pack opening, deck problems
+timeout 300 $G --headless --path . res://tests/menu_smoke.tscn        # menu dialogs, pack opening, deck problems, lessons flow
 timeout 300 $G --headless --path . res://tests/intro_test.tscn        # opening cinematic data + player + skip
 timeout 600 $G --headless --path . --export-release "Windows Desktop" build/windows/DantesInfernoCards.exe
 timeout 600 $G --headless --path . --export-debug   "Android"         build/android/DantesInfernoCards.apk
@@ -23,7 +24,8 @@ Other presets (Linux, Web, macOS) are defined in `export_presets.cfg`. macOS / i
 Debug flags (after `--`): `--autoplay` (AI plays both sides), `--shots=<dir>` (battle screenshots every 3 s),
 `--snap=<file.png> [--snap-delay=s]` (one screenshot of any scene). Battle only: `--arena=<id>` forces an arena (without
 its painted board it is shown on the Acheron board), `--shot-every=s`, `--shot-count=N`, `--poke-toys=s` (taps every
-arena toy and the divider after s seconds).
+arena toy and the divider after s seconds). `--offer-lessons` asks the first-launch "New to Hell?" question on the
+title screen even in a debug run or for a player who was already asked.
 Headless runs, `--autoplay`, `--snap=`, `--shots=`, `--out=`, `--intro-shots=` and any scene or script under
 `res://tests/` are debug runs (`Game.debug_run()`): no intro, no coach tips, and nothing is written to the player's
 settings, progress or collection.

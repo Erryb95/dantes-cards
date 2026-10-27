@@ -1,10 +1,11 @@
 class_name Virgil
 ## Virgil, the guide of the lessons: his framed portrait (the oval gold ring around his painting, his name on the red
-## ribbon) and his painted question box. The portrait is the painted `assets/ui/virgil_portrait` when it exists, else
-## the art of his card (Virgil, the Guide) cropped to the oval.
+## ribbon) and his question box, in dark ink on parchment. The portrait is the painted `assets/ui/virgil_portrait`
+## when it exists, else the art of his card (Virgil, the Guide) cropped to the oval.
 
 const CARD_FX := preload("res://assets/shaders/card_fx.gdshader")
 const RING := Vector2(1.3, 1.27) ## the oval ring around a portrait, as a multiple of the portrait's size
+const RED_INK := Color(0.45, 0.1, 0.04) ## headings and hints in red ink on parchment (the body text is UI.INK)
 
 
 ## The portrait's painting: the dedicated portrait when it is painted, else the card art cropped around his face.
@@ -74,8 +75,23 @@ static func dialog(parent: Node, title: String, text: String, choices: Array) ->
 	row.add_child(holder)
 	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(col)
+	# The heading as painted words when they exist (assets/ui/words, art_src/tutorial_art.json), else the set title.
+	var word := UI.word_tex(title)
+	if word != null and col.get_child(0) is Label:
+		var old := col.get_child(0)
+		var w := UI.word_rect(word, Vector2(640, 92))
+		w.custom_minimum_size = w.size
+		w.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		col.add_child(w)
+		col.move_child(w, 0)
+		col.remove_child(old)
+		old.queue_free()
+	# Virgil speaks in dark ink on parchment, like every info box: the title in red ink, the words in black.
+	panel.add_theme_stylebox_override("panel", UI.parchment_box(84, 60))
 	for l in col.get_children():
 		if l is Label:
 			(l as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+			l.add_theme_color_override("font_color", RED_INK if l.get_index() == 0 else UI.INK)
+			l.add_theme_constant_override("outline_size", 0)
 	(col.get_child(-1) as HBoxContainer).alignment = BoxContainer.ALIGNMENT_BEGIN
 	return d
