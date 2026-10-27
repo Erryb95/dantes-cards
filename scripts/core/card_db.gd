@@ -70,6 +70,24 @@ static func class_title(cls: String) -> String:
 	return str(hero(class_hero(cls)).get("class_name", cls.capitalize()))
 
 
+## What a player needs to know about class `cls`, from its hero's entry in data/cards.json: "title" (Pilgrim...),
+## "hero" (id), "hero_name", "tagline" (one line), "style" (two or three sentences), "keywords" (ids of UI.KEYWORD_HELP
+## that define the class), "tips" (short play tips), "power" (the hero power: name, cost, text) and "power_icon".
+static func class_info(cls: String) -> Dictionary:
+	var h := hero(class_hero(cls))
+	return {
+		"title": class_title(cls),
+		"hero": str(h.get("id", "")),
+		"hero_name": str(h.get("name", "")),
+		"tagline": str(h.get("class_tagline", "")),
+		"style": str(h.get("class_style", "")),
+		"keywords": h.get("class_keywords", []),
+		"tips": h.get("class_tips", []),
+		"power": h.get("power", {}),
+		"power_icon": str(h.get("power_icon", "")),
+	}
+
+
 ## The class a hero leads.
 static func hero_class(hero_id: String) -> String:
 	return str(hero(hero_id).get("class", ""))

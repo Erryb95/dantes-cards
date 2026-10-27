@@ -10,6 +10,7 @@ var checks := 0
 
 func _initialize() -> void:
 	_test_data()
+	_test_class_info()
 	_test_rules()
 	_test_freeze()
 	_test_silence_ai()
@@ -1099,6 +1100,16 @@ func _test_damage_edges() -> void:
 ## A minion copied onto the board (Capocchio) keeps the original's state the Hearthstone way: buffs and damage, the
 ## keywords it has now, Silence, Freeze; it is still a new minion (asleep unless Swift). A copy into the hand is the
 ## printed card.
+## Every class explains itself (CardDB.class_info): the collection, Choose your path and How to play show this text.
+func _test_class_info() -> void:
+	var help: Dictionary = load("res://scripts/ui/ui.gd").KEYWORD_HELP
+	for cls in CardDB.classes():
+		var i := CardDB.class_info(cls)
+		ok(i.title != "" and i.hero != "" and i.tagline != "" and i.style.length() > 40, "class %s has a title, tagline and style" % cls)
+		ok(not i.keywords.is_empty() and i.keywords.all(func(k): return help.has(k)), "class %s keywords all have help" % cls)
+		ok(i.tips.size() >= 2 and str(i.power.get("text", "")) != "", "class %s has tips and a hero power" % cls)
+
+
 func _test_copy_state() -> void:
 	var st := _blank()
 	var gy := _put(st, 1, "geryon") # 4/5 Guard

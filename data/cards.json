@@ -572,7 +572,20 @@
      }
     ]
    },
-   "image": "hero_dante_face_s777"
+   "image": "hero_dante_face_s777",
+   "class_tagline": "Endure, then win late.",
+   "class_style": "Dante walks down with Virgil and the souls he meets. The Pilgrim protects himself with Armor and Guards, draws cards and heals, and wins the long game with strong late cards.",
+   "class_keywords": [
+    "guard",
+    "ward",
+    "drain",
+    "rebirth"
+   ],
+   "class_tips": [
+    "Use Steadfast whenever you have 2 mana spare: Armor adds up.",
+    "Keep Guards in front of your best minions.",
+    "Don't race an aggressive deck: trade, heal and outlast it."
+   ]
   },
   {
    "id": "charon",
@@ -594,7 +607,20 @@
      }
     ]
    },
-   "image": "hero_charon_face_s31"
+   "image": "hero_charon_face_s31",
+   "class_tagline": "Pressure the enemy hero.",
+   "class_style": "Charon ferries the damned and demons of the lower circles. The Ferryman hits hard and early, poisons big threats with Venom, steals life with Drain and burns the enemy hero with Ferry Toll every turn.",
+   "class_keywords": [
+    "venom",
+    "drain",
+    "rebirth",
+    "swift"
+   ],
+   "class_tips": [
+    "Ferry Toll deals 2 to the enemy hero every turn: count it toward lethal.",
+    "Venom kills any minion it damages, whatever its size.",
+    "Attack the hero when the board is safe; trade only when you must."
+   ]
   },
   {
    "id": "ulysses",
@@ -616,7 +642,19 @@
      }
     ]
    },
-   "image": "hero_ulysses_face_s777"
+   "image": "hero_ulysses_face_s777",
+   "class_tagline": "Chain cheap cards into clever turns.",
+   "class_style": "Ulysses and his crew outwit their enemies. The Wanderer plays several cards in one turn: Ruse cards get a bonus when another card was played earlier that turn, and many cards copy, return or replay others.",
+   "class_keywords": [
+    "ruse",
+    "freeze",
+    "silence"
+   ],
+   "class_tips": [
+    "Play a cheap card first, then the Ruse card that needs it.",
+    "Searing Word kills 1-Health minions and finishes damaged ones.",
+    "Plan the order of your turn before you play anything."
+   ]
   },
   {
    "id": "filippo",
@@ -643,7 +681,20 @@
      }
     ]
    },
-   "image": "hero_filippo_face_s777"
+   "image": "hero_filippo_face_s777",
+   "class_tagline": "Hurt your own minions to make them stronger.",
+   "class_style": "Filippo Argenti and the wrathful souls brawl in the mud of the Styx. The Wrathful hurts its own minions on purpose: Wrath gives a damaged minion extra Attack, Frenzy fires the first time a minion is hit, and Fight cards make minions trade blows.",
+   "class_keywords": [
+    "wrath",
+    "frenzy",
+    "fight",
+    "guard"
+   ],
+   "class_tips": [
+    "Spite on your own minion turns its Wrath on and sets off a Frenzy.",
+    "Healing a Wrath minion to full turns its bonus off.",
+    "This class pays with its own health: win before the long game."
+   ]
   }
  ]
 }
