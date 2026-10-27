@@ -330,6 +330,7 @@ static func ribbon(text: String, width: float, size: int, color: Color = BONE) -
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	l.size = Vector2(width, h * 0.78) # the ribbon's band sits a little above its middle (the tails hang below)
 	fit_label(l, width * 0.62, maxi(14, size - 16))
+	gild(l, color if color != BONE else GOLD, l.size.y)
 	c.add_child(l)
 	return c
 
@@ -444,6 +445,19 @@ static func word_rect(tex: Texture2D, box: Vector2) -> TextureRect:
 	r.size = Vector2(tex.get_width(), tex.get_height()) * k
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	r.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS # shrunk many times: no shimmering hatching
+	# A soft dark copy just below: the gold letters stand off the grey ribbon like raised metal.
+	var sh := TextureRect.new()
+	sh.name = "Shadow"
+	sh.texture = tex
+	sh.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	sh.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	sh.size = r.size
+	sh.position = Vector2(0, maxf(1.5, r.size.y * 0.04))
+	sh.modulate = Color(0, 0, 0, 0.55)
+	sh.show_behind_parent = true
+	sh.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sh.texture_filter = r.texture_filter
+	r.add_child(sh)
 	return r
 
 

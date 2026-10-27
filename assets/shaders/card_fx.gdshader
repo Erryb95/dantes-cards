@@ -36,12 +36,18 @@ uniform float depth_margin = 0.03; // over-scale, >= the largest shift
 uniform float art_aspect = 1.0; // w / h of the art rect, so a turn shifts as many pixels across as down
 // Off for text: MSDF glyphs are decoded before this shader runs, so they must not be resampled.
 uniform bool resample = true;
+// The card's name in engraved gold (as gilded_text.gdshader): the fill's light turns to gold metal from the
+// capitals' top (gild_top) to the baseline (gild_base), in the label's own pixels; the dark outline stays.
+uniform bool gild = false;
+uniform float gild_top = 0.0;
+uniform float gild_base = 30.0;
 
 varying vec2 world;
 varying vec3 puv; // (UV * w, w) for perspective-correct sampling
 varying vec2 cardn; // card-local position in half-heights, before projection
 varying float depth;
 varying vec4 vcol;
+varying vec2 local; // the vertex in the item's own space, before the tilt moves it
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -61,12 +67,26 @@ float fbm(vec2 p) {
 	return v;
 }
 
+vec3 gold_ramp(float t) {
+	vec3 top = vec3(1.0, 0.95, 0.76);
+	vec3 bright = vec3(0.97, 0.78, 0.38);
+	vec3 band = vec3(0.52, 0.31, 0.1);
+	vec3 low = vec3(0.92, 0.68, 0.3);
+	if (t < 0.42) {
+		return mix(top, bright, t / 0.42);
+	} else if (t < 0.58) {
+		return mix(bright, band, (t - 0.42) / 0.16);
+	}
+	return mix(band, low, clamp((t - 0.58) / 0.3, 0.0, 1.0));
+}
+
 void vertex() {
 	world = (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy;
 	puv = vec3(UV, 1.0);
 	cardn = vec2(0.0);
 	depth = 0.0;
 	vcol = COLOR;
+	local = VERTEX;
 	if (tilt != vec2(0.0)) {
 		vec2 d = world - card_center;
 		vec2 n = vec2(dot(d, card_x) / dot(card_x, card_x), dot(d, card_y) / dot(card_y, card_y)) / half_h;
@@ -116,6 +136,11 @@ void fragment() {
 		c.a *= 1.0 - smoothstep(0.85, 1.0, d);
 		float edge = max(abs(uv.x - 0.5), abs(uv.y - 0.5)) * 2.0;
 		c.rgb *= mix(1.0, 0.7, smoothstep(0.75, 1.0, edge));
+	}
+	if (gild) {
+		float t = clamp((local.y - gild_top) / max(1.0, gild_base - gild_top), 0.0, 1.0);
+		float hatch = 0.92 + 0.08 * sin(local.y * 2.4 + local.x * 0.35);
+		c.rgb = mix(c.rgb, gold_ramp(t) * hatch, smoothstep(0.3, 0.55, max(c.r, max(c.g, c.b))));
 	}
 	if (shine >= 0.0) {
 		float s = (uv.x + uv.y) * 0.5 - shine;

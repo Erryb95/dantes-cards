@@ -312,6 +312,7 @@ func _show(e: Dictionary, step: int) -> void:
 	_name.text = e.name
 	_name.add_theme_font_size_override("font_size", 36)
 	_fit_label(_name, float(_name.get_meta("room")), 22)
+	UI.gild(_name, UI.GOLD, _name.size.y)
 	var room := _who.custom_minimum_size.x
 	_who.text = "%s  ·  %s: %s" % [hero.get("name", ""), hero.power.name, hero.power.text]
 	_who.add_theme_font_size_override("font_size", 21)
@@ -525,6 +526,8 @@ func _tile_label(b: Control, text: String, px: int, kind: String, color: Color, 
 	l.clip_text = true
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fit_label(l, room, 15)
+	if kind == "title": # deck names in engraved gold, like every name on the painted UI
+		UI.gild(l, UI.GOLD, h)
 	b.add_child(l)
 	return l
 

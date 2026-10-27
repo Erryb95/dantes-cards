@@ -219,15 +219,7 @@ func _build_face() -> void:
 			Color(0, 0, 0, 0.5), 6), Vector2(10, 196))
 		banner.use_parent_material = true
 		_face.add_child(banner)
-	var nm: String = card.get("name", card_id)
-	var short := nm.split(",")[0] if nm.length() > 22 else nm
-	var name_l := UI.label(short, _fit_size(short, W - 40, 22, "title"), "title", UI.BONE, 4, Color(0.1, 0.02, 0.02))
-	name_l.position = Vector2(10, 196)
-	name_l.size = Vector2(W - 20, 40)
-	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	name_l.use_parent_material = true
-	_face.add_child(name_l)
+	_add_name(Vector2(10, 196), W - 40)
 
 	# Rarity gem.
 	if rarity != "token" and UiSkin.has("rarity_" + rarity):
@@ -314,15 +306,7 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	var ry := 196.0
 	if UiSkin.has("name_ribbon"):
 		_face.add_child(UiSkin.rect("name_ribbon", Vector2(W + 20, 54), Vector2(-10, ry - 6)))
-	var nm: String = card.get("name", card_id)
-	var short := nm.split(",")[0] if nm.length() > 22 else nm
-	var name_l := UI.label(short, _fit_size(short, W - 64, 22, "title"), "title", UI.BONE, 4, Color(0.1, 0.02, 0.02))
-	name_l.position = Vector2(10, ry)
-	name_l.size = Vector2(W - 20, 40)
-	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	name_l.use_parent_material = true
-	_face.add_child(name_l)
+	_add_name(Vector2(10, ry), W - 64)
 
 	# Rules text plate (Enrico: "anche sulle carte le scritte sono da disegnare"): a bronze cartouche on minions,
 	# whose concave lower corners leave room for the attack and health gems, an unrolled scroll on spells.
@@ -400,6 +384,30 @@ func _stat_label(text: String, center: Vector2, size: int) -> Label:
 	l.use_parent_material = true
 	return l
 
+
+## The card's name on the ribbon in engraved gold, in the 40 px band at `at` (W - 20 wide), at most `room` px wide.
+## Names over 22 letters drop their epithet ("Minos, Judge of the Damned" → "Minos").
+func _add_name(at: Vector2, room: float) -> void:
+	var nm: String = card.get("name", card_id)
+	var short := nm.split(",")[0] if nm.length() > 22 else nm
+	var box := Vector2(W - 20, 40)
+	var name_l := UI.label(short, _fit_size(short, room, 22, "title"), "title", UI.GOLD, 4, Color(0.1, 0.02, 0.02))
+	name_l.position = at
+	name_l.size = box
+	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# Engraved gold through the card's own shader, so the name tilts and burns away with the card.
+	var f := name_l.get_theme_font("font")
+	var fs := name_l.get_theme_font_size("font_size")
+	var base := (box.y - f.get_height(fs)) / 2.0 + f.get_ascent(fs)
+	var m := ShaderMaterial.new()
+	m.shader = CARD_FX
+	m.set_shader_parameter("resample", false)
+	m.set_shader_parameter("gild", true)
+	m.set_shader_parameter("gild_base", base)
+	m.set_shader_parameter("gild_top", base - fs * 0.7)
+	name_l.material = m
+	_face.add_child(name_l)
 
 static func _fit_size(text: String, width: float, max_size: int, kind: String) -> int:
 	var f := UI.font(kind)
