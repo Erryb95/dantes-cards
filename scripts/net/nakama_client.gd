@@ -102,20 +102,23 @@ func authenticate_device(device_id: String) -> Dictionary:
 	return {}
 
 
-## Google: sign in with an id_token (a new account when there is none). {} or {"error"}.
-func authenticate_google(id_token: String) -> Dictionary:
-	var r := await http(HTTPClient.METHOD_POST, "/v2/account/authenticate/google?create=true", {"token": id_token}, true)
+## An identity provider's sign-in: `provider` is Nakama's name for it ("google"; later "steam"), `token` what the
+## provider gave (Google's id_token, a Steam session ticket). A new account when there is none. {} or {"error"}.
+func authenticate_provider(provider: String, token_value: String) -> Dictionary:
+	var r := await http(HTTPClient.METHOD_POST, "/v2/account/authenticate/%s?create=true" % provider,
+		{"token": token_value}, true)
 	if r.has("error"):
 		return r
 	if int(r.code) != 200 or not (r.body is Dictionary) or not r.body.has("token"):
-		return {"error": "The server refused the Google sign-in (%s)." % str(r.body.get("message", r.code))}
+		var why: Variant = r.body.get("message", r.code) if r.body is Dictionary else r.code
+		return {"error": "The server refused the %s sign-in (%s)." % [provider.capitalize(), str(why)]}
 	_take_session(r.body)
 	return {}
 
 
-## Links Google (or another device id) to the signed-in account. {} or {"error", "code"}.
-func link_google(id_token: String) -> Dictionary:
-	return await _link("/v2/account/link/google", {"token": id_token})
+## Links a provider's identity (or another device id) to the signed-in account. {} or {"error", "code"}.
+func link_provider(provider: String, token_value: String) -> Dictionary:
+	return await _link("/v2/account/link/%s" % provider, {"token": token_value})
 
 
 func link_device(device_id: String) -> Dictionary:

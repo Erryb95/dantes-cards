@@ -120,12 +120,25 @@ func google_account() -> Dictionary:
 ## is lost; when that Google account already has its own game account, this install moves onto it instead (it gets a
 ## new device id linked there, so later sign-ins land on the Google account). "" on success, else what went wrong.
 func sign_in_google(id_token: String, info: Dictionary) -> String:
+	var err := await sign_in_with("google", id_token)
+	if err != "":
+		return err
+	var cfg := ConfigFile.new()
+	cfg.set_value("google", "name", str(info.get("name", "")))
+	cfg.set_value("google", "email", str(info.get("email", "")))
+	cfg.save(_google_path())
+	return ""
+
+
+## The auth provider hook (Google now, Steam later): link the provider's identity to this install's account, or move
+## the install onto the provider's own account when it already has one. "" on success, else what went wrong.
+func sign_in_with(provider: String, token_value: String) -> String:
 	var err := await ensure_connected()
 	if err != "":
 		return err
-	var linked := await client.link_google(id_token)
+	var linked := await client.link_provider(provider, token_value)
 	if linked.has("error"):
-		var a := await client.authenticate_google(id_token)
+		var a := await client.authenticate_provider(provider, token_value)
 		if a.has("error"):
 			return str(a.error)
 		var fresh := _new_device_id()
@@ -138,10 +151,6 @@ func sign_in_google(id_token: String, info: Dictionary) -> String:
 		var s := await client.connect_socket()
 		if s.has("error"):
 			return str(s.error)
-	var cfg := ConfigFile.new()
-	cfg.set_value("google", "name", str(info.get("name", "")))
-	cfg.set_value("google", "email", str(info.get("email", "")))
-	cfg.save(_google_path())
 	return ""
 
 

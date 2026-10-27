@@ -246,6 +246,26 @@ func _peek_line(who: String, text: String) -> void:
 	t.tween_callback(p.queue_free)
 
 
+var _lift := 0.0 ## how far the panel is raised above a phone's on-screen keyboard
+
+
+## On a phone the open panel rises above the on-screen keyboard while its field is being typed in.
+func _process(_delta: float) -> void:
+	if not _open:
+		return
+	var want := 0.0
+	var kb := DisplayServer.virtual_keyboard_get_height() if DisplayServer.has_feature(
+		DisplayServer.FEATURE_VIRTUAL_KEYBOARD) else 0
+	if kb > 0 and _field.has_focus():
+		var vs := get_viewport_rect().size
+		var win := DisplayServer.window_get_size()
+		want = kb * vs.y / maxf(1.0, float(win.y)) - 70.0
+		want = maxf(0.0, want)
+	if absf(want - _lift) > 0.5:
+		_lift = lerpf(_lift, want, 0.35)
+		_panel.position.y = get_viewport_rect().size.y - 90 - _panel.size.y - _lift
+
+
 ## Esc / back: closes the panel first (the battle asks before opening its pause menu).
 func close_if_open() -> bool:
 	if _open:

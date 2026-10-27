@@ -263,8 +263,9 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
   Google to the guest account (`/v2/account/link/google`, nothing lost); when that Google account already has its own
   game account the install signs into it and gets a fresh device id linked there. "Play as guest" starts a new guest.
   While the consent screen is in testing only its listed test users can sign in (the refusal says so). A future Steam
-  provider plugs into the same place (`OnlineSession.sign_in_google` is the model: get a provider token, link or
-  authenticate).
+  provider plugs into the same hook: `OnlineSession.sign_in_with("steam", ticket)` links the identity to the guest
+  account or moves the install onto that account (`NakamaClient.link_provider` / `authenticate_provider`); it only
+  needs a Steam ticket source in place of `GoogleAuth`, plus the app id and publisher key on the server.
 
 ## Adding content
 - **Card:** add an entry to `cards.json` and use it in a deck. Run `python tools/cards/art_jobs.py run`

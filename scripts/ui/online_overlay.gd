@@ -29,6 +29,9 @@ static func open(parent: Node, p_cls: String, p_cards: Array, p_rejoin := "") ->
 	o.cls = p_cls
 	o.cards = p_cards
 	o.rejoin_id = p_rejoin
+	var old := parent.get_node_or_null("Dialog") # a dialog closing this frame (Rejoin) must not take our name
+	if old != null:
+		old.name = "DialogClosing"
 	parent.add_child(o)
 	return o
 

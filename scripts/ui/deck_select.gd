@@ -228,7 +228,7 @@ func _header() -> Control:
 		UI.fit_text(diff))
 	head.add_child(diff)
 	# Online: the selected deck against another player (OnlineOverlay searches, then the battle opens).
-	var online := UI.button("Play online", 300, 60)
+	var online := UI.button("Play online", 360, 60)
 	online.name = "PlayOnline"
 	online.add_theme_font_size_override("font_size", 30)
 	online.pressed.connect(func(): _play_online(_find(_selected)))

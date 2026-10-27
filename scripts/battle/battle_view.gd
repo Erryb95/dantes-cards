@@ -3106,8 +3106,12 @@ func _net_tick(delta: float) -> void:
 		if m.is_empty():
 			break
 		_net_message(m[0], m[1])
+	if _net_wait < 0.0 and _net_note != null and _net_note.get_meta("kind", "") == "send":
+		_net_note_hide()
 	if _net_wait >= 0.0:
 		_net_wait += delta
+		if _net_wait > 0.5 and (_net_note == null or not is_instance_valid(_net_note)):
+			_net_note_show("Sending...", "send") # only when the server is slow to answer
 		if _net_wait > 8.0:
 			_net_wait = -1.0
 			_toast(V / 2, "The server did not answer", Color(1.0, 0.6, 0.5))
