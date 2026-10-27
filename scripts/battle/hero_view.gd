@@ -32,6 +32,8 @@ var _power_glow: Aura
 var _power_face: Node2D
 var _target_glow: Aura
 var _t := 0.0
+var _depth := false ## the portrait has a depth map (ArtDepth): a subtle parallax on hover
+var _view := Vector2.ZERO
 
 
 func setup(snap: Dictionary) -> HeroView:
@@ -68,6 +70,7 @@ func _build() -> void:
 	_art_mat = ShaderMaterial.new()
 	_art_mat.shader = CARD_FX
 	_art_mat.set_shader_parameter("mask_mode", 1)
+	_depth = ArtDepth.setup_hero(_art_mat, hero_id, ArtDepth.HERO)
 	art.material = _art_mat
 	add_child(art)
 	var ring: Node2D
@@ -197,6 +200,13 @@ func set_targeted(v: bool) -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
+	if _depth:
+		var view := Vector2.ZERO
+		if is_visible_in_tree() and contains_point(get_global_mouse_position()):
+			var m := (to_local(get_global_mouse_position()) / Vector2(W / 2, H / 2)).limit_length(1.0)
+			view = m * 0.2 + Vector2(sin(_t * 1.1), cos(_t * 0.9)) * 0.05
+		_view = _view.lerp(view, minf(1.0, delta * 6.0))
+		ArtDepth.look(_art_mat, _view)
 
 
 func flash(color: Color = Color(1, 0.2, 0.1), duration: float = 0.4) -> void:
