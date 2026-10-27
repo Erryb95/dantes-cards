@@ -256,12 +256,15 @@ func _refresh() -> void:
 	var ons: Array = CardDB.card(card_id).get("effects", []).map(func(e): return e.get("on", ""))
 	if "death" in ons:
 		icons.append("icon_deathrattle")
-	if "turn_end" in ons or "turn_start" in ons or "frenzy" in ons:
+	if "turn_end" in ons or "turn_start" in ons:
 		icons.append("icon_trigger")
+	if "frenzy" in ons:
+		icons.append("icon_frenzy" if UiSkin.has("icon_frenzy") else "icon_trigger") # Frenzy: the torn claw marks
 	if int(CardDB.card(card_id).get("wrath", 0)) > 0:
-		icons.append("icon_wrath" if UiSkin.has("icon_wrath") else "icon_ash") # Wrath: the smouldering coals
+		icons.append("icon_rage" if UiSkin.has("icon_rage") else "icon_ash") # Wrath: the fist over the coals
 	for i in icons.size():
 		var s: Node2D = UiSkin.sprite(icons[i], Vector2(40, 40)) if UiSkin.has(icons[i]) else 			Shapes.make(Shapes.Kind.DIAMOND, Vector2(22, 28), Color(0.45, 0.4, 0.5), Color(0.1, 0.05, 0.02), 2.0)
+		s.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS # 512 px medallions shrunk to 40
 		s.position = Vector2((i - (icons.size() - 1) / 2.0) * 36, 0)
 		_icons.add_child(s)
 	_refresh_glow()

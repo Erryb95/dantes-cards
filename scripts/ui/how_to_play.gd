@@ -206,6 +206,17 @@ func _keyword(k: String, w: float) -> PanelContainer:
 			m.set_frozen(true)
 		row.add_child(holder)
 		text_w -= 128.0
+	elif k == "fight" and UiSkin.has("icon_fight"):
+		# An effect no minion shows: its medallion (two gauntlets clashing) stands in for the example minion.
+		var medal := UiSkin.rect("icon_fight", Vector2(96, 96), Vector2(7, 4))
+		medal.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		medal.use_parent_material = false
+		var holder := Control.new()
+		holder.custom_minimum_size = Vector2(110, 104)
+		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		holder.add_child(medal)
+		row.add_child(holder)
+		text_w -= 128.0
 	var col := VBoxContainer.new()
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE

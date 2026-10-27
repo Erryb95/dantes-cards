@@ -660,7 +660,7 @@
    "id": "filippo",
    "class": "wrath",
    "class_name": "Wrathful",
-   "power_icon": "icon_ash",
+   "power_icon": "icon_wrath",
    "defeat_line": "Filippo sinks back into the mud, still gnawing at himself.",
    "name": "Filippo Argenti, the Wrathful",
    "health": 30,

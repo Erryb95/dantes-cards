@@ -60,6 +60,8 @@ func _shoot() -> void:
 	st._cleanup()
 	await get_tree().create_timer(0.3).timeout
 	await _snap("fight")
+	await get_tree().create_timer(0.12).timeout
+	await _snap("fight_clash")
 	await _settle()
 	# A Frenzy.
 	st._damage(u["wr_mud_wrestler"], 1, null)

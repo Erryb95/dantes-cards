@@ -329,10 +329,11 @@ static func keyword(view, n: Node2D, kind: String) -> void:
 		"burn":
 			_paint(fx, ["vfx_card_burn", "fire_burst"], n.position, 340.0, 0.7, Color.WHITE)
 		"wrath":
-			# Wrath wakes: a blood-red flare behind the minion, a ring of embers bursting outward and sparks rising,
-			# with a low growl. Then the minion's own ember aura holds (MinionView.set_raging).
+			# Wrath wakes: a blood-red flare behind the minion, the painted ring of rage embers bursting outward and
+			# sparks rising, with a low growl. Then the minion's own ember aura holds (MinionView.set_raging).
 			var blood: Dictionary = VfxData.SCHOOLS.blood
 			_paint(fx, ["vfx_blood_burst", "blood_splat"], n.position, 250.0, 0.45, Color(1.0, 0.55, 0.4))
+			_paint(fx, ["vfx_rage_embers"], n.position, 300.0, 0.6, Color.WHITE)
 			Fx.flash(fx, "k_flare_01", n.position, 330.0, 0.35, UI.EMBER, 0.0)
 			Fx.shockwave(fx, n.position, Color(0.95, 0.25, 0.05), 210.0, 0.4)
 			FxLight.add(fx, n.position, blood, 300.0, 1.1, 0.5)

@@ -37,6 +37,11 @@ run `--import`. A card without a depth map just has no parallax. Preview:
 `timeout 60 $G --path . res://tests/depth_preview.tscn --resolution 1920x1080 -- --out=<file.png> [--board] [--sweep=h]`
 (also writes <file>_flat.png). Effect lights (scripts/battle/fx_light.gd) can be switched off with `DV_NOFXLIGHT=1`.
 
+Painted UI pieces (art_src/tutorial_art.json, deck_ui_art.json): `python tools/ui/import_ui_pieces.py` fetches them
+from the ComfyUI PC (read-only) and installs them; `--names <id,id>` keys painted card names into assets/cards/names/
+(CardDB.name_tex; a card without one keeps the gilded label). Review sheet:
+`timeout 60 $G --path . res://tests/name_preview.tscn --resolution 1920x1080 -- --out=<file.png>`.
+
 Arena art: `python tools/arena/import_arena.py` fetches new boards / mists / props from the ComfyUI PC and lists what
 is still missing (`--force` re-imports).
 Board blockouts (Blender 5.2, always with a `timeout`):

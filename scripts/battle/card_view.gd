@@ -387,7 +387,12 @@ func _stat_label(text: String, center: Vector2, size: int) -> Label:
 
 ## The card's name on the ribbon in engraved gold, in the 40 px band at `at` (W - 20 wide), at most `room` px wide.
 ## Names over 22 letters drop their epithet ("Minos, Judge of the Damned" → "Minos").
+## A card with a painted name (CardDB.name_tex) shows that instead, whole, fitted in the same band.
 func _add_name(at: Vector2, room: float) -> void:
+	var painted := CardDB.name_tex(card_id)
+	if painted != null:
+		_add_painted_name(painted, at, room)
+		return
 	var nm: String = card.get("name", card_id)
 	var short := nm.split(",")[0] if nm.length() > 22 else nm
 	var box := Vector2(W - 20, 40)
@@ -408,6 +413,30 @@ func _add_name(at: Vector2, room: float) -> void:
 	m.set_shader_parameter("gild_top", base - fs * 0.7)
 	name_l.material = m
 	_face.add_child(name_l)
+
+## The painted name `tex` fitted inside the ribbon's band (keeping its shape, a small margin all round) and centred on
+## it. Its own CARD_FX material (gild off: the gold is painted), so _collect_mats tilts, burns and dissolves it with
+## the card exactly like the set name.
+func _add_painted_name(tex: Texture2D, at: Vector2, room: float) -> void:
+	const MARGIN := Vector2(4, 4)
+	var box := Vector2(W - 20, 40)
+	var fit := Vector2(room, box.y) - MARGIN * 2.0
+	var k := minf(fit.x / tex.get_width(), fit.y / tex.get_height())
+	var r := TextureRect.new()
+	r.name = "PaintedName"
+	r.texture = tex
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	r.stretch_mode = TextureRect.STRETCH_SCALE
+	r.size = Vector2(tex.get_width(), tex.get_height()) * k
+	r.position = at + (box - r.size) / 2.0
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	r.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS # a 160 px painting shrunk to ~30 px
+	var m := ShaderMaterial.new()
+	m.shader = CARD_FX
+	m.set_shader_parameter("gild", false)
+	r.material = m
+	_face.add_child(r)
+
 
 static func _fit_size(text: String, width: float, max_size: int, kind: String) -> int:
 	var f := UI.font(kind)

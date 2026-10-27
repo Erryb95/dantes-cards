@@ -53,8 +53,11 @@ with **Qwen-Image 2512** (Apache-2.0) + the Lightning 4-step LoRA (Apache-2.0). 
 the ComfyUI session's notes (status/cards_style.md). House style: hand-tinted Gustave Dore-style engraving, chosen by the
 owner on 2026-10-25. Source files: art_src/dore_cards/; card -> image map: the "image" field in data/cards.json.
 The painted UI parts in assets/ui/ (card borders, ribbon, gems, rarity cabochons, button plate, end-turn seal, power disc,
-icons, card text plates, the headline lettering in assets/ui/words/, the app icon in assets/icon.png and assets/app_icon/) and the painted VFX sprites in assets/vfx/ (every file not named k_*) come from the
-same ComfyUI setup (Qwen-Image 2512, alpha cut with BiRefNet, MIT); sources in art_src/ui/. The vfx_*.png spell sprites
+icons, card text plates, the headline lettering in assets/ui/words/, Virgil's portrait, the deck tags and class
+emblem frame, the app icon in assets/icon.png and assets/app_icon/), the painted card names in assets/cards/names/ and
+the painted VFX sprites in assets/vfx/ (every file not named k_*) come from the
+same ComfyUI setup (Qwen-Image 2512, alpha cut with BiRefNet, MIT); sources in art_src/ui/ (the lettering on black is
+keyed to alpha by tools/ui/make_words.py; card names' sources in art_src/cards/names/). The vfx_*.png spell sprites
 are emissive paintings on black, drawn with additive blending (no alpha cut); sources in art_src/vfx/,
 imported by tools/vfx/import_vfx.py.
 The looping animations of some legendary cards (assets/cards/loops/*.ogv, 3 s, silent) are AI-generated: Wan 2.2

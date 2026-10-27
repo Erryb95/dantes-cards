@@ -1,8 +1,10 @@
 """Painted headline words: keys gilded lettering painted on flat black (Qwen-Image) into a transparent PNG.
 
-    python tools/ui/make_words.py <painted.png> <slug> [--height 220]
+    python tools/ui/make_words.py <painted.png> <slug> [--height 220] [--out-dir assets/ui/words]
+                                  [--src-dir art_src/ui/words]
 
-Writes assets/ui/words/<slug>.png (and keeps the painting in art_src/ui/words/). The letters are found as the
+Writes <out-dir>/<slug>.png (default assets/ui/words/<slug>.png) and keeps the painting in <src-dir>. Painted card
+names use `--out-dir assets/cards/names --src-dir art_src/cards/names --height 160` (tools/ui/import_ui_pieces.py). The letters are found as the
 bright pixels, closed and hole-filled so their dark engraved lines stay opaque; outside them the black fades out
 with the paint's own brightness, so the soft edges and the hatched drop shadow stay soft. The result is trimmed to
 the letters with a small margin and scaled to `height` px.
@@ -51,17 +53,25 @@ def main() -> None:
     ap.add_argument("src")
     ap.add_argument("slug")
     ap.add_argument("--height", type=int, default=220)
+    ap.add_argument("--out-dir", default=os.path.join("assets", "ui", "words"), help="relative to the repo root")
+    ap.add_argument("--src-dir", default=os.path.join("art_src", "ui", "words"), help="relative to the repo root")
     a = ap.parse_args()
-    src_dir = os.path.join(ROOT, "art_src", "ui", "words")
-    out_dir = os.path.join(ROOT, "assets", "ui", "words")
+    make(a.src, a.slug, a.height, os.path.join(ROOT, a.out_dir), os.path.join(ROOT, a.src_dir))
+
+
+def make(src: str, slug: str, height: int, out_dir: str, src_dir: str) -> tuple:
+    """Keys the painting `src` into <out_dir>/<slug>.png (at most `height` px tall); returns its size."""
     os.makedirs(src_dir, exist_ok=True)
     os.makedirs(out_dir, exist_ok=True)
-    shutil.copyfile(a.src, os.path.join(src_dir, a.slug + ".png"))
-    img = trim(key(Image.open(a.src)))
-    if img.height > a.height:
-        img = img.resize((round(img.width * a.height / img.height), a.height), Image.LANCZOS)
-    img.save(os.path.join(out_dir, a.slug + ".png"), optimize=True)
-    print(a.slug, img.size)
+    keep = os.path.join(src_dir, slug + ".png")
+    if os.path.abspath(src) != os.path.abspath(keep):
+        shutil.copyfile(src, keep)
+    img = trim(key(Image.open(src)))
+    if img.height > height:
+        img = img.resize((round(img.width * height / img.height), height), Image.LANCZOS)
+    img.save(os.path.join(out_dir, slug + ".png"), optimize=True)
+    print(slug, img.size)
+    return img.size
 
 
 if __name__ == "__main__":
