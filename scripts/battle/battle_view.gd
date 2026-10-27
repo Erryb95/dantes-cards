@@ -8,6 +8,7 @@ extends Node2D
 const HAND_SCALE := 0.62
 const ENEMY_HAND_SCALE := 0.42
 const HOVER_SCALE := 1.12
+const HOVER_SPREAD := 70.0 ## hand cards beside a hovered one move this far aside
 const END_OVAL := Vector2(236, 150) ## the end-turn seal's visible oval, px
 const MINION_GAP := 40.0
 const PLAY_LINE := 0.70 ## releasing a dragged card above this fraction of the screen height plays it
@@ -659,6 +660,10 @@ func _process(delta: float) -> void:
 			_take_shot()
 	if playing:
 		return
+	# The pause menu holds the match: the animation already under way ends, but no new event plays and the enemy
+	# does not move until it closes (it used to play on, and could even win, under the menu).
+	if _paused():
+		return
 	if not queue.is_empty():
 		_play_next()
 		return
@@ -808,7 +813,8 @@ func _present(ev: Dictionary) -> void:
 			await c.burn_away(0.8)
 		"fatigue":
 			var h: HeroView = heroes[ev.side]
-			_toast(h.position + Vector2(0, -130), "Fatigue: %d damage" % ev.amount, Color(0.85, 0.75, 1.0))
+			# Left of the portrait: above it the plaque sat on the row of minions and hid their numbers.
+			_toast(h.position + Vector2(-340, 0), "Fatigue: %d damage" % ev.amount, Color(0.85, 0.75, 1.0))
 			await _wait(0.4)
 		"play":
 			_last_aoe = ""
@@ -1516,6 +1522,10 @@ func _on_aoe(ev: Dictionary) -> void:
 func _on_game_over(ev: Dictionary) -> void:
 	over = true
 	_end_aim()
+	# Nothing is playable any more: put out the green and gold glows (hand, minions, hero power, End Turn), which
+	# otherwise burned on under the result screen.
+	_refresh_highlights()
+	_coach.dismiss()
 	await _wait(0.5)
 	var loser: int = -1
 	if ev.winner == 0:
@@ -1621,10 +1631,23 @@ func _legendary_cutin(id: String) -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(root)
 	var bar_h := V.y * 0.16
-	var bars: Array[ColorRect] = []
+	var bars: Array[TextureRect] = []
 	for top in [true, false]:
-		var b := ColorRect.new()
-		b.color = Color(0.02, 0.01, 0.01, 0.92)
+		# Soot rather than a hard black slab: solid at the screen edge, feathered toward the middle.
+		var g := GradientTexture2D.new()
+		g.width = 4
+		g.height = 64
+		g.fill_from = Vector2(0, 0 if top else 1)
+		g.fill_to = Vector2(0, 1 if top else 0)
+		var gr := Gradient.new()
+		gr.set_color(0, Color(0.02, 0.01, 0.01, 0.95))
+		gr.add_point(0.6, Color(0.02, 0.01, 0.01, 0.85))
+		gr.set_color(gr.get_point_count() - 1, Color(0.02, 0.01, 0.01, 0.0))
+		g.gradient = gr
+		var b := TextureRect.new()
+		b.texture = g
+		b.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		b.stretch_mode = TextureRect.STRETCH_SCALE
 		b.size = Vector2(V.x, bar_h)
 		b.position = Vector2(0, -bar_h if top else V.y)
 		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1632,10 +1655,11 @@ func _legendary_cutin(id: String) -> void:
 		bars.append(b)
 	var band := ColorRect.new()
 	band.color = Color(0.05, 0.02, 0.01, 0.0)
-	band.size = Vector2(V.x, V.y - bar_h * 2)
-	band.position = Vector2(0, bar_h)
+	# The dim spans the whole screen under the bars, so their feathered inner edges blend into it.
+	band.size = V
 	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(band)
+	root.move_child(band, 0)
 	var parts := str(card.get("name", "")).split(",")
 	# The name on the charred banner, the epithet on the red ribbon under it.
 	var name_l := UI.banner(parts[0].strip_edges().to_upper(), 76, UI.RARITY.legendary)
@@ -1764,12 +1788,22 @@ func _layout_hand(side: int) -> void:
 		room = minf(room, maxf(640.0, 2.0 * (mana_views[0].position.x - 310.0 - V.x / 2)))
 	var spacing := minf(CardView.W * s * 0.92, room / n)
 	var hi := cards.find(hover_card) if side == 0 else -1
+	var shift := 0.0 ## the whole fan slides left by this much so its right end stays off the mana tray
+	if side == 0 and n > 1:
+		# The outermost card's visible corner (it leans outward) must stay left of the painted mana tray, also
+		# while a hovered card spreads its right-hand neighbours by HOVER_SPREAD.
+		var edge := _hand_edge()
+		var half := (n - 1) / 2.0
+		var reach := _fan_half_width(half * 0.055, s)
+		spacing = minf(spacing, maxf(0.0, (edge - reach - V.x / 2) / half))
+		if hi != -1 and hi < n - 1:
+			shift = maxf(0.0, V.x / 2 + half * spacing + HOVER_SPREAD + reach - edge)
 	for i in n:
 		var c: CardView = cards[i]
 		if c == drag_card:
 			continue
 		var k := i - (n - 1) / 2.0
-		var x := V.x / 2 + k * spacing
+		var x := V.x / 2 + k * spacing - shift
 		var y: float
 		var rot := k * 0.055
 		if side == 0:
@@ -1783,15 +1817,28 @@ func _layout_hand(side: int) -> void:
 		if hi != -1:
 			if i == hi:
 				c.z_index = 100
-				# Lifted clear of the screen edge and a bit larger, so the whole card reads.
+				# Lifted clear of the screen edge and a bit larger, so the whole card reads; its right edge stops at
+				# the mana tray.
+				x = minf(x, _hand_edge() - CardView.W * HOVER_SCALE / 2)
 				c.home = Vector2(x, V.y - CardView.H * HOVER_SCALE / 2 - 24)
 				_move(c, c.home, 0.0, HOVER_SCALE, 0.12)
 				continue
-			x += 70.0 * signf(i - hi)
+			x += HOVER_SPREAD * signf(i - hi)
 		c.home = Vector2(x, y)
 		c.home_rot = rot
 		c.home_scale = s
 		_move(c, c.home, rot, s, 0.25)
+
+
+## The x the player's hand must stay left of: the left end of the painted mana tray (232 px left of its socket,
+## a little margin included).
+func _hand_edge() -> float:
+	return mana_views[0].position.x - 232.0
+
+
+## How far right of its centre a hand card at scale `s` leaning by `rot` reaches (its upper outer corner).
+static func _fan_half_width(rot: float, s: float) -> float:
+	return (CardView.W / 2 * cos(rot) + CardView.H / 2 * sin(absf(rot))) * s
 
 
 func _board_slots(side: int, count: int, gap: int = -1) -> Array[float]:
@@ -1905,6 +1952,10 @@ func _clear_targets() -> void:
 # ================================================================ input
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and not event.is_echo():
+		_on_back()
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouseButton:
 		var p := _to_world(event.position)
 		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
@@ -1958,7 +2009,12 @@ func _on_press(p: Vector2) -> void:
 		_finish_aim(p)
 		return
 	if not _my_turn():
-		_board_touch(p)
+		# A touch screen has no hover: a tap on a minion or hero shows its card and tips during the enemy turn too.
+		var seen = _pick_unit(p) if not over and not _in_mulligan else null
+		if seen != null:
+			_show_inspect(seen)
+		else:
+			_board_touch(p)
 		return
 	var c := _pick_hand(p)
 	if c != null:
@@ -2394,8 +2450,7 @@ func _tick_hand_tips() -> void:
 	var c: CardView = null
 	var center := Vector2.ZERO
 	var scl := 1.0
-	var paused := _pause_dim != null and is_instance_valid(_pause_dim)
-	if over or _in_mulligan or paused:
+	if over or _in_mulligan or _paused():
 		c = null
 	elif mode == Mode.IDLE and hover_card != null and is_instance_valid(hover_card) and hand_views[0].has(hover_card):
 		c = hover_card
@@ -2453,7 +2508,32 @@ func _hide_inspect() -> void:
 
 # ================================================================ pause / debug
 
+## True while the pause menu (or its options / concede pages) is open.
+func _paused() -> bool:
+	return _pause_dim != null and is_instance_valid(_pause_dim) and not _pause_dim.is_queued_for_deletion()
+
+
+## Escape (Back) steps out one layer at a time: the options page, the concede question or the pause menu, an aim or
+## drag in progress; with nothing open it opens the pause menu.
+func _on_back() -> void:
+	if _paused():
+		var opts := _pause_dim.get_children().filter(func(n): return n is OptionsPanel)
+		if not opts.is_empty():
+			opts.back()._close()
+		else:
+			_pause_dim.queue_free()
+		return
+	if mode != Mode.IDLE:
+		_cancel()
+		return
+	if not over:
+		_open_pause()
+
+
 func _open_pause() -> void:
+	if _paused():
+		return
+	_cancel() # no arrow or held card left hanging under the menu
 	var dim := ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.7)
 	dim.size = V
