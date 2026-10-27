@@ -608,54 +608,14 @@ func _empty_hint() -> Control:
 	return p
 
 
-## The mana curve: for each cost a bronze rod as tall as the copies at that cost (the count engraved above it),
-## standing on the mana gem of that cost.
+## The mana curve (ManaCurve.paint): a bronze rod per cost on its mana gem, the copies engraved above it.
 func _draw_curve() -> void:
-	var counts := [0, 0, 0, 0, 0, 0, 0, 0]
-	for id in deck.cards:
-		counts[clampi(int(CardDB.card(id).cost), 0, 7)] += int(deck.cards[id])
-	var top: int = maxi(4, counts.max())
-	var w := _curve.size.x / 8.0
-	var f := UI.font("title")
-	var gem := 36.0
-	var base := _curve.size.y - gem ## the rods stand on the gems
-	var tall := base - 24.0 ## room left for the count above the tallest rod
-	# The bars are strips of the gilded button plate turned upright: its gold field between the bronze rims.
-	var rod: Texture2D = UI.upright_tex("menu_plate", 22) if UiSkin.has("menu_plate") else null
-	for i in 8:
-		var cx := i * w + w / 2
-		if counts[i] > 0:
-			var h: float = maxf(10.0, tall * counts[i] / float(top))
-			var r := Rect2(cx - 11, base - h + 2, 22, h)
-			if rod != null:
-				var src := Rect2(0, 24, 22, rod.get_height() - 48) # the plain middle, without the scrollwork ends
-				_curve.draw_texture_rect_region(rod, r, src)
-				_curve.draw_rect(Rect2(r.position, Vector2(r.size.x, 2)), Color(1.0, 0.85, 0.5, 0.8)) # the cut top edge
-			else:
-				_curve.draw_rect(r, UI.GOLD.darkened(0.2))
-			var at := Vector2(cx - w / 2, r.position.y - 5)
-			_curve.draw_string_outline(f, at, str(counts[i]), HORIZONTAL_ALIGNMENT_CENTER, w, 19, 4, Color(0.04, 0.01, 0.01))
-			_curve.draw_string(f, at, str(counts[i]), HORIZONTAL_ALIGNMENT_CENTER, w, 19, UI.BONE)
-		var g := Rect2(cx - gem / 2, base, gem, gem)
-		if UiSkin.has("gem_mana"):
-			_curve.draw_texture_rect(UiSkin.tex("gem_mana"), g, false,
-				Color.WHITE if counts[i] > 0 else Color(0.55, 0.55, 0.62))
-		# The last gem is "7+": the digit a little left and a bold drawn "+" (Cinzel's own is a hairline).
-		var fs := 19
-		var at := Vector2(g.position.x - (4.0 if i == 7 else 0.0), g.get_center().y + fs * 0.36)
-		_curve.draw_string_outline(f, at, str(i), HORIZONTAL_ALIGNMENT_CENTER, gem, fs, 5, Color(0, 0.02, 0.08))
-		_curve.draw_string(f, at, str(i), HORIZONTAL_ALIGNMENT_CENTER, gem, fs, UI.NUMBER)
-		if i == 7:
-			_draw_plus(_curve, g.get_center() + Vector2(7, 0), 4.0, 2.0, 1.5)
+	ManaCurve.paint(_curve, _curve.size, ManaCurve.counts_of(deck.cards), 36.0)
 
 
-## A bold "+" centred at `c` (arms `arm` px from the centre, `thick` px wide) in the gem digits' colour, ringed in
-## their dark outline: Cinzel's own "+" is too thin to read on a small gem.
+## A bold "+" (see ManaCurve.draw_plus).
 static func _draw_plus(ci: CanvasItem, c: Vector2, arm: float, thick: float, rim: float) -> void:
-	for pass_ in [[rim, Color(0, 0.02, 0.08)], [0.0, UI.NUMBER]]:
-		var o: float = pass_[0]
-		ci.draw_rect(Rect2(c.x - arm - o, c.y - thick / 2 - o, 2 * (arm + o), thick + 2 * o), pass_[1])
-		ci.draw_rect(Rect2(c.x - thick / 2 - o, c.y - arm - o, thick + 2 * o, 2 * (arm + o)), pass_[1])
+	ManaCurve.draw_plus(ci, c, arm, thick, rim)
 
 
 func _save() -> void:

@@ -3,9 +3,12 @@ extends Node
 ## the legendary cut-in, the result, the collection zoom, the pack reveal, a filled deck), for the painted-UI audit.
 ##   Godot --path . res://tests/screen_audit.tscn --resolution 1920x1080 -- --out=<dir> --what=<mode>
 ## Modes: menu_options, credits, builder, builder_name, builder_long, builder_empty, builder_leave, builder_edit,
-## builder_delete, builder_tip, collection_zoom, packs_reveal, packs_empty, deck_tip, battle (several shots),
+## builder_delete, builder_tip, collection_zoom, collection_class (the class strip and a keyword chip's tip),
+## collection_guide, collection_neutral, deck_peek (a key card shown big), deck_list (View cards), deck_list_zoom,
+## deck_guide (the class guide), packs_reveal, packs_empty, deck_tip, battle (several shots),
 ## lessons (Virgil's lessons screen), howto (every How to Play chapter), offer (the first-launch question),
 ## lesson (`--lesson=<id> [--steps=0,3]`: every line of a lesson played through, and its result), lesson_pause.
+## `--cls=` also picks the class of collection_class / collection_guide / deck_guide.
 ## `--cls=<class>`: the class of the deck in the "builder" shot (default Pilgrim).
 
 const LessonDriver := preload("res://tests/lesson_driver.gd")
@@ -68,6 +71,38 @@ func _ready() -> void:
 			s._show_zoom("francesca")
 			await _wait(0.6)
 			await _snap("collection_zoom")
+		"collection_class", "collection_guide", "collection_neutral":
+			var s := _open("res://scenes/collection.tscn")
+			await _wait(0.5)
+			s._set_filter("neutral" if what == "collection_neutral" else cls)
+			await _wait(0.5)
+			if what == "collection_class":
+				var chips := s.find_children("*", "Button", true, false).filter(func(b): return b.has_meta("keyword"))
+				if not chips.is_empty():
+					ClassInfoPanel.show_tip(chips[0])
+			elif what == "collection_guide":
+				ClassInfoPanel.open(s, cls)
+			await _wait(0.6)
+			await _snap(what)
+		"deck_peek", "deck_list", "deck_list_zoom", "deck_guide":
+			Settings.deck_choice = {"selected": "pre:" + (CardDB.class_decks(cls)[1].id if what == "deck_list" else CardDB.class_decks(cls)[0].id)}
+			var s := _open("res://scenes/deck_select.tscn")
+			await _wait(1.0)
+			match what:
+				"deck_peek":
+					var c: CardView = s._cards.get_child(0)
+					s._lift(c, true)
+					s._peek_card(c.card_id, c)
+				"deck_list", "deck_list_zoom":
+					s._open_list(s._find(s._selected))
+					if what == "deck_list_zoom":
+						await _wait(0.4)
+						var e: Dictionary = s._find(s._selected)
+						CardZoom.open(s.get_node("Dialog"), str(e.featured[0]))
+				"deck_guide":
+					ClassInfoPanel.open(s, cls)
+			await _wait(0.7)
+			await _snap(what)
 		"packs_reveal":
 			Collection.packs = maxi(Collection.packs, 1)
 			var s := _open("res://scenes/pack_opening.tscn")
