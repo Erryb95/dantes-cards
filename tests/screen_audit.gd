@@ -16,6 +16,9 @@ func _ready() -> void:
 			what = a.substr(7)
 	DirAccess.make_dir_recursive_absolute(out)
 	Settings.fast_animations = false
+	# `--out=` is not one of the flags that skip the first-launch cinematic: on a fresh profile the main menu would
+	# jump to the intro and the menu shots would hang.
+	Game.intro_played = true
 	match what:
 		"menu_options":
 			var s := _open("res://scenes/main_menu.tscn")

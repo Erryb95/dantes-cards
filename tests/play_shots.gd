@@ -2,8 +2,8 @@ extends "res://tests/ui_smoke.gd"
 ## Plays the real battle through the input path like a person would, and saves a screenshot at each key moment
 ## (mulligan, hover, drag, aim, inspect, end turn, result) for a visual review.
 ##   Godot --path . res://tests/play_shots.tscn -- --out=<dir> [--class=<cls>]
-## --class plays that class's first preconstructed deck (with a Ruse class, it also films a gold Ruse glow in hand and
-## the inspect tips of a Ruse minion).
+## --class plays that class's first preconstructed deck against another class's starter (with a Ruse class, it also
+## films a gold Ruse glow in hand and the inspect tips of a Ruse minion).
 
 var out := "user://play_shots"
 var _n := 0
@@ -19,6 +19,10 @@ func _ready() -> void:
 			var cls := a.substr(8)
 			Game.player_cards = CardDB.deck_list(CardDB.class_decks(cls)[0].id)
 			Game.player_hero = CardDB.class_hero(cls)
+			# The opponent plays another class's starter (the default enemy is the Ferryman, a mirror for --class=ferry).
+			var foe: String = CardDB.other_classes(cls)[0]
+			Game.enemy_cards = CardDB.deck_list(CardDB.class_decks(foe)[0].id)
+			Game.enemy_hero = CardDB.class_hero(foe)
 	DirAccess.make_dir_recursive_absolute(out)
 	battle = load("res://scenes/battle.tscn").instantiate()
 	add_child(battle)
