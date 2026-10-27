@@ -51,7 +51,14 @@ him, card by card. / At the river Acheron, Charon is waiting."
   minion.
 - Keywords: **Guard** (must be attacked first), **Swift** (attacks at once), **Ward** (blocks the first
   damage), **Drain** (its damage heals your hero), **Venom** (destroys any minion it damages), **Rebirth**
-  (returns once after dying).
+  (returns once after dying, like Hearthstone's Reborn: a new minion with 1 Health and 1 max Health, its printed
+  Attack and keywords, no buffs and no Rebirth; healing cannot raise it).
+- **Copies** follow Hearthstone. A minion copied onto the board (Capocchio) is a new minion with the original's state
+  as it is now: Attack, Health and max Health (buffs, debuffs, damage), the keywords it has now (a broken Ward or a used
+  Rebirth stays gone, a gained one comes along), Silence and Freeze (frozen while asleep, the copy stays frozen through
+  its owner's next turn). It is asleep unless it has Swift. A copy into the hand (Forged Will, the augurs) is the
+  printed card, like Zola's copy in Hearthstone: a card in hand has no damage or buffs here. Diomedes' "Summon a copy of
+  this minion" goes off as he enters, while he is still as printed, so a plain summon of the card is the same copy.
 - Triggers: **On Play**, **Last Breath**, **End of Turn**, **Start of Turn**, **Ruse** (On Play, but only if you
   already played another card this turn).
 - **Freeze** costs a minion one attack (the Hearthstone rule): a Frozen minion can't attack, and it thaws at the end
@@ -92,7 +99,7 @@ souls and board clears; Ulysses wins with timing, stolen knowledge and false app
   Cheap cards (0-1 mana) set it up; the class sequences its turn instead of just spending mana.
 - **Copy / Steal:** Puccio, Spoils of Troy, the augurs and Simon Magus copy from the enemy's hand or deck; the Palladium
   steals the top of the enemy's deck and the Black Cherub a card from their hand; Capocchio summons a copy of an enemy
-  minion.
+  minion as it is now (buffs, damage, Silence, Freeze; see "Copies" under Rules).
 - **Transform:** Circe's Draught and Circe turn minions into 1/1 Swine (no Last Breath, Ward does not help).
 - **Disguise and replay:** weak-looking bodies with a payoff (Achaean in Hiding, Buoso Donati, the Trojan Horse: a 0/6
   Guard that releases three Achaean Raiders), bounce to replay On Play effects (Turn the Prow, the Distant Mountain).

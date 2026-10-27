@@ -21,7 +21,10 @@ func _initialize() -> void:
 	_test_death_order()
 	_test_game_end()
 	_test_damage_edges()
+	_test_copy_state()
+	_test_rebirth()
 	_test_ai_edges()
+	_test_easy_guard()
 	_test_saves()
 	_soak(120)
 	_soak_classes(24)
@@ -673,8 +676,8 @@ func _test_ulysses() -> void:
 	ok(st.sides[0].hand.size() == 1 and st.sides[0].hand[0].id == "geryon", "Forged Will copies the minion")
 	gy.health = 1
 	st.play_card(0, _give(st, 0, "ul_capocchio"), gy.uid)
-	ok(st.sides[0].board.size() == 2 and st.sides[0].board[1].id == "geryon" and st.sides[0].board[1].health == 5,
-		"Capocchio summons a fresh copy next to him")
+	ok(st.sides[0].board.size() == 2 and st.sides[0].board[1].id == "geryon" and st.sides[0].board[1].health == 1
+		and st.sides[0].board[1].max_health == 5, "Capocchio summons a copy as it is now (damaged) next to him")
 
 	# Transform: same place, no Last Breath, Ward does not stop it, printed stats of the new card.
 	st = _blank()
@@ -1037,6 +1040,201 @@ func _test_damage_edges() -> void:
 	st._resolve({"do": "silence", "target": "choose_minion"}, 0, null, demon.uid, "test")
 	st.play_card(0, _give(st, 0, "cd_burning_sand"), demon.uid)
 	ok(st.sides[0].board.is_empty(), "a silenced Rebirth minion stays dead")
+
+
+## A minion copied onto the board (Capocchio) keeps the original's state the Hearthstone way: buffs and damage, the
+## keywords it has now, Silence, Freeze; it is still a new minion (asleep unless Swift). A copy into the hand is the
+## printed card.
+func _test_copy_state() -> void:
+	var st := _blank()
+	var gy := _put(st, 1, "geryon") # 4/5 Guard
+	st._resolve({"do": "buff", "target": "choose_minion", "attack": 2, "health": 2, "keywords": ["venom"]}, 1, null,
+		gy.uid, "test")
+	st._damage(gy, 3, null)
+	var evs := []
+	st.event.connect(func(ev): evs.append(ev))
+	st.play_card(0, _give(st, 0, "ul_capocchio"), gy.uid)
+	var c: BattleState.Unit = st.sides[0].board[1]
+	ok(c.id == "geryon" and c.side == 0 and c.uid != gy.uid, "the copy is a new minion on Capocchio's side")
+	ok(c.attack == 6 and c.health == 4 and c.max_health == 7, "the copy keeps buffs and damage (%d/%d of %d)" % [
+		c.attack, c.health, c.max_health])
+	ok(c.has("guard") and c.has("venom"), "the copy keeps printed and gained keywords")
+	ok(c.sleeping and c.attacks_made == 0 and not c.frozen and not c.silenced, "the copy is asleep, not frozen or silenced")
+	var sm: Array = evs.filter(func(ev): return ev.t == "summon" and ev.unit.id == "geryon")
+	ok(sm.size() == 1 and sm[0].unit.health == 4 and sm[0].unit.max_health == 7 and sm[0].unit.attack == 6,
+		"the summon event carries the copied numbers (the view shows a damaged, buffed minion)")
+	st._resolve({"do": "heal", "target": "choose_minion", "amount": 9}, 0, null, c.uid, "test")
+	ok(c.health == 7, "a damaged copy heals up to the original's max Health")
+	ok(gy.health == 4 and gy.attack == 6, "the original is unchanged")
+
+	# Keywords lost stay lost: a broken Ward, a used Rebirth.
+	st = _blank()
+	var pa := _put(st, 1, "paolo")
+	st._damage(pa, 2, null)
+	ok(not pa.has("ward") and pa.health == 5, "Paolo's Ward broke")
+	st.play_card(0, _give(st, 0, "ul_capocchio"), pa.uid)
+	ok(st.sides[0].board[1].id == "paolo" and not st.sides[0].board[1].has("ward"), "a broken Ward is not copied")
+	st = _blank()
+	var demon := _put(st, 1, "ih_whip_demon")
+	st._damage(demon, 1, null)
+	st._cleanup()
+	var back: BattleState.Unit = st.sides[1].board[0]
+	ok(back.id == "ih_whip_demon" and not back.has("rebirth"), "the Whip Demon came back without Rebirth")
+	st.play_card(0, _give(st, 0, "ul_capocchio"), back.uid)
+	var dc: BattleState.Unit = st.sides[0].board[1]
+	ok(not dc.has("rebirth") and dc.health == 1 and dc.max_health == 1, "a used Rebirth is not copied")
+	st._damage(dc, 1, null)
+	st._cleanup()
+	ok(not st.sides[0].board.any(func(u): return u.id == "ih_whip_demon"), "the copy of a reborn minion dies for good")
+
+	# Silence is copied: no keywords, no Last Breath.
+	st = _blank()
+	var stung := _put(st, 1, "stung_neutral")
+	st._resolve({"do": "silence", "target": "choose_minion"}, 0, null, stung.uid, "test")
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	st.play_card(0, _give(st, 0, "ul_capocchio"), stung.uid)
+	var sc: BattleState.Unit = st.sides[0].board[1]
+	ok(sc.silenced and sc.keywords.is_empty(), "the copy of a silenced minion is silenced")
+	ok(evs.any(func(ev): return ev.t == "status" and ev.uid == sc.uid and ev.silenced), "a status event shows the Silence")
+	st._damage(sc, 5, null)
+	st._cleanup()
+	ok(st.sides[0].board.size() == 1, "the silenced copy has no Last Breath")
+
+	# Freeze is copied, and the copy (frozen while asleep) stays frozen through its owner's next turn.
+	st = _blank()
+	var gy2 := _put(st, 1, "geryon")
+	st._resolve({"do": "freeze", "target": "choose_minion"}, 0, null, gy2.uid, "test")
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	st.play_card(0, _give(st, 0, "ul_capocchio"), gy2.uid)
+	var fc: BattleState.Unit = st.sides[0].board[1]
+	ok(fc.frozen, "the copy of a frozen minion is frozen")
+	ok(evs.any(func(ev): return ev.t == "status" and ev.uid == fc.uid and ev.frozen), "a status event shows the Freeze")
+	st.end_turn()
+	ok(fc.frozen, "the frozen copy stays frozen through the enemy turn")
+	st.end_turn()
+	ok(fc.frozen and not st.can_attack(fc), "the frozen copy loses its owner's next attack")
+	st.end_turn()
+	ok(not fc.frozen, "then it thaws")
+
+	# Swift: the copy of a Swift minion can attack at once, even if the original already attacked.
+	st = _blank()
+	var ph := _put(st, 1, "phlegyas")
+	ph.attacks_made = 1
+	st.play_card(0, _give(st, 0, "ul_capocchio"), ph.uid)
+	ok(st.can_attack(st.sides[0].board[1]), "a Swift copy can attack the turn it is summoned")
+
+	# Into the hand a copy is the printed card (Forged Will), whatever happened to the minion.
+	st = _blank()
+	gy = _put(st, 1, "geryon")
+	st._damage(gy, 3, null)
+	st.play_card(0, _give(st, 0, "ul_forged_will"), gy.uid)
+	ok(st.sides[0].hand.size() == 1 and st.sides[0].hand[0].keys().size() == 2, "a copy into the hand is the plain card")
+	st.play_card(0, st.sides[0].hand[0].uid)
+	var hc: BattleState.Unit = st.sides[0].board[0]
+	ok(hc.health == 5 and hc.max_health == 5, "the hand copy enters with printed stats")
+
+
+## Rebirth, the Hearthstone Reborn way: a new minion with 1 Health and 1 max Health (not a damaged one), its printed
+## Attack and keywords minus Rebirth, no buffs; the view gets one summon with those numbers.
+func _test_rebirth() -> void:
+	var st := _blank()
+	var stat := _put(st, 0, "pj_statius") # 3/5 Rebirth
+	st._resolve({"do": "buff", "target": "choose_minion", "attack": 2, "health": 2, "keywords": ["guard"]}, 0, null,
+		stat.uid, "test")
+	var evs := []
+	st.event.connect(func(ev): evs.append(ev))
+	st._damage(stat, 9, null)
+	st._cleanup()
+	ok(st.sides[0].board.size() == 1, "Rebirth brings the minion back")
+	var r: BattleState.Unit = st.sides[0].board[0]
+	ok(r.id == "pj_statius" and r.uid != stat.uid, "it is a new minion")
+	ok(r.health == 1 and r.max_health == 1, "it returns with 1 Health and 1 max Health (%d of %d)" % [r.health,
+		r.max_health])
+	ok(r.attack == 3 and not r.has("guard") and not r.has("rebirth"), "printed Attack; buffs and Rebirth gone")
+	ok(r.sleeping, "it returns asleep")
+	var sm: Array = evs.filter(func(ev): return ev.t == "summon")
+	ok(sm.size() == 1 and sm[0].unit.health == 1 and sm[0].unit.max_health == 1,
+		"the summon event shows a clean 1-Health minion")
+	ok(not evs.any(func(ev): return ev.t == "status" and ev.uid == r.uid), "no damaged-state update follows")
+	var rb: Array = evs.filter(func(ev): return ev.t == "rebirth")
+	ok(rb.size() == 1 and rb[0].uid == r.uid and evs.find(rb[0]) > evs.find(sm[0]), "the rebirth flame plays on it")
+	evs.clear()
+	st._resolve({"do": "heal", "target": "choose_minion", "amount": 5}, 0, null, r.uid, "test")
+	ok(r.health == 1 and not evs.any(func(ev): return ev.t == "heal"), "healing a reborn minion does nothing")
+	st._resolve({"do": "buff", "target": "choose_minion", "health": 2}, 0, null, r.uid, "test")
+	ok(r.health == 3 and r.max_health == 3, "a buff raises it like any minion")
+	# Typhon: Rebirth keeps the printed body (8/8 -> 8/1) and does not replay On Play.
+	st = _blank()
+	var ty := _put(st, 1, "ih_typhon")
+	var foe := _put(st, 0, "lost_soul")
+	st._resolve({"do": "destroy", "target": "choose_minion"}, 0, null, ty.uid, "test")
+	st._cleanup()
+	ok(st.sides[1].board.size() == 1 and st.sides[1].board[0].attack == 8 and st.sides[1].board[0].health == 1
+		and st.sides[1].board[0].max_health == 1 and not foe.frozen, "Typhon returns 8/1 without its On Play")
+
+
+## Easy behind a Guard: it does not throw a minion that dies without killing the Guard (a 1/1 into a 6/9), but it still
+## makes that hit when its other attackers can then finish the Guard and that pays: a Venom or Drain Guard, or lethal
+## behind it. It still kills a Guard it can and chips one when its minion survives.
+func _test_easy_guard() -> void:
+	var st := _blank()
+	st.sides[0].power_used = true
+	var small := _put(st, 0, "lost_soul")
+	_put(st, 1, "cd_old_man_crete") # 6/9 Guard
+	var act := BattleAI.new(0, BattleAI.Level.EASY).next_action(st)
+	ok(act.do == "end", "Easy keeps a 1/1 away from a 6/9 Guard (%s)" % act)
+
+	# A Guard it can kill, or survive: it attacks.
+	st = _blank()
+	st.sides[0].power_used = true
+	var big := _put(st, 0, "paolo")
+	var g := _put(st, 1, "cerberus")
+	act = BattleAI.new(0, BattleAI.Level.EASY).next_action(st)
+	ok(act.do == "attack" and act.attacker == big.uid and act.target == g.uid, "Easy still kills a Guard it can")
+	st = _blank()
+	st.sides[0].power_used = true
+	var tank := _put(st, 0, "cd_old_man_crete")
+	_put(st, 1, "cd_old_man_crete")
+	act = BattleAI.new(0, BattleAI.Level.EASY).next_action(st)
+	ok(act.do == "attack" and act.attacker == tank.uid, "Easy chips a Guard when its minion survives")
+
+	# Two minions, one hopeless: only the useful one attacks.
+	st = _blank()
+	st.sides[0].power_used = true
+	small = _put(st, 0, "lost_soul")
+	big = _put(st, 0, "paolo")
+	_put(st, 1, "cerberus")
+	_put(st, 1, "cd_old_man_crete")
+	act = BattleAI.new(0, BattleAI.Level.EASY).next_action(st)
+	ok(act.do == "attack" and act.attacker == big.uid, "Easy skips the hopeless 1/1 and attacks with Paolo")
+
+	# A Venom Guard the others can finish: the hopeless hit is worth it.
+	st = _blank()
+	st.sides[0].power_used = true
+	for i in 3:
+		_put(st, 0, "lost_pilgrim") # 2/1
+	g = _put(st, 1, "cerberus") # 3/5 Guard
+	g.keywords["venom"] = true
+	act = BattleAI.new(0, BattleAI.Level.EASY).next_action(st)
+	ok(act.do == "attack" and act.target == g.uid, "Easy gangs up on a Venom Guard")
+	_ai_turn(st, BattleAI.new(0, BattleAI.Level.EASY))
+	ok(not st.units.has(g.uid), "and kills it")
+	# The same Guard without Venom and nothing behind it: nobody suicides, even at 2 Health when all three are needed
+	# to break it (none would be left for the face).
+	st = _blank()
+	st.sides[0].power_used = true
+	for i in 3:
+		_put(st, 0, "lost_pilgrim")
+	_put(st, 1, "cerberus")
+	st.sides[1].hero.health = 2
+	act = BattleAI.new(0, BattleAI.Level.EASY).next_action(st)
+	ok(act.do == "end", "Easy does not trade 2/1s into a plain 3/5 Guard (%s)" % act)
+	# A fourth attacker makes it lethal: it goes through.
+	_put(st, 0, "lost_pilgrim")
+	_ai_turn(st, BattleAI.new(0, BattleAI.Level.EASY))
+	ok(st.winner == 0, "Easy breaks a Guard when lethal follows")
 
 
 ## Lets `ai` play its whole turn on `st`; returns the ids of the cards it played. Every move it picks must be legal.

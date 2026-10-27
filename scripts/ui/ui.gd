@@ -603,7 +603,7 @@ const KEYWORD_HELP := {
 	"ward": ["Ward", "The first damage it would take is blocked."],
 	"drain": ["Drain", "Damage it deals also heals your hero."],
 	"venom": ["Venom", "Destroys any minion it damages."],
-	"rebirth": ["Rebirth", "The first time it dies, it returns with 1 Health."],
+	"rebirth": ["Rebirth", "The first time it dies, it returns as a new minion with 1 Health."],
 	"turn_end": ["End of Turn", "Does something at the end of your turn."],
 	"turn_start": ["Start of Turn", "Does something at the start of your turn."],
 	"death": ["Last Breath", "Does something when it dies."],
