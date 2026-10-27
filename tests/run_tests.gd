@@ -21,6 +21,7 @@ func _initialize() -> void:
 		quit(1 if failures > 0 else 0)
 		return
 	_test_data()
+	_test_export_presets()
 	_test_class_info()
 	_test_rules()
 	_test_freeze()
@@ -52,6 +53,25 @@ func _initialize() -> void:
 	_test_online_mirror(24)
 	print("TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures > 0 else 0)
+
+
+## The exports ship what online play needs: the server config, and on Android the network permissions (without
+## INTERNET the phone refuses every connection: no duel, no Google sign-in, no cloud save).
+func _test_export_presets() -> void:
+	var cf := ConfigFile.new()
+	ok(cf.load("res://export_presets.cfg") == OK, "export_presets.cfg loads")
+	var android := 0
+	for sec in cf.get_sections():
+		if not sec.ends_with(".options") and cf.has_section_key(sec, "platform"):
+			var opts := sec + ".options"
+			ok(str(cf.get_value(sec, "include_filter", "")).contains("config/*.cfg"),
+				"export preset %s ships config/*.cfg" % cf.get_value(sec, "name"))
+			if str(cf.get_value(sec, "platform")) == "Android":
+				android += 1
+				ok(cf.get_value(opts, "permissions/internet", false) == true, "the Android export asks for INTERNET")
+				ok(cf.get_value(opts, "permissions/access_network_state", false) == true,
+					"the Android export asks for ACCESS_NETWORK_STATE")
+	ok(android > 0, "there is an Android export preset")
 
 
 func ok(cond: bool, what: String) -> void:
