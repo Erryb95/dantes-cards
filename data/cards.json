@@ -595,6 +595,27 @@
     ]
    },
    "image": "hero_charon_face_s31"
+  },
+  {
+   "id": "ulysses",
+   "class": "ulysses",
+   "class_name": "Wanderer",
+   "power_icon": "icon_trigger",
+   "defeat_line": "The two-horned flame gutters out. The last voyage is over.",
+   "name": "Ulysses, the Wanderer",
+   "health": 30,
+   "power": {
+    "name": "Guile",
+    "cost": 2,
+    "text": "Copy a random card from the enemy's deck into your hand.",
+    "effects": [
+     {
+      "do": "copy",
+      "from": "enemy_deck"
+     }
+    ]
+   },
+   "image": "hero_ulysses_face_s777"
   }
  ]
 }
