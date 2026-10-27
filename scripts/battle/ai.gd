@@ -4,7 +4,7 @@ extends RefCounted
 ## Action: {"do": "play", "uid", "target", "index"} | {"do": "attack", "attacker", "target"} |
 ##         {"do": "power", "target"} | {"do": "end"}
 ## Levels (Settings.difficulty uses the same numbers):
-## - EASY follows fixed rules (the most expensive card first, simple trades).
+## - EASY follows fixed rules (the most expensive card first, simple trades; no minion thrown away on a Guard).
 ## - HARD tries every legal move on a copy of the battle, then plays the best few out to the end of the turn and
 ##   keeps the line that leaves the best position (see `evaluate`).
 ## - MEDIUM runs the same search shallower and noisier: fewer lines played out and a random error on how it scores
@@ -276,12 +276,14 @@ func _rules(st: BattleState) -> Dictionary:
 		if t != -1:
 			return {"do": "power", "target": t}
 
-	# 4. Attacks: kill guards, take good trades, otherwise go face.
+	# 4. Attacks: kill guards, take good trades, otherwise go face. A minion that would only die on a Guard stays home
+	# (see `_attack_choice`).
 	for u in me.board:
 		if not st.can_attack(u):
 			continue
-		var targets := st.attack_targets(side)
-		return {"do": "attack", "attacker": u.uid, "target": _attack_choice(st, u, targets)}
+		var t := _attack_choice(st, u, st.attack_targets(side))
+		if t != -1:
+			return {"do": "attack", "attacker": u.uid, "target": t}
 	return {"do": "end"}
 
 
@@ -430,7 +432,7 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 						return {}
 			"copy":
 				if tt == "choose_enemy_minion" or tt == "choose_minion":
-					target = _best_copy(st, tt)
+					target = _best_copy(st, tt, e.get("to", "hand") == "board")
 					if target == -1 and card.type == "spell":
 						return {}
 				elif card.type == "spell" and me.hand.size() >= 9:
@@ -540,15 +542,16 @@ func _best_destroy(st: BattleState, tt: String) -> int:
 	return best
 
 
-## The minion most worth copying: the most expensive card.
-func _best_copy(st: BattleState, tt: String) -> int:
+## The minion most worth copying. Into the hand the copy is the printed card: the most expensive one. Onto the board
+## it is the minion as it is now (buffs, damage, Silence...): the one worth most on the board.
+func _best_copy(st: BattleState, tt: String, to_board: bool = false) -> int:
 	var best := -1
-	var best_cost := -1
+	var best_v := -INF
 	for uid in st.valid_targets(side, tt):
 		var u = st.units[uid]
-		var cost := int(CardDB.card(u.id).get("cost", 0))
-		if cost > best_cost:
-			best_cost = cost
+		var v: float = _value(u) if to_board else float(CardDB.card(u.id).get("cost", 0))
+		if v > best_v:
+			best_v = v
 			best = uid
 	return best
 
@@ -564,6 +567,8 @@ func _best_friend(st: BattleState) -> int:
 	return best
 
 
+## Easy's target for attacker `a`, or -1 when it should not attack: it is behind a Guard and every attack it has
+## would be hopeless (it dies and the Guard lives), unless that hit still pays (`_hopeless_pays`).
 func _attack_choice(st: BattleState, a, targets: Array[int]) -> int:
 	var foe := st.sides[1 - side]
 	var best := -1
@@ -584,10 +589,56 @@ func _attack_choice(st: BattleState, a, targets: Array[int]) -> int:
 		elif t.has("venom") and kills:
 			v = 8.0
 		elif t.has("guard"):
-			v = 1.0 + _value(t) * 0.1
+			if kills or survives or t.attack <= 0:
+				v = 1.0 + _value(t) * 0.1
+			elif _hopeless_pays(st, a, t):
+				v = 0.5
 		if v > best_v:
 			best_v = v
 			best = uid
 	if targets.has(foe.hero.uid) and best_v < 10.0:
 		return foe.hero.uid
-	return best if best != -1 else targets[0]
+	return best
+
+
+## A hopeless hit on a Guard (the attacker dies, the Guard lives) is still worth it when the attackers ready this turn
+## can then finish the Guard and either it is a Venom or Drain threat or its death opens the way to lethal.
+func _hopeless_pays(st: BattleState, a, t) -> bool:
+	var others := 0
+	var venom := false
+	for u in st.sides[side].board:
+		if u != a and st.can_attack(u):
+			others += u.attack
+			venom = venom or u.has("venom")
+	# `a` hits first: it breaks a Ward or takes its Attack off the Guard's Health.
+	var left: int = t.health if t.has("ward") else t.health - a.attack
+	if not (venom or others >= left):
+		return false
+	return t.has("venom") or t.has("drain") or _lethal_through_guards(st)
+
+
+## Easy's rough lethal check through Guards: the ready attackers, smallest first, are spent on the Guards (a Ward takes
+## one hit, Venom kills in one, overkill is lost) and the ones left must reach the enemy hero.
+func _lethal_through_guards(st: BattleState) -> bool:
+	var foe := st.sides[1 - side]
+	var ready: Array = st.sides[side].board.filter(func(u): return st.can_attack(u))
+	ready.sort_custom(func(x, y): return x.attack < y.attack)
+	for g in foe.board:
+		if not g.has("guard"):
+			continue
+		var hp: int = g.health
+		var ward: bool = g.has("ward")
+		while hp > 0:
+			if ready.is_empty():
+				return false
+			var u = ready.pop_front()
+			if ward:
+				ward = false
+			elif u.has("venom"):
+				hp = 0
+			else:
+				hp -= u.attack
+	var left := 0
+	for u in ready:
+		left += u.attack
+	return left >= foe.hero.health + foe.hero.armor

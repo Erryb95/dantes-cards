@@ -1,5 +1,26 @@
 # Balance log
 
+## 2026-10-27: Hearthstone copies and Reborn, Easy behind Guards
+
+**Rules.** Capocchio's copy keeps the minion's current state (buffs, damage, keywords now, Silence, Freeze); Rebirth
+brings a minion back as a new 1/1-Health minion (max Health 1, no buffs). Capocchio is in no preconstructed deck, and
+the old "damaged" Rebirth body never got healed in the AI games: Hard vs Hard is unchanged to the game (starters
+Pilgrim / Ferryman 112-88, Pilgrim / Wanderer 96-104, Ferryman / Wanderer 120-80 of 200; The Noble School, the
+Rebirth deck, 50.8% against the six other-class decks at 100 games each, before and after).
+
+**Easy AI.** Easy no longer throws a minion into a Guard when it dies and the Guard lives (a 1/1 into a 6/9), unless
+its other ready attackers then finish the Guard and that pays (a Venom or Drain Guard, or lethal behind it). It stays
+clearly the weakest level. `ai_duel.gd --levels=A,B --classes=X,Y`, 200 games each (every deal from both seats),
+Easy's win rate before -> after:
+
+| classes | Easy vs Medium | Easy vs Hard | random decks: vs Medium | random decks: vs Hard |
+|---|---|---|---|---|
+| Pilgrim / Ferryman | 36% -> 38% | 32% -> 33% | 41% -> 42% | 31% -> 29% |
+| Pilgrim / Wanderer | 29% -> 29% | 24% -> 24% | 37% -> 35% | 25% -> 24% |
+| Ferryman / Wanderer | 29% -> 31% | 17% -> 20% | 34% -> 33% | 21% -> 22% |
+
+Medium vs Hard is unchanged (39%, 41%, 37%); the moves are within the +/-3.5% noise of 200 games.
+
 ## 2026-10-27: the Wanderer (Ulysses), third class
 
 **Method.** `tests/ai_duel.gd` generalised to every pair of classes (`--matrix`, `--class=`, `--deck=`), Hard vs Hard, each

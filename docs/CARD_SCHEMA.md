@@ -47,7 +47,7 @@ Cards live in `data/cards.json` (core set) and `data/sets/*.json` (expansions). 
 | `ramp` | `amount` | gain empty mana crystals (no target) |
 | `give_card` | `card`, `count` | add copies of a card id to your hand (no target); a card that does not fit in a full hand burns |
 | `mana` | `amount` | gain mana this turn only, up to 10 (no target; Charon's Obol) |
-| `copy` | `from` (`enemy_hand` / `enemy_deck`, random cards, never the same card twice) or a minion target; `count`; `steal` (the cards leave the enemy: the top of the deck, or a random hand card); `to`: `hand` (default) or `board` (summon the copy) | add copies to your hand. Hand limit applies: a copy that does not fit burns, and nothing is stolen without room for it. Text: "Copy ... into your hand", "Steal ...", "Summon a copy of ..." |
+| `copy` | `from` (`enemy_hand` / `enemy_deck`, random cards, never the same card twice) or a minion target; `count`; `steal` (the cards leave the enemy: the top of the deck, or a random hand card); `to`: `hand` (default) or `board` (summon the copy) | add copies to your hand. A minion copied onto the board keeps its current state (buffs, damage, keywords now, Silence, Freeze; Hearthstone rule), a copy into the hand is the printed card. Hand limit applies: a copy that does not fit burns, and nothing is stolen without room for it. Text: "Copy ... into your hand", "Steal ...", "Summon a copy of ..." |
 | `transform` | `card` (a minion id) | the target becomes a fresh copy of that card in the same place: no Last Breath, Ward does not stop it |
 
 **Targets**

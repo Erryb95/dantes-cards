@@ -480,12 +480,13 @@ func use_power(side: int, target_uid: int = -1) -> bool:
 # ---------------------------------------------------------------- effects
 
 func _summon(side: int, id: String, index: int = -1, from_card: int = -1) -> Unit:
-	var s := sides[side]
-	if s.board.size() >= MAX_BOARD:
-		return null
+	return _place(_new_unit(side, id), index, from_card)
+
+
+## A minion of card `id` as printed, not on the board yet (no uid until `_place`).
+func _new_unit(side: int, id: String) -> Unit:
 	var card := CardDB.card(id)
 	var u := Unit.new()
-	u.uid = _uid()
 	u.id = id
 	u.side = side
 	u.attack = int(card.get("attack", 0))
@@ -494,11 +495,37 @@ func _summon(side: int, id: String, index: int = -1, from_card: int = -1) -> Uni
 	for k in card.get("keywords", []):
 		u.keywords[k] = true
 	u.sleeping = not u.has("swift")
+	return u
+
+
+## Puts a new minion on its owner's board at `index` (the end when -1) and reports it with the values it enters with;
+## null when the board is full.
+func _place(u: Unit, index: int = -1, from_card: int = -1) -> Unit:
+	var s := sides[u.side]
+	if s.board.size() >= MAX_BOARD:
+		return null
+	u.uid = _uid()
 	if index < 0 or index > s.board.size():
 		index = s.board.size()
 	s.board.insert(index, u)
 	units[u.uid] = u
-	_emit({"t": "summon", "side": side, "unit": u.snapshot(), "index": index, "from_card": from_card})
+	_emit({"t": "summon", "side": u.side, "unit": u.snapshot(), "index": index, "from_card": from_card})
+	return u
+
+
+## A copy of minion `t` for `side`, the Hearthstone way: it keeps the original's current state (Attack, Health and
+## max Health, so buffs, debuffs and damage; the keywords it has now, so a broken Ward or a used Rebirth stays gone;
+## Silence; Freeze) but it is a new minion: asleep unless it has Swift, no attack made. A frozen copy is frozen
+## while asleep, so it stays frozen through its owner's next turn (see `_freeze_spent`).
+func _unit_copy(side: int, t: Unit) -> Unit:
+	var u := _new_unit(side, t.id)
+	u.attack = t.attack
+	u.health = t.health
+	u.max_health = t.max_health
+	u.keywords = t.keywords.duplicate()
+	u.frozen = t.frozen
+	u.silenced = t.silenced
+	u.sleeping = not u.has("swift")
 	return u
 
 
@@ -604,12 +631,15 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 
 ## Copies cards into your hand (or onto your board with "to": "board"). Source: "from" = "enemy_hand" / "enemy_deck"
 ## (random cards; with "steal" they leave the enemy instead), or else the effect's target minions. Hand limit applies.
+## As in Hearthstone, a minion copied onto the board keeps its current state (`_unit_copy`: Capocchio), while a copy
+## into the hand is the printed card (Forged Will, like Zola's copy: a card in hand has no damage or buffs here).
 func _copy(e: Dictionary, side: int, source: Unit, targets: Array[Unit], ttype: String, from_id: String) -> void:
 	var me := sides[side]
 	var foe := sides[1 - side]
 	var from: String = e.get("from", "")
 	var steal: bool = e.get("steal", false)
 	var ids: Array[String] = []
+	var minions: Array[Unit] = [] ## the copied minions when the copy is of target minions (same order as `ids`)
 	if from == "enemy_hand" or from == "enemy_deck":
 		# "Copy 2 random cards": two different cards (positions) of the hand or deck, never one card twice.
 		var pool: Array[int] = []
@@ -652,15 +682,21 @@ func _copy(e: Dictionary, side: int, source: Unit, targets: Array[Unit], ttype: 
 					_emit({"t": "projectile", "from": source.uid if source != null else me.hero.uid, "to": t.uid,
 						"id": from_id, "kind": "buff"})
 				ids.append(t.id)
+				minions.append(t)
 	if e.get("to", "hand") == "board":
 		var at := -1
 		if source != null and me.board.has(source):
 			at = me.board.find(source) + 1
-		for id in ids:
-			if CardDB.card(id).get("type", "") != "minion":
+		for i in ids.size():
+			if CardDB.card(ids[i]).get("type", "") != "minion":
 				continue
-			var u := _summon(side, id, at)
-			if u != null and at != -1:
+			# A minion on the board is copied as it is now (`_unit_copy`); a card from a hand or deck as printed.
+			var u := _place(_unit_copy(side, minions[i]) if i < minions.size() else _new_unit(side, ids[i]), at)
+			if u == null:
+				continue
+			if u.frozen or u.silenced:
+				_emit_status(u) # the view builds a minion from its numbers and keywords; this shows the rest
+			if at != -1:
 				at += 1
 		return
 	for id in ids:
@@ -808,12 +844,14 @@ func _cleanup() -> void:
 		for d in died:
 			var u: Unit = d[0]
 			# Silence already took the keyword away; one given back afterwards (Absolved in Advance) still works.
+			# Like Hearthstone's Reborn it comes back as a fresh minion with 1 Health and 1 max Health (not a damaged
+			# one: healing cannot raise it), its printed Attack and keywords minus Rebirth, no buffs.
 			if u.has("rebirth"):
-				var r := _summon(u.side, u.id, mini(int(d[1]), sides[u.side].board.size()))
-				if r != null:
-					r.keywords.erase("rebirth")
-					r.health = 1
-					_emit_status(r)
+				var r := _new_unit(u.side, u.id)
+				r.keywords.erase("rebirth")
+				r.health = 1
+				r.max_health = 1
+				if _place(r, mini(int(d[1]), sides[u.side].board.size())) != null:
 					_emit({"t": "rebirth", "uid": r.uid}) # view only: the rising flame
 			if u.silenced:
 				continue
