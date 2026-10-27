@@ -100,6 +100,13 @@ func _ready() -> void:
 	create_tween().tween_property(col, "modulate:a", 1.0, 1.0)
 
 
+## Esc / the back gesture (Game.back) on the title screen: a phone leaves the game, as its other apps do; a desktop
+## stays (Quit is one click away, and a stray Esc should not close the game).
+func go_back() -> void:
+	if OS.has_feature("mobile"):
+		get_tree().quit()
+
+
 func _process(delta: float) -> void:
 	_t += delta
 	var vs := get_viewport_rect().size

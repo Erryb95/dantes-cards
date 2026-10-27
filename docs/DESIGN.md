@@ -15,7 +15,7 @@
 | `scripts/battle/battle_view.gd` | the board: replays events as animations, handles input |
 | `scripts/battle/{card,minion,hero}_view.gd` | the pieces; `fx.gd`, `shapes.gd`, `target_arrow.gd` for the juice |
 | `scripts/battle/vfx.gd`, `vfx_data.gd`, `data/vfx.json` | per-card spell looks: 15 schools (colours, textures, sounds; default from the card's circle) x single-target "hit" patterns x board-wide "mass" patterns; every spell has a profile (tested). Staged as anticipation, travel, impact (shake, hit-stop), aftermath. Painted sprites `assets/vfx/vfx_*.png` via `tools/vfx/import_vfx.py`; review with `tests/vfx_preview.tscn -- --out=<dir> --spells` + `tools/vfx/contact_sheet.py` |
-| `scripts/ui/` | main menu, deck select, deck builder, pack opening, collection, options, shared look (`ui.gd`), painted skin loader (`ui_skin.gd`) |
+| `scripts/ui/` | main menu, deck select, deck builder, pack opening, collection, options, credits (`credits_panel.gd`, from Options; keep it in step with `assets/CREDITS.md`), shared look (`ui.gd`, incl. the painted `UI.dialog`), the deck name's gold-ink caret (`ink_caret.gd`), painted skin loader (`ui_skin.gd`) |
 | `scripts/intro/`, `scenes/intro.tscn` | the opening cinematic (see "Opening cinematic" below) |
 | `assets/shaders/` | `card_fx` (art mask, hit flash, burn-away dissolve, legendary foil), `river`, `fog`, `crack` (Dis embers / Cocytus frost), `wind` (Lust), `heat_haze` |
 | `tools/cards/art_jobs.py` | builds the ComfyUI jobs from the data and imports the results |
@@ -118,7 +118,8 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
   from Choose your path without owning their cards). Battles pay Obols (win 100, loss 25); a pack costs 100.
 - A pack holds 5 cards: per slot legendary 1.5%, epic 5.5%, rare 21%; at least one rare; a legendary within
   20 packs. Copies beyond the deck limit refund Obols (5 / 20 / 100 / 400).
-- Deck builder: owned cards only; Auto-fill completes a deck along a mana curve.
+- Deck builder: owned cards only; Auto-fill completes a deck along a mana curve. Back asks before dropping unsaved
+  changes, Delete asks before removing a deck; a saved deck is the one Choose your path shows next.
 
 ## Adding content
 - **Card:** add an entry to `cards.json` and use it in a deck. Run `python tools/cards/art_jobs.py run`
@@ -132,6 +133,9 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
   Right-click cancels. Hover a minion to inspect it.
 - **Touch:** the same with your finger. A card you hold over the hand is shown at full size above your finger;
   tap-tap aiming works for attacks and targets.
+- **Back:** Esc (desktop) or the Android back gesture closes an open dialog, Credits or Options, else steps back one
+  menu screen (`go_back()` on the scene, routed by `Game.back()`); on the title screen a phone leaves the game. The
+  battle and the intro ignore it.
 
 ## Next (roadmap)
 1. Paintings for the 175 new cards (list in `art_src/new_card_art.json`, made on the ComfyUI PC).

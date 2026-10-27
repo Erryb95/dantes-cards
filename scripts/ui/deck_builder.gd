@@ -28,6 +28,7 @@ var _set_tabs := {} ## set filter -> Button
 var _cost_tabs := {} ## cost filter -> Button
 var _own_tab: Button
 var _hover_tips: Control ## keyword tips beside the card under the pointer
+var _saved := {} ## the deck as it was saved (or as a new deck started): leaving asks first when `deck` differs
 
 
 func _ready() -> void:
@@ -60,8 +61,9 @@ func _ready() -> void:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 12)
 	left.add_child(top)
+	_saved = deck.duplicate(true)
 	var back := UI.button("Back", 170, 60)
-	back.pressed.connect(func(): Game.go(Game.DECK_SELECT))
+	back.pressed.connect(_leave)
 	top.add_child(back)
 	var cls_name := CardDB.class_title(deck.cls)
 	for f in [["all", "All"], ["class", cls_name], ["neutral", "Neutral"]]:
@@ -125,24 +127,30 @@ func _ready() -> void:
 	_name.placeholder_text = "Name your deck"
 	_name.max_length = 24
 	_name.select_all_on_focus = true
-	_name.caret_blink = true
 	_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_name.add_theme_font_override("font", UI.font("title"))
 	_name.add_theme_font_size_override("font_size", 26)
 	_name.add_theme_color_override("font_color", UI.GOLD)
 	_name.add_theme_color_override("font_placeholder_color", UI.BONE.darkened(0.45))
-	_name.add_theme_color_override("caret_color", UI.GOLD)
-	_name.add_theme_color_override("selection_color", Color(0.55, 0.32, 0.08, 0.75))
-	_name.add_theme_color_override("font_selected_color", Color(1.0, 0.95, 0.8))
+	# Selected letters light up (the selection is a gold ink underline, the caret a stroke of gold ink: InkCaret).
+	_name.add_theme_color_override("font_selected_color", Color(1.0, 0.97, 0.86))
+	_name.add_theme_constant_override("outline_size", 4)
+	_name.add_theme_color_override("font_outline_color", Color(0.04, 0.01, 0.01))
+	InkCaret.attach(_name)
 	# An engraved name plate: the bronze frame around the painted field, lit while it is being edited.
 	_name.add_theme_stylebox_override("normal", UI.plaque_box(18, 8))
 	_name.add_theme_stylebox_override("focus", UI.plaque_box(18, 8, Color(1.45, 1.25, 0.9)))
 	_name.custom_minimum_size = Vector2(0, 60)
 	UI.add_field(_name)
-	_name.text_changed.connect(func(t: String): deck.name = t)
+	_name.text_changed.connect(func(t: String):
+		deck.name = t
+		_fit_name())
+	_name.resized.connect(_fit_name)
 	_name.text_submitted.connect(func(_t: String): _name.release_focus())
 	nr.add_child(_name)
-	var ren := _small_button("Rename", 196)
+	# Rename: a bronze disc with an engraved pen nib (the Rename plate took almost half the row, and a long name
+	# shrank to 16 px and still ran under the frame).
+	var ren := _disc("Rename the deck", _draw_nib)
 	ren.pressed.connect(func():
 		_name.grab_focus()
 		_name.select_all())
@@ -189,19 +197,20 @@ func _ready() -> void:
 	r1.alignment = BoxContainer.ALIGNMENT_CENTER
 	r1.add_theme_constant_override("separation", 6)
 	rv.add_child(r1)
-	var fill := _small_button("Auto-fill", 170 if _index >= 0 else 220)
+	var fill := _small_button("Auto-fill", 220 if _index < 0 else 200)
 	fill.pressed.connect(func():
 		Collection.autofill(deck)
 		Sfx.play("swish_long", -6.0)
 		_refresh())
 	r1.add_child(fill)
-	var clear := _small_button("Clear", 135 if _index >= 0 else 170)
+	var clear := _small_button("Clear", 170 if _index < 0 else 160)
 	clear.pressed.connect(func():
 		deck.cards.clear()
 		_refresh())
 	r1.add_child(clear)
 	if _index >= 0:
-		var del := _small_button("Delete", 135)
+		# Delete on a bronze disc with an engraved cross (as a third plate the row left each label about 56 px).
+		var del := _disc("Delete this deck", _draw_cross)
 		del.pressed.connect(_delete)
 		r1.add_child(del)
 	var r2 := HBoxContainer.new()
@@ -225,6 +234,101 @@ func _ready() -> void:
 	_fill()
 	if _index < 0:
 		_name.call_deferred("grab_focus") # a new deck starts by naming it (the text is selected: typing replaces it)
+
+
+## Shrinks the name's letters (26 down to 16 px) so the whole name stays on its plate: a long name never runs under
+## the bronze frame or scrolls half out of sight.
+func _fit_name() -> void:
+	var sb := _name.get_theme_stylebox("normal")
+	var room := _name.size.x - sb.get_margin(SIDE_LEFT) - sb.get_margin(SIDE_RIGHT) - 8.0
+	if room <= 0.0:
+		return
+	var f := _name.get_theme_font("font")
+	var px := 26
+	while px > 16 and f.get_string_size(_name.text, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x > room:
+		px -= 1
+	_name.add_theme_font_size_override("font_size", px)
+
+
+## Back (and Esc / the back gesture): straight to Choose your path when nothing changed, else asks whether to save.
+func _leave() -> void:
+	if deck.recursive_equal(_saved, 4):
+		Game.go(Game.DECK_SELECT)
+		return
+	var shown: String = deck.name.strip_edges() if deck.name.strip_edges() != "" else "this deck"
+	UI.dialog(self, "Leave without saving?", "Your changes to %s are not saved yet." % shown, [
+		["Save", func():
+			_save()
+			Game.go(Game.DECK_SELECT)],
+		["Discard", func(): Game.go(Game.DECK_SELECT)],
+		["Keep editing", null]])
+
+
+## Esc / the back gesture (Game.back): ends the naming first, then like Back.
+func go_back() -> void:
+	if _name.has_focus():
+		_name.release_focus()
+		return
+	_leave()
+
+
+## A round button: the painted bronze disc (like Choose your path's scroll discs) with a glyph engraved on it by
+## `glyph` (a static drawing function taking the canvas item and the disc's centre), `tip` as its tooltip.
+func _disc(tip: String, glyph: Callable) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(60, 60)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	b.focus_mode = Control.FOCUS_NONE
+	b.tooltip_text = tip
+	b.pivot_offset = b.custom_minimum_size / 2
+	for st in [["normal", Color(0.95, 0.9, 0.82)], ["hover", Color(1.2, 1.08, 0.9)], ["pressed", Color(0.75, 0.62, 0.5)]]:
+		b.add_theme_stylebox_override(st[0], UI.frame_box("power_disc", 0, 0,
+			UI.box(Color(0.1, 0.04, 0.03, 0.88), UI.GOLD_DARK, 3, 30), st[1]))
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	var nib := Control.new()
+	nib.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	nib.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	nib.draw.connect(func(): glyph.call(nib, Vector2(30, 30)))
+	b.add_child(nib)
+	b.mouse_entered.connect(func():
+		Sfx.play("ui_hover", -10.0)
+		b.create_tween().tween_property(b, "scale", Vector2.ONE * 1.08, 0.08))
+	b.mouse_exited.connect(func(): b.create_tween().tween_property(b, "scale", Vector2.ONE, 0.08))
+	b.pressed.connect(func(): Sfx.play("ui_confirm", -8.0))
+	return b
+
+
+## A pen nib engraved at `c`, its point down-left: dark ink with a thin light edge below (like the discs' arrows).
+static func _draw_nib(ci: CanvasItem, c: Vector2) -> void:
+	var xf := Transform2D(PI / 4, Vector2(1.15, 1.15), 0.0, c + Vector2(2, -2))
+	var body := PackedVector2Array([Vector2(-7, -14), Vector2(7, -14), Vector2(9, -3), Vector2(0, 15), Vector2(-9, -3)])
+	for pass_ in [[Vector2(0, 2), Color(1.0, 0.9, 0.62, 0.35)], [Vector2.ZERO, Color(0.22, 0.09, 0.03)]]:
+		var off: Vector2 = pass_[0]
+		var pts := PackedVector2Array()
+		for p in body:
+			pts.append(xf * p + off)
+		ci.draw_colored_polygon(pts, pass_[1])
+		pts.append(pts[0])
+		ci.draw_polyline(pts, pass_[1], 1.0, true) # polygons are not antialiased: a smooth edge around it
+	# The slit and the breather hole, cut through the nib in the disc's bronze.
+	var bronze := Color(0.75, 0.55, 0.3)
+	ci.draw_line(xf * Vector2(0, 14), xf * Vector2(0, -1), bronze, 1.4, true)
+	ci.draw_circle(xf * Vector2(0, -3), 2.2, bronze)
+	# The stroke it has just written, under the point.
+	ci.draw_line(c + Vector2(-13, 16), c + Vector2(4, 16), Color(0.22, 0.09, 0.03), 2.0, true)
+
+
+## A cross engraved at `c` (Delete): two tapered strokes of dark ink with a thin light edge below.
+static func _draw_cross(ci: CanvasItem, c: Vector2) -> void:
+	for pass_ in [[Vector2(0, 2), Color(1.0, 0.9, 0.62, 0.35)], [Vector2.ZERO, Color(0.22, 0.09, 0.03)]]:
+		for d in [Vector2(1, 1), Vector2(1, -1)]:
+			var a: Vector2 = c - d * 11.0 + pass_[0]
+			var b: Vector2 = c + d * 11.0 + pass_[0]
+			var n := Vector2(-d.y, d.x).normalized()
+			var pts := PackedVector2Array([a, a.lerp(b, 0.5) + n * 3.2, b, a.lerp(b, 0.5) - n * 3.2])
+			ci.draw_colored_polygon(pts, pass_[1])
+			pts.append(a)
+			ci.draw_polyline(pts, pass_[1], 1.0, true)
 
 
 func _small_button(text: String, w: float) -> Button:
@@ -467,6 +571,8 @@ func _refresh() -> void:
 			row.add_child(strip)
 		row.pressed.connect(_remove.bind(id))
 		_list.add_child(row)
+	if ids.is_empty():
+		_list.add_child(_empty_hint())
 	var n := Collection.deck_count(deck.cards)
 	_count.text = "%d / %d" % [n, Collection.DECK_SIZE]
 	_count.add_theme_color_override("font_color", UI.GOLD if n == Collection.DECK_SIZE else UI.BONE)
@@ -475,6 +581,26 @@ func _refresh() -> void:
 	_problem_plate.visible = _problem.text != ""
 	_play.disabled = p != ""
 	_curve.queue_redraw()
+
+
+## An empty deck's list: how to fill it, engraved on a plaque (instead of a bare dark well).
+func _empty_hint() -> Control:
+	var p := UI.plaque(24, 14)
+	var v := VBoxContainer.new()
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_theme_constant_override("separation", 6)
+	p.add_child(v)
+	var t := UI.label("Your deck is empty", 26, "title", UI.GOLD, 4, Color(0.04, 0.01, 0.01))
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(t)
+	var tap := UI.tap_word()
+	var how := UI.label("%s a card on the left to add it, or let Auto-fill choose. %s a card in this list to take it out."
+		% [tap, tap], 21, "italic", UI.BONE, 3, Color(0.04, 0.01, 0.01))
+	how.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	how.custom_minimum_size = Vector2(360, 0)
+	v.add_child(how)
+	return p
 
 
 ## The mana curve: for each cost a bronze rod as tall as the copies at that cost (the count engraved above it),
@@ -537,9 +663,31 @@ func _save() -> void:
 		_index = Collection.decks.size() - 1
 		Game.edit_deck = _index
 	Collection.save()
+	_saved = deck.duplicate(true)
+	# Choose your path opens on the deck just saved (its library on a filter that shows it).
+	Settings.deck_choice["selected"] = "own:%d" % _index
+	if str(Settings.deck_choice.get("filter", "all")) not in ["all", deck.cls]:
+		Settings.deck_choice["filter"] = deck.cls
+	if not Game.debug_run(): # snapshots and tests never touch the player's settings
+		Settings.save()
 
 
+## Delete asks first: a deck is gone for good.
 func _delete() -> void:
+	var shown: String = deck.name.strip_edges() if deck.name.strip_edges() != "" else "This deck"
+	UI.dialog(self, "Delete this deck?", "%s will be gone for good. Its cards stay in your collection." % shown, [
+		["Delete", _delete_now],
+		["Keep it", null]])
+
+
+func _delete_now() -> void:
 	Collection.decks.remove_at(_index)
 	Collection.save()
+	# The player's decks after it move up one place: keep Choose your path on the same deck (or the first one).
+	var sel := str(Settings.deck_choice.get("selected", ""))
+	if sel.begins_with("own:"):
+		var i := int(sel.substr(4))
+		Settings.deck_choice["selected"] = "" if i == _index else "own:%d" % (i - 1) if i > _index else sel
+		if not Game.debug_run():
+			Settings.save()
 	Game.go(Game.DECK_SELECT)

@@ -2,7 +2,8 @@ extends Node
 ## Screenshots of the screens and overlays the plain `--snap` cannot reach (options, pause, banners, damage numbers,
 ## the legendary cut-in, the result, the collection zoom, the pack reveal, a filled deck), for the painted-UI audit.
 ##   Godot --path . res://tests/screen_audit.tscn --resolution 1920x1080 -- --out=<dir> --what=<mode>
-## Modes: menu_options, builder, collection_zoom, packs_reveal, packs_empty, deck_tip, battle (several shots).
+## Modes: menu_options, credits, builder, builder_name, builder_long, builder_empty, builder_leave, builder_edit,
+## builder_delete, builder_tip, collection_zoom, packs_reveal, packs_empty, deck_tip, battle (several shots).
 
 var out := "user://audit"
 var what := "battle"
@@ -20,12 +21,25 @@ func _ready() -> void:
 	# jump to the intro and the menu shots would hang.
 	Game.intro_played = true
 	match what:
-		"menu_options":
-			var s := _open("res://scenes/main_menu.tscn")
+		"menu_options", "credits":
+			# The title screen as the current scene, so Options shows its title-screen row (Watch intro, Credits).
+			var s: Node = load("res://scenes/main_menu.tscn").instantiate()
+			get_tree().root.add_child.call_deferred(s) # the root is still setting up its children
+			await get_tree().process_frame
+			get_tree().current_scene = s
 			await _wait(1.6)
-			s.add_child(OptionsPanel.new())
+			var o := OptionsPanel.new()
+			s.add_child(o)
 			await _wait(0.5)
-			await _snap("menu_options")
+			if what == "credits":
+				s.add_child(CreditsPanel.new())
+				await _wait(0.5)
+			await _snap(what)
+			if what == "credits": # the end of the list
+				var sc: ScrollContainer = s.find_children("*", "ScrollContainer", true, false)[0]
+				sc.scroll_vertical = 100000
+				await _wait(0.3)
+				await _snap("credits_end")
 		"builder":
 			Game.edit_deck = -1
 			Game.new_deck_cls = "pilgrim"
@@ -38,6 +52,8 @@ func _ready() -> void:
 			s._name.release_focus()
 			await _wait(0.6)
 			await _snap("builder")
+		"builder_name", "builder_long", "builder_empty", "builder_leave", "builder_edit", "builder_delete", "builder_tip":
+			await _builder(what)
 		"collection_zoom":
 			var s := _open("res://scenes/collection.tscn")
 			await _wait(0.8)
@@ -85,6 +101,56 @@ func _ready() -> void:
 		_:
 			await _battle()
 	get_tree().quit()
+
+
+## The deck builder in a state a plain snapshot cannot reach (all in memory: debug runs never save):
+## builder_name   a name being typed, the gold-ink caret in the middle of it;
+## builder_long   the longest name the field takes, with part of it selected (the ink underline);
+## builder_empty  an empty deck: the hint in the deck list;
+## builder_leave  Back with unsaved changes: the "Leave without saving?" dialog;
+## builder_edit   a saved deck being edited (the Delete disc);
+## builder_delete Delete on a saved deck: the "Delete this deck?" dialog;
+## builder_tip    the keyword tips beside a card of the grid.
+func _builder(mode: String) -> void:
+	Game.edit_deck = -1
+	Game.new_deck_cls = "pilgrim"
+	if mode in ["builder_edit", "builder_delete"]:
+		Collection.decks.append({"name": "Lions of Violence", "cls": "pilgrim", "cards": {}})
+		Game.edit_deck = Collection.decks.size() - 1
+	var s := _open("res://scenes/deck_builder.tscn")
+	await _wait(0.6)
+	var le: LineEdit = s._name
+	match mode:
+		"builder_name":
+			le.grab_focus()
+			le.text = "The Long Way"
+			le.text_changed.emit(le.text)
+			le.deselect()
+			le.caret_column = 8
+		"builder_long":
+			le.grab_focus()
+			le.text = "Wolves of the Ninth Ring" # 24 letters, the most the field takes
+			le.text_changed.emit(le.text)
+			le.select(10, 24)
+		"builder_empty":
+			le.release_focus()
+		"builder_leave":
+			le.release_focus()
+			s._add("lost_pilgrim")
+			s._leave()
+		"builder_edit":
+			Collection.autofill(s.deck)
+			s._refresh()
+		"builder_delete":
+			s._delete()
+		"builder_tip":
+			le.release_focus()
+			for id in s._views: # the first card of the grid with keyword tips
+				if not UI.card_tips(CardDB.card(id)).is_empty():
+					s._show_tips(id, s._views[id].get_parent())
+					break
+	await _wait(0.8)
+	await _snap(mode)
 
 
 func _open(path: String) -> Node:
