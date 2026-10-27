@@ -11,6 +11,7 @@ static var _framed := {}
 static var _loops := {}
 static var _depths := {}
 static var _names := {}
+static var _living := {} ## card id -> its living-art entry (data/living_art.json "cards")
 
 
 static func _ensure() -> void:
@@ -30,6 +31,7 @@ static func _ensure() -> void:
 				_cards[card.id] = card
 	_decks = _read("res://data/decks.json").get("decks", [])
 	_arenas = _read("res://data/arenas.json").get("arenas", [])
+	_living = _read("res://data/living_art.json").get("cards", {})
 
 
 static func _read(path: String) -> Dictionary:
@@ -223,6 +225,10 @@ static func art_loop(id: String) -> VideoStream:
 		return _loops[id]
 	var stream: VideoStream = null
 	var path := "res://assets/cards/loops/%s.ogv" % id
+	# A card with living art (the painting animated in the shader) never plays its loop, even with the living art off.
+	if not living(id).is_empty():
+		_loops[id] = null
+		return null
 	# Headless runs (tests, servers) have nothing to show; DV_NOVIDEO=1 turns the loops off (same switch as the intro).
 	if DisplayServer.get_name() != "headless" and OS.get_environment("DV_NOVIDEO") == "" 			and ClassDB.class_exists("VideoStreamPlayer") and ResourceLoader.exists(path):
 		var res = load(path)
@@ -230,6 +236,18 @@ static func art_loop(id: String) -> VideoStream:
 			stream = res
 	_loops[id] = stream
 	return stream
+
+
+## The card's living-art entry (data/living_art.json: motion parameters and the mask recipe, see ArtLiving), or {}
+## for a card whose painting stays still.
+static func living(id: String) -> Dictionary:
+	_ensure()
+	return _living.get(id, {})
+
+
+## The living art's mask (assets/cards/living/<id>.png, written by tools/cards/living_mask.py), or null.
+static func living_mask(id: String) -> Texture2D:
+	return _tex("res://assets/cards/living/%s.png" % id)
 
 
 ## The hero's portrait, or the Acheron landscape (like a card without its painting) until it arrives.

@@ -93,6 +93,7 @@ func _build() -> void:
 	_art_mat.shader = CARD_FX
 	_art_mat.set_shader_parameter("mask_mode", 1)
 	_depth = ArtDepth.setup_card(_art_mat, card_id, W / H, 0.34, ArtDepth.MINION)
+	ArtLiving.setup_card(_art_mat, card_id, W / H, 0.34)
 	art.material = _art_mat
 	if art.texture == null:
 		var g := GradientTexture2D.new()

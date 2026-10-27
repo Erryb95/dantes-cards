@@ -7,6 +7,7 @@ shader_type canvas_item;
 // Depth parallax (art only): with a depth map (near = white) the painting is sampled through a window: what lies behind
 // `depth_focus` slides against the frame as the view turns (`parallax`, radians like `tilt`), what lies in front slides the
 // other way. The art is over-scaled by `depth_margin` so a shifted edge never shows.
+// Living art (art only, `living_level` > 0): see living_art.gdshaderinc.
 
 uniform int mask_mode = 0; // 0 none, 1 oval, 2 rounded rectangle
 uniform float corner = 0.08;
@@ -68,6 +69,8 @@ float fbm(vec2 p) {
 	return v;
 }
 
+#include "res://assets/shaders/living_art.gdshaderinc"
+
 vec3 gold_ramp(float t) {
 	vec3 top = vec3(1.0, 0.95, 0.76);
 	vec3 bright = vec3(0.97, 0.78, 0.38);
@@ -122,7 +125,20 @@ void fragment() {
 			suv += clamp(off, -depth_margin, depth_margin);
 		}
 	}
-	if (crop.zw != vec2(1.0)) {
+	vec2 lua;
+	vec2 lub;
+	float lw;
+	vec4 lm;
+	if (living_level > 0 && living_uv(suv, lua, lub, lw, lm)) {
+		// A legendary's living art (it never plays a video loop).
+		c = texture(TEXTURE, lua);
+		if (lw > 0.0) {
+			c = mix(c, texture(TEXTURE, lub), lw);
+		}
+		c = living_light(c * vcol, suv, lm);
+	} else if (living_level > 0) {
+		c = texture(TEXTURE, suv) * vcol;
+	} else if (crop.zw != vec2(1.0)) {
 		c = texture(TEXTURE, crop.xy + suv * crop.zw) * vcol;
 	} else if (depth_amount > 0.0) {
 		c = texture(TEXTURE, suv) * vcol;

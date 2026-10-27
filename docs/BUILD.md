@@ -82,6 +82,12 @@ run `--import`. A card without a depth map just has no parallax. Preview:
 `timeout 60 $G --path . res://tests/depth_preview.tscn --resolution 1920x1080 -- --out=<file.png> [--board] [--sweep=h]`
 (also writes <file>_flat.png). Effect lights (scripts/battle/fx_light.gd) can be switched off with `DV_NOFXLIGHT=1`.
 
+Living art (data/living_art.json, ArtLiving): `python -I tools/cards/living_mask.py [--only id] [--preview <out.png>]`
+paints each listed card's mask into assets/cards/living/<id>.png (no GPU), then run `--import`. Review or record it
+with the movie maker (`--what=zoom|places|side|collection`, `--frozen` stops the tilt / drift / foil, `--level=0|1|2`):
+`timeout 300 $G --path . res://tests/living_preview.tscn --fixed-fps 30 --write-movie <dir>/f.png --quit-after 180 -- --what=zoom`
+(the frames are f00000000.png...; join them with ffmpeg). `DV_LIVING=0` shows the still paintings.
+
 Painted UI pieces (art_src/tutorial_art.json, deck_ui_art.json): `python tools/ui/import_ui_pieces.py` fetches them
 from the ComfyUI PC (read-only) and installs them; `--names <id,id>` keys painted card names into assets/cards/names/
 (CardDB.name_tex; a card without one keeps the gilded label). Review sheet:
