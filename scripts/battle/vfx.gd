@@ -672,6 +672,8 @@ static func _seal_stamp(view, target: Node2D, s: Dictionary, size: float, at: Ve
 	await t.finished
 	Sfx.play("lock", -6.0)
 	Fx.flash(view.fx_layer, "k_flare_01", pos, 280.0 * size, 0.3, s.hot, 0.0)
+	if UiSkin.has("vfx_silence_lock"):
+		Fx.flash(view.fx_layer, "vfx_silence_lock", pos, 260.0 * size, 0.55, Color.WHITE, 0.3)
 	var out := g.create_tween()
 	out.tween_property(g, "modulate:a", 0.0, 0.3 / k)
 	out.tween_callback(g.queue_free)
@@ -925,7 +927,7 @@ static func _freeze(view, t: Node2D) -> void:
 	var fx: Node2D = view.fx_layer
 	var ice: Dictionary = VfxData.SCHOOLS.ice
 	_paint(fx, ice.impact, t.position, 260.0, 0.6, _mid(ice))
-	Fx.flash(fx, "k_star_07", t.position, 300.0, 0.6, Color(0.6, 0.85, 1.0), 0.6)
+	_paint(fx, ["vfx_ice_encase", "k_star_07"], t.position, 240.0, 0.8, Color(0.6, 0.85, 1.0))
 	_sparks(view, t.position, ice, 10)
 	Sfx.play("glass", -8.0, 0.8)
 	Sfx.play("ice", -8.0)

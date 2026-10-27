@@ -577,10 +577,8 @@ func _oy() -> float:
 
 func _intro(p_arena: Dictionary) -> void:
 	# The arena's name as a big title; its circle and intro line on an engraved plaque under it.
-	var title := UI.label(p_arena.get("name", ""), 64, "title", UI.GOLD, 12, Color(0.1, 0.0, 0.0))
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.size = Vector2(V.x, 90)
-	title.position = Vector2(0, V.y * 0.36)
+	var title := UI.banner(p_arena.get("name", ""), 56, UI.GOLD, 0.0, 90.0)
+	title.position = Vector2((V.x - title.size.x) / 2, V.y * 0.36 - 8)
 	var holder := CenterContainer.new()
 	holder.size = Vector2(V.x, 0)
 	holder.position = Vector2(0, V.y * 0.36 + 96)
@@ -956,10 +954,9 @@ func _mulligan_wait() -> void:
 	_mull_ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_mull_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(_mull_ui)
-	var title := UI.label("Your starting hand", 64, "title", UI.GOLD, 10, Color.BLACK)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.size = Vector2(V.x, 80)
-	title.position = Vector2(0, V.y * 0.12)
+	# The heading on the charred banner.
+	var title := UI.banner("Your starting hand", 54, UI.GOLD, 0.0, 80.0)
+	title.position = Vector2((V.x - title.size.x) / 2, V.y * 0.12)
 	_mull_ui.add_child(title)
 	var order := "You go first." if _first_side == 0 else "You go second, with an extra card and Charon's Obol."
 	# The instructions on an engraved plaque under the title.
@@ -1329,9 +1326,9 @@ func _show_result(winner: int) -> void:
 	box.add_theme_constant_override("separation", 26)
 	ui.add_child(box)
 	var won := winner == 0
-	var title := UI.label("VICTORY" if won else ("DEFEAT" if winner == 1 else "DRAW"), 150, "title",
-		UI.GOLD if won else Color(0.8, 0.25, 0.2), 18, Color(0.1, 0.0, 0.0))
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# The verdict on the charred banner.
+	var title := UI.banner("VICTORY" if won else ("DEFEAT" if winner == 1 else "DRAW"), 120,
+		UI.GOLD if won else Color(0.9, 0.3, 0.24), 0.0, 0.0, 1.8)
 	box.add_child(title)
 	var line: String = str(CardDB.hero(Game.enemy_hero).get("defeat_line", "The way lies open.")) if won else (
 		"The shades close in. Try again.")
@@ -1382,7 +1379,7 @@ func _show_result(winner: int) -> void:
 	menu.pressed.connect(func(): Game.go(Game.MENU))
 	row.add_child(menu)
 	box.modulate.a = 0.0
-	title.pivot_offset = Vector2(V.x / 2, 90)
+	title.pivot_offset = title.size / 2
 	title.scale = Vector2(1.6, 1.6)
 	var t := box.create_tween().set_parallel(true)
 	t.tween_property(box, "modulate:a", 1.0, 0.5)
@@ -1418,9 +1415,9 @@ func _legendary_cutin(id: String) -> void:
 	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(band)
 	var parts := str(card.get("name", "")).split(",")
-	var name_l := UI.label(parts[0].strip_edges().to_upper(), 92, "title", UI.RARITY.legendary, 14, Color(0.12, 0.03, 0.0))
-	name_l.size = Vector2(V.x * 0.55, 120)
-	name_l.position = Vector2(V.x * 0.4, V.y / 2 - 90)
+	# The name on the charred banner, the epithet on the red ribbon under it.
+	var name_l := UI.banner(parts[0].strip_edges().to_upper(), 76, UI.RARITY.legendary)
+	name_l.position = Vector2(V.x * 0.4 - 60, V.y / 2 - 30 - name_l.size.y)
 	name_l.modulate.a = 0.0
 	root.add_child(name_l)
 	# The epithet on the red ribbon under the name.
@@ -1444,7 +1441,7 @@ func _legendary_cutin(id: String) -> void:
 	t.tween_property(cv, "position", Vector2(V.x * 0.25, V.y / 2), 0.45 / sp).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	t.tween_property(cv, "rotation", -0.06, 0.45 / sp).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	t.tween_property(name_l, "modulate:a", 1.0, 0.3 / sp).set_delay(0.2 / sp)
-	t.tween_property(name_l, "position:x", V.x * 0.42, 1.4 / sp).set_delay(0.2 / sp)
+	t.tween_property(name_l, "position:x", V.x * 0.4 - 20, 1.4 / sp).set_delay(0.2 / sp)
 	t.tween_property(epithet, "modulate:a", 1.0, 0.3 / sp).set_delay(0.35 / sp)
 	Fx.burst(fx_layer, Vector2(V.x * 0.25, V.y / 2), UI.GOLD, 50, 600.0, 1.0, 12.0, 100.0)
 	await get_tree().create_timer(1.3 / sp).timeout
@@ -1498,12 +1495,16 @@ func _set_end_button(side: int) -> void:
 	_end_label.text = "END TURN" if mine else "ENEMY TURN"
 	# The dimmed seal of the enemy's turn is too dark for ink: the words go pale there.
 	UI.engraved(_end_label, Color(0.2, 0.08, 0.03) if mine else Color(0.62, 0.56, 0.48))
-	# Shrink until the words fit inside the seal's oval.
+	# Shrink until the words fit inside the seal's smooth inner oval. The room is the oval's, not the label's own
+	# size (a label grows to its text, which pushed a long "ENEMY TURN" off centre onto the rope rim).
+	var room := END_OVAL * Vector2(0.56, 0.5)
 	var fs := 28 if mine else 24
 	var font := _end_label.get_theme_font("font")
-	while fs > 16 and font.get_string_size(_end_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > _end_label.size.x:
+	while fs > 16 and font.get_string_size(_end_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > room.x:
 		fs -= 1
 	_end_label.add_theme_font_size_override("font_size", fs)
+	_end_label.size = room
+	_end_label.position = -room / 2
 	_end_disc.set_fill(Color(0.38, 0.1, 0.05) if mine else Color(0.15, 0.12, 0.1))
 	if _end_seal != null:
 		_end_seal.modulate = Color.WHITE if mine else Color(0.45, 0.42, 0.4)
@@ -2052,7 +2053,9 @@ func _show_inspect(u) -> void:
 func _show_hero_tip(h: HeroView) -> void:
 	var def := CardDB.hero(h.hero_id)
 	_add_tip(def.get("name", ""), "Hero power: %s (%d mana). %s" % [def.power.name, def.power.cost, def.power.text])
-	_tips.position = Vector2(h.position.x + 160, h.position.y - 60)
+	# Right of the hero power disc (which sits right of the portrait), so the tip never hides it.
+	# Kept on screen and clear of the mana trays in the top and bottom corners.
+	_tips.position = Vector2(minf(h.position.x + 260, V.x - 430.0), clampf(h.position.y - 60, 110.0, V.y - 330.0))
 
 
 func _add_tip(title: String, text: String) -> void:
@@ -2093,9 +2096,7 @@ func _open_pause() -> void:
 	box.size = V
 	box.add_theme_constant_override("separation", 22)
 	dim.add_child(box)
-	var title := UI.label("Paused", 80, "title", UI.GOLD, 10, Color.BLACK)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(title)
+	box.add_child(UI.banner("Paused", 66)) # the heading on the charred banner
 	for entry in [["Resume", dim.queue_free],
 			["Options", func(): dim.add_child(OptionsPanel.new())],
 			["Concede", _concede]]:

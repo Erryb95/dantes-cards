@@ -15,6 +15,7 @@ var _grid: GridContainer
 var _list: VBoxContainer
 var _count: Label
 var _problem: Label
+var _problem_plate: PanelContainer
 var _name: LineEdit
 var _curve: Control
 var _play: Button
@@ -147,8 +148,12 @@ func _ready() -> void:
 	nr.add_child(ren)
 	var hero := CardDB.hero(CardDB.class_hero(deck.cls))
 	# Hero line with the card count on its right, so the count never crowds the bottom of the deck list.
+	# Both engraved on a plaque like the name's.
+	var hp := UI.plaque(18, 4)
+	rv.add_child(hp)
 	var hr := HBoxContainer.new()
-	rv.add_child(hr)
+	hr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hp.add_child(hr)
 	var hl := UI.label("%s  ·  %s" % [hero.get("name", ""), cls_name], 24, "italic", UI.BONE, 3, Color.BLACK)
 	hl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hr.add_child(hl)
@@ -170,10 +175,15 @@ func _ready() -> void:
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 4)
 	ls.add_child(_list)
+	# Why the deck cannot be played yet, on a plaque shown only while there is a reason.
+	_problem_plate = UI.plaque(18, 4)
+	_problem_plate.visible = false
+	rv.add_child(_problem_plate)
 	_problem = UI.label("", 20, "italic", Color(1.0, 0.6, 0.45), 3, Color.BLACK)
 	_problem.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_problem.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rv.add_child(_problem)
+	_problem.custom_minimum_size = Vector2(400, 0)
+	_problem_plate.add_child(_problem)
 	var r1 := HBoxContainer.new()
 	r1.alignment = BoxContainer.ALIGNMENT_CENTER
 	r1.add_theme_constant_override("separation", 6)
@@ -419,6 +429,7 @@ func _refresh() -> void:
 	_count.add_theme_color_override("font_color", UI.GOLD if n == Collection.DECK_SIZE else UI.BONE)
 	var p := Collection.deck_problem(deck)
 	_problem.text = "" if p == "" or n < Collection.DECK_SIZE else p
+	_problem_plate.visible = _problem.text != ""
 	_play.disabled = p != ""
 	_curve.queue_redraw()
 

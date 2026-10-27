@@ -38,12 +38,13 @@ func _ready() -> void:
 	add_child(ui)
 	Sfx.play_music("intro")
 
-	var title := UI.label("Open Packs", 64, "title", UI.GOLD, 10, Color.BLACK)
-	title.position = Vector2(60, 30)
+	# The heading on the charred banner.
+	var title := UI.banner("Open Packs", 50)
+	title.position = Vector2(30, 16)
 	ui.add_child(title)
 	# Packs and Obols on an engraved plaque under the title, the Obols beside their coin.
 	var purse := UI.plaque(28, 8)
-	purse.position = Vector2(56, 118)
+	purse.position = Vector2(56, 128)
 	ui.add_child(purse)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
@@ -170,7 +171,9 @@ func _spawn_pack() -> void:
 	body.scale = Vector2(1.25, 1.25)
 	body.set_process(false)
 	pack.add_child(body)
-	var seal := Shapes.make(Shapes.Kind.ELLIPSE, Vector2(110, 110), UI.CRIMSON, UI.GOLD, 6.0)
+	# The seal: Charon's painted obol stamped on the pack (the price of every pack), else a drawn wax seal.
+	var seal: Node2D = UiSkin.sprite("icon_obol", Vector2(130, 130)) if UiSkin.has("icon_obol") else \
+		Shapes.make(Shapes.Kind.ELLIPSE, Vector2(110, 110), UI.CRIMSON, UI.GOLD, 6.0)
 	seal.use_parent_material = false
 	pack.add_child(seal)
 	# The call to action on the red ribbon hung under the pack.
@@ -339,11 +342,10 @@ func _tag(v: Node2D, text: String, color: Color) -> void:
 	holder.create_tween().tween_property(holder, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK)
 
 
+## A legendary's name on the charred banner across the top of the table.
 func _banner(text: String, color: Color) -> void:
-	var l := UI.label(text, 90, "title", color, 14, Color.BLACK)
-	l.size = Vector2(V.x, 120)
-	l.position = Vector2(0, 40)
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var l := UI.banner(text, 60, color)
+	l.position = Vector2((V.x - l.size.x) / 2, 4)
 	l.pivot_offset = l.size / 2
 	l.scale = Vector2(1.6, 1.6)
 	ui.add_child(l)

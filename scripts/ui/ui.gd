@@ -317,6 +317,84 @@ static func ribbon(text: String, width: float, size: int, color: Color = BONE) -
 	return c
 
 
+## A heading on the charred banner (the painted ribbon of the turn banner): `text` set in the banner's dark band,
+## the ribbon stretched only in its middle so the folded tails keep their shape. The banner is `k` x the font size
+## tall and as wide as the text needs (or `width`). The returned control is that size for containers (or
+## `layout_h` tall, the ribbon then overhanging it, centred); its label is the child "Text". Without the painting the
+## heading is a plain label with a dark edge.
+static func banner(text: String, size: int, color: Color = GOLD, width: float = 0.0, layout_h: float = 0.0,
+		k: float = 2.0) -> Control:
+	var h := roundf(size * k)
+	var tail := h * 0.96 ## the folded tail at each end, in px: the band of the ribbon lies between them
+	var tw := font("title").get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	var w := width if width > 0.0 else tw + 2.0 * tail + 40.0
+	var c := Control.new()
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	c.custom_minimum_size = Vector2(w, layout_h if layout_h > 0.0 else h)
+	c.size = c.custom_minimum_size
+	var painted := UiSkin.has("turn_banner")
+	if painted:
+		var r := NinePatchRect.new()
+		r.name = "Ribbon"
+		r.texture = _banner_tex(int(h))
+		r.patch_margin_left = int(tail)
+		r.patch_margin_right = int(tail)
+		r.anchor_right = 1.0
+		r.anchor_top = 0.5
+		r.anchor_bottom = 0.5
+		r.offset_top = -h / 2
+		r.offset_bottom = h / 2
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		r.use_parent_material = true
+		c.add_child(r)
+	var l := label(text, size, "title", color, maxi(6, size / 8) if painted else maxi(8, size / 7),
+		Color(0.1, 0.02, 0.0))
+	l.name = "Text"
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# The band's middle sits a little below the ribbon's; Cinzel's letters sit high in their line box.
+	var dy := 0.02 * h + 0.06 * size
+	l.offset_top = dy
+	l.offset_bottom = dy
+	l.use_parent_material = true
+	if painted:
+		fit_label(l, w - 2.0 * tail + 10.0, maxi(14, size - 20))
+	c.add_child(l)
+	return c
+
+
+static func _banner_tex(h: int) -> Texture2D:
+	var key := "turn_banner@h%d" % h
+	if not _scaled.has(key):
+		var img := UiSkin.tex("turn_banner").get_image()
+		if img.is_compressed():
+			img.decompress()
+		img.resize(maxi(1, roundi(img.get_width() * float(h) / img.get_height())), h, Image.INTERPOLATE_LANCZOS)
+		_scaled[key] = ImageTexture.create_from_image(img)
+	return _scaled[key]
+
+
+## The painted look for what Godot draws on its own: tooltips sit on the bronze tooltip plate in the body face.
+## Written into the engine's default theme (Game does it once), the fallback every control's tooltip looks up.
+static func paint_tooltips() -> void:
+	var t := ThemeDB.get_default_theme()
+	var tip := frame_box("tooltip_frame_filled", 40, 0, box(Color(0.08, 0.05, 0.04, 0.94), GOLD_DARK, 2, 8))
+	if tip is StyleBoxTexture:
+		tip.content_margin_left = 46
+		tip.content_margin_right = 46
+		tip.content_margin_top = 30
+		tip.content_margin_bottom = 32
+	t.set_stylebox("panel", "TooltipPanel", tip)
+	t.set_font("font", "TooltipLabel", font("body"))
+	t.set_font_size("font_size", "TooltipLabel", 24)
+	t.set_color("font_color", "TooltipLabel", BONE)
+	t.set_color("font_outline_color", "TooltipLabel", Color(0.04, 0.01, 0.01))
+	t.set_constant("outline_size", "TooltipLabel", 3)
+	t.set_color("font_shadow_color", "TooltipLabel", Color(0, 0, 0, 0))
+
+
 ## Shrinks a one-line label until its text fits `room` px.
 static func fit_label(l: Label, room: float, min_size: int) -> void:
 	var f := l.get_theme_font("font")
