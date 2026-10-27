@@ -146,7 +146,7 @@ static func open(from: Node) -> CanvasLayer:
 	d.mouse_filter = Control.MOUSE_FILTER_STOP
 	layer.add_child(d)
 	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.62)
+	dim.color = Color(0, 0, 0, 0.82) # dark enough that the pack and its "Click to open" ribbon behind do not read
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	d.add_child(dim)

@@ -5,7 +5,7 @@ extends Control
 ## the one to play next lit and tagged. Any lesson can be played in any order, again and again; the reward is paid the
 ## first time it is won. Back returns to the title screen; How to Play opens the rules reference.
 
-const TILE := Vector2(980, 156)
+const TILE := Vector2(980, 168)
 
 var _tiles: Array[Button] = []
 var _t := 0.0
@@ -120,17 +120,17 @@ func _tile(l: Dictionary, i: int) -> Button:
 	var right_w := 250.0
 	var text_w := TILE.x - x - right_w - 30.0
 	var num := UI.label("LESSON %d" % (i + 1), 22, "title", Color(0.85, 0.7, 0.45), 3, Color.BLACK)
-	num.position = Vector2(x, 14)
+	num.position = Vector2(x, 12)
 	b.add_child(num)
 	var title := UI.label(str(l.title), 38, "title", UI.GOLD, 5, Color(0.08, 0.02, 0.0))
-	title.position = Vector2(x, 38)
+	title.position = Vector2(x, 34)
 	title.size = Vector2(text_w, 50)
 	UI.fit_label(title, text_w, 24)
 	b.add_child(title)
 	var learn := UI.label(str(l.learn), 24, "body", UI.BONE, 3, Color(0.04, 0.01, 0.01))
 	learn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	learn.position = Vector2(x, 90)
-	learn.size = Vector2(text_w, 56)
+	learn.position = Vector2(x, 88)
+	learn.size = Vector2(text_w, 60)
 	learn.max_lines_visible = 2
 	b.add_child(learn)
 	# The right-hand column: the reward still to win, or "Completed"; the recommended lesson wears a ribbon.

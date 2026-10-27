@@ -23,7 +23,7 @@ func _ready() -> void:
 		m.add_theme_constant_override("margin_" + side, 44)
 	panel.add_child(m)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 22)
+	v.add_theme_constant_override("separation", 14)
 	m.add_child(v)
 	var title := UI.banner("Options", 54, UI.GOLD, 0.0, 0.0, 1.8) # the heading on the charred banner
 	title.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -59,16 +59,23 @@ func _ready() -> void:
 	right.add_child(_cycle("Opponent", Settings.DIFFICULTY_NAMES, Settings.difficulty, func(i): Settings.difficulty = i))
 	right.add_child(_toggle("Fast animations", Settings.fast_animations, func(on): Settings.fast_animations = on))
 	right.add_child(_toggle("Intro subtitles", Settings.subtitles, func(on): Settings.subtitles = on))
+	var plates: Array = [] # the three page plates share one letter size
 	if get_tree().current_scene and get_tree().current_scene.scene_file_path == Game.MENU:  # not mid-battle
-		var intro := UI.button("Watch intro", 360)
+		var intro := UI.button("Watch intro", 400, 64)
 		intro.pressed.connect(func():
 			Settings.save()
 			Game.play_intro())
 		var ic := CenterContainer.new()
 		ic.add_child(intro)
 		right.add_child(ic)
-	right.add_child(HowToPlayPanel.open_button(self))
-	right.add_child(CreditsPanel.open_button(self))
+		plates.append(intro)
+	var how := HowToPlayPanel.open_button(self)
+	right.add_child(how)
+	plates.append(how)
+	var credits := CreditsPanel.open_button(self)
+	right.add_child(credits)
+	plates.append(credits)
+	UI.even_text(plates)
 	var close := UI.button("Done", 300)
 	close.pressed.connect(_close)
 	var cc := CenterContainer.new()
@@ -78,7 +85,7 @@ func _ready() -> void:
 
 func _column(parent: Control) -> VBoxContainer:
 	var c := VBoxContainer.new()
-	c.add_theme_constant_override("separation", 18)
+	c.add_theme_constant_override("separation", 12)
 	parent.add_child(c)
 	return c
 
@@ -92,7 +99,8 @@ func _row(text: String) -> HBoxContainer:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 30)
 	var l := UI.label(text, 32, "title", UI.BONE)
-	l.custom_minimum_size = Vector2(290, 0)
+	l.custom_minimum_size = Vector2(290, 64) # one row height, so a slider's label sits level with a plate's
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	h.add_child(l)
 	return h
 
@@ -104,7 +112,7 @@ func _slider(text: String, value: float, on_change: Callable) -> HBoxContainer:
 	s.max_value = 1.0
 	s.step = 0.05
 	s.value = value
-	s.custom_minimum_size = Vector2(340, 48)
+	s.custom_minimum_size = Vector2(340, 64)
 	s.add_theme_stylebox_override("slider", UI.frame_box("slider_track", 14, 6, UI.box(Color(0.2, 0.1, 0.08), UI.GOLD_DARK, 2, 8)))
 	if UiSkin.has("slider_grabber"):
 		s.add_theme_icon_override("grabber", UI.scaled_tex("slider_grabber", 46))
@@ -122,7 +130,7 @@ func _slider(text: String, value: float, on_change: Callable) -> HBoxContainer:
 ## A plate button that steps through `names` on each click and reports the new index.
 func _cycle(text: String, names: Array, value: int, on_change: Callable) -> HBoxContainer:
 	var h := _row(text)
-	var b := UI.button(names[value], 300, 64)
+	var b := UI.button(names[value], 340, 64)
 	b.pressed.connect(func():
 		var i := (names.find(b.text) + 1) % names.size()
 		b.text = names[i]
@@ -136,10 +144,10 @@ func _cycle(text: String, names: Array, value: int, on_change: Callable) -> HBox
 ## An On / Off switch on a painted plate: lit when on, dimmed when off.
 func _toggle(text: String, value: bool, on_change: Callable) -> HBoxContainer:
 	var h := _row(text)
-	var b := UI.button("On" if value else "Off", 200, 60)
+	var b := UI.button("On" if value else "Off", 340, 64) # the same plate as the cycle buttons
 	b.toggle_mode = true
 	b.button_pressed = value
-	b.add_theme_font_size_override("font_size", 30)
+	b.add_theme_font_size_override("font_size", 34)
 	b.modulate = Color(1.1, 1.02, 0.88) if value else Color(0.68, 0.62, 0.58)
 	b.toggled.connect(func(on: bool):
 		b.text = "On" if on else "Off"

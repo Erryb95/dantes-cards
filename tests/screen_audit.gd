@@ -3,10 +3,12 @@ extends Node
 ## the legendary cut-in, the result, the collection zoom, the pack reveal, a filled deck), for the painted-UI audit.
 ##   Godot --path . res://tests/screen_audit.tscn --resolution 1920x1080 -- --out=<dir> --what=<mode>
 ## Modes: menu (the title screen; `--named` with a player name), profile (the profile panel; `--named`),
+## profile_online (the panel with its Online section: needs `-- --online-config=<file>`), online_search (the search
+## overlay, then its error shot; same config),
 ## profile_error (an invalid name typed), menu_options, credits, builder, builder_name, builder_long, builder_empty, builder_leave, builder_edit,
 ## builder_delete, builder_tip, collection_zoom, collection_class (the class strip and a keyword chip's tip),
 ## collection_guide, collection_neutral, deck_peek (a key card shown big), deck_list (View cards), deck_list_zoom,
-## deck_guide (the class guide), packs_reveal, packs_empty, packs_rates (the drop-rates sheet), collection_sort
+## deck_plain (Choose your path as it opens), deck_guide (the class guide), packs_reveal, packs_empty, packs_rates (the drop-rates sheet), collection_sort
 ## (`--sort=<id of the collection's SORTS>` on the `--filter=` set, default all, most cards owned), deck_tip,
 ## battle (several shots), lessons (Virgil's lessons screen), howto (every How to Play chapter), offer (the
 ## first-launch question), lesson (`--lesson=<id> [--steps=0,3]`: every line of a lesson played through, and its
@@ -41,7 +43,7 @@ func _ready() -> void:
 	# jump to the intro and the menu shots would hang.
 	Game.intro_played = true
 	match what:
-		"menu", "profile", "profile_error":
+		"menu", "profile", "profile_error", "profile_online":
 			Settings.player_name = "Farinata" if "--named" in OS.get_cmdline_user_args() else ""
 			var s: Node = load("res://scenes/main_menu.tscn").instantiate()
 			get_tree().root.add_child.call_deferred(s)
@@ -59,6 +61,16 @@ func _ready() -> void:
 					p.save()
 				await _wait(0.4)
 			await _snap(what)
+		"online_search":
+			# The online overlay on Choose your path: searching, then the refusal when no server answers (run it with
+			# `-- --online-config=<an INI with a dead host>`, so no real server is asked).
+			var s := _open("res://scenes/deck_select.tscn")
+			await _wait(1.0)
+			s._play_online(s._find(s._selected))
+			await _wait(0.5)
+			await _snap("online_search")
+			await _wait(3.0)
+			await _snap("online_error")
 		"menu_options", "credits":
 			# The title screen as the current scene, so Options shows its title-screen row (Watch intro, Credits).
 			var s: Node = load("res://scenes/main_menu.tscn").instantiate()
@@ -121,11 +133,13 @@ func _ready() -> void:
 			s._set_filter(filter)
 			await _wait(0.8)
 			await _snap("collection_sort_%s_%s" % [sort_id, filter])
-		"deck_peek", "deck_list", "deck_list_zoom", "deck_guide":
+		"deck_plain", "deck_peek", "deck_list", "deck_list_zoom", "deck_guide":
 			Settings.deck_choice = {"selected": "pre:" + (CardDB.class_decks(cls)[1].id if what == "deck_list" else CardDB.class_decks(cls)[0].id)}
 			var s := _open("res://scenes/deck_select.tscn")
 			await _wait(1.0)
 			match what:
+				"deck_plain":
+					pass # Choose your path as it opens
 				"deck_peek":
 					var c: CardView = s._cards.get_child(0)
 					s._lift(c, true)
@@ -320,6 +334,8 @@ func _battle() -> void:
 	await _snap("b_arena_intro")
 	while not b._mull_waiting:
 		await get_tree().process_frame
+	await _wait(1.2) # the opening hand dealt and settled
+	await _snap("b_mulligan")
 	b._confirm_mulligan()
 	# The first turn banner, once it has popped in.
 	var t := 0.0
