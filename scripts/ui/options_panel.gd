@@ -1,6 +1,6 @@
 class_name OptionsPanel
 extends Control
-## Modal options: volumes, fullscreen (desktop), animation speed. Saves on close.
+## Modal options: volumes, fullscreen and V-Sync (desktop), frame limit, FPS counter, animation speed. Saves on close.
 
 
 func _ready() -> void:
@@ -23,38 +23,62 @@ func _ready() -> void:
 		m.add_theme_constant_override("margin_" + side, 44)
 	panel.add_child(m)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 26)
+	v.add_theme_constant_override("separation", 22)
 	m.add_child(v)
-	var title := UI.label("Options", 60, "title", UI.GOLD, 8, Color.BLACK)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var title := UI.banner("Options", 54, UI.GOLD, 0.0, 0.0, 1.8) # the heading on the charred banner
+	title.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(title)
-	v.add_child(_slider("Music", Settings.music_volume, func(x):
+	# Two columns, so every row fits a phone-height screen: sound and screen on the left, the game on the right.
+	var cols := HBoxContainer.new()
+	cols.add_theme_constant_override("separation", 64)
+	v.add_child(cols)
+	var left := _column(cols)
+	var right := _column(cols)
+	left.add_child(_slider("Music", Settings.music_volume, func(x):
 		Settings.music_volume = x
 		Settings.apply()))
-	v.add_child(_slider("Effects", Settings.sfx_volume, func(x):
+	left.add_child(_slider("Effects", Settings.sfx_volume, func(x):
 		Settings.sfx_volume = x
 		Settings.apply()
 		Sfx.play("tick", -6.0)))
 	if Settings.is_desktop():
-		v.add_child(_toggle("Fullscreen", Settings.fullscreen, func(on):
+		left.add_child(_toggle("Fullscreen", Settings.fullscreen, func(on):
 			Settings.fullscreen = on
 			Settings.apply()))
-	v.add_child(_toggle("Fast animations", Settings.fast_animations, func(on): Settings.fast_animations = on))
-	v.add_child(_cycle("Opponent", Settings.DIFFICULTY_NAMES, Settings.difficulty, func(i): Settings.difficulty = i))
-	v.add_child(_toggle("Intro subtitles", Settings.subtitles, func(on): Settings.subtitles = on))
+	left.add_child(_cycle("Frame limit", Settings.FRAME_LIMIT_NAMES, Settings.FRAME_LIMITS.find(Settings.frame_limit),
+		func(i):
+			Settings.frame_limit = Settings.FRAME_LIMITS[i]
+			Settings.apply()))
+	if Settings.is_desktop():
+		left.add_child(_toggle("V-Sync", Settings.vsync, func(on):
+			Settings.vsync = on
+			Settings.apply()))
+	left.add_child(_toggle("Show FPS", Settings.show_fps, func(on):
+		Settings.show_fps = on
+		Settings.apply()))
+	right.add_child(_cycle("Opponent", Settings.DIFFICULTY_NAMES, Settings.difficulty, func(i): Settings.difficulty = i))
+	right.add_child(_toggle("Fast animations", Settings.fast_animations, func(on): Settings.fast_animations = on))
+	right.add_child(_toggle("Intro subtitles", Settings.subtitles, func(on): Settings.subtitles = on))
 	if get_tree().current_scene and get_tree().current_scene.scene_file_path == Game.MENU:  # not mid-battle
-		var intro := UI.button("Watch intro", 420)
+		var intro := UI.button("Watch intro", 360)
 		intro.pressed.connect(func():
 			Settings.save()
 			Game.play_intro())
 		var ic := CenterContainer.new()
 		ic.add_child(intro)
-		v.add_child(ic)
+		right.add_child(ic)
 	var close := UI.button("Done", 300)
 	close.pressed.connect(_close)
 	var cc := CenterContainer.new()
 	cc.add_child(close)
 	v.add_child(cc)
+
+
+func _column(parent: Control) -> VBoxContainer:
+	var c := VBoxContainer.new()
+	c.add_theme_constant_override("separation", 18)
+	parent.add_child(c)
+	return c
 
 
 func _close() -> void:
@@ -65,8 +89,8 @@ func _close() -> void:
 func _row(text: String) -> HBoxContainer:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 30)
-	var l := UI.label(text, 34, "title", UI.BONE)
-	l.custom_minimum_size = Vector2(320, 0)
+	var l := UI.label(text, 32, "title", UI.BONE)
+	l.custom_minimum_size = Vector2(290, 0)
 	h.add_child(l)
 	return h
 
@@ -78,7 +102,7 @@ func _slider(text: String, value: float, on_change: Callable) -> HBoxContainer:
 	s.max_value = 1.0
 	s.step = 0.05
 	s.value = value
-	s.custom_minimum_size = Vector2(420, 48)
+	s.custom_minimum_size = Vector2(340, 48)
 	s.add_theme_stylebox_override("slider", UI.frame_box("slider_track", 14, 6, UI.box(Color(0.2, 0.1, 0.08), UI.GOLD_DARK, 2, 8)))
 	if UiSkin.has("slider_grabber"):
 		s.add_theme_icon_override("grabber", UI.scaled_tex("slider_grabber", 46))

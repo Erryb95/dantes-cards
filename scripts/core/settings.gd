@@ -3,10 +3,15 @@ extends Node
 
 const PATH := "user://settings.cfg"
 const DIFFICULTY_NAMES := ["Easy", "Medium", "Hard"]
+const FRAME_LIMITS := [30, 60, 90, 120, 144, 240, 0] ## Engine.max_fps choices; 0 is no limit of our own
+const FRAME_LIMIT_NAMES := ["30", "60", "90", "120", "144", "240", "No limit"]
 
 var music_volume := 0.7
 var sfx_volume := 0.9
 var fullscreen := false
+var frame_limit := 0 ## frames per second at most (Engine.max_fps), 0 for no limit; V-Sync may still cap it
+var vsync := true ## wait for the display's refresh (desktop; phones always do)
+var show_fps := false ## the frame-rate counter in the corner
 var fast_animations := false
 var subtitles := true ## subtitles of the intro narration
 var intro_seen := false ## the opening cinematic has been played (or skipped) once
@@ -32,6 +37,11 @@ func load_settings() -> void:
 	music_volume = cfg.get_value("audio", "music", music_volume)
 	sfx_volume = cfg.get_value("audio", "sfx", sfx_volume)
 	fullscreen = cfg.get_value("video", "fullscreen", fullscreen)
+	frame_limit = int(cfg.get_value("video", "frame_limit", frame_limit))
+	if not FRAME_LIMITS.has(frame_limit):
+		frame_limit = 0
+	vsync = cfg.get_value("video", "vsync", vsync)
+	show_fps = cfg.get_value("video", "show_fps", show_fps)
 	fast_animations = cfg.get_value("game", "fast_animations", fast_animations)
 	subtitles = cfg.get_value("game", "subtitles", subtitles)
 	intro_seen = cfg.get_value("game", "intro_seen", intro_seen)
@@ -51,6 +61,9 @@ func save() -> void:
 	cfg.set_value("audio", "music", music_volume)
 	cfg.set_value("audio", "sfx", sfx_volume)
 	cfg.set_value("video", "fullscreen", fullscreen)
+	cfg.set_value("video", "frame_limit", frame_limit)
+	cfg.set_value("video", "vsync", vsync)
+	cfg.set_value("video", "show_fps", show_fps)
 	cfg.set_value("game", "fast_animations", fast_animations)
 	cfg.set_value("game", "subtitles", subtitles)
 	cfg.set_value("game", "intro_seen", intro_seen)
@@ -67,6 +80,37 @@ func apply() -> void:
 		var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
 		if DisplayServer.window_get_mode() != mode:
 			DisplayServer.window_set_mode(mode)
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
+	if DisplayServer.get_name() != "headless": # tests run as fast as they can
+		Engine.max_fps = frame_limit
+	_show_fps_counter(show_fps)
+
+
+var _fps: CanvasLayer
+
+
+## The frame-rate counter: a small plaque in the bottom-left corner, above every scene.
+func _show_fps_counter(on: bool) -> void:
+	if on and _fps == null:
+		_fps = CanvasLayer.new()
+		_fps.layer = 120
+		var plate := UI.plaque_label("-- FPS", 20, "title", UI.BONE, 0.0, 16, 4)
+		plate.name = "Plate"
+		plate.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+		plate.offset_left = 12
+		plate.offset_bottom = -10
+		plate.grow_vertical = Control.GROW_DIRECTION_BEGIN
+		_fps.add_child(plate)
+		var t := Timer.new()
+		t.wait_time = 0.5
+		t.autostart = true
+		t.timeout.connect(func():
+			(plate.get_node("Text") as Label).text = "%d FPS" % roundi(Engine.get_frames_per_second()))
+		_fps.add_child(t)
+		add_child(_fps)
+	elif not on and _fps != null:
+		_fps.queue_free()
+		_fps = null
 
 
 func _set_bus(bus: String, v: float) -> void:

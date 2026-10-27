@@ -332,7 +332,11 @@ static func banner(text: String, size: int, color: Color = GOLD, width: float = 
 		k: float = 2.0) -> Control:
 	var h := roundf(size * k)
 	var tail := h * 0.96 ## the folded tail at each end, in px: the band of the ribbon lies between them
+	var word := word_tex(text)
+	var word_h := size * WORD_K
 	var tw := font("title").get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	if word != null:
+		tw = word_h * word.get_width() / word.get_height()
 	var w := width if width > 0.0 else tw + 2.0 * tail + 40.0
 	var c := Control.new()
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -367,8 +371,69 @@ static func banner(text: String, size: int, color: Color = GOLD, width: float = 
 	l.use_parent_material = true
 	if painted:
 		fit_label(l, w - 2.0 * tail + 10.0, maxi(14, size - 20))
+		if word == null:
+			gild(l, color, c.custom_minimum_size.y)
 	c.add_child(l)
+	if word != null: # the painted words take the label's place (it stays, hidden, for code that reads its text)
+		l.visible = false
+		var room := minf(tw, w - 2.0 * tail + 10.0)
+		var wr := word_rect(word, Vector2(room, room * word.get_height() / word.get_width()))
+		wr.position = (c.size - wr.size) / 2.0 + Vector2(0, dy * 0.5)
+		wr.use_parent_material = true
+		c.add_child(wr)
 	return c
+
+
+static var _gilded: Shader
+
+
+## Engraved gold for a heading set in a font (one with no painted words, like a card or arena name): `l` is one
+## line, vertically centred in a box `box_h` px tall; `color` tints the gold (an ember name goes copper).
+static func gild(l: Label, color: Color, box_h: float) -> void:
+	if _gilded == null:
+		_gilded = load("res://assets/shaders/gilded_text.gdshader")
+	var f := l.get_theme_font("font")
+	var fs := l.get_theme_font_size("font_size")
+	var baseline := (box_h - f.get_height(fs)) / 2.0 + f.get_ascent(fs)
+	var m := ShaderMaterial.new()
+	m.shader = _gilded
+	m.set_shader_parameter("baseline", baseline)
+	m.set_shader_parameter("cap_top", baseline - fs * 0.7) # Cinzel's capitals stand about 0.7 em
+	m.set_shader_parameter("tint", color)
+	l.use_parent_material = false
+	l.material = m
+
+
+## How tall painted words stand on a banner, in font sizes: inside the band between its gilded trims.
+const WORD_K := 0.86
+
+
+## Painted lettering for a heading: the words painted on the GPU in gilded capitals on a transparent ground, in
+## assets/ui/words/<slug>.png, the slug being the text lower-cased with its words joined by "_" ("YOUR TURN" →
+## your_turn, "Concede this match?" → concede_this_match). Null when that heading has no painting (a font is used).
+static func word_tex(text: String) -> Texture2D:
+	var slug := ""
+	for ch in text.to_lower().strip_edges():
+		if (ch >= "a" and ch <= "z") or (ch >= "0" and ch <= "9"):
+			slug += ch
+		elif ch == " " and not slug.ends_with("_"):
+			slug += "_"
+	var path := "res://assets/ui/words/%s.png" % slug.trim_suffix("_")
+	return load(path) if ResourceLoader.exists(path) else null
+
+
+## Painted words `tex` scaled to fit `box` (keeping their shape), centred in a control of their scaled size.
+static func word_rect(tex: Texture2D, box: Vector2) -> TextureRect:
+	var k := minf(box.x / tex.get_width(), box.y / tex.get_height())
+	var r := TextureRect.new()
+	r.name = "Word"
+	r.texture = tex
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	r.size = Vector2(tex.get_width(), tex.get_height()) * k
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	r.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS # shrunk many times: no shimmering hatching
+	return r
 
 
 static func _banner_tex(h: int) -> Texture2D:

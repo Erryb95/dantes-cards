@@ -1675,8 +1675,20 @@ func _legendary_cutin(id: String) -> void:
 
 
 func _show_banner(text: String, color: Color, size: int = 96) -> void:
+	# The painted words when the heading has them (they replace the letters), else the font.
+	var old := banner.get_node_or_null("Word")
+	if old != null:
+		old.free()
+	# The label keeps the text (tests read it), its letters then clear.
+	var word := UI.word_tex(text)
 	banner.text = text
-	banner.add_theme_color_override("font_color", color)
+	if word != null:
+		# Inside the ribbon's dark band (about 76 px of its 208, between the gilded trims) and clear of its folds.
+		var wr := UI.word_rect(word, Vector2(700.0, 72.0))
+		wr.position = (banner.size - wr.size) / 2.0 + Vector2(0, 8)
+		banner.add_child(wr)
+	banner.add_theme_color_override("font_color", color if word == null else Color.TRANSPARENT)
+	banner.add_theme_color_override("font_outline_color", Color(0.15, 0.02, 0.0) if word == null else Color.TRANSPARENT)
 	banner.add_theme_font_size_override("font_size", size)
 	banner.pivot_offset = banner.size / 2
 	banner.scale = Vector2(1.4, 1.4)

@@ -35,11 +35,17 @@ func _ready() -> void:
 		title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		UI.fit_label(title, 530.0, 40)
 		logo.add_child(title)
+		var word := UI.word_tex("DANTE'S INFERNO")
+		if word != null: # the painted lettering in the label's place
+			title.visible = false
+			var wr := UI.word_rect(word, Vector2(540, 84))
+			wr.position = Vector2(125, 48) + (Vector2(555, 80) - wr.size) / 2.0
+			logo.add_child(wr)
 		col.add_child(logo)
 	else:
 		col.add_child(title)
 	# The subtitle on the charred banner under the logo.
-	var sub := UI.banner("THE CARD GAME", 34, UI.BONE)
+	var sub := UI.banner("THE CARD GAME", 40, UI.BONE)
 	sub.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	col.add_child(sub)
 	var spacer := Control.new()
@@ -76,13 +82,14 @@ func _ready() -> void:
 	stats.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	col.add_child(stats)
 
-	# Version and credits engraved on a small plaque in the corner.
-	var credit := UI.plaque_label("v%s  ·  card art AI-generated (Qwen-Image), music public domain" %
-		ProjectSettings.get_setting("application/config/version"), 20, "body", Color(0.86, 0.8, 0.7), 0.0, 20, 5)
+	# The version engraved on a small plaque in the bottom-right corner (what made the art and the music is in the credits).
+	var credit := UI.plaque_label("v%s" % ProjectSettings.get_setting("application/config/version"), 20, "body",
+		Color(0.86, 0.8, 0.7), 0.0, 20, 5)
 	credit.name = "Credit"
-	credit.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	credit.offset_left = 16
+	credit.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT) # the FPS counter (Options) sits bottom-left
+	credit.offset_right = -16
 	credit.offset_bottom = -12
+	credit.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	credit.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	add_child(credit)
 
