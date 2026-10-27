@@ -42,8 +42,8 @@ Cards live in `data/cards.json` (core set) and `data/sets/*.json` (expansions). 
 | `bounce` | - | return a minion to its owner's hand |
 | `armor` | `amount` | target must be `own_hero` |
 | `destroy` | - | destroy a minion |
-| `freeze` | - | the target can't attack during its next turn |
-| `silence` | - | remove keywords and card effects from a minion |
+| `freeze` | - | the target loses its next attack; it thaws at the end of its owner's turn once the freeze has cost it an attack (frozen after attacking or while asleep, it stays frozen through its next turn) |
+| `silence` | - | remove keywords and card effects from a minion (stat changes stay, a freeze stays) |
 | `ramp` | `amount` | gain empty mana crystals (no target) |
 | `give_card` | `card`, `count` | add copies of a card id to your hand (no target) |
 | `mana` | `amount` | gain mana this turn only, up to 10 (no target; Charon's Obol) |
@@ -87,3 +87,6 @@ A vanilla minion has attack + health ≈ 2 x cost + 1 (1-mana 2/1, 2-mana 2/3 or
 - **Prefixes:** `On Play: Deal 2 damage.`, `Last Breath: Summon a 2/2 Shade.`, `End of Turn: Gain +1 Attack.`, `Ruse: Gain +1/+1.`
 - **Capitals:** keywords capitalised (Guard, Swift, Ward, Drain, Venom, Rebirth, Freeze, Silence).
 - **Keyword-only cards:** the text is just the keywords: `Guard. Drain.`
+- **Mana:** `mana` is "Gain 1 Mana this turn only."; `ramp` is "Gain an empty Mana Crystal." ("Gain 2 empty Mana Crystals.").
+- **Same effect, same words:** `damage` on `choose_any` is "Deal 2 damage." (no "to any target"); narrower targets say
+  so ("to a minion", "to an enemy minion", "to an enemy").

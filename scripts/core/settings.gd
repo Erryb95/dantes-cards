@@ -43,7 +43,10 @@ func load_settings() -> void:
 	deck_choice = cfg.get_value("game", "deck_choice", deck_choice)
 
 
+## Tests and tooling runs (`Game.debug_run()`) keep their changes in memory: the player's real settings are never written.
 func save() -> void:
+	if Game.debug_run():
+		return
 	var cfg := ConfigFile.new()
 	cfg.set_value("audio", "music", music_volume)
 	cfg.set_value("audio", "sfx", sfx_volume)

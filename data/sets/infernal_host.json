@@ -520,7 +520,7 @@
      "amount": 2
     }
    ],
-   "text": "Deal 2 damage to any target.",
+   "text": "Deal 2 damage.",
    "flavor": "Slow flakes of fire fall on the sand, and they never stop.",
    "circle": "violence",
    "art": "Slow flakes of fire falling through the air above a plain of gray sand."
@@ -582,7 +582,7 @@
      "amount": 2
     }
    ],
-   "text": "Gain 2 empty mana crystals.",
+   "text": "Gain 2 empty Mana Crystals.",
    "flavor": "The ground breathes out fumes, and the fumes are fuel.",
    "circle": "malebolge",
    "art": "Yellow sulphur smoke pouring out of a crack in a rocky ground."

@@ -26,7 +26,7 @@
    "keywords": [
     "guard"
    ],
-   "text": "Guard",
+   "text": "Guard.",
    "flavor": "They know everything, except a way out.",
    "image": "limbo_s31"
   },
@@ -184,7 +184,7 @@
    "keywords": [
     "guard"
    ],
-   "text": "Guard",
+   "text": "Guard.",
    "flavor": "The image of fraud, carrying the poets down on its back.",
    "image": "geryon_s31"
   },
@@ -200,7 +200,7 @@
    "keywords": [
     "swift"
    ],
-   "text": "Swift",
+   "text": "Swift.",
    "flavor": "No arrow ever flew as fast as his boat.",
    "image": "phlegyas_s31"
   },
@@ -216,7 +216,7 @@
    "keywords": [
     "ward"
    ],
-   "text": "Ward",
+   "text": "Ward.",
    "flavor": "Together in the storm, forever.",
    "image": "francesca_s31"
   },
@@ -277,7 +277,7 @@
   },
   {
    "id": "stung_neutral",
-   "name": "Stung Neutral",
+   "name": "Stung Bystander",
    "set": "ferry",
    "type": "minion",
    "rarity": "common",
@@ -398,7 +398,7 @@
    "keywords": [
     "drain"
    ],
-   "text": "Drain",
+   "text": "Drain.",
    "flavor": "Pape Satan, pape Satan aleppe!",
    "image": "plutus_s31"
   },
@@ -414,7 +414,7 @@
    "keywords": [
     "guard"
    ],
-   "text": "Guard",
+   "text": "Guard.",
    "flavor": "Three throats, and all of them hungry.",
    "image": "cerberus_s31"
   },
@@ -514,7 +514,7 @@
    "keywords": [
     "venom"
    ],
-   "text": "Venom",
+   "text": "Venom.",
    "flavor": "",
    "image": "harpies_s31"
   },
@@ -538,7 +538,7 @@
    "type": "spell",
    "rarity": "token",
    "cost": 0,
-   "text": "Gain 1 Mana Crystal this turn only.",
+   "text": "Gain 1 Mana this turn only.",
    "flavor": "The ferryman's fare, pressed into the hand of whoever crosses second.",
    "effects": [
     {

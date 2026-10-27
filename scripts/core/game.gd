@@ -58,9 +58,25 @@ func _ready() -> void:
 		last_arena = str(cfg.get_value("run", "last_arena", ""))
 
 
+## The first match keeps the intro's promise ("At the river Acheron, Charon is waiting."): on a fresh profile the
+## arena is the Acheron and the opponent plays Charon's starter deck (unless the player leads Charon's class).
+const FIRST_ARENA := "acheron"
+const FIRST_FOE := "charon"
+
+
+## No match finished yet (wins + losses == 0; draws and abandoned games do not count).
+func first_match() -> bool:
+	return int(stats.get("wins", 0)) + int(stats.get("losses", 0)) == 0
+
+
 ## Draws the arena for the next match: a random one whose painted board is installed, never the previous
 ## match's when there is a choice. Arenas still waiting for their art are left out (the Acheron always qualifies).
+## The first match is always at the Acheron.
 func pick_arena() -> String:
+	if first_match() and CardDB.arena_ready(FIRST_ARENA):
+		arena_id = FIRST_ARENA
+		arena_picked = true
+		return arena_id
 	var pool: Array[String] = []
 	for a in CardDB.arenas():
 		if CardDB.arena_ready(a.id) and a.id != last_arena:
@@ -122,8 +138,11 @@ func start_with(cards: Array, hero: String, enemy_cls := "") -> void:
 
 
 ## A random opponent class for a player of class `cls`: any other class with preconstructed decks (the same class
-## when it is the only one).
+## when it is the only one). The first match is against Charon's class when the player is not playing it.
 func pick_enemy_class(cls: String) -> String:
+	var first_foe := CardDB.hero_class(FIRST_FOE)
+	if first_match() and first_foe != cls and not CardDB.class_decks(first_foe).is_empty():
+		return first_foe
 	var pool: Array[String] = []
 	for c in CardDB.other_classes(cls):
 		if not CardDB.class_decks(c).is_empty():
@@ -131,8 +150,11 @@ func pick_enemy_class(cls: String) -> String:
 	return pool.pick_random() if not pool.is_empty() else cls
 
 
-## A random preconstructed deck of class `cls`, never the one faced last time when there is a choice.
+## A random preconstructed deck of class `cls`, never the one faced last time when there is a choice. In the first
+## match Charon's class plays its starter (its first deck).
 func pick_enemy_deck(cls: String) -> String:
+	if first_match() and cls == CardDB.hero_class(FIRST_FOE) and not CardDB.class_decks(cls).is_empty():
+		return str(CardDB.class_decks(cls)[0].id)
 	var pool: Array[String] = []
 	for d in CardDB.class_decks(cls):
 		if d.id != enemy_deck_id or CardDB.class_decks(cls).size() == 1:
@@ -159,8 +181,8 @@ func _save_progress(key: String, value: Variant) -> void:
 	cfg.save("user://progress.cfg")
 
 
-## The opening cinematic plays once, on the first launch, before the main menu. Never in headless runs (tests) or
-## when a debug flag takes over the first scene (`--snap`, `--shots`, `--autoplay`, `--no-intro`); `--intro` forces it.
+## The opening cinematic plays once, on the first launch, before the main menu. Never in headless runs (tests), with
+## `--no-intro` or in any other `debug_run` (a tooling flag such as `--snap`, `--shots`, `--autoplay`); `--intro` forces it.
 func intro_due() -> bool:
 	if intro_played:
 		return false
@@ -169,19 +191,27 @@ func intro_due() -> bool:
 		return true
 	if Settings.intro_seen or DisplayServer.get_name() == "headless":
 		return false
-	for a in args:
-		if a == "--no-intro" or a == "--autoplay" or a.begins_with("--snap=") or a.begins_with("--shots="):
-			return false
+	if "--no-intro" in args or debug_run():
+		return false
 	return true
 
 
-## True for tests and tooling runs (headless, or a debug flag that drives the game), where first-time things such as
-## the intro and the coach tips must neither show nor be marked as seen.
+## Flags of the tooling runs (BUILD.md, tests/*.gd) that drive the real game; any of them makes a `debug_run`.
+const DEBUG_FLAGS := ["--autoplay", "--snap=", "--shots=", "--out=", "--intro-shots="]
+
+
+## True for tests and tooling runs, where first-time things such as the intro and the coach tips must neither show
+## nor be marked as seen, and nothing is written to the player's profile (settings, progress, collection): headless
+## runs, a debug flag that drives the game (DEBUG_FLAGS), or any scene or script started from res://tests/.
 func debug_run() -> bool:
 	if DisplayServer.get_name() == "headless":
 		return true
 	for a in OS.get_cmdline_user_args():
-		if a == "--autoplay" or a.begins_with("--snap=") or a.begins_with("--shots=") or a.begins_with("--out="):
+		for f in DEBUG_FLAGS:
+			if a == f or (f.ends_with("=") and a.begins_with(f)):
+				return true
+	for a in OS.get_cmdline_args():
+		if a.begins_with("res://tests/") or a.begins_with("tests/"):
 			return true
 	return false
 

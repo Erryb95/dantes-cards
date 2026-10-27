@@ -7,7 +7,7 @@
 | `data/cards.json` | every card and hero: stats, keywords, effects, rules text, flavour, art prompt |
 | `data/sets/*.json` | expansion sets (loaded automatically); schema and balance guide in `docs/CARD_SCHEMA.md`, check with `python tools/cards/validate.py` |
 | `data/decks.json` | the preconstructed decks (30 cards each, three per class; the first of each class is its starter): class, hero, name, plan text, 3 featured cards |
-| `data/arenas.json` | arenas: name, circle, intro text, music, ambience, painted board / mist, divider kind, ambient particles, tints, tappable corner props (shown only with `"corner_props": true`; off everywhere since 2026-10-26: the board plus the middle animations is enough). Each match draws a random arena whose board is installed (never the previous one) |
+| `data/arenas.json` | arenas: name, circle, intro text, music, ambience, painted board / mist, divider kind, ambient particles, tints, tappable corner props (shown only with `"corner_props": true`; off everywhere since 2026-10-26: the board plus the middle animations is enough). Each match draws a random arena whose board is installed (never the previous one; the first match is always the Acheron) |
 | `scripts/battle/arena_props.gd` | `ArenaProps`: an arena's living layer built from its data (divider VFX, ambient, toys); `arena_acheron.gd` subclasses it for Charon's boat (the bell, brazier and skulls are corner props). Sockets: `scenes/arenas/standard.tscn` |
 | `scripts/core/` | `CardDB` (static data access), autoloads `Settings`, `Sfx`, `Game` (scene flow + stats), `Collection` (owned cards, Obols, packs, custom decks in `user://collection.cfg`) |
 | `scripts/battle/battle_state.gd` | **the rules**: pure logic, no nodes; every change goes out as an event |
@@ -54,6 +54,11 @@ him, card by card. / At the river Acheron, Charon is waiting."
   (returns once after dying).
 - Triggers: **On Play**, **Last Breath**, **End of Turn**, **Start of Turn**, **Ruse** (On Play, but only if you
   already played another card this turn).
+- **Freeze** costs a minion one attack (the Hearthstone rule): a Frozen minion can't attack, and it thaws at the end
+  of its owner's turn only if the freeze took that turn's attack from it (it was awake and had not attacked). Frozen
+  after it attacked (a Last Breath such as Ruggieri's or Cassius's set off by its own attack) or while still asleep,
+  it stays frozen through its owner's next turn (`BattleState._freeze_spent`).
+- **Silence** removes a minion's card text and keywords; stat changes stay and a Frozen minion stays frozen.
 - Effects: damage, heal, draw, buff, summon, bounce, armor, destroy, freeze, silence, ramp, give_card, mana, copy, transform. Targets: `choose_*` are picked by the
   player; `all_*`, `own_hero`, `enemy_hero`, `random_enemy_minion` and `other_friendly_minions` resolve on their own.
 
@@ -62,6 +67,9 @@ him, card by card. / At the river Acheron, Charon is waiting."
 - Preconstructed decks (`data/decks.json`), three per class, picked with the arrows on Choose your path (the last
   pick per class is saved in `Settings.deck_choice`); the opponent plays a random one of the other class
   (`Game.pick_enemy_deck`, never the same one twice in a row). Custom decks face a random one too.
+- **First match:** the intro ends "At the river Acheron, Charon is waiting.", so on a fresh profile (`Game.first_match()`:
+  no win or loss recorded yet) the arena is the Acheron and the opponent plays Charon's starter, *The Ferryman's Host*
+  (a player who picks the Ferryman faces another class, still at the Acheron).
   - Pilgrim: *The Pilgrim's Way* (starter, midrange guards and draw), *Cato's Vigil* (guards, Armor, removal),
     *The Noble School* (the poets of Limbo: draw, spells, Rebirth).
   - Ferryman: *The Ferryman's Host* (starter, souls, venom, clears), *The Serpent Pit* (cheap souls and Venom swarm),
@@ -86,7 +94,7 @@ souls and board clears; Ulysses wins with timing, stolen knowledge and false app
   steals the top of the enemy's deck and the Black Cherub a card from their hand; Capocchio summons a copy of an enemy
   minion.
 - **Transform:** Circe's Draught and Circe turn minions into 1/1 Swine (no Last Breath, Ward does not help).
-- **Disguise and replay:** weak-looking bodies with a payoff (Achaean in Hiding, Buoso Donati, the Trojan Horse: a 0/7
+- **Disguise and replay:** weak-looking bodies with a payoff (Achaean in Hiding, Buoso Donati, the Trojan Horse: a 0/6
   Guard that releases three Achaean Raiders), bounce to replay On Play effects (Turn the Prow, the Distant Mountain).
 - **Flame:** Tongue of Flame, Wandering Flames, Speech of Fire, the Two-Horned Flame and the Valley of Flames burn
   minions and, with Ruse, the enemy hero.

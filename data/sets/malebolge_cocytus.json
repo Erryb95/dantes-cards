@@ -51,7 +51,7 @@
           "amount": 2
         }
       ],
-      "text": "Deal 2 damage to any target.",
+      "text": "Deal 2 damage.",
       "flavor": "The pitch scalds whoever tries to climb out.",
       "circle": "malebolge",
       "art": "A bubbling cauldron of black pitch with a single hand reaching up from the surface."
@@ -70,7 +70,7 @@
           "amount": 1
         }
       ],
-      "text": "Gain 1 empty Mana Crystal.",
+      "text": "Gain an empty Mana Crystal.",
       "flavor": "One false story, and the gates open from the inside.",
       "circle": "malebolge",
       "art": "A large wooden horse standing outside a city wall at dusk."

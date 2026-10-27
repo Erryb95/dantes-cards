@@ -455,14 +455,13 @@ func _best_freeze(st: BattleState) -> int:
 	return best
 
 
-## How much a minion loses when silenced (keywords, card effects, buffs above its printed stats).
+## How much a minion loses when silenced: its keywords and card effects. Silence keeps stat changes (buffs stay)
+## and does not thaw a Frozen minion, so neither counts here.
 func _silence_value(u) -> float:
 	if u.silenced:
 		return 0.0
 	var c := CardDB.card(u.id)
-	var v: float = 2.0 * u.keywords.size() + 3.0 * c.get("effects", []).size()
-	v += maxf(0.0, u.attack - int(c.get("attack", 0))) + maxf(0.0, u.max_health - int(c.get("health", 0)))
-	return v
+	return 2.0 * u.keywords.size() + 3.0 * c.get("effects", []).size()
 
 
 func _best_silence(st: BattleState) -> int:

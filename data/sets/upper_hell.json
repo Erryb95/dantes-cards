@@ -13,7 +13,7 @@
    "keywords": [
     "swift"
    ],
-   "text": "Swift",
+   "text": "Swift.",
    "flavor": "A hound is coming that will chase the she-wolf back to Hell.",
    "circle": "dark_wood",
    "art": "A lean greyhound running at full speed across a hillside at dawn."
@@ -73,7 +73,7 @@
    "keywords": [
     "swift"
    ],
-   "text": "Swift",
+   "text": "Swift.",
    "flavor": "She ran over the wheat without bending a single stalk.",
    "circle": "limbo",
    "art": "A young woman with a bow sprinting across a golden wheat field."
@@ -133,7 +133,7 @@
    "keywords": [
     "guard"
    ],
-   "text": "Guard",
+   "text": "Guard.",
    "flavor": "They sulked in the black mud and refused to move.",
    "circle": "wrath",
    "art": "Two gaunt figures sunk to the waist in dark swamp water."
@@ -154,7 +154,7 @@
      "amount": 1
     }
    ],
-   "text": "On Play: Gain 1 empty mana crystal.",
+   "text": "On Play: Gain an empty Mana Crystal.",
    "flavor": "Hoarders and spenders shove their weights at each other forever.",
    "circle": "greed",
    "art": "A huge stone ball rolling along a cracked road between two crowds of shoving figures."
@@ -171,7 +171,7 @@
    "keywords": [
     "rebirth"
    ],
-   "text": "Rebirth",
+   "text": "Rebirth.",
    "flavor": "It burns to ash and rises again, as the old poets said.",
    "circle": "malebolge",
    "art": "A phoenix rising out of a pile of glowing ashes with its wings spread wide."
@@ -341,7 +341,7 @@
    "keywords": [
     "ward"
    ],
-   "text": "Ward",
+   "text": "Ward.",
    "flavor": "The finest Trojan fighter, still defending a city that burned.",
    "circle": "limbo",
    "art": "A bearded warrior in bronze armor holding a round shield before a burning city wall."
@@ -358,7 +358,7 @@
    "keywords": [
     "venom"
    ],
-   "text": "Venom",
+   "text": "Venom.",
    "flavor": "A warrior queen who fought bravely and fell to Achilles.",
    "circle": "limbo",
    "art": "A warrior woman with a crescent shield and spear riding a horse."
@@ -375,7 +375,7 @@
    "keywords": [
     "drain"
    ],
-   "text": "Drain",
+   "text": "Drain.",
    "flavor": "He drank the love potion once and is swept along by the wind forever.",
    "circle": "lust",
    "art": "A young knight in a torn tunic tossed by a howling wind in a dark sky."
@@ -468,7 +468,7 @@
      "amount": 2
     }
    ],
-   "text": "Drain. On Play: Gain 2 empty mana crystals.",
+   "text": "Drain. On Play: Gain 2 empty Mana Crystals.",
    "flavor": "She made her own desires into law.",
    "circle": "lust",
    "art": "A crowned queen in a long gown standing on a stone throne above a city."
@@ -531,7 +531,7 @@
      "amount": 2
     }
    ],
-   "text": "Deal 2 damage to any target.",
+   "text": "Deal 2 damage.",
    "flavor": "Snap a thorn off the wood and strike.",
    "circle": "dark_wood",
    "art": "A broken thorny branch lying on dead leaves."
@@ -692,7 +692,7 @@
      "amount": 1
     }
    ],
-   "text": "Gain 1 empty mana crystal.",
+   "text": "Gain an empty Mana Crystal.",
    "flavor": "Gold you cannot spend is still gold.",
    "circle": "greed",
    "art": "A single gold coin lying on a dark stone floor."

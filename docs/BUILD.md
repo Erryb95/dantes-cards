@@ -23,6 +23,9 @@ Debug flags (after `--`): `--autoplay` (AI plays both sides), `--shots=<dir>` (b
 `--snap=<file.png> [--snap-delay=s]` (one screenshot of any scene). Battle only: `--arena=<id>` forces an arena (without
 its painted board it is shown on the Acheron board), `--shot-every=s`, `--shot-count=N`, `--poke-toys=s` (taps every
 arena toy and the divider after s seconds).
+Headless runs, `--autoplay`, `--snap=`, `--shots=`, `--out=`, `--intro-shots=` and any scene or script under
+`res://tests/` are debug runs (`Game.debug_run()`): no intro, no coach tips, and nothing is written to the player's
+settings, progress or collection.
 
 Art depth maps (parallax): `python -I tools/cards/make_depth.py [--sheet <out.png>]` writes assets/cards/depth/<id>.png
 (and depth/heroes/<id>.png) for new or changed art only, with Depth Anything V2 **Small** (Apache-2.0; never the

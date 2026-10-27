@@ -9,6 +9,9 @@ var checks := 0
 func _initialize() -> void:
 	_test_data()
 	_test_rules()
+	_test_freeze()
+	_test_silence_ai()
+	_test_first_match()
 	_test_ulysses()
 	_soak(120)
 	_soak_classes(24)
@@ -252,6 +255,115 @@ func _test_rules() -> void:
 	st.sides[0].deck.clear()
 	st.draw(0, 2)
 	ok(st.sides[0].hero.health == 27, "fatigue 1+2 (%d)" % st.sides[0].hero.health)
+
+
+## Freeze costs a minion one attack: it thaws at the end of its owner's turn only once the freeze has taken an attack
+## from it (awake, attack unused); frozen after attacking or while asleep, it stays frozen through its next turn.
+func _test_freeze() -> void:
+	# Frozen on the enemy's turn: no attack on the owner's next turn, thawed at its end.
+	var st := _blank()
+	var m := _put(st, 0, "she_wolf")
+	st.end_turn()
+	var chill := _give(st, 1, "uh_bitter_chill")
+	ok(st.play_card(1, chill, m.uid) and m.frozen, "Bitter Chill freezes")
+	st.end_turn()
+	ok(m.frozen and not st.can_attack(m), "frozen minion cannot attack on its owner's next turn")
+	st.end_turn()
+	ok(not m.frozen, "it thaws at the end of the turn it lost")
+
+	# Ruggieri's Last Breath on the attacker's own turn (the QA case): the freeze must last through the next turn.
+	st = _blank()
+	var att := _put(st, 0, "geryon")
+	var idle := _put(st, 0, "she_wolf")
+	var fresh := st._summon(0, "lost_pilgrim") # played this turn: still asleep
+	var r := _put(st, 1, "mc_ruggieri")
+	r.health = 1
+	r.attack = 0
+	ok(st.attack(0, att.uid, r.uid) and r.dead, "Ruggieri dies to the attack")
+	ok(att.frozen and idle.frozen and fresh.frozen, "Ruggieri's Last Breath freezes every enemy minion")
+	ok(not st.can_attack(idle), "a minion frozen before it attacked loses this turn's attack")
+	st.end_turn()
+	ok(att.frozen, "frozen after attacking: still frozen after its owner's turn ends")
+	ok(fresh.frozen, "frozen while asleep: still frozen after its owner's turn ends")
+	ok(not idle.frozen, "frozen before attacking: thaws at the end of that turn (the freeze cost it the attack)")
+	st.end_turn()
+	ok(att.frozen and not st.can_attack(att), "the attacker misses its next turn")
+	ok(fresh.frozen and not st.can_attack(fresh), "the sleeper misses its first awake turn")
+	ok(st.can_attack(idle), "the thawed minion attacks again")
+	st.end_turn()
+	ok(not att.frozen and not fresh.frozen, "both thaw at the end of the turn they lost")
+
+	# Cassius killed by a spell after the minion attacked: the same.
+	st = _blank()
+	var w := _put(st, 0, "she_wolf")
+	var cassius := _put(st, 1, "mc_cassius")
+	cassius.health = 1
+	ok(st.attack(0, w.uid, st.sides[1].hero.uid), "she-wolf attacks the hero")
+	var strike := _give(st, 0, "oar_strike")
+	ok(st.play_card(0, strike, cassius.uid) and w.frozen, "Cassius' Last Breath freezes the she-wolf")
+	st.end_turn()
+	st.end_turn()
+	ok(w.frozen and not st.can_attack(w), "Cassius' freeze holds through the she-wolf's next turn")
+	st.end_turn()
+	ok(not w.frozen, "and thaws after it")
+
+	# The search AI's copies keep the state the rule needs (sleeping, attacks made).
+	st = _blank()
+	var c := _put(st, 0, "she_wolf")
+	c.frozen = true
+	c.attacks_made = 1
+	var cl := st.clone(5)
+	cl.end_turn()
+	ok(cl.units[c.uid].frozen, "a clone keeps a freeze set after the attack")
+
+
+## Silence keeps stat changes and does not thaw, so the AI does not count buffs as something Silence removes.
+func _test_silence_ai() -> void:
+	var st := _blank()
+	var u := _put(st, 1, "she_wolf")
+	var ai := BattleAI.new(0)
+	var before: float = ai._silence_value(u)
+	u.attack += 5
+	u.health += 5
+	u.max_health += 5
+	ok(is_equal_approx(ai._silence_value(u), before), "the AI's Silence value ignores buffs")
+	u.frozen = true
+	st._resolve({"do": "silence", "target": "choose_enemy_minion"}, 0, null, u.uid, "test")
+	ok(u.silenced and u.attack == 8 and u.max_health == 7 and u.frozen, "Silence keeps buffs and the freeze")
+
+
+## The first match follows the intro ("At the river Acheron, Charon is waiting."): on a fresh profile the arena is
+## the Acheron and the opponent Charon's starter deck.
+func _test_first_match() -> void:
+	var g: Node = root.get_node_or_null("Game")
+	ok(g != null, "Game autoload present")
+	if g == null:
+		return
+	var saved: Dictionary = g.stats.duplicate()
+	var saved_last: String = g.last_arena
+	var saved_enemy: String = g.enemy_deck_id
+	var foe_cls := CardDB.hero_class("charon")
+	var starter: String = CardDB.class_decks(foe_cls)[0].id
+	g.stats = {"wins": 0, "losses": 0}
+	g.last_arena = "acheron" # even right after an Acheron match
+	g.enemy_deck_id = starter # and right after facing the starter
+	ok(g.first_match(), "a fresh profile is the first match")
+	for i in 5:
+		ok(g.pick_arena() == "acheron", "the first match is at the Acheron")
+	for cls in CardDB.other_classes(foe_cls):
+		ok(g.pick_enemy_class(cls) == foe_cls, "the first opponent of a %s is Charon's class" % cls)
+	ok(g.pick_enemy_class(foe_cls) != foe_cls, "a Charon player still faces another class")
+	ok(g.pick_enemy_deck(foe_cls) == starter and CardDB.deck(starter).hero == "charon",
+		"the first opponent plays Charon's starter")
+	g.stats = {"wins": 0, "losses": 1}
+	ok(not g.first_match(), "one finished match ends the first-match rule")
+	var ready := CardDB.arenas().filter(func(a): return CardDB.arena_ready(a.id))
+	if ready.size() > 1:
+		ok(g.pick_arena() != "acheron", "later matches draw another arena")
+	g.stats = saved
+	g.last_arena = saved_last
+	g.enemy_deck_id = saved_enemy
+	g.arena_picked = false
 
 
 func _soak(games: int) -> void:

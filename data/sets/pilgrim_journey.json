@@ -3,7 +3,7 @@
  "cards": [
   {
    "id": "pj_wanderer_dark_wood",
-   "name": "Wanderer of the Dark Wood",
+   "name": "Traveler in the Dark Wood",
    "set": "pilgrim",
    "type": "minion",
    "rarity": "common",
@@ -49,7 +49,7 @@
    "keywords": [
     "swift"
    ],
-   "text": "Swift",
+   "text": "Swift.",
    "flavor": "It blocked the sunlit hill, quick and bright-spotted.",
    "circle": "lust",
    "art": "A spotted leopard with a sleek coat stands on a sunlit hillside."
@@ -66,7 +66,7 @@
    "keywords": [
     "guard"
    ],
-   "text": "Guard",
+   "text": "Guard.",
    "flavor": "Hungry and proud, it charged up the hill toward him.",
    "circle": "violence",
    "art": "A fierce lion with an open roaring mouth stands on rocky ground."
@@ -83,7 +83,7 @@
    "keywords": [
     "drain"
    ],
-   "text": "Drain",
+   "text": "Drain.",
    "flavor": "Her hunger grows with every meal.",
    "circle": "greed",
    "art": "A gaunt grey she-wolf with bared teeth stands on a barren plain."
@@ -100,7 +100,7 @@
    "keywords": [
     "ward"
    ],
-   "text": "Ward",
+   "text": "Ward.",
    "flavor": "A sharp wit, even in a place with no way out.",
    "circle": "limbo",
    "art": "A bearded Roman poet with a scroll sits in a quiet meadow beside a stone wall."
@@ -187,7 +187,7 @@
    "keywords": [
     "rebirth"
    ],
-   "text": "Rebirth",
+   "text": "Rebirth.",
    "flavor": "He admired Virgil so deeply that he chose to follow him.",
    "circle": "malebolge",
    "art": "Two robed poets walk together along a stone ridge above a dark ravine."
@@ -325,7 +325,7 @@
    "keywords": [
     "guard"
    ],
-   "text": "Guard",
+   "text": "Guard.",
    "flavor": "He stood firm, though every step felt like falling.",
    "circle": "ante_inferno",
    "art": "A determined man in a red cloak plants his feet on a steep rocky path."
@@ -364,7 +364,7 @@
    "keywords": [
     "venom"
    ],
-   "text": "Venom",
+   "text": "Venom.",
    "flavor": "She nests in a tree that cries out when it is broken.",
    "circle": "violence",
    "art": "A winged harpy with a woman's face perches on a split, bleeding tree trunk."
@@ -381,7 +381,7 @@
    "keywords": [
     "drain"
    ],
-   "text": "Drain",
+   "text": "Drain.",
    "flavor": "My old teacher still walks the burning sand, still giving advice.",
    "circle": "violence",
    "art": "An elderly man in a scholar's cap walks across burning sand under falling flames."
@@ -424,7 +424,7 @@
    "keywords": [
     "venom"
    ],
-   "text": "Venom",
+   "text": "Venom.",
    "flavor": "Its bite poisons the sinner again and again.",
    "circle": "malebolge",
    "art": "A coiled green serpent with an open jaw rests on a ledge of dark rock above a pit."
@@ -489,7 +489,7 @@
    "keywords": [
     "drain"
    ],
-   "text": "Drain",
+   "text": "Drain.",
    "flavor": "She ruled through desire, and now the wind carries her forever.",
    "circle": "lust",
    "art": "A queen with a golden crown is blown by a stormy wind across a dark sky."
@@ -585,7 +585,7 @@
      "count": 2
     }
    ],
-   "text": "Gain 1 empty mana crystal. Add 2 copies of Rope Belt to your hand.",
+   "text": "Gain an empty Mana Crystal. Add 2 copies of Rope Belt to your hand.",
    "flavor": "Follow a wise guide, and the hard road becomes clear.",
    "circle": "limbo",
    "art": "An older poet with a laurel wreath points at a glowing scroll in a lamp-lit room."
@@ -648,7 +648,7 @@
      "amount": 1
     }
    ],
-   "text": "Gain 1 empty mana crystal. Draw a card.",
+   "text": "Gain an empty Mana Crystal. Draw a card.",
    "flavor": "Each step up the slope makes the next one easier.",
    "circle": "ante_inferno",
    "art": "A narrow stone path climbs a sunlit mountain slope toward a bright sky."
@@ -691,7 +691,7 @@
      "amount": 1
     }
    ],
-   "text": "Draw 2 cards. Gain 1 empty mana crystal.",
+   "text": "Draw 2 cards. Gain an empty Mana Crystal.",
    "flavor": "We climbed out of the dark to see the stars again.",
    "circle": "cocytus",
    "art": "A dense field of bright stars spreads over a dark horizon."

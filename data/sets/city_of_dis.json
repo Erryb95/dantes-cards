@@ -193,7 +193,7 @@
      "amount": 1
     }
    ],
-   "text": "On Play: Gain an empty mana crystal.",
+   "text": "On Play: Gain an empty Mana Crystal.",
    "flavor": "The grammarian who wrote the rules, and still walks by them in the sand.",
    "circle": "violence",
    "art": "A white-haired scholar holds an open book while walking across a burning sandy plain."
@@ -584,7 +584,7 @@
      "amount": 1
     }
    ],
-   "text": "Draw a card. Gain an empty mana crystal.",
+   "text": "Draw a card. Gain an empty Mana Crystal.",
    "flavor": "Every coin lent is a coin owed, with interest.",
    "circle": "violence",
    "art": "A small leather purse spills gold coins onto a wooden table."

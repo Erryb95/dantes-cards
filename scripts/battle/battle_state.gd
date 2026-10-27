@@ -233,9 +233,11 @@ func end_turn() -> void:
 	_fire_turn_triggers(current, "turn_end")
 	if winner != -1:
 		return
-	# Frozen minions thaw at the end of their owner's turn.
+	# Freeze costs a minion one attack (Hearthstone rule). At the end of its owner's turn a frozen minion thaws only
+	# if the freeze took this turn's attack from it: it was awake and had not attacked. One frozen after it attacked
+	# (a Last Breath set off by its own attack) or while it was still asleep stays frozen through its next turn.
 	for u in sides[current].board:
-		if u.frozen:
+		if u.frozen and _freeze_spent(u):
 			u.frozen = false
 			_emit_status(u)
 	_emit({"t": "turn_end", "side": current})
@@ -245,6 +247,12 @@ func end_turn() -> void:
 		_emit({"t": "game_over", "winner": 2})
 		return
 	_begin_turn()
+
+
+## True when a frozen minion has lost an attack to the freeze this turn: awake and with its attack unused, so it
+## thaws at the end of its owner's turn. Otherwise the freeze still has to cost it its next turn's attack.
+static func _freeze_spent(u: Unit) -> bool:
+	return not u.sleeping and u.attacks_made == 0
 
 
 func _fire_turn_triggers(side: int, trigger: String) -> void:
