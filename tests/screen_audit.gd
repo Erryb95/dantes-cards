@@ -3,8 +3,12 @@ extends Node
 ## the legendary cut-in, the result, the collection zoom, the pack reveal, a filled deck), for the painted-UI audit.
 ##   Godot --path . res://tests/screen_audit.tscn --resolution 1920x1080 -- --out=<dir> --what=<mode>
 ## Modes: menu_options, credits, builder, builder_name, builder_long, builder_empty, builder_leave, builder_edit,
-## builder_delete, builder_tip, collection_zoom, packs_reveal, packs_empty, deck_tip, battle (several shots).
+## builder_delete, builder_tip, collection_zoom, packs_reveal, packs_empty, deck_tip, battle (several shots),
+## lessons (Virgil's lessons screen), howto (every How to Play chapter), offer (the first-launch question),
+## lesson (`--lesson=<id> [--steps=0,3]`: every line of a lesson played through, and its result), lesson_pause.
 ## `--cls=<class>`: the class of the deck in the "builder" shot (default Pilgrim).
+
+const LessonDriver := preload("res://tests/lesson_driver.gd")
 
 var out := "user://audit"
 var what := "battle"
@@ -81,6 +85,31 @@ func _ready() -> void:
 			_open("res://scenes/pack_opening.tscn")
 			await _wait(1.2)
 			await _snap("packs_empty")
+		"lessons":
+			_open(Game.LESSONS)
+			await _wait(1.2)
+			await _snap("lessons")
+		"howto":
+			# Every chapter of How to Play, over the lessons screen it is opened from.
+			var s := _open(Game.LESSONS)
+			await _wait(0.8)
+			var h := HowToPlayPanel.new()
+			s.add_child(h)
+			for i in HowToPlayPanel.CHAPTERS.size():
+				h.show_chapter(i)
+				await _wait(0.5)
+				await _snap("howto_%d" % i)
+		"offer":
+			var s: Node = load(Game.MENU).instantiate()
+			get_tree().root.add_child.call_deferred(s)
+			await get_tree().process_frame
+			get_tree().current_scene = s
+			await _wait(1.4)
+			s.offer_lessons()
+			await _wait(0.6)
+			await _snap("offer")
+		"lesson", "lesson_pause":
+			await _lesson(what)
 		"deck_tip":
 			# A library disc's tooltip (the discs only show when the library overflows, so one is forced on).
 			var s := _open("res://scenes/deck_select.tscn")
@@ -155,6 +184,38 @@ func _builder(mode: String) -> void:
 					break
 	await _wait(0.8)
 	await _snap(mode)
+
+
+## A lesson played through (tests/lesson_driver.gd), a shot of every line Virgil shows and of the result:
+## lesson_<id>_<step>.png. `--lesson=<id>` (default the first lesson); `--steps=a,b` keeps only those step shots.
+## "lesson_pause": the lesson's pause menu, and How to Play opened from it.
+func _lesson(mode: String) -> void:
+	var id := str(Lessons.all()[0].id)
+	var only: Array = []
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--lesson="):
+			id = a.substr(9)
+		elif a.begins_with("--steps="):
+			only = Array(a.substr(8).split(",")).map(func(x): return int(x))
+	Game.prepare_lesson(id)
+	var b: Node2D = _open(Game.BATTLE)
+	if mode == "lesson_pause":
+		await _wait(4.0)
+		b._open_pause()
+		await _wait(0.5)
+		await _snap("lesson_pause")
+		b._pause_dim.add_child(HowToPlayPanel.new())
+		await _wait(0.5)
+		await _snap("lesson_pause_howto")
+		return
+	var shot := func(i: int, _s: Dictionary) -> void:
+		if only.is_empty() or only.has(i):
+			await _wait(1.3) # the line typed out, the arrow settled
+			await _snap("lesson_%s_%02d" % [id, i])
+	var r: Dictionary = await LessonDriver.run(get_tree(), b, shot)
+	print("AUDIT lesson %s: %s" % [id, r])
+	await _wait(2.6)
+	await _snap("lesson_%s_result" % id)
 
 
 func _open(path: String) -> Node:

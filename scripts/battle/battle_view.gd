@@ -82,6 +82,8 @@ var _hand_tips: GridContainer ## keyword tips beside the lifted (hovered or held
 var _hand_tips_card: CardView
 var _pointer := Vector2.ZERO
 var _coach: Coach
+var lesson: Dictionary = {} ## the lesson this battle is (Game.lesson, data/lessons.json), {} in a real match
+var guide: LessonGuide ## Virgil, in a lesson: his lines, the pointer and the gate on the player's actions
 var _pause_dim: Control ## the open pause menu (no coach tips while it is up)
 var _flash_rect: ColorRect
 
@@ -129,6 +131,8 @@ func _ready() -> void:
 			_poke_at = float(a.substr(12))
 	V = get_viewport_rect().size
 	ky = minf(V.y / 1080.0, V.x / 1920.0) # the 16:9 layout fits inside any screen (letterboxed on 16:10)
+	if Game.lesson != "":
+		lesson = Lessons.get_lesson(Game.lesson)
 	_resolve_arena()
 	_build_scene()
 	get_viewport().size_changed.connect(_on_resize)
@@ -138,8 +142,17 @@ func _ready() -> void:
 	st.event.connect(func(ev): queue.append(ev))
 	ai = BattleAI.new(1, BattleAI.Level.HARD if autoplay else Settings.difficulty as BattleAI.Level)
 	ai_self = BattleAI.new(0)
-	_intro(arena)
-	st.start(Game.player_cards, Game.player_hero, Game.enemy_cards, Game.enemy_hero, 0, true, -1)
+	# A lesson opens with its own title and what it teaches, in place of the arena's name and line.
+	_intro(arena if lesson.is_empty() else {"name": lesson.title, "intro": lesson.learn,
+		"circle": "Lesson %d of %d" % [Lessons.index_of(lesson.id) + 1, Lessons.all().size()]})
+	if lesson.is_empty():
+		st.start(Game.player_cards, Game.player_hero, Game.enemy_cards, Game.enemy_hero, 0, true, -1)
+	else:
+		# A lesson: its own dealing, opponent and opening (see Lessons.configure).
+		Lessons.configure(st, lesson)
+		ai = Lessons.make_ai(lesson)
+		st.start(Game.player_cards, Game.player_hero, Game.enemy_cards, Game.enemy_hero, 0,
+			bool(lesson.get("mulligan", false)), int(lesson.get("first", 0)))
 
 
 func _on_resize() -> void:
@@ -377,6 +390,18 @@ func _build_scene() -> void:
 	add_child(coach_layer)
 	_coach = Coach.new()
 	coach_layer.add_child(_coach)
+	if not lesson.is_empty():
+		# Virgil above the coach. His scripted lessons need no coach; a lesson with "hints" (the trial) shows every
+		# coach tip and keyword tip once in the match, seen before or not.
+		var guide_layer := CanvasLayer.new()
+		guide_layer.layer = 55
+		add_child(guide_layer)
+		guide = LessonGuide.new().setup(self, lesson)
+		guide_layer.add_child(guide)
+		if lesson.get("hints", false):
+			_coach.lesson_mode()
+		else:
+			_coach.enabled = false
 
 	var menu := UI.button("Menu", 150, 56)
 	menu.add_theme_font_size_override("font_size", 24)
@@ -770,6 +795,8 @@ func _present(ev: Dictionary) -> void:
 					w.node.queue_free()
 			_stolen.clear()
 			_set_end_button(ev.side)
+			if guide != null:
+				guide.on_turn(ev.side)
 			if ev.side == 0:
 				_show_banner("YOUR TURN", UI.GOLD)
 				Sfx.play("chime", -6.0, 1.0, 0.0)
@@ -1045,6 +1072,8 @@ func _mulligan_wait() -> void:
 	ok.position = Vector2(V.x / 2 - 170, V.y * 0.78)
 	ok.pressed.connect(_confirm_mulligan)
 	_mull_ui.add_child(ok)
+	if guide != null:
+		guide.on_mulligan()
 	await mulligan_confirmed
 
 
@@ -1084,6 +1113,7 @@ func _confirm_mulligan() -> void:
 		c.modulate = Color.WHITE
 	st.finish_mulligan(1, ai.mulligan_choice(st))
 	st.finish_mulligan(0, chosen if not autoplay else ai_self.mulligan_choice(st))
+	_did({"act": "mulligan"})
 	mulligan_confirmed.emit()
 
 
@@ -1610,6 +1640,11 @@ func _on_game_over(ev: Dictionary) -> void:
 		Vfx.hero_death(self, h)
 		_screen_flash(Color(1, 0.5, 0.2), 0.6)
 		await h.burn_away(1.4)
+	if guide != null:
+		guide.on_turn(1) # Virgil steps aside for the result
+	if not lesson.is_empty():
+		_show_lesson_result(ev.winner) # a lesson never counts in the record
+		return
 	Game.record_result(ev.winner)
 	_show_result(ev.winner)
 
@@ -1679,6 +1714,86 @@ func _show_result(winner: int) -> void:
 	var menu := UI.button("Main Menu", 340)
 	menu.pressed.connect(func(): Game.go(Game.MENU))
 	row.add_child(menu)
+	box.modulate.a = 0.0
+	title.pivot_offset = title.size / 2
+	title.scale = Vector2(1.6, 1.6)
+	var t := box.create_tween().set_parallel(true)
+	t.tween_property(box, "modulate:a", 1.0, 0.5)
+	t.tween_property(title, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if won:
+		Sfx.play("title_sting", -4.0, 1.0, 0.0)
+		Fx.burst(fx_layer, V / 2, UI.GOLD, 120, 800.0, 2.0, 14.0, 300.0)
+	else:
+		Sfx.play("bell_funeral", -6.0, 1.0, 0.0)
+
+
+## A lesson's end: "Lesson complete" (or the defeat) on the charred banner, Virgil's closing words beside his portrait,
+## the reward the first time the lesson is won, then the way on: the next lesson, the lessons, or a new try.
+func _show_lesson_result(winner: int) -> void:
+	var won := winner == 0
+	var paid: Dictionary = Lessons.complete(lesson.id) if won else {}
+	var dim := ColorRect.new()
+	dim.name = "ResultDim"
+	dim.color = Color(0, 0, 0, 0)
+	dim.size = V
+	ui.add_child(dim)
+	dim.create_tween().tween_property(dim, "color:a", 0.65, 0.6)
+	var box := VBoxContainer.new()
+	box.name = "LessonResult"
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.size = V
+	box.add_theme_constant_override("separation", 30)
+	ui.add_child(box)
+	var title := UI.banner("Lesson complete" if won else ("DEFEAT" if winner == 1 else "DRAW"), 96 if won else 120,
+		UI.GOLD if won else Color(0.9, 0.3, 0.24), 0.0, 0.0, 1.8)
+	box.add_child(title)
+	var plate := PanelContainer.new()
+	plate.add_theme_stylebox_override("panel", UI.tip_box())
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var pc := CenterContainer.new()
+	pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pc.add_child(plate)
+	box.add_child(pc)
+	var prow := HBoxContainer.new()
+	prow.add_theme_constant_override("separation", 48)
+	prow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plate.add_child(prow)
+	var vh := CenterContainer.new()
+	vh.custom_minimum_size = Vector2(150, 200)
+	vh.add_child(Virgil.portrait(Vector2(118, 150)))
+	prow.add_child(vh)
+	var pv := VBoxContainer.new()
+	pv.alignment = BoxContainer.ALIGNMENT_CENTER
+	pv.add_theme_constant_override("separation", 14)
+	pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	prow.add_child(pv)
+	var line := str(lesson.get("outro", "")) if won else "Even the bravest stumble here. Try again: I will be at your side."
+	var sub := UI.label(line, 32, "italic", UI.BONE, 3, Color.BLACK)
+	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sub.custom_minimum_size = Vector2(minf(820.0, V.x - 700.0), 0)
+	pv.add_child(sub)
+	if not paid.is_empty():
+		pv.add_child(LessonsScreen.reward_badge(paid, "Reward:  "))
+		Sfx.play("coins", -4.0)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 30)
+	box.add_child(row)
+	var next := Lessons.next_after(lesson.id)
+	var buttons := []
+	if won and next != "":
+		buttons.append(["Next Lesson", Game.start_lesson.bind(next)])
+	elif won and Collection.packs > 0:
+		buttons.append(["Open Packs", Game.go.bind(Game.PACKS)])
+	if not won:
+		buttons.append(["Try Again", Game.start_lesson.bind(lesson.id)])
+	buttons.append(["Lessons", Game.go.bind(Game.LESSONS)])
+	if won and next == "":
+		buttons.append(["Main Menu", Game.go.bind(Game.MENU)])
+	for b in buttons:
+		var btn := UI.button(b[0], 340)
+		btn.pressed.connect(b[1])
+		row.add_child(btn)
 	box.modulate.a = 0.0
 	title.pivot_offset = title.size / 2
 	title.scale = Vector2(1.6, 1.6)
@@ -1960,22 +2075,24 @@ func _my_turn() -> bool:
 
 func _refresh_highlights() -> void:
 	var mine := _my_turn()
+	if mine and guide != null:
+		guide.on_idle() # Virgil's next line first: it decides what may glow
 	var any := false
 	var ruse := mine and st.ruse_active(0)
 	for c in hand_views[0]:
-		c.playable = mine and st.can_play(0, c.uid)
+		c.playable = mine and st.can_play(0, c.uid) and _allowed({"act": "play", "card": c.card_id})
 		c.ruse = ruse and _has_ruse(c.card_id)
 		any = any or c.playable
 	for m in board_views[0]:
 		var u = st.units.get(m.uid)
-		m.can_attack = mine and u != null and st.can_attack(u)
+		m.can_attack = mine and u != null and st.can_attack(u) and _allowed({"act": "attack", "card": m.card_id})
 		any = any or m.can_attack
 	for m in board_views[1]:
 		m.can_attack = false
 	if heroes[0]:
-		heroes[0].power_ready = mine and st.can_use_power(0)
+		heroes[0].power_ready = mine and st.can_use_power(0) and _allowed({"act": "power"})
 		any = any or heroes[0].power_ready
-	_end_glow.set_on(mine and not any)
+	_end_glow.set_on(mine and not any and _allowed({"act": "end"}))
 	if mine:
 		_set_mana(0, st.sides[0].mana, st.sides[0].max_mana)
 		_offer_coach(any)
@@ -1985,6 +2102,8 @@ func _refresh_highlights() -> void:
 func _offer_coach(any: bool) -> void:
 	if autoplay or _in_mulligan or _coach.showing() or is_instance_valid(_pause_dim):
 		return
+	if guide != null and guide.talking():
+		return # one voice at a time: Virgil first
 	var xf := get_canvas_transform()
 	for c in hand_views[0]:
 		if c.playable and CardDB.card(c.card_id).type == "minion":
@@ -1992,6 +2111,8 @@ func _offer_coach(any: bool) -> void:
 			if _coach.offer("play", xf * (Vector2(V.x / 2, _board_y(0)) + board_layer.position)):
 				return
 			break
+	if _offer_keyword(xf):
+		return
 	for m in board_views[0]:
 		if m.can_attack:
 			for e in board_views[1]:
@@ -2006,6 +2127,53 @@ func _offer_coach(any: bool) -> void:
 			return
 	if not any and st.turn >= 3:
 		_coach.offer("end", xf * (end_btn.global_position))
+
+
+## The first time a keyword or a trigger is on the board (the enemy's minions first: what stands against you), the
+## coach says what it means, pointing at the minion: "Ward: The first damage it would take is blocked." Once ever.
+func _offer_keyword(xf: Transform2D) -> bool:
+	for side in [1, 0]:
+		for m in board_views[side]:
+			var u = st.units.get(m.uid)
+			if u == null:
+				continue
+			var live: Dictionary = CardDB.card(u.id).duplicate()
+			live["keywords"] = u.keywords.keys()
+			live["frozen"] = u.frozen
+			live["silenced"] = u.silenced
+			live["wrath"] = u.wrath
+			for t in UI.card_tips(live, true):
+				var key := ""
+				for k in UI.KEYWORD_HELP:
+					if UI.KEYWORD_HELP[k][0] == t[0]:
+						key = k
+				# Guard keeps the coach's own tip (the one shown when an attack is blocked).
+				var id := "guard" if key == "guard" else "kw_" + key
+				var text := "" if key == "guard" else "%s: %s" % [t[0], t[1]]
+				if key != "" and _coach.fresh(id):
+					return _coach.offer(id, xf * (m.position + board_layer.position), text)
+	return false
+
+
+## Lessons: may the player take `action` now ({act, card, target}; see LessonGuide.allows)? Always in a real match.
+func _allowed(action: Dictionary) -> bool:
+	return guide == null or guide.allows(action)
+
+
+## The same, but a refusal says so: "Not yet" above `pos` (a board point) and Virgil's line pulses back into view.
+func _permit(action: Dictionary, pos: Vector2) -> bool:
+	if _allowed(action):
+		return true
+	_nope(pos, "Not yet")
+	guide.nudge()
+	return false
+
+
+## The player's action went through: Virgil hears of it. `hit`: whether it was the step's action, judged before it
+## happened (null: judge it now; fine when its target cannot have left the board).
+func _did(action: Dictionary, hit: Variant = null) -> void:
+	if guide != null:
+		guide.performed(action, hit)
 
 
 func any_card_playable() -> bool:
@@ -2086,6 +2254,11 @@ func _pick_unit(p: Vector2):
 func _on_press(p: Vector2) -> void:
 	_hide_inspect()
 	_coach.dismiss()
+	if guide != null and guide.wants_tap():
+		guide.tap() # Virgil is talking: the tap moves his lesson on
+		return
+	if guide != null:
+		guide.on_press() # a passing remark goes away with the first touch
 	if _mull_waiting:
 		var mc := _pick_hand(p)
 		if mc != null:
@@ -2119,11 +2292,17 @@ func _on_press(p: Vector2) -> void:
 		aim_attacker = u.uid
 		_start_aim(u.position, st.attack_targets(0))
 		return
+	if u is MinionView and u.side == 0 and guide != null and st.can_attack(st.units.get(u.uid)) \
+			and not _permit({"act": "attack", "card": u.card_id}, u.position):
+		return # it could attack, but this is not the moment in the lesson
 	if heroes[0] != null and heroes[0].power_contains(p):
+		if st.can_use_power(0) and not _permit({"act": "power"}, heroes[0].power.global_position):
+			return
 		if st.can_use_power(0):
 			var tt := BattleState.power_target_type(CardDB.hero(st.sides[0].hero_id))
 			if tt == "":
-				st.use_power(0)
+				if st.use_power(0):
+					_did({"act": "power", "target": -1})
 			else:
 				mode = Mode.AIM_POWER
 				_start_aim(heroes[0].power.global_position, st.valid_targets(0, tt))
@@ -2170,7 +2349,8 @@ func _on_motion(p: Vector2) -> void:
 				if gi != _gap_index:
 					_gap_index = gi
 					_layout_board(0)
-			elif above and BattleState.target_type(card) != "" and st.can_play(0, drag_card.uid):
+			elif above and BattleState.target_type(card) != "" and st.can_play(0, drag_card.uid) \
+					and _allowed({"act": "play", "card": drag_card.card_id}):
 				# A targeted spell turns into an arrow once it leaves the hand.
 				mode = Mode.AIM_SPELL
 				aim_card_uid = drag_card.uid
@@ -2198,6 +2378,9 @@ func _on_release(p: Vector2) -> void:
 				_nope(c.position, "Not enough mana" if int(card.cost) > st.sides[0].mana else "Can't play that now")
 				_return_card()
 				return
+			if not _permit({"act": "play", "card": c.card_id}, c.position):
+				_return_card()
+				return
 			if card.type == "minion":
 				var idx: int = _gap_index if _gap_index != -1 else board_views[0].size()
 				var tt := BattleState.target_type(card)
@@ -2222,11 +2405,13 @@ func _on_release(p: Vector2) -> void:
 					return
 				drag_card = null
 				mode = Mode.IDLE
-				st.play_card(0, c.uid, -1, idx)
+				if st.play_card(0, c.uid, -1, idx):
+					_did({"act": "play", "card": c.card_id, "target": -1})
 			else:
 				drag_card = null
 				mode = Mode.IDLE
-				st.play_card(0, c.uid)
+				if st.play_card(0, c.uid):
+					_did({"act": "play", "card": c.card_id, "target": -1})
 		Mode.AIM_SPELL, Mode.AIM_BATTLECRY, Mode.AIM_ATTACK, Mode.AIM_POWER:
 			if _press_pos.distance_to(p) < 24.0 and not _sticky:
 				_sticky = true ## tap-tap aiming for touch screens
@@ -2281,18 +2466,33 @@ func _finish_aim(p: Vector2) -> void:
 		if m == Mode.AIM_SPELL or m == Mode.AIM_BATTLECRY:
 			_return_card()
 		return
+	# What the aim would do, for the lesson's gate (a real match lets everything through).
+	var action := {"act": "power", "target": target}
+	if m == Mode.AIM_ATTACK:
+		action = {"act": "attack", "card": str(st.units[attacker].id) if st.units.has(attacker) else "", "target": target}
+	elif m == Mode.AIM_SPELL or m == Mode.AIM_BATTLECRY:
+		action = {"act": "play", "card": str(st.hand_card(0, card_uid).get("id", "")), "target": target}
+	if not _permit(action, u.position):
+		if m == Mode.AIM_SPELL or m == Mode.AIM_BATTLECRY:
+			_return_card()
+		return
+	# Judged now: once the blow lands, its target may be gone from the board.
+	var hit := guide != null and guide.hits(action)
+	var done := false
 	match m:
 		Mode.AIM_ATTACK:
-			st.attack(0, attacker, target)
+			done = st.attack(0, attacker, target)
 		Mode.AIM_POWER:
-			st.use_power(0, target)
+			done = st.use_power(0, target)
 		Mode.AIM_SPELL:
 			drag_card = null
-			st.play_card(0, card_uid, target)
+			done = st.play_card(0, card_uid, target)
 		Mode.AIM_BATTLECRY:
 			drag_card = null
 			_gap_index = -1
-			st.play_card(0, card_uid, target, index)
+			done = st.play_card(0, card_uid, target, index)
+	if done:
+		_did(action, hit)
 
 
 func _end_aim() -> void:
@@ -2329,10 +2529,13 @@ func _cancel() -> void:
 func _end_turn() -> void:
 	if not _my_turn():
 		return
+	if not _permit({"act": "end"}, end_btn.position + Vector2(0, 40)):
+		return
 	_cancel()
 	Sfx.play("ui_confirm", -6.0)
 	_pop(end_btn, 0.9)
 	st.end_turn()
+	_did({"act": "end"})
 
 
 ## Why an action was refused ("Not enough mana"), on a small plaque that pops above `pos` and fades.
@@ -2396,6 +2599,7 @@ func _show_inspect(u) -> void:
 	if not (u is MinionView):
 		return
 	var id: String = u.card_id
+	_did({"act": "inspect", "card": id})
 	inspect = CardView.new().setup(id, -1, true)
 	inspect.z_index = 300
 	inspect.sway = true
@@ -2558,6 +2762,7 @@ func _tick_hand_tips() -> void:
 			for t in tips:
 				_hand_tips.add_child(UI.tip_plate(t[0], t[1]))
 			_hand_tips.set_meta("tips", tips)
+			_did({"act": "inspect", "card": c.card_id})
 	_hand_tips.visible = c != null
 	if c == null:
 		return
@@ -2604,9 +2809,11 @@ func _paused() -> bool:
 ## drag in progress; with nothing open it opens the pause menu.
 func _on_back() -> void:
 	if _paused():
-		var opts := _pause_dim.get_children().filter(func(n): return n is OptionsPanel)
-		if not opts.is_empty():
-			opts.back()._close()
+		# The last page opened over the pause menu closes first (Credits over Options), then the menu itself.
+		var pages := _pause_dim.get_children().filter(func(n):
+			return (n is OptionsPanel or n is CreditsPanel or n is HowToPlayPanel) and not n.is_queued_for_deletion())
+		if not pages.is_empty():
+			pages.back()._close()
 		else:
 			_pause_dim.queue_free()
 		return
@@ -2633,10 +2840,21 @@ func _open_pause() -> void:
 	box.add_theme_constant_override("separation", 22)
 	dim.add_child(box)
 	box.add_child(UI.banner("Paused", 66)) # the heading on the charred banner
-	for entry in [["Resume", dim.queue_free],
-			["Options", func(): dim.add_child(OptionsPanel.new())],
-			["Concede", _ask_concede.bind(dim, box)]]:
-		var b := UI.button(entry[0], 380)
+	var entries := [["Resume", dim.queue_free],
+			["How to Play", func(): dim.add_child(HowToPlayPanel.new())],
+			["Options", func(): dim.add_child(OptionsPanel.new())]]
+	if lesson.is_empty():
+		entries.append(["Concede", _ask_concede.bind(dim, box)])
+	else:
+		# A lesson is left, restarted or skipped, never conceded (it does not count in the record).
+		entries.append(["Restart Lesson", func(): _leave_lesson(lesson.id)])
+		entries.append(["Skip Lesson", func():
+			Lessons.skip(lesson.id)
+			_leave_lesson(Lessons.next_after(lesson.id))])
+		entries.append(["Leave Lesson", func(): _leave_lesson("")])
+	box.add_theme_constant_override("separation", 22 if entries.size() <= 4 else 14)
+	for entry in entries:
+		var b := UI.button(entry[0], 380, 84 if entries.size() <= 4 else 74)
 		b.pressed.connect(entry[1])
 		var c := CenterContainer.new()
 		c.add_child(b)
@@ -2674,6 +2892,15 @@ func _concede() -> void:
 	over = true
 	Game.record_result(1)
 	Game.go(Game.MENU)
+
+
+## Out of a lesson from its pause menu: into lesson `next` ("" for the lessons screen). Nothing is recorded.
+func _leave_lesson(next: String) -> void:
+	over = true
+	if next != "":
+		Game.start_lesson(next)
+	else:
+		Game.go(Game.LESSONS)
 
 
 func _take_shot() -> void:

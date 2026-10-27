@@ -1,6 +1,7 @@
 extends SceneTree
 ## Headless rules tests + AI-vs-AI soak.
 ##   Godot --headless --path . -s res://tests/run_tests.gd
+## `-- --only=lessons` runs just the lesson checks (quick, while writing lessons).
 
 const SaveFileScript := preload("res://scripts/core/save_file.gd")
 
@@ -9,6 +10,11 @@ var checks := 0
 
 
 func _initialize() -> void:
+	if "--only=lessons" in OS.get_cmdline_user_args():
+		_test_lessons()
+		print("TESTS: %d checks, %d failures" % [checks, failures])
+		quit(1 if failures > 0 else 0)
+		return
 	_test_data()
 	_test_class_info()
 	_test_rules()
@@ -29,6 +35,7 @@ func _initialize() -> void:
 	_test_ai_edges()
 	_test_easy_guard()
 	_test_saves()
+	_test_lessons()
 	_soak(120)
 	_soak_classes(24)
 	_soak_random(400)
@@ -1754,3 +1761,175 @@ func _test_wrath() -> void:
 				ok(s.hand.size() <= BattleState.MAX_HAND and s.board.size() <= BattleState.MAX_BOARD, "%s keeps limits" % c.id)
 				for u in s.board:
 					ok(u.health > 0 and _wrath_sane(u), "%s leaves a sane board (%s)" % [c.id, u.id])
+
+
+# ---------------------------------------------------------------- Virgil's lessons
+
+const LESSON_ACTS := ["play", "attack", "power", "end", "inspect"]
+const LESSON_UNTIL := ["end_turn", "win", "act", "mulligan"]
+const LESSON_POINTS := ["my_hero", "foe_hero", "power", "end", "mana"]
+
+
+## data/lessons.json is complete; every scripted lesson is won by doing exactly what Virgil says (each "do" step can be
+## done when it comes, and the guide accepts that very action), its opponent follows its script without skipping an
+## intent, and against any play (random moves) the scripted opponent never makes an illegal move or stalls. The
+## progress and the rewards: a lesson pays the first time it is won, never again.
+func _test_lessons() -> void:
+	ok(Lessons.all().size() >= 2, "lessons load")
+	var ids := {}
+	for l in Lessons.all():
+		var id := str(l.get("id", ""))
+		ok(id != "" and not ids.has(id), "lesson id '%s' is unique" % id)
+		ids[id] = true
+		ok(str(l.get("title", "")) != "" and str(l.get("learn", "")) != "" and str(l.get("outro", "")) != "",
+			"lesson %s has its title, its lesson line and its closing line" % id)
+		ok(ResourceLoader.exists("res://assets/ui/%s.png" % str(l.get("icon", ""))), "lesson %s icon" % id)
+		ok(str(l.get("arena", "")) == "" or CardDB.arena_ready(str(l.arena)), "lesson %s arena is installed" % id)
+		ok(Lessons.reward_text(l) != "", "lesson %s has a reward" % id)
+		var lu := Lessons.line_up(l)
+		for side in ["player", "enemy"]:
+			var hero := str(lu[side + "_hero"])
+			ok(not CardDB.hero(hero).is_empty(), "lesson %s %s hero %s" % [id, side, hero])
+			ok(lu[side + "_cards"].size() >= 10, "lesson %s %s deck is long enough" % [id, side])
+			for c in lu[side + "_cards"]:
+				ok(not CardDB.card(c).is_empty(), "lesson %s card %s exists" % [id, c])
+		ok(CardDB.hero_class(lu.player_hero) != CardDB.hero_class(lu.enemy_hero), "lesson %s: two classes" % id)
+		for s in l.get("steps", []):
+			var ends := int(s.has("do")) + int(s.has("until")) + int(s.has("wait"))
+			ok(ends == 1, "lesson %s step '%s' ends one way" % [id, str(s.get("say", "")).left(30)])
+			if s.has("do"):
+				ok(str(s.do.get("act", "")) in LESSON_ACTS, "lesson %s step act %s" % [id, s.do.get("act", "")])
+			if s.has("until"):
+				ok(str(s.until) in LESSON_UNTIL, "lesson %s step until %s" % [id, s.until])
+			for key in ["point", "mark"]:
+				if s.has(key):
+					var p := str(s[key])
+					ok(p in LESSON_POINTS or p.begins_with("hand:") or p.begins_with("mine:") or p.begins_with("foe:"),
+						"lesson %s step %s %s" % [id, key, p])
+					if ":" in p:
+						ok(not CardDB.card(p.split(":")[1]).is_empty(), "lesson %s points at a real card %s" % [id, p])
+		if l.has("script"):
+			_play_lesson(l)
+			_soak_lesson(l, 12)
+	_test_lesson_progress()
+
+
+## Plays lesson `l` the taught way: every step in order, free steps played out by the Hard AI for the player.
+func _play_lesson(l: Dictionary) -> void:
+	var st := Lessons.start_state(l, 11)
+	var foe: LessonAI = Lessons.make_ai(l)
+	var me := BattleAI.new(0, BattleAI.Level.HARD)
+	var steps: Array = l.steps
+	var i := 0
+	var guard := 0
+	while st.winner == -1 and guard < 600:
+		guard += 1
+		if st.current == 1:
+			if not _lesson_enemy_turn(st, foe, l.id):
+				return
+			continue
+		if i >= steps.size() or str(steps[i].get("until", "")) == "win":
+			var m := me.next_action(st)
+			if m.do == "end" or not BattleAI.apply(st, 0, m):
+				st.end_turn()
+			continue
+		var s: Dictionary = steps[i]
+		i += 1
+		if s.has("do"):
+			if str(s.do.act) == "inspect":
+				continue
+			var m := Lessons.resolve(s.do, st)
+			ok(not m.is_empty(), "lesson %s step %d (%s) can be done when it comes" % [l.id, i, s.do])
+			if m.is_empty():
+				return
+			ok(Lessons.matches(s.do, _lesson_action(m, st), st), "lesson %s step %d: the guide accepts %s" % [l.id, i, m])
+			if m.do == "end":
+				st.end_turn()
+			else:
+				ok(BattleAI.apply(st, 0, m), "lesson %s step %d is legal" % [l.id, i])
+		elif str(s.get("until", "")) == "end_turn":
+			st.end_turn()
+	ok(st.winner == 0, "lesson %s is won by following the steps (winner %d, turn %d)" % [l.id, st.winner, st.turn])
+	ok(i == steps.size() or (i == steps.size() - 1 and str(steps[-1].get("until", "")) == "win"),
+		"lesson %s reached its last step (%d of %d)" % [l.id, i, steps.size()])
+	ok(foe.skipped.is_empty(), "lesson %s: the opponent followed its script (skipped %s)" % [l.id, foe.skipped])
+	# The taught path is short: won within a turn or two of the last scripted enemy turn.
+	ok(st.turn <= 2 * l.get("script", []).size() + 3, "lesson %s is short (won on turn %d)" % [l.id, st.turn])
+
+
+## The player action LessonGuide sees for a BattleAI move ({act, card, target}).
+func _lesson_action(m: Dictionary, st: BattleState) -> Dictionary:
+	match m.do:
+		"play":
+			return {"act": "play", "card": str(st.hand_card(0, m.uid).get("id", "")), "target": m.target}
+		"attack":
+			return {"act": "attack", "card": str(st.units[m.attacker].id), "target": m.target}
+		"power":
+			return {"act": "power", "target": m.target}
+	return {"act": "end"}
+
+
+## The scripted opponent's whole turn: every move legal, and the turn ends (false when it stalled).
+func _lesson_enemy_turn(st: BattleState, foe: BattleAI, id: String) -> bool:
+	for k in 40:
+		if st.winner != -1:
+			return true
+		var m := foe.next_action(st)
+		if m.do == "end":
+			st.end_turn()
+			return true
+		if not BattleAI.apply(st, 1, m):
+			ok(false, "lesson %s: the opponent picked an illegal move %s" % [id, m])
+			st.end_turn()
+			return true
+	ok(false, "lesson %s: the opponent's turn never ended" % id)
+	return false
+
+
+## Random play against the scripted opponent: whatever the player does, the opponent stays legal and never stalls.
+func _soak_lesson(l: Dictionary, games: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	for g in games:
+		rng.seed = 900 + g
+		var st := Lessons.start_state(l, 100 + g)
+		var foe: LessonAI = Lessons.make_ai(l)
+		var me := BattleAI.new(0, BattleAI.Level.EASY)
+		var guard := 0
+		while st.winner == -1 and guard < 2000:
+			guard += 1
+			if st.current == 1:
+				if not _lesson_enemy_turn(st, foe, l.id):
+					return
+				continue
+			var moves := me._moves(st)
+			if moves.is_empty() or rng.randf() < 0.25:
+				st.end_turn()
+			else:
+				BattleAI.apply(st, 0, moves[rng.randi() % moves.size()])
+		ok(st.winner != -1, "lesson %s random game %d ends" % [l.id, g])
+
+
+## Progress: a lesson pays its reward once; a skipped lesson can still be won for it; the recommended lesson moves on.
+func _test_lesson_progress() -> void:
+	var col: Node = root.get_node_or_null("Collection")
+	var prefs: Node = root.get_node_or_null("Settings")
+	var keep: Dictionary = prefs.lessons.duplicate()
+	var obols: int = col.obols
+	var packs: int = col.packs
+	prefs.lessons = {}
+	var first := str(Lessons.all()[0].id)
+	ok(Lessons.recommended() == first, "a new player is pointed at the first lesson")
+	Lessons.skip(first)
+	ok(Lessons.status(first) == Lessons.SKIPPED and Lessons.recommended() == first, "a skipped lesson is still the next one")
+	var paid: Dictionary = Lessons.complete(first)
+	ok(not paid.is_empty() and Lessons.status(first) == Lessons.DONE, "winning a lesson pays its reward")
+	ok(col.obols - obols == int(paid.get("obols", 0)) and col.packs - packs == int(paid.get("packs", 0)),
+		"the reward reaches the collection")
+	ok(Lessons.complete(first).is_empty(), "a lesson pays only once")
+	Lessons.skip(first)
+	ok(Lessons.status(first) == Lessons.DONE, "skipping a won lesson keeps it won")
+	ok(Lessons.recommended() == Lessons.next_after(first), "the next lesson is recommended after a win")
+	ok(not Lessons.offer_due(), "tests never get the first-launch question")
+	prefs.lessons = keep
+	col.obols = obols
+	col.packs = packs

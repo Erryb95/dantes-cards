@@ -19,6 +19,8 @@ var intro_seen := false ## the opening cinematic has been played (or skipped) on
 var difficulty := 0 ## the opponent's BattleAI.Level: 0 Easy, 1 Medium, 2 Hard (new players start on Easy)
 var coach_seen: Array = [] ## ids of the first-game tips already shown (scripts/battle/coach.gd)
 var deck_choice := {} ## class -> id of the preconstructed deck last picked on Choose your path
+var lessons := {} ## Virgil's lessons: lesson id -> "done" (won once, reward paid) or "skipped" (scripts/tutorial/lessons.gd)
+var lessons_offered := false ## the first-launch question "Shall I show you the way?" was asked once
 
 
 func _ready() -> void:
@@ -52,6 +54,8 @@ func load_settings(path: String = PATH) -> void:
 	difficulty = clampi(SaveFile.value(cfg, "game", "difficulty", difficulty), 0, DIFFICULTY_NAMES.size() - 1)
 	coach_seen = SaveFile.value(cfg, "game", "coach_seen", coach_seen)
 	deck_choice = SaveFile.value(cfg, "game", "deck_choice", deck_choice)
+	lessons = SaveFile.value(cfg, "game", "lessons", lessons)
+	lessons_offered = SaveFile.value(cfg, "game", "lessons_offered", lessons_offered)
 
 
 ## Tests and tooling runs (`Game.debug_run()`) keep their changes in memory: the player's real settings are never written.
@@ -71,6 +75,8 @@ func save() -> void:
 	cfg.set_value("game", "difficulty", difficulty)
 	cfg.set_value("game", "coach_seen", coach_seen)
 	cfg.set_value("game", "deck_choice", deck_choice)
+	cfg.set_value("game", "lessons", lessons)
+	cfg.set_value("game", "lessons_offered", lessons_offered)
 	cfg.save(PATH)
 
 

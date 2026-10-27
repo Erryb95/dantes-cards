@@ -1,8 +1,10 @@
 class_name Coach
 extends Control
 ## First-game tips: a parchment bubble with a bobbing arrow that points at the thing to try next (play a card,
-## attack, hero power, Guard, end turn). Each tip shows once ever (Settings.coach_seen) and goes away on the next
-## press. Never shown in tests or tooling runs; `-- --coach` shows them anyway without marking them seen.
+## attack, hero power, Guard, end turn), and the first time a keyword or a trigger shows up on the board, what it
+## means ("kw_<keyword>", the text of UI.KEYWORD_HELP). Each tip shows once ever (Settings.coach_seen) and goes away
+## on the next press. Never shown in tests or tooling runs; `-- --coach` shows them anyway without marking them seen.
+## In Virgil's trial (lesson_mode) every tip shows once in the match, seen before or not.
 
 const TIPS := {
 	"play": "Drag a glowing card from your hand up here to play it. It costs the mana shown in its corner.",
@@ -19,7 +21,9 @@ var _target := Vector2.ZERO
 var _t := 0.0
 var _id := ""
 var _forced := false
-var _enabled := true
+var enabled := true ## false: no tips at all (Virgil's scripted lessons, where he does the talking)
+var _session: Array = [] ## lesson_mode: the tips already shown in this match
+var _per_match := false
 var _fade: Tween
 
 
@@ -27,7 +31,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_forced = "--coach" in OS.get_cmdline_user_args()
-	_enabled = _forced or not Game.debug_run()
+	enabled = _forced or not Game.debug_run()
 	_bubble = PanelContainer.new()
 	_bubble.add_theme_stylebox_override("panel", UI.tip_box())
 	_bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -54,14 +58,30 @@ static func _touch() -> bool:
 	return DisplayServer.is_touchscreen_available() and OS.has_feature("mobile")
 
 
+## Virgil's trial: every tip once in this match, whether the player saw it before or not (and seen from then on).
+func lesson_mode() -> void:
+	_per_match = true
+
+
+## Whether tip `id` would show now (not seen yet, or not yet in this match in lesson_mode).
+func fresh(id: String) -> bool:
+	if not enabled:
+		return false
+	if _per_match:
+		return not _session.has(id)
+	return _forced or not Settings.coach_seen.has(id)
+
+
 ## Shows tip `id` pointing at `target` (screen position) unless it was seen already. Returns true when shown.
-func offer(id: String, target: Vector2) -> bool:
-	if not _enabled or showing() or (Settings.coach_seen.has(id) and not _forced):
+## `text` replaces the tip's own text (the keyword tips bring theirs).
+func offer(id: String, target: Vector2, text: String = "") -> bool:
+	if showing() or not fresh(id):
 		return false
 	_id = id
 	_target = target
-	_label.text = str(TIPS[id]).format({"tap": "tap" if _touch() else "click"})
-	if not _forced:
+	_label.text = (text if text != "" else str(TIPS[id])).format({"tap": "tap" if _touch() else "click"})
+	_session.append(id)
+	if not _forced and not Settings.coach_seen.has(id):
 		Settings.coach_seen.append(id)
 		Settings.save()
 	_bubble.reset_size()

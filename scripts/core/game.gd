@@ -8,6 +8,7 @@ const COLLECTION := "res://scenes/collection.tscn"
 const PACKS := "res://scenes/pack_opening.tscn"
 const DECK_BUILDER := "res://scenes/deck_builder.tscn"
 const INTRO := "res://scenes/intro.tscn"
+const LESSONS := "res://scenes/lessons.tscn" ## Virgil's lessons (the guided matches for new players)
 const PROGRESS := "user://progress.cfg" ## wins / losses and the last arena
 const SaveFile := preload("res://scripts/core/save_file.gd")
 
@@ -28,6 +29,7 @@ var arena_forced := false ## the current battle's arena was forced (it may be sh
 var last_winner := -1
 var stats := {"wins": 0, "losses": 0}
 var intro_played := false ## the cinematic has played in this run (so `--intro` does not loop)
+var lesson := "" ## the lesson (data/lessons.json id) the next / current battle is, "" for a real match
 
 var _fade: ColorRect
 var _layer: CanvasLayer
@@ -134,9 +136,40 @@ func start_battle(deck_id: String) -> void:
 	start_with(CardDB.deck_list(deck_id), CardDB.deck(deck_id).hero)
 
 
+## Starts one of Virgil's lessons (data/lessons.json): its fixed decks and heroes, its arena (a lesson with none draws
+## one as a match does). A lesson's result never counts in the record (see `record_result`).
+func start_lesson(id: String) -> void:
+	if prepare_lesson(id):
+		go(BATTLE)
+
+
+## Sets the next battle up as lesson `id` without opening it (the tests open the battle scene themselves).
+func prepare_lesson(id: String) -> bool:
+	var l := Lessons.get_lesson(id)
+	if l.is_empty():
+		return false
+	var lu := Lessons.line_up(l)
+	lesson = id
+	player_cards.assign(lu.player_cards)
+	player_hero = lu.player_hero
+	player_deck = CardDB.hero_class(player_hero)
+	enemy_cards.assign(lu.enemy_cards)
+	enemy_hero = lu.enemy_hero
+	enemy_deck = CardDB.hero_class(enemy_hero)
+	enemy_deck_id = lu.enemy_deck_id
+	var a := str(l.get("arena", ""))
+	if a != "" and CardDB.arena_ready(a):
+		arena_id = a
+		arena_picked = true
+	else:
+		pick_arena()
+	return true
+
+
 ## Starts a battle with any card list; the opponent plays a random preconstructed deck of class `enemy_cls`, or of
 ## a random other class when it is "".
 func start_with(cards: Array, hero: String, enemy_cls := "") -> void:
+	lesson = ""
 	player_cards.assign(cards)
 	player_hero = hero
 	player_deck = CardDB.hero_class(hero)
@@ -258,7 +291,7 @@ func back() -> void:
 	var panels := s.find_children("*", "Control", true, false)
 	panels.reverse() # the last one opened (credits over options) closes first
 	for n in panels:
-		if (n is OptionsPanel or n is CreditsPanel) and not n.is_queued_for_deletion():
+		if (n is OptionsPanel or n is CreditsPanel or n is HowToPlayPanel) and not n.is_queued_for_deletion():
 			n._close()
 			return
 	if s.has_method("go_back"):

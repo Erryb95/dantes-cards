@@ -62,6 +62,15 @@ var rng := RandomNumberGenerator.new()
 var units := {} ## uid -> Unit, heroes and minions in play
 var _next_uid := 10
 
+# Lesson setup (Virgil's lessons, scripts/tutorial/lessons.gd): set these before start(). The defaults are the real game.
+var stacked := false ## the decks are dealt in list order, the first card first (no shuffle)
+var opening := [-1, -1] ## per side: the opening hand's size (-1: START_HAND, by who goes first)
+var coin := true ## the side going second gets Charon's Obol
+var hero_health := [0, 0] ## per side: the hero's Health and max Health (0: the hero's own)
+var hero_wounds := [0, 0] ## per side: damage the hero has already taken when the game starts
+var start_mana := [0, 0] ## per side: the empty mana crystals it starts with (its first turn adds one)
+var start_board: Array = [[], []] ## per side: minion card ids already in play when the game starts (awake)
+
 
 # ---------------------------------------------------------------- setup
 
@@ -76,30 +85,45 @@ func start(deck_a: Array[String], hero_a: String, deck_b: Array[String], hero_b:
 		var s := SideState.new()
 		s.hero_id = hero_a if i == 0 else hero_b
 		s.deck = (deck_a if i == 0 else deck_b).duplicate()
-		_shuffle(s.deck)
+		if stacked:
+			s.deck.reverse() # cards are drawn from the back: the list's first card comes first
+		else:
+			_shuffle(s.deck)
 		var h := Unit.new()
 		h.uid = HERO_UIDS[i]
 		h.id = s.hero_id
 		h.side = i
 		h.is_hero = true
-		h.health = int(CardDB.hero(s.hero_id).get("health", 30))
-		h.max_health = h.health
+		h.max_health = int(hero_health[i]) if int(hero_health[i]) > 0 else int(CardDB.hero(s.hero_id).get("health", 30))
+		h.health = maxi(1, h.max_health - int(hero_wounds[i]))
 		s.hero = h
+		s.max_mana = clampi(int(start_mana[i]), 0, MAX_MANA - 1)
 		units[h.uid] = h
 		sides.append(s)
 	_emit({"t": "start", "heroes": [sides[0].hero.snapshot(), sides[1].hero.snapshot()],
 		"decks": [sides[0].deck.size(), sides[1].deck.size()]})
+	for i in 2:
+		for id in start_board[i]:
+			var u := _summon(i, str(id))
+			if u != null:
+				u.sleeping = false
+		if not sides[i].board.is_empty():
+			_emit({"t": "wake", "side": i, "uids": sides[i].board.map(func(u): return u.uid)})
+		if sides[i].max_mana > 0:
+			_emit({"t": "mana", "side": i, "mana": 0, "max": sides[i].max_mana})
 	if wait_mulligan:
 		_emit({"t": "mulligan_begin"})
 	current = first if first != -1 else rng.randi() % 2
 	_emit({"t": "first", "side": current})
 	for i in 2:
-		draw(i, START_HAND[0] if i == current else START_HAND[1])
+		var n := int(opening[i])
+		draw(i, n if n >= 0 else (START_HAND[0] if i == current else START_HAND[1]))
 	if wait_mulligan:
 		_mulligan_pending = [true, true]
 		_emit({"t": "mulligan_wait"})
 	else:
-		_give_coin()
+		if coin:
+			_give_coin()
 		_begin_turn()
 
 

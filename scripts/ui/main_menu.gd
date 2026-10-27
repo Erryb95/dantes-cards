@@ -57,6 +57,11 @@ func _ready() -> void:
 	play.add_theme_font_size_override("font_size", 44)
 	play.pressed.connect(func(): Game.go(Game.DECK_SELECT))
 	col.add_child(play)
+	var learn := UI.button("Learn to Play", 460)
+	learn.name = "LearnToPlay"
+	learn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	learn.pressed.connect(func(): Game.go(Game.LESSONS))
+	col.add_child(learn)
 	var coll := UI.button("Collection", 460)
 	coll.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	coll.pressed.connect(func(): Game.go(Game.COLLECTION))
@@ -105,6 +110,22 @@ func _ready() -> void:
 		t.tween_property(_showcase[i], "modulate:a", 1.0, 0.8)
 	col.modulate.a = 0.0
 	create_tween().tween_property(col, "modulate:a", 1.0, 1.0)
+	if Lessons.offer_due():
+		# A new player, once: Virgil offers his lessons when the title screen has settled.
+		get_tree().create_timer(1.1).timeout.connect(offer_lessons)
+
+
+## The first-launch question: Virgil offers to teach the game. Asked once ever (a skip or Esc counts as an answer);
+## the lessons stay under Learn to Play.
+func offer_lessons() -> void:
+	if not is_inside_tree() or get_node_or_null("Dialog") != null:
+		return
+	Settings.lessons_offered = true
+	Settings.save()
+	var first := str(Lessons.all()[0].id) if not Lessons.all().is_empty() else ""
+	Virgil.dialog(self, "New to Hell?",
+		"I am Virgil. Let me show you the way: a few short lessons teach the whole game. You can find them later under Learn to Play.",
+		[["Begin the lessons", func(): Game.start_lesson(first)], ["Not now", null]])
 
 
 ## Esc / the back gesture (Game.back) on the title screen: a phone leaves the game, as its other apps do; a desktop

@@ -67,6 +67,7 @@ func _ready() -> void:
 		var ic := CenterContainer.new()
 		ic.add_child(intro)
 		right.add_child(ic)
+	right.add_child(HowToPlayPanel.open_button(self))
 	right.add_child(CreditsPanel.open_button(self))
 	var close := UI.button("Done", 300)
 	close.pressed.connect(_close)
