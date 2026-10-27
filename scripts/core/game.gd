@@ -9,6 +9,7 @@ const PACKS := "res://scenes/pack_opening.tscn"
 const DECK_BUILDER := "res://scenes/deck_builder.tscn"
 const INTRO := "res://scenes/intro.tscn"
 const LESSONS := "res://scenes/lessons.tscn" ## Virgil's lessons (the guided matches for new players)
+const LESSON_HERO := "res://scenes/lesson_hero.tscn" ## the hero choice before The Trial
 const PROGRESS := "user://progress.cfg" ## wins / losses and the last arena
 const SaveFile := preload("res://scripts/core/save_file.gd")
 
@@ -31,6 +32,8 @@ var stats := {"wins": 0, "losses": 0}
 var class_games := {} ## class -> finished matches played with it (the profile's favourite class)
 var intro_played := false ## the cinematic has played in this run (so `--intro` does not loop)
 var lesson := "" ## the lesson (data/lessons.json id) the next / current battle is, "" for a real match
+var lesson_choice := "" ## the lesson whose hero the player is choosing (scenes/lesson_hero.tscn)
+var lesson_hero := "" ## the hero last chosen for a lesson (the chooser's first pick next time)
 var online := false ## the next / current battle is an online duel (the match is in the `Online` autoload)
 var online_requeue := false ## Choose your path opens the online search at once (the result's "Find another duel")
 
@@ -156,17 +159,25 @@ func start_battle(deck_id: String) -> void:
 
 ## Starts one of Virgil's lessons (data/lessons.json): its fixed decks and heroes, its arena (a lesson with none draws
 ## one as a match does). A lesson's result never counts in the record (see `record_result`).
-func start_lesson(id: String) -> void:
-	if prepare_lesson(id):
+## A lesson that lets the player choose (The Trial) first opens the hero chooser, unless `hero` is given (a restart).
+func start_lesson(id: String, hero := "") -> void:
+	var l := Lessons.get_lesson(id)
+	if hero == "" and Lessons.chooses_hero(l):
+		lesson_choice = id
+		go(LESSON_HERO)
+	elif prepare_lesson(id, hero):
 		go(BATTLE)
 
 
-## Sets the next battle up as lesson `id` without opening it (the tests open the battle scene themselves).
-func prepare_lesson(id: String) -> bool:
+## Sets the next battle up as lesson `id` without opening it (the tests open the battle scene themselves). `hero`:
+## the player's pick, for a lesson that lets them choose (else the lesson's own hero).
+func prepare_lesson(id: String, hero := "") -> bool:
 	var l := Lessons.get_lesson(id)
 	if l.is_empty():
 		return false
-	var lu := Lessons.line_up(l)
+	var lu := Lessons.line_up(l, hero)
+	if Lessons.chooses_hero(l):
+		lesson_hero = str(lu.player_hero)
 	lesson = id
 	online = false
 	player_cards.assign(lu.player_cards)

@@ -53,10 +53,23 @@ var _cost_label: Label
 var _atk_label: Label
 var _hp_label: Label
 var _foil := -1.0
+var _name_label: Label ## the name in engraved gold (always built)
+var _name_painted: TextureRect ## the painted name, when the card has one (CardDB.name_tex)
+var _name_painted_cap := 0.0 ## capital height (px at scale 1) of each name: which one reads better at the card's scale
+var _name_label_cap := 0.0
+var _name_scale := -1.0 ## the screen scale the name was last judged at
+var _name_shows_painted := false
 var _ruse_pulse := false ## the Ruse glow is breathing (its strength is driven here, not by the Aura's fade)
 
 ## Ruse ready: a deep, warm gold that breathes slowly, so it never reads as the green "playable" glow.
 const RUSE_GLOW := [Color(1.0, 0.9, 0.5), Color(1.0, 0.5, 0.0)]
+
+## Painted card names: the smallest height of their capitals, in screen px, that still reads (the gilded label takes
+## over below it), the share of the painting's height those capitals take, and the brightness gain that brings the
+## painted gold up to the gilded label's on the dark ribbon.
+const NAME_MIN_CAP := 9.0
+const NAME_CAP_K := 0.58
+const NAME_GAIN := 1.5
 
 
 func setup(p_card_id: String, p_uid: int = -1, p_face_up: bool = true) -> CardView:
@@ -387,12 +400,10 @@ func _stat_label(text: String, center: Vector2, size: int) -> Label:
 
 ## The card's name on the ribbon in engraved gold, in the 40 px band at `at` (W - 20 wide), at most `room` px wide.
 ## Names over 22 letters drop their epithet ("Minos, Judge of the Damned" → "Minos").
-## A card with a painted name (CardDB.name_tex) shows that instead, whole, fitted in the same band.
+## A card with a painted name (CardDB.name_tex) shows that instead, whole, fitted in the same band, as long as its
+## capitals are big enough to read on screen (`_update_name`); below NAME_MIN_CAP px (a long name at hand size) the gilded
+## label, which shortens long names, takes over. Both are always built, so the card copes with any subset of painted names.
 func _add_name(at: Vector2, room: float) -> void:
-	var painted := CardDB.name_tex(card_id)
-	if painted != null:
-		_add_painted_name(painted, at, room)
-		return
 	var nm: String = card.get("name", card_id)
 	var short := nm.split(",")[0] if nm.length() > 22 else nm
 	var box := Vector2(W - 20, 40)
@@ -413,6 +424,12 @@ func _add_name(at: Vector2, room: float) -> void:
 	m.set_shader_parameter("gild_top", base - fs * 0.7)
 	name_l.material = m
 	_face.add_child(name_l)
+	_name_label = name_l
+	_name_label_cap = fs * 0.7 # Cinzel's capitals stand about 0.7 em
+	var painted := CardDB.name_tex(card_id)
+	if painted != null:
+		_add_painted_name(painted, at, room)
+		_apply_name_mode(true)
 
 ## The painted name `tex` fitted inside the ribbon's band (keeping its shape, a small margin all round) and centred on
 ## it. Its own CARD_FX material (gild off: the gold is painted), so _collect_mats tilts, burns and dissolves it with
@@ -434,8 +451,43 @@ func _add_painted_name(tex: Texture2D, at: Vector2, room: float) -> void:
 	var m := ShaderMaterial.new()
 	m.shader = CARD_FX
 	m.set_shader_parameter("gild", false)
+	m.set_shader_parameter("name_gain", NAME_GAIN) # the painted gold is dimmer than the gilded label: lift it
 	r.material = m
 	_face.add_child(r)
+	_name_painted = r
+	_name_painted_cap = r.size.y * NAME_CAP_K
+
+
+## The painted name or the gilded label, whichever reads better at the card's size on screen: the painted one when
+## its capitals are at least NAME_MIN_CAP px tall (a little more to switch to it than to stay on it, so a hovering
+## card does not flicker), or when it is no smaller than the label's; else the label. The switch is a quick fade.
+func _update_name() -> void:
+	if _name_painted == null:
+		return
+	var s := get_global_transform().y.length()
+	var vp := get_viewport()
+	if vp != null:
+		s *= vp.get_final_transform().y.length()
+	if s < 0.01 or absf(s - _name_scale) < 0.02 * maxf(_name_scale, 0.01):
+		return
+	var first := _name_scale < 0.0
+	_name_scale = s
+	var need := NAME_MIN_CAP * (0.92 if _name_shows_painted else 1.08)
+	var painted := _name_painted_cap * s >= need or _name_painted_cap >= _name_label_cap
+	if painted != _name_shows_painted or first:
+		_apply_name_mode(painted, not first)
+
+
+func _apply_name_mode(painted: bool, fade := false) -> void:
+	_name_shows_painted = painted
+	var shown: Array = [_name_painted, _name_label]
+	for i in 2:
+		var n: CanvasItem = shown[i]
+		var a := 1.0 if (i == 0) == painted else 0.0
+		if fade and is_inside_tree():
+			create_tween().tween_property(n, "modulate:a", a, 0.12)
+		else:
+			n.modulate.a = a
 
 
 static func _fit_size(text: String, width: float, max_size: int, kind: String) -> int:
@@ -559,6 +611,7 @@ func _tick_ruse_glow(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_tick_ruse_glow(delta)
+	_update_name()
 	# Velocity tilt while dragged: lean into the motion like a real card.
 	_vel = _vel.lerp((position - _last_pos) / maxf(delta, 0.001), 0.25)
 	_last_pos = position

@@ -162,7 +162,12 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
 - **Virgil's lessons** (Learn to Play on the title screen, `scenes/lessons.tscn`): four short scripted matches, Virgil
   as the guide. 1 The Ferryman (mana, playing minions, attacking, ending the turn), 2 The Wrathful Knight (spells, hero
   power, Armor, Guard), 3 The Two-Horned Flame (Ward, Drain, Venom, Rebirth, Swift, reading card text), 4 The Trial (a
-  real match against the Easy AI with the starter deck, opening-hand choice, light coach hints). Lessons 1-3 use fixed
+  real match against the Easy AI with the starter deck, opening-hand choice, light coach hints). **The Trial lets the
+  player choose their hero first** (`LessonHeroScreen`, `scenes/lesson_hero.tscn`, from `Game.start_lesson` when the
+  lesson's player has `"choose": true`): one painted plaque per hero of `CardDB.classes()` that has a deck (portrait,
+  class, tagline, hero power, starter deck name, an "i" for the class guide; the row scrolls when there are many), a
+  press picks, Begin (or a second press) starts the match with that class's starter deck; the opponent is another
+  class. A restart keeps the pick (`Game.start_lesson(id, hero)`). Lessons 1-3 use fixed
   hands dealt in order, a weakened opponent hero and an opponent that plays a script (`LessonAI`, then passes or plays
   as Easy), so each plays out as taught.
 - Each line of Virgil sits on a painted plate beside his portrait, placed where it covers the fewest pieces; a gold
@@ -180,7 +185,8 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
 - **In normal matches** the first time a keyword shows up on the board its tip shows once, coach style (coach ids
   `kw_<keyword>`).
 - Optional painted pieces (Virgil's portrait, the headings as painted words) are listed in `art_src/tutorial_art.json`.
-- Review: `tests/screen_audit.tscn -- --what=lessons|howto|offer|lesson|lesson_pause [--lesson=<id>] [--steps=0,3]`.
+- Review: `tests/screen_audit.tscn -- --what=lessons|lesson_hero|howto|offer|lesson|lesson_pause [--lesson=<id>] [--steps=0,3]`
+  (`lesson_hero --cls=<class>` picks that hero first).
 
 ## Title screen, info surfaces and the profile
 - **Title screen**: the stack is Play, Collection, Open Packs, Options, Quit. Learn to Play is Virgil's round medallion
@@ -325,3 +331,14 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
 3. More keywords (Frenzy), weapons for heroes, secrets ("Judgements").
 4. Animated legendary art (Wan video loops), per-card sounds, voice lines.
 5. Proper release keystore for Android; store icons; iOS / macOS signing.
+
+## Painted card names
+- `CardDB.name_tex(id)` = `assets/cards/names/<id>.png` (gilded lettering on transparency); a card without one uses the
+  gilded label, so any subset works. `CardView._add_name` builds the label always and the painting when there is one,
+  and `_update_name` shows the better one for the card's size on screen (global scale x the window's stretch):
+  the painting while its capitals (`NAME_CAP_K` = 0.58 of its height) stand at least `NAME_MIN_CAP` = 9 px, or are no
+  smaller than the label's (which drops a long name's epithet); below that the gilded label (a 0.12 s fade; 8% hysteresis
+  so a hovering card does not flicker). The painting is brightened by the `name_gain` uniform of `card_fx.gdshader`
+  (`NAME_GAIN` = 1.5, rolling off softly toward white: the painted gold was dimmer than the label on the dark ribbon).
+- Review: `tests/screen_audit.tscn -- --what=names` (names_hand 0.62 + deck showcase 0.34, names_collection 0.72,
+  names_inspect 0.95, names_zoom 1.9, on every painted name plus one without), `tests/name_preview.tscn`.

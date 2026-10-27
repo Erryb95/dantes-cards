@@ -4,6 +4,7 @@
   "player / enemy: hero, cards (dealt in this order when 'stacked'; or 'deck': 'starter' = the hero's class starter, shuffled),",
   "  opening (opening hand size), health (hero Health), wounds (damage already taken), mana (empty crystals at the start),",
   "  board (minions already in play). enemy.hero 'random' = a random hero of another class.",
+  "  player.choose: true = the player picks their hero (one per class) before the match; 'hero' is then the default.",
   "script: the enemy's turns, in order, as lists of intents: {play: id, target?}, {attack: id|'all', target: 'hero'|id},",
   "  {power: true, target?}. A target names a minion by card id (the enemy's own side last) or 'hero'.",
   "  After the script: 'after' = 'easy' (the Easy AI) or 'pass'. 'ai': 'easy' plays the whole match with the Easy AI.",
@@ -184,7 +185,7 @@
    "arena": "",
    "reward": {"packs": 1},
    "stacked": false, "first": -1, "coin": true, "mulligan": true, "hints": true, "ai": "easy",
-   "player": {"hero": "dante", "deck": "starter"},
+   "player": {"hero": "dante", "deck": "starter", "choose": true},
    "enemy": {"hero": "random", "deck": "starter"},
    "outro": "You walk the rest of the way on your own now. Hell is wide: go and see it.",
    "steps": [

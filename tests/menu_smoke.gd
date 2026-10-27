@@ -13,7 +13,8 @@ extends Node
 ##   button opens the guide;
 ## - Virgil's lessons: a plaque per lesson, How to Play opens from it with every chapter (the classes as their guides)
 ##   and Esc closes it; the first-launch question marks itself asked; every lesson played as Virgil teaches is won
-##   through the battle's own input (taps, presses, aims) (a wrong move refused) and ends on its result; a lesson's pause menu restarts, skips or leaves it.
+##   through the battle's own input (taps, presses, aims) (a wrong move refused) and ends on its result; a lesson's pause menu restarts, skips or leaves it;
+##   The Trial's hero choice has a plaque per hero, picks a non-default one, deals that class's starter deck, and the Trial is played through with it.
 ## - the profile: the name rules (length, characters, spaces cleaned); the title screen has the
 ##   player plaque and Virgil's medallion; the plaque opens the profile, an invalid name is refused with a red error,
 ##   a valid one saves (cleaned) with the avatar picked and redraws the plaque, Back and Esc close without saving.
@@ -37,12 +38,14 @@ func _ready() -> void:
 	await _deck_select()
 	await _collection_class()
 	await _lessons_screen()
+	await _lesson_hero_choice()
 	await _lesson_offer()
 	_profile_rules()
 	await _profile()
 	await _lesson_battle()
 	await _collection_sort()
 	await _drop_rates()
+	await _painted_names()
 	print("MENU SMOKE: %d failures" % fails)
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -284,6 +287,70 @@ func _lessons_screen() -> void:
 	await _frames()
 
 
+## The hero choice before The Trial: one plaque per hero of the class registry, a press picks one, and the match then
+## has that hero's class with its starter deck against another class; the whole Trial is played with a non-default
+## hero and finishes.
+func _lesson_hero_choice() -> void:
+	var trial: Dictionary = {}
+	for l in Lessons.all():
+		if Lessons.chooses_hero(l):
+			trial = l
+	if trial.is_empty():
+		_fail("no lesson lets the player choose a hero")
+		return
+	Game.lesson_choice = str(trial.id)
+	Game.lesson_hero = ""
+	var s := _open(Game.LESSON_HERO)
+	await _frames(3)
+	var heroes := Lessons.pickable_heroes()
+	var plaques := s.find_children("Hero_*", "Button", true, false)
+	if plaques.size() != heroes.size() or heroes.size() < 2:
+		_fail("the hero choice has %d plaques for %d heroes" % [plaques.size(), heroes.size()])
+		s.queue_free()
+		return
+	var default_hero := str(trial.player.hero)
+	if s.pick != default_hero:
+		_fail("the hero choice starts on %s, not the lesson's hero %s" % [s.pick, default_hero])
+	var other := ""
+	for h in heroes:
+		if h != default_hero:
+			other = h
+	var cls := CardDB.hero_class(other)
+	var btn := s.find_child("Hero_%s" % cls, true, false) as Button
+	if btn == null:
+		_fail("no plaque for the %s hero" % cls)
+		s.queue_free()
+		return
+	btn.pressed.emit()
+	await _frames()
+	if s.pick != other:
+		_fail("a press on the %s plaque did not pick %s (picked %s)" % [cls, other, s.pick])
+	if not (btn.get_node("Chosen") as Control).visible:
+		_fail("the picked plaque shows no 'Your hero' ribbon")
+	var guide := btn.find_child("Guide", true, false) as Button
+	if guide == null:
+		_fail("a hero plaque has no class guide button")
+	else:
+		guide.pressed.emit()
+		await _frames()
+		if s.get_node_or_null("Dialog") == null:
+			_fail("the class guide did not open from the hero choice")
+		UI.cancel_dialog(s)
+		await _frames(2)
+	s.queue_free()
+	await _frames()
+	Game.prepare_lesson(str(trial.id), other)
+	if Game.player_hero != other or Game.player_deck != cls:
+		_fail("the Trial did not start as %s (%s / %s)" % [other, Game.player_hero, Game.player_deck])
+	if Game.player_cards != CardDB.deck_list(str(CardDB.class_decks(cls)[0].id)):
+		_fail("the Trial did not deal the %s starter deck" % cls)
+	if Game.enemy_deck == cls:
+		_fail("the Trial's opponent plays the player's own class")
+	if Game.lesson_hero != other:
+		_fail("the chosen hero was not remembered")
+	await _play_lesson(str(trial.id), other)
+
+
 func _lesson_offer() -> void:
 	Settings.lessons_offered = false
 	var m := _open(Game.MENU)
@@ -407,6 +474,73 @@ func _lesson_battle() -> void:
 	Game.lesson = ""
 
 
+## Painted card names: a card with one shows it when it is big enough to read and falls back to the gilded label when
+## not (a long name at hand size), a card without one has only the label, and the painting is brightened.
+func _painted_names() -> void:
+	var painted: Array[String] = []
+	var dir := DirAccess.open("res://assets/cards/names")
+	for f in dir.get_files() if dir != null else PackedStringArray():
+		if f.ends_with(".png"):
+			painted.append(f.get_basename())
+	if painted.is_empty():
+		return
+	# The legibility rule reads the card's size on screen: a headless window is 64 px wide, so give it the design size.
+	var win := get_window()
+	var keep_size := win.size
+	win.size = Vector2i(1920, 1080)
+	await _frames(2)
+	for id in painted:
+		var big := CardView.new().setup(id, -1, true)
+		big.scale = Vector2.ONE * 1.9
+		add_child(big)
+		var tiny := CardView.new().setup(id, -1, true)
+		tiny.scale = Vector2.ONE * 0.2
+		add_child(tiny)
+		await _frames(3)
+		if big._name_painted == null or not big._name_shows_painted:
+			_fail("%s zoomed shows no painted name" % id)
+		elif float(big._name_painted.material.get_shader_parameter("name_gain")) <= 1.0:
+			_fail("the painted name of %s is not brightened" % id)
+		if tiny._name_shows_painted and tiny._name_painted_cap * 0.2 < CardView.NAME_MIN_CAP 				and tiny._name_painted_cap < tiny._name_label_cap:
+			_fail("%s at 0.2 scale keeps a painted name too small to read" % id)
+		# Growing a card switches it to the painted name, shrinking it back to the label, with no stale half-fade.
+		tiny.scale = Vector2.ONE * 1.9
+		await _frames(2)
+		await get_tree().create_timer(0.3).timeout
+		if not tiny._name_shows_painted or tiny._name_painted.modulate.a < 0.99 or tiny._name_label.modulate.a > 0.01:
+			_fail("%s did not switch to its painted name when enlarged" % id)
+		big.queue_free()
+		tiny.queue_free()
+	# A long name at hand size reads better as the gilded label; a card with no painted name never has a painting.
+	var long_id := ""
+	for id in painted:
+		var w: float = CardDB.name_tex(id).get_width()
+		if w > 1500.0:
+			long_id = id
+	if long_id != "":
+		var hand := CardView.new().setup(long_id, -1, true)
+		hand.scale = Vector2.ONE * 0.62
+		add_child(hand)
+		await _frames(3)
+		if hand._name_shows_painted or hand._name_label.modulate.a < 0.99:
+			_fail("%s at hand size keeps its too-small painted name" % long_id)
+		hand.queue_free()
+	var plain := ""
+	for c in CardDB.all_cards():
+		if CardDB.name_tex(str(c.id)) == null:
+			plain = str(c.id)
+			break
+	if plain != "":
+		var v := CardView.new().setup(plain, -1, true)
+		add_child(v)
+		await _frames(2)
+		if v._name_painted != null or v._name_label == null or v._name_label.modulate.a < 0.99:
+			_fail("%s has no painted name but is not drawn with the gilded label" % plain)
+		v.queue_free()
+	win.size = keep_size
+	await _frames()
+
+
 func _collection_sort() -> void:
 	Settings.collection_sort = "cost"
 	var s := _open(Game.COLLECTION)
@@ -519,11 +653,13 @@ func _drop_rates() -> void:
 
 
 ## Lesson `id` played as Virgil teaches it, through the battle's own input (taps, presses, aims): it must be won.
-func _play_lesson(id: String) -> void:
-	if not Game.prepare_lesson(id):
+func _play_lesson(id: String, hero := "") -> void:
+	if not Game.prepare_lesson(id, hero):
 		_fail("lesson %s could not be prepared" % id)
 		return
 	var b: Node2D = _open(Game.BATTLE)
+	if hero != "" and Game.player_hero != hero:
+		_fail("lesson %s was not played as %s" % [id, hero])
 	var r: Dictionary = await LessonDriver.run(get_tree(), b, Callable(), 240.0)
 	# A lesson that ends in free play (The Trial) is finished by the AI for the player: it may lose that match.
 	var free: bool = Lessons.get_lesson(id).steps.any(func(st): return str(st.get("until", "")) == "win")

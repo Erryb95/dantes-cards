@@ -126,10 +126,13 @@ static func offer_due() -> bool:
 
 ## The cards and heroes of a lesson's match: {player_cards, player_hero, enemy_cards, enemy_hero, enemy_deck_id}.
 ## "deck": "starter" deals the hero's class starter; enemy hero "random" picks a hero of another class.
-static func line_up(l: Dictionary) -> Dictionary:
+## `pick`: the hero the player chose, for a lesson that lets them choose ("choose": true on its player, see `chooses_hero`).
+static func line_up(l: Dictionary, pick: String = "") -> Dictionary:
 	var p: Dictionary = l.get("player", {})
 	var e: Dictionary = l.get("enemy", {})
 	var hero := str(p.get("hero", "dante"))
+	if pick != "" and chooses_hero(l) and pick in pickable_heroes():
+		hero = pick
 	var foe := str(e.get("hero", "charon"))
 	if foe == "random":
 		var pool := CardDB.other_classes(CardDB.hero_class(hero)).filter(func(c): return not CardDB.class_decks(c).is_empty())
@@ -139,6 +142,21 @@ static func line_up(l: Dictionary) -> Dictionary:
 	out.enemy_cards = _cards_of(e, foe)
 	if str(e.get("deck", "")) == "starter":
 		out.enemy_deck_id = str(CardDB.class_decks(CardDB.hero_class(foe))[0].id)
+	return out
+
+
+## The lesson lets the player choose their hero ("choose": true on its player: The Trial); its "hero" is the default.
+static func chooses_hero(l: Dictionary) -> bool:
+	return bool(l.get("player", {}).get("choose", false))
+
+
+## The heroes a player can choose from: one per class of the registry that has a preconstructed deck (never a fixed
+## count: new classes and heroes join CardDB.classes()).
+static func pickable_heroes() -> Array[String]:
+	var out: Array[String] = []
+	for c in CardDB.classes():
+		if not CardDB.class_decks(c).is_empty() and CardDB.class_hero(c) != "":
+			out.append(CardDB.class_hero(c))
 	return out
 
 
@@ -177,8 +195,8 @@ static func make_ai(l: Dictionary) -> BattleAI:
 
 
 ## A fresh battle for lesson `l`, set up and started (the tests drive it; the battle screen uses configure()).
-static func start_state(l: Dictionary, seed_value: int = 1) -> BattleState:
-	var lu := line_up(l)
+static func start_state(l: Dictionary, seed_value: int = 1, pick: String = "") -> BattleState:
+	var lu := line_up(l, pick)
 	var st := BattleState.new()
 	configure(st, l)
 	st.start(lu.player_cards, lu.player_hero, lu.enemy_cards, lu.enemy_hero, seed_value, bool(l.get("mulligan", false)),
