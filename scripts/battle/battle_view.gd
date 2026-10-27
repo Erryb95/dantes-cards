@@ -1963,6 +1963,11 @@ func _clear_targets() -> void:
 
 # ================================================================ input
 
+## Android's back gesture (Game.back()): the same as Esc, one layer back or the pause menu.
+func go_back() -> void:
+	_on_back()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and not event.is_echo():
 		_on_back()

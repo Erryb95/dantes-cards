@@ -38,25 +38,27 @@ func _ready() -> void:
 			total += 1
 			owned_n += int(Collection.copies(c.id) > 0)
 	# Cards owned out of the whole pool, engraved on a plaque.
-	var progress := UI.plaque_label("%d / %d" % [owned_n, total], 28, "title", UI.BONE, 0.0, 24, 8)
+	var progress := UI.plaque_label("%d / %d cards" % [owned_n, total], 28, "title", UI.BONE, 0.0, 24, 8)
 	progress.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(progress)
 	var filters := [["all", "All"]]
 	for cls in CardDB.classes():
 		filters.append([cls, CardDB.class_title(cls)])
 	filters.append_array([["neutral", "Neutral"], ["token", "Tokens"]])
-	var fw := 180.0 if filters.size() <= 5 else maxf(130.0, 900.0 / filters.size())
-	# Narrower plates when the bar would run off a narrow screen (the banner, Back and the count take their room).
-	progress.reset_size()
-	var bar := get_viewport_rect().size.x - 80.0 - back.custom_minimum_size.x - title.custom_minimum_size.x \
-		- progress.get_combined_minimum_size().x - 20.0 * (filters.size() + 3)
-	fw = clampf(bar / filters.size(), 120.0, fw)
+	# The filters get a row of their own under the title bar: squeezed beside the banner, a long class name on its
+	# plate shrank to about 17 px. The plates narrow only when more classes arrive than the screen holds.
+	var tabs := HBoxContainer.new()
+	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
+	tabs.add_theme_constant_override("separation", 14)
+	root.add_child(tabs)
+	var fw := clampf((get_viewport_rect().size.x - 80.0 - 14.0 * (filters.size() - 1)) / filters.size(), 150.0, 230.0)
 	for f in filters:
-		var b := UI.button(f[1], fw, 64)
+		var b := UI.button(f[1], fw, 60)
 		b.add_theme_font_size_override("font_size", 26)
 		b.pressed.connect(_set_filter.bind(f[0]))
-		top.add_child(b)
+		tabs.add_child(b)
 		_tabs[f[0]] = b
+	UI.even_text(_tabs.values())
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -76,6 +78,15 @@ func _ready() -> void:
 	center.add_child(_grid)
 	resized.connect(_fill)
 	_fill()
+
+
+## Esc / the back gesture (Game.back): closes the enlarged card, else like Back.
+func go_back() -> void:
+	if _zoom != null:
+		_zoom.queue_free()
+		_zoom = null
+	else:
+		Game.go(Game.MENU)
 
 
 func _set_filter(f: String) -> void:

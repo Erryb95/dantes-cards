@@ -9,7 +9,7 @@ const FRAME_LIMIT_NAMES := ["30", "60", "90", "120", "144", "240", "No limit"]
 var music_volume := 0.7
 var sfx_volume := 0.9
 var fullscreen := false
-var frame_limit := 0 ## frames per second at most (Engine.max_fps), 0 for no limit; V-Sync may still cap it
+var frame_limit := 60 ## frames per second at most (Engine.max_fps), 0 for no limit; V-Sync may still cap it
 var vsync := true ## wait for the display's refresh (desktop; phones always do)
 var show_fps := false ## the frame-rate counter in the corner
 var fast_animations := false
@@ -39,7 +39,7 @@ func load_settings() -> void:
 	fullscreen = cfg.get_value("video", "fullscreen", fullscreen)
 	frame_limit = int(cfg.get_value("video", "frame_limit", frame_limit))
 	if not FRAME_LIMITS.has(frame_limit):
-		frame_limit = 0
+		frame_limit = 60
 	vsync = cfg.get_value("video", "vsync", vsync)
 	show_fps = cfg.get_value("video", "show_fps", show_fps)
 	fast_animations = cfg.get_value("game", "fast_animations", fast_animations)

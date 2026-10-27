@@ -160,6 +160,17 @@ static func fit_text(b: Button) -> void:
 	b.add_theme_font_size_override("font_size", size)
 
 
+## One letter size for a row of plates (filter tabs): each label fitted to its plate, then all set to the smallest,
+## so "All" does not shout beside a long class name squeezed small.
+static func even_text(buttons: Array) -> void:
+	var px := 1000
+	for b in buttons:
+		fit_text(b)
+		px = mini(px, (b as Button).get_theme_font_size("font_size"))
+	for b in buttons:
+		(b as Button).add_theme_font_size_override("font_size", px)
+
+
 static func _press_depth(b: Button, s: float) -> void:
 	if b.disabled and s > 1.0:
 		return
@@ -669,6 +680,78 @@ static func tip_column(card: Dictionary, on_board: bool = false, width: float = 
 	for t in tips:
 		col.add_child(tip_plate(t[0], t[1], width))
 	return col
+
+
+## A modal question on the big bronze-framed panel over a dim veil: `title` in gold, `text` under it, then one plate
+## per choice ([label, callable]; the callable may be null). Any choice closes the dialog first; Esc / the Android back
+## gesture picks the last choice (keep it the harmless one, e.g. "Keep it"). Returns the dialog (added to `parent`).
+static func dialog(parent: Node, title: String, text: String, choices: Array) -> Control:
+	var d := Control.new()
+	d.name = "Dialog"
+	d.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	d.mouse_filter = Control.MOUSE_FILTER_STOP
+	d.z_index = 100 # above the scenes' Node2D layers (cards)
+	var dim := ColorRect.new() # the veil, like the options panel's
+	dim.color = Color(0, 0, 0, 0.6)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	d.add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	d.add_child(center)
+	var panel := PanelContainer.new()
+	var s := frame_box("panel_frame_filled", 96, 0, box(Color(0.09, 0.05, 0.04, 0.97), GOLD, 3, 14, Color(0, 0, 0, 0.7), 30))
+	s.content_margin_left = 100
+	s.content_margin_right = 100
+	s.content_margin_top = 80
+	s.content_margin_bottom = 84
+	panel.add_theme_stylebox_override("panel", s)
+	center.add_child(panel)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 22)
+	panel.add_child(v)
+	var t := label(title, 50, "title", GOLD, 8, Color.BLACK)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	fit_label(t, 760.0, 30)
+	v.add_child(t)
+	if text != "":
+		var b := label(text, 28, "italic", BONE, 3, Color.BLACK)
+		b.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		b.custom_minimum_size = Vector2(minf(760.0, maxf(420.0, t.get_minimum_size().x)), 0)
+		v.add_child(b)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 20)
+	v.add_child(row)
+	var buttons: Array[Button] = []
+	for c in choices:
+		# Each plate as wide as its label needs past the scrollwork ends (within reason); one letter size for the row.
+		var tw := font("title").get_string_size(str(c[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, 30).x
+		var btn := button(str(c[0]), clampf(tw + 190.0, 260.0, 400.0), 76)
+		btn.add_theme_font_size_override("font_size", 30)
+		var act: Variant = c[1]
+		btn.pressed.connect(func():
+			d.queue_free()
+			if act is Callable:
+				(act as Callable).call())
+		row.add_child(btn)
+		buttons.append(btn)
+	even_text(buttons)
+	d.set_meta("cancel", buttons[-1])
+	parent.add_child(d)
+	d.modulate.a = 0.0
+	d.create_tween().tween_property(d, "modulate:a", 1.0, 0.15)
+	return d
+
+
+## Esc / the Android back gesture inside a scene with an open dialog: presses its last (harmless) choice. True when
+## a dialog took it.
+static func cancel_dialog(scene: Node) -> bool:
+	var d := scene.get_node_or_null("Dialog")
+	if d == null or d.is_queued_for_deletion():
+		return false
+	(d.get_meta("cancel") as Button).pressed.emit()
+	return true
 
 
 ## A touch screen phone or tablet (the hints say "Tap" / "Touch" there, "Click" / "mouse" on a desktop).

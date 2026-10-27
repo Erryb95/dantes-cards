@@ -366,8 +366,8 @@ func _library() -> Control:
 	top.alignment = BoxContainer.ALIGNMENT_CENTER
 	top.add_theme_constant_override("separation", 12)
 	v.add_child(top)
-	# One filter per class after "All decks"; the plates narrow as classes are added so the row fits the panel.
-	var filters := [["all", "All decks"]]
+	# One filter per class after "All"; the plates narrow as classes are added so the row fits the panel.
+	var filters := [["all", "All"]] # as in the collection; "All decks" set the whole row's letters smallest
 	for cls in CardDB.classes():
 		filters.append([cls, CardDB.class_title(cls)])
 	var fw := minf(210.0, (inner - 12.0 * (filters.size() - 1)) / filters.size())
@@ -380,6 +380,7 @@ func _library() -> Control:
 			_refill())
 		_tabs[f[0]] = b
 		top.add_child(b)
+	UI.even_text(_tabs.values())
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER # wheel, drag and the bronze discs scroll it
@@ -650,6 +651,11 @@ func _fit_wrapped(l: Label, room: float, lines: int, min_size: int) -> void:
 			break
 		px -= 1
 	l.add_theme_font_size_override("font_size", px)
+
+
+## Esc / the back gesture (Game.back): like Back.
+func go_back() -> void:
+	Game.go(Game.MENU)
 
 
 func _edit(index: int, cls: String) -> void:

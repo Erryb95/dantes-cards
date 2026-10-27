@@ -31,16 +31,17 @@ var _fade: ColorRect
 var _layer: CanvasLayer
 
 
-## Frame caps: a card game needs no more than 60 fps, and a window in the background needs almost none. Leaves the
-## GPU to other programs (the art PC runs ComfyUI next to the game) and saves battery on phones.
-const FPS_ACTIVE := 60
+## A window in the background needs almost no frames: leaves the GPU to other programs (the art PC runs ComfyUI next
+## to the game) and saves battery on phones. In front, the player's Frame limit (Settings.frame_limit) applies.
 const FPS_BACKGROUND := 10
 
 
 func _ready() -> void:
 	if DisplayServer.get_name() != "headless": # tests run the frames as fast as they can
-		Engine.max_fps = FPS_ACTIVE
+		Engine.max_fps = Settings.frame_limit
 	UI.paint_tooltips()
+	# Android's back gesture steps back through the menus (back()) instead of quitting the game from any screen.
+	get_tree().quit_on_go_back = false
 	_layer = CanvasLayer.new()
 	_layer.layer = 100
 	add_child(_layer)
@@ -235,10 +236,37 @@ func go(path: String) -> void:
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
+## Esc on a desktop, the back gesture / button on Android (the engine's default there quits the app from any
+## screen, see _ready): closes an open dialog, Credits or Options, else asks the scene to step back (`go_back()`, which
+## the menus define; a scene without it, the battle or the intro, ignores it).
+func back() -> void:
+	var s := get_tree().current_scene
+	if s == null or _fade.color.a > 0.01: # mid-fade: a second press would change the scene twice
+		return
+	if UI.cancel_dialog(s):
+		return
+	var panels := s.find_children("*", "Control", true, false)
+	panels.reverse() # the last one opened (credits over options) closes first
+	for n in panels:
+		if (n is OptionsPanel or n is CreditsPanel) and not n.is_queued_for_deletion():
+			n._close()
+			return
+	if s.has_method("go_back"):
+		s.go_back()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and not event.is_echo():
+		back()
+
+
 func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		back()
+		return
 	if debug_run(): # tooling (snapshots, autoplay) runs unfocused and must not slow down
 		return
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		Engine.max_fps = FPS_BACKGROUND
 	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
-		Engine.max_fps = FPS_ACTIVE
+		Engine.max_fps = Settings.frame_limit
