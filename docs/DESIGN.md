@@ -45,7 +45,7 @@ him, card by card. / At the river Acheron, Charon is waiting."
   thunder, title sting, water) are used from `assets/audio/sfx/`; the score is `assets/intro/music/score_a` + `score_b` (cut to fit; the menu plays whole pieces).
 
 ## Rules (v0.2)
-- 30 health heroes; mana 1 to 10, refilled each turn; hand limit 10 (overdraw burns); board limit 7; fatigue.
+- 30 health heroes; mana 1 to 10, refilled each turn; hand limit 10 (an overdraw, or a card added to a full hand, burns); board limit 7; fatigue.
 - Mulligan: you start with 3 cards, the opponent with 4, and either can replace any of them.
 - Hero power: 2 mana, once per turn. Dante: gain 2 Armor. Charon: 2 damage to the enemy hero. Ulysses: 1 damage to a
   minion.
@@ -120,6 +120,9 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
   20 packs. Copies beyond the deck limit refund Obols (5 / 20 / 100 / 400).
 - Deck builder: owned cards only; Auto-fill completes a deck along a mana curve. Back asks before dropping unsaved
   changes, Delete asks before removing a deck; a saved deck is the one Choose your path shows next.
+- Saves (`user://collection.cfg`, `progress.cfg`, `settings.cfg`) are read through `scripts/core/save_file.gd`: a file
+  that cannot be parsed is copied to `<file>.bad` and the game starts from defaults; a value of the wrong type keeps
+  its default and a malformed custom deck is dropped. Test and tooling runs only read them.
 
 ## Adding content
 - **Card:** add an entry to `cards.json` and use it in a deck. Run `python tools/cards/art_jobs.py run`

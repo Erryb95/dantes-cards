@@ -2,6 +2,8 @@ extends SceneTree
 ## Headless rules tests + AI-vs-AI soak.
 ##   Godot --headless --path . -s res://tests/run_tests.gd
 
+const SaveFileScript := preload("res://scripts/core/save_file.gd")
+
 var failures := 0
 var checks := 0
 
@@ -13,6 +15,14 @@ func _initialize() -> void:
 	_test_silence_ai()
 	_test_first_match()
 	_test_ulysses()
+	_test_limits()
+	_test_transform_edges()
+	_test_ruse_edges()
+	_test_death_order()
+	_test_game_end()
+	_test_damage_edges()
+	_test_ai_edges()
+	_test_saves()
 	_soak(120)
 	_soak_classes(24)
 	_soak_random(400)
@@ -725,3 +735,464 @@ func _test_ulysses() -> void:
 			ok(st.play_card(0, uid, targets[0] if not targets.is_empty() else -1), "%s plays (ruse %d)" % [c.id, pre])
 			for s in st.sides:
 				ok(s.hand.size() <= BattleState.MAX_HAND and s.board.size() <= BattleState.MAX_BOARD, "%s keeps limits" % c.id)
+
+
+## Hand and board limits: an overdraw and a card made for a full hand burn (and the view is told), nothing is stolen
+## without room for it, the last card of a deck can be stolen, "2 random cards" are two different cards, and summons,
+## copies and Last Breaths stop at 7 minions.
+func _test_limits() -> void:
+	# Overdraw: the card leaves the deck and burns.
+	var st := _blank()
+	for i in 10:
+		_give(st, 0, "lost_pilgrim")
+	var evs := []
+	st.event.connect(func(ev): evs.append(ev))
+	var deck0 := st.sides[0].deck.size()
+	st.draw(0, 1)
+	ok(st.sides[0].hand.size() == 10 and st.sides[0].deck.size() == deck0 - 1, "overdraw: the card leaves the deck")
+	ok(evs.any(func(ev): return ev.t == "burn" and ev.side == 0 and not ev.get("made", false)), "overdraw shows a burn")
+
+	# An added card for a full hand burns: Orpheus adds two Shades with one free slot.
+	st = _blank()
+	var orpheus := _give(st, 0, "uh_orpheus")
+	for i in 9:
+		_give(st, 0, "lost_pilgrim")
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	ok(st.play_card(0, orpheus), "Orpheus plays from a full hand")
+	ok(st.sides[0].hand.size() == 10 and st.sides[0].hand.filter(func(c): return c.id == "uh_limbo_shade").size() == 1,
+		"one Shade fits in the hand")
+	ok(evs.filter(func(ev): return ev.t == "burn" and ev.get("made", false) and ev.id == "uh_limbo_shade").size() == 1,
+		"the other Shade is shown burning")
+
+	# A copy for a full hand burns too (Envoy to Troy copies two different cards, one slot left).
+	st = _blank()
+	_give(st, 1, "geryon")
+	_give(st, 1, "cerberus")
+	var envoy := _give(st, 0, "ul_envoy_to_troy")
+	for i in 9:
+		_give(st, 0, "lost_pilgrim")
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	st.play_card(0, envoy)
+	var got: Array = st.sides[0].hand.filter(func(c): return c.id in ["geryon", "cerberus"]).map(func(c): return c.id)
+	var burnt: Array = evs.filter(func(ev): return ev.t == "burn" and ev.get("made", false)).map(func(ev): return ev.id)
+	ok(st.sides[0].hand.size() == 10 and got.size() == 1 and burnt.size() == 1 and got[0] != burnt[0],
+		"Envoy: one copy kept, the other burns (%s / %s)" % [got, burnt])
+	ok(st.sides[1].hand.size() == 2, "copies leave the enemy hand as it was")
+
+	# "2 random cards" are two different cards: one card in the enemy hand gives one copy, not two.
+	st = _blank()
+	_give(st, 1, "geryon")
+	st.play_card(0, _give(st, 0, "ul_envoy_to_troy"))
+	ok(st.sides[0].hand.size() == 1, "Envoy copies the only enemy card once (%d)" % st.sides[0].hand.size())
+	st = _blank()
+	st.sides[1].deck.assign(["geryon", "cerberus"])
+	st.play_card(0, _give(st, 0, "ul_spoils_of_troy"))
+	var ids: Array = st.sides[0].hand.map(func(c): return c.id)
+	ids.sort()
+	ok(ids == ["cerberus", "geryon"], "Spoils of Troy copies two different deck cards (%s)" % [ids])
+
+	# Steal with room for one card: only one leaves the enemy deck, nothing burns.
+	st = _blank()
+	var pal := _give(st, 0, "ul_palladium")
+	for i in 9:
+		_give(st, 0, "lost_pilgrim")
+	var foe_deck := st.sides[1].deck.size()
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	st.play_card(0, pal)
+	ok(st.sides[0].hand.size() == 10 and st.sides[1].deck.size() == foe_deck - 1, "the Palladium steals only what fits")
+	ok(not evs.any(func(ev): return ev.t == "burn"), "a stolen card never burns")
+
+	# Steal the last card of the enemy deck: the deck is empty and the enemy's next draw is fatigue.
+	st = _blank()
+	st.sides[1].deck.assign(["geryon"])
+	st.play_card(0, _give(st, 0, "ul_palladium"))
+	ok(st.sides[1].deck.is_empty() and st.sides[0].hand.size() == 1 and st.sides[0].hand[0].id == "geryon",
+		"the last deck card is stolen")
+	st.end_turn()
+	ok(st.sides[1].hero.health == 29 and st.sides[1].fatigue == 1, "the robbed side takes fatigue on its next draw")
+
+	# Full board: summons and copies stop at 7, without errors.
+	st = _blank()
+	for i in 7:
+		_put(st, 0, "lost_pilgrim")
+	ok(st.play_card(0, _give(st, 0, "harpies_flock")) and st.sides[0].board.size() == 7, "a summon spell on a full board")
+	ok(not st.can_play(0, _give(st, 0, "geryon")), "no minion fits on a full board")
+	st = _blank()
+	for i in 6:
+		_put(st, 0, "lost_pilgrim")
+	_put(st, 1, "geryon")
+	st.play_card(0, _give(st, 0, "ul_capocchio"), st.sides[1].board[0].uid)
+	ok(st.sides[0].board.size() == 7 and not st.sides[0].board.any(func(u): return u.id == "geryon"),
+		"Capocchio takes the last slot: no copy")
+	st = _blank()
+	for i in 5:
+		_put(st, 0, "lost_pilgrim")
+	st.play_card(0, _give(st, 0, "ul_night_raid"))
+	ok(st.sides[0].board.size() == 7, "Night Raid fills the board")
+	st.play_card(0, _give(st, 0, "ul_night_raid"))
+	ok(st.sides[0].board.size() == 7, "a second Night Raid on a full board summons nothing")
+	st = _blank()
+	for i in 5:
+		_put(st, 0, "lost_pilgrim")
+	st.play_card(0, _give(st, 0, "obol_coin"))
+	st.play_card(0, _give(st, 0, "ul_diomedes"))
+	ok(st.sides[0].board.size() == 7 and st.sides[0].board[6].id == "ul_diomedes", "Diomedes' copy takes the 7th slot")
+	# Last Breath summons on a full board: the Trojan Horse dies and only one Raider fits, in its place.
+	st = _blank()
+	for i in 3:
+		_put(st, 1, "lost_pilgrim")
+	var horse := _put(st, 1, "ul_trojan_horse")
+	for i in 3:
+		_put(st, 1, "lost_pilgrim")
+	st.play_card(0, _give(st, 0, "cd_furys_lash"), horse.uid)
+	ok(st.sides[1].board.size() == 7 and st.sides[1].board[3].id == "ul_achaean_raider"
+		and st.sides[1].board.filter(func(u): return u.id == "ul_achaean_raider").size() == 1,
+		"the Horse's Raiders stop at 7 minions, in its place")
+	# Circe on a full enemy board: seven Swine in the same places.
+	st = _blank()
+	for i in 7:
+		_put(st, 1, "geryon" if i % 2 == 0 else "harpy")
+	st.play_card(0, _give(st, 0, "ul_circe"))
+	ok(st.sides[1].board.size() == 7 and st.sides[1].board.all(func(u): return u.id == "ul_swine"),
+		"Circe transforms a full board")
+
+
+## Transform makes a fresh minion: buffs, Freeze, Silence and keywords are gone; Silence then works on the new form.
+func _test_transform_edges() -> void:
+	for id in ["cerberus", "paolo", "harpy", "ih_whip_demon", "she_wolf"]:
+		for what in ["plain", "buffed", "frozen", "silenced"]:
+			var st := _blank()
+			var u := _put(st, 1, id)
+			match what:
+				"buffed":
+					u.attack += 3
+					u.health += 3
+					u.max_health += 3
+				"frozen":
+					u.frozen = true
+				"silenced":
+					st._resolve({"do": "silence", "target": "choose_minion"}, 0, null, u.uid, "test")
+			ok(st.play_card(0, _give(st, 0, "ul_circes_draught"), u.uid), "Circe's Draught on a %s %s" % [what, id])
+			var s: BattleState.Unit = st.sides[1].board[0] if st.sides[1].board.size() == 1 else null
+			ok(s != null and s.id == "ul_swine" and s.attack == 1 and s.health == 1 and s.max_health == 1
+				and s.keywords.is_empty() and not s.frozen and not s.silenced and not st.units.has(u.uid),
+				"a %s %s becomes a plain 1/1 Swine" % [what, id])
+			if s == null:
+				continue
+			st._resolve({"do": "silence", "target": "choose_minion"}, 0, null, s.uid, "test")
+			ok(s.silenced and s.attack == 1 and s.health == 1, "the Swine can be silenced")
+	# Rebirth does not bring back a transformed minion (it did not die).
+	var st2 := _blank()
+	var whip := _put(st2, 1, "ih_whip_demon")
+	st2.play_card(0, _give(st2, 0, "ul_circes_draught"), whip.uid)
+	st2.play_card(0, _give(st2, 0, "cd_burning_sand"), st2.sides[1].board[0].uid)
+	ok(st2.sides[1].board.is_empty(), "the Swine of a Rebirth minion dies for good")
+	# A friendly minion turned into a Swine cannot attack this turn.
+	st2 = _blank()
+	var mine := _put(st2, 0, "she_wolf")
+	st2.play_card(0, _give(st2, 0, "ul_circes_draught"), mine.uid)
+	ok(st2.sides[0].board[0].id == "ul_swine" and not st2.can_attack(st2.sides[0].board[0]), "a new Swine is asleep")
+
+
+## Ruse counts cards, whatever they cost: a 0-mana card sets it up, the hero power does not (Ruse: "after another card").
+func _test_ruse_edges() -> void:
+	var st := _blank()
+	var mate := _put(st, 0, "lost_pilgrim")
+	ok(st.play_card(0, _give(st, 0, "ul_turn_the_prow"), mate.uid) and st.ruse_active(0), "a 0-mana card sets up Ruse")
+	st.play_card(0, _give(st, 0, "ul_oarsmen"))
+	ok(st.sides[0].board[0].attack == 4 and st.sides[0].board[0].health == 3, "Oarsmen get their Ruse after it")
+	st = _blank()
+	st.sides[0].hero_id = "ulysses"
+	var target := _put(st, 1, "geryon")
+	ok(st.use_power(0, target.uid) and not st.ruse_active(0), "the hero power is not a card")
+	st.play_card(0, _give(st, 0, "ul_oarsmen"))
+	ok(st.sides[0].board[0].attack == 3 and st.sides[0].board[0].health == 2, "no Ruse after the hero power alone")
+
+
+## Index of the first event that `f` accepts (-1 when none).
+static func _event_at(evs: Array, f: Callable) -> int:
+	for i in evs.size():
+		if f.call(evs[i]):
+			return i
+	return -1
+
+
+## Minions that die together leave in one go (the side whose turn it is first, each side in board order), then their
+## Last Breaths resolve in that same order.
+func _test_death_order() -> void:
+	var st := _blank()
+	st.sides[1].hero.health = 20
+	var a := _put(st, 0, "uh_shore_soul") # Last Breath: draw a card
+	var b := _put(st, 0, "ih_barbed_imp") # Last Breath: 1 damage to the enemy hero
+	var c := _put(st, 1, "pj_trembling_pilgrim") # Last Breath: summon a Lost Shade
+	var d := _put(st, 1, "pj_swoon_of_pity") # Last Breath: restore 2 Health to its hero
+	var evs := []
+	st.event.connect(func(ev): evs.append(ev))
+	st.play_card(0, _give(st, 0, "minotaur_rampage"))
+	var deaths: Array = evs.filter(func(ev): return ev.t == "death").map(func(ev): return ev.uid)
+	ok(deaths == [a.uid, b.uid, c.uid, d.uid], "deaths in order: current side first, board order (%s)" % [deaths])
+	var last_death := _event_at(evs, func(ev): return ev.t == "death" and ev.uid == d.uid)
+	var hero1: int = st.sides[1].hero.uid
+	var i_draw := _event_at(evs, func(ev): return ev.t == "draw" and ev.side == 0)
+	var i_hit := _event_at(evs, func(ev): return ev.t == "damage" and ev.uid == hero1)
+	var i_shade := _event_at(evs, func(ev): return ev.t == "summon" and ev.unit.id == "pj_lost_shade")
+	var i_heal := _event_at(evs, func(ev): return ev.t == "heal" and ev.uid == hero1)
+	ok(last_death < i_draw and i_draw < i_hit and i_hit < i_shade and i_shade < i_heal,
+		"Last Breaths resolve after all the deaths, in the same order (%d %d %d %d %d)" % [last_death, i_draw, i_hit,
+		i_shade, i_heal])
+	ok(st.sides[1].hero.health == 21 and st.sides[1].board.size() == 1, "every Last Breath resolved")
+
+
+## How a game ends: both heroes at 0 together is a draw; nothing happens after "game_over" (fatigue at the start of a
+## turn skips the Start of Turn effects; a lethal effect stops the rest of the card).
+func _test_game_end() -> void:
+	# Simultaneous hero death: Barbed Imp and Filippo Argenti die to the same Rampage and their Last Breaths kill both.
+	var st := _blank()
+	st.sides[0].hero.health = 2
+	st.sides[1].hero.health = 1
+	_put(st, 0, "ih_barbed_imp")
+	var fil := _put(st, 1, "uh_filippo_argenti")
+	fil.health = 3
+	var evs := []
+	st.event.connect(func(ev): evs.append(ev))
+	st.play_card(0, _give(st, 0, "minotaur_rampage"))
+	ok(st.winner == 2, "both heroes die at once: a draw (%d)" % st.winner)
+	ok(evs.filter(func(ev): return ev.t == "game_over").size() == 1 and evs.back().t == "game_over",
+		"one game_over, the last event")
+
+	# Fatigue kills at the start of a turn: the Start of Turn effects do not fire after the game ended.
+	st = _blank()
+	st.sides[1].deck.clear()
+	st.sides[1].hero.health = 1
+	_put(st, 1, "mc_tiresias") # Start of Turn: draw a card (more fatigue)
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	st.end_turn()
+	ok(st.winner == 0 and evs.back().t == "game_over", "fatigue ends the game; nothing follows game_over")
+	ok(not evs.any(func(ev): return ev.t == "trigger"), "no Start of Turn trigger after the game ended")
+
+	# A lethal first effect stops the card: the Two-Horned Flame's Ruse does not hit a dead hero.
+	st = _blank()
+	st.sides[1].hero.health = 3
+	st.play_card(0, _give(st, 0, "obol_coin"))
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	st.play_card(0, _give(st, 0, "ul_two_horned_flame"), st.sides[1].hero.uid)
+	ok(st.winner == 0 and st.sides[1].hero.health == 0 and evs.back().t == "game_over",
+		"a card stops resolving once the game is over (hp %d)" % st.sides[1].hero.health)
+	ok(not st.play_card(0, _give(st, 0, "cd_burning_sand"), st.sides[1].hero.uid), "no card can be played after the end")
+
+
+## Damage details: Drain at full health, Drain into Ward, Armor (partial soak, fatigue), Venom against Ward, and Rebirth
+## given back after a Silence.
+func _test_damage_edges() -> void:
+	var st := _blank()
+	var p := _put(st, 0, "plutus")
+	var evs := []
+	st.event.connect(func(ev): evs.append(ev))
+	st.attack(0, p.uid, st.sides[1].hero.uid)
+	ok(st.sides[0].hero.health == 30 and not evs.any(func(ev): return ev.t == "heal"), "Drain at full health heals nothing")
+	st = _blank()
+	st.sides[0].hero.health = 29
+	p = _put(st, 0, "plutus")
+	st.attack(0, p.uid, st.sides[1].hero.uid)
+	ok(st.sides[0].hero.health == 30, "Drain never heals above full")
+	st = _blank()
+	st.sides[0].hero.health = 20
+	p = _put(st, 0, "plutus")
+	var w := _put(st, 1, "paolo")
+	st.attack(0, p.uid, w.uid)
+	ok(st.sides[0].hero.health == 20 and not w.has("ward"), "Drain into a Ward heals nothing")
+
+	# Armor soaks first, the rest hits Health; it also soaks fatigue.
+	st = _blank()
+	st.sides[0].hero.armor = 3
+	st._damage(st.sides[0].hero, 5, null)
+	ok(st.sides[0].hero.armor == 0 and st.sides[0].hero.health == 28, "Armor soaks 3 of 5")
+	st.sides[0].hero.armor = 2
+	st.sides[0].deck.clear()
+	st.draw(0, 1)
+	ok(st.sides[0].hero.armor == 1 and st.sides[0].hero.health == 28, "Armor soaks fatigue")
+
+	# Venom does not get through a Ward.
+	st = _blank()
+	var h := _put(st, 0, "harpy")
+	w = _put(st, 1, "paolo")
+	st.attack(0, h.uid, w.uid)
+	ok(st.units.has(w.uid) and w.health == 5 and not w.has("ward"), "Ward stops Venom")
+
+	# Rebirth given back after a Silence works (Absolved in Advance); a silenced Rebirth minion stays dead.
+	st = _blank()
+	var wolf := _put(st, 0, "she_wolf")
+	st._resolve({"do": "silence", "target": "choose_minion"}, 0, null, wolf.uid, "test")
+	ok(st.play_card(0, _give(st, 0, "ul_absolved_in_advance"), wolf.uid) and wolf.has("rebirth"), "Rebirth given back")
+	st.play_card(0, _give(st, 0, "centaur_arrows"), wolf.uid)
+	ok(st.sides[0].board.size() == 1 and st.sides[0].board[0].id == "she_wolf" and st.sides[0].board[0].health == 1
+		and not st.sides[0].board[0].has("rebirth"), "a silenced minion given Rebirth returns once")
+	st = _blank()
+	var demon := _put(st, 0, "ih_whip_demon")
+	st._resolve({"do": "silence", "target": "choose_minion"}, 0, null, demon.uid, "test")
+	st.play_card(0, _give(st, 0, "cd_burning_sand"), demon.uid)
+	ok(st.sides[0].board.is_empty(), "a silenced Rebirth minion stays dead")
+
+
+## Lets `ai` play its whole turn on `st`; returns the ids of the cards it played. Every move it picks must be legal.
+func _ai_turn(st: BattleState, ai: BattleAI) -> Array:
+	var played := []
+	for i in 30:
+		var act := ai.next_action(st)
+		if act.do == "end":
+			break
+		if act.do == "play":
+			played.append(str(st.hand_card(st.current, act.uid).get("id", "")))
+		var legal := BattleAI.apply(st, st.current, act)
+		ok(legal, "the AI only picks legal moves (%s)" % act)
+		ok(st.sides[0].board.size() <= BattleState.MAX_BOARD, "the AI keeps the board limit")
+		if not legal:
+			break
+	return played
+
+
+## The AI at every level: it passes when it has nothing to do, plays legal moves with a full board, does not spend a
+## removal spell on a token but does use it on a real threat, and uses its hero power.
+func _test_ai_edges() -> void:
+	for lvl in [BattleAI.Level.EASY, BattleAI.Level.MEDIUM, BattleAI.Level.HARD]:
+		var st := _blank()
+		st.sides[0].mana = 0
+		ok(BattleAI.new(0, lvl).next_action(st).do == "end", "AI %d with no legal move ends its turn" % lvl)
+
+		st = _blank()
+		for i in 7:
+			_put(st, 0, "lost_soul")
+		_give(st, 0, "geryon")
+		_give(st, 0, "harpies_flock")
+		_put(st, 1, "cerberus")
+		_ai_turn(st, BattleAI.new(0, lvl))
+
+		st = _blank()
+		st.sides[0].power_used = true
+		_give(st, 0, "uh_cut_the_thread")
+		_put(st, 1, "lost_soul")
+		ok(not "uh_cut_the_thread" in _ai_turn(st, BattleAI.new(0, lvl)), "AI %d keeps its Destroy from a 1/1 token" % lvl)
+		st = _blank()
+		st.sides[0].power_used = true
+		_give(st, 0, "uh_cut_the_thread")
+		_put(st, 1, "cd_old_man_crete")
+		ok("uh_cut_the_thread" in _ai_turn(st, BattleAI.new(0, lvl)), "AI %d destroys a 6/9" % lvl)
+
+		if lvl != BattleAI.Level.MEDIUM: # Medium's scoring noise may pass on a small gain, by design
+			st = _blank()
+			_ai_turn(st, BattleAI.new(0, lvl))
+			ok(st.sides[0].power_used and st.sides[0].hero.armor == 2, "AI %d uses its hero power" % lvl)
+
+
+func _write(path: String, text: String) -> void:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string(text)
+	f.close()
+
+
+static func _mtime(path: String) -> int:
+	return FileAccess.get_modified_time(path) if FileAccess.file_exists(path) else -1
+
+
+## Saves: the collection (with custom decks), progress and settings survive a round trip; a missing, damaged or
+## hand-edited file loads defaults without a crash; and a test run never writes the player's real files.
+func _test_saves() -> void:
+	var col: Node = root.get_node_or_null("Collection")
+	var game: Node = root.get_node_or_null("Game")
+	var prefs: Node = root.get_node_or_null("Settings")
+	ok(col != null and game != null and prefs != null, "save autoloads present")
+	if col == null or game == null or prefs == null:
+		return
+	var real := ["user://collection.cfg", "user://progress.cfg", "user://settings.cfg"]
+	var real_times := real.map(func(p): return _mtime(p))
+	var tmp := OS.get_temp_dir().path_join("dv_save_test_%d.cfg" % OS.get_process_id())
+	var keep_col := [col.owned.duplicate(true), col.obols, col.packs, col.packs_since_legendary, col.opened_total,
+		col.decks.duplicate(true)]
+
+	# Round trip.
+	col.owned = {"geryon": 2, "ul_circe": 1}
+	col.obols = 345
+	col.packs = 2
+	col.packs_since_legendary = 7
+	col.opened_total = 11
+	col.decks = [{"name": "Test", "cls": "ulysses", "cards": {"ul_circe": 1, "geryon": 2}}]
+	col.save_to(tmp)
+	col.owned = {}
+	col.obols = 0
+	col.decks = []
+	col.load_from(tmp)
+	ok(col.obols == 345 and col.packs == 2 and col.packs_since_legendary == 7 and col.opened_total == 11,
+		"collection numbers round-trip")
+	ok(col.copies("ul_circe") == 1 and col.copies("geryon") == 2, "owned cards round-trip")
+	ok(col.decks.size() == 1 and col.decks[0].name == "Test" and col.decks[0].cls == "ulysses"
+		and col.decks[0].cards == {"ul_circe": 1, "geryon": 2}, "a custom deck round-trips")
+
+	# Missing file: a first run, with the starter cards and three packs.
+	DirAccess.remove_absolute(tmp)
+	col.load_from(tmp)
+	ok(col.packs == col.START_PACKS and col.decks.is_empty() and col.obols == 0,
+		"a missing collection is a first run")
+	var starter: Array[String] = CardDB.deck_list(CardDB.class_decks("pilgrim")[0].id)
+	ok(starter.all(func(id): return col.copies(id) > 0), "the starter cards are owned")
+
+	# Damaged file: no crash, a fresh collection, and in a test run it is not even copied aside.
+	_write(tmp, "[collection\nowned = {{{ broken")
+	col.load_from(tmp)
+	ok(col.packs == col.START_PACKS and col.decks.is_empty(), "a damaged collection loads as a fresh one")
+	ok(not FileAccess.file_exists(tmp + ".bad"), "a test run never copies a damaged file aside")
+
+	# Values of the wrong type and broken decks are dropped, the rest is kept.
+	_write(tmp, '[collection]\nowned=5\nobols="lots"\npacks=2.0\ndecks=[1, {"cls": "nobody", "cards": {}}, ' +
+		'{"name": "Ok", "cls": "pilgrim", "cards": {"geryon": 2, "bad": "x"}}]\n')
+	col.load_from(tmp)
+	ok(col.obols == 0 and col.packs == 2 and col.owned is Dictionary, "wrong types fall back to the defaults")
+	ok(col.decks.size() == 1 and col.decks[0].cards == {"geryon": 2}, "malformed decks and entries are dropped")
+
+	# The real game copies a damaged file aside, so the next save cannot destroy it.
+	_write(tmp, "[run\nstats = ???")
+	var cfg: ConfigFile = SaveFileScript.open(tmp, true)
+	ok(cfg.get_sections().is_empty() and FileAccess.file_exists(tmp + ".bad"), "a damaged file is copied aside")
+	DirAccess.remove_absolute(tmp + ".bad")
+
+	# Progress: hand-edited stats load as defaults and the result screen can still count the win.
+	var keep_stats: Dictionary = game.stats.duplicate()
+	var keep_arena: String = game.last_arena
+	var keep_winner: int = game.last_winner
+	_write(tmp, '[run]\nstats={"wins": "many"}\nlast_arena=3\n')
+	game.load_progress(tmp)
+	ok(game.stats.wins == 0 and game.stats.losses == 0 and game.last_arena == "", "bad progress loads the defaults")
+	game.record_result(0)
+	ok(game.stats.wins == 1, "a win is counted after a bad progress file")
+	game.stats = keep_stats
+	game.last_arena = keep_arena
+	game.last_winner = keep_winner
+
+	# Settings: values of the wrong type keep their defaults, numbers are clamped.
+	var keep_prefs := [prefs.music_volume, prefs.sfx_volume, prefs.difficulty, prefs.coach_seen.duplicate(),
+		prefs.intro_seen]
+	_write(tmp, '[audio]\nmusic="loud"\nsfx=1\n[game]\ndifficulty=9\ncoach_seen=3\nintro_seen="yes"\n')
+	prefs.load_settings(tmp)
+	ok(prefs.music_volume == keep_prefs[0] and prefs.sfx_volume == 1.0 and prefs.difficulty == 2
+		and prefs.coach_seen is Array and prefs.intro_seen == keep_prefs[4], "bad settings load safely")
+	prefs.music_volume = keep_prefs[0]
+	prefs.sfx_volume = keep_prefs[1]
+	prefs.difficulty = keep_prefs[2]
+	prefs.coach_seen = keep_prefs[3]
+
+	# A test run never writes the player's files.
+	col.save()
+	prefs.save()
+	game._save_progress("stats", game.stats)
+	ok(real.map(func(p): return _mtime(p)) == real_times, "a test run never writes the real save files")
+	DirAccess.remove_absolute(tmp)
+	col.owned = keep_col[0]
+	col.obols = keep_col[1]
+	col.packs = keep_col[2]
+	col.packs_since_legendary = keep_col[3]
+	col.opened_total = keep_col[4]
+	col.decks = keep_col[5]

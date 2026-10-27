@@ -45,9 +45,9 @@ Cards live in `data/cards.json` (core set) and `data/sets/*.json` (expansions). 
 | `freeze` | - | the target loses its next attack; it thaws at the end of its owner's turn once the freeze has cost it an attack (frozen after attacking or while asleep, it stays frozen through its next turn) |
 | `silence` | - | remove keywords and card effects from a minion (stat changes stay, a freeze stays) |
 | `ramp` | `amount` | gain empty mana crystals (no target) |
-| `give_card` | `card`, `count` | add copies of a card id to your hand (no target) |
+| `give_card` | `card`, `count` | add copies of a card id to your hand (no target); a card that does not fit in a full hand burns |
 | `mana` | `amount` | gain mana this turn only, up to 10 (no target; Charon's Obol) |
-| `copy` | `from` (`enemy_hand` / `enemy_deck`, random cards) or a minion target; `count`; `steal` (the cards leave the enemy: the top of the deck, or a random hand card); `to`: `hand` (default) or `board` (summon the copy) | add copies to your hand. Hand limit applies; nothing is stolen into a full hand. Text: "Copy ... into your hand", "Steal ...", "Summon a copy of ..." |
+| `copy` | `from` (`enemy_hand` / `enemy_deck`, random cards, never the same card twice) or a minion target; `count`; `steal` (the cards leave the enemy: the top of the deck, or a random hand card); `to`: `hand` (default) or `board` (summon the copy) | add copies to your hand. Hand limit applies: a copy that does not fit burns, and nothing is stolen without room for it. Text: "Copy ... into your hand", "Steal ...", "Summon a copy of ..." |
 | `transform` | `card` (a minion id) | the target becomes a fresh copy of that card in the same place: no Last Breath, Ward does not stop it |
 
 **Targets**

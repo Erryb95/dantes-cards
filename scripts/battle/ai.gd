@@ -16,6 +16,8 @@ enum Level { EASY, MEDIUM, HARD }
 const ROLLOUTS := 8 ## Hard: candidate first moves that get played out to the end of the turn
 const MEDIUM_ROLLOUTS := 2
 const MEDIUM_NOISE := 1.5 ## Medium: standard deviation of the error added to each line's score
+const WASTE_FLOOR := 5.0 ## Easy: the least `_value` a minion needs to be worth a destroy card (about a 2/3)
+const WASTE_WEIGHT := 1.5 ## Search: removal spells want a target worth this many points per mana (see `_waste`)
 
 var side := 1
 var level := Level.HARD
@@ -98,14 +100,15 @@ func _search(st: BattleState) -> Dictionary:
 			continue
 		if b.winner == side:
 			return m
-		scored.append([evaluate(b), m, b])
+		var w := _waste(st, m)
+		scored.append([evaluate(b) - w, m, b, w])
 	if scored.is_empty():
 		return {"do": "end"}
 	scored.sort_custom(func(x, y): return x[0] > y[0])
 	var best: Dictionary = {}
 	var best_v := base + 0.25
 	for i in scored.size() if rollouts == 0 else mini(rollouts, scored.size()):
-		var v: float = scored[i][0] if rollouts == 0 else _rollout(scored[i][2])
+		var v: float = scored[i][0] if rollouts == 0 else _rollout(scored[i][2]) - scored[i][3]
 		if noise > 0.0:
 			v += _rng.randfn(0.0, noise)
 		if v > best_v:
@@ -122,24 +125,29 @@ func _copy(st: BattleState) -> BattleState:
 ## Greedy continuation: keep taking the best one-step move until none improves the position.
 func _rollout(st: BattleState) -> float:
 	var cur := evaluate(st)
+	var spent := 0.0 ## removal wasted along the line (see `_waste`)
 	for step in 12:
 		if st.winner != -1 or abort:
 			break
 		var next: BattleState = null
 		var next_v := cur + 0.25
+		var next_w := 0.0
 		for m in _moves(st):
 			var b := _copy(st)
 			if not apply(b, side, m):
 				continue
-			var v := evaluate(b)
+			var w := _waste(st, m)
+			var v := evaluate(b) - w
 			if v > next_v:
 				next_v = v
 				next = b
+				next_w = w
 		if next == null:
 			break
 		st = next
-		cur = next_v
-	return cur
+		cur = next_v + next_w
+		spent += next_w
+	return cur - spent
 
 
 ## How good the position is for this AI. Heroes count more as they get low; minions by stats and abilities;
@@ -200,6 +208,30 @@ func _unit_value(u) -> float:
 	if u.frozen:
 		v -= 0.5 * u.attack
 	return v
+
+
+## The search's penalty for a removal spell (destroy or transform on a chosen enemy minion) spent on a target worth less
+## than the card: `evaluate` counts every card in hand the same, so without it a 6-mana Destroy on a 1/1 token looked
+## like a gain and the AI had nothing left for the real threat. `st` is the position before the move. A target that
+## endangers the hero is still removed: the danger term of `evaluate` outweighs this.
+func _waste(st: BattleState, m: Dictionary) -> float:
+	if m.do != "play" or not st.units.has(m.target):
+		return 0.0
+	var card := CardDB.card(str(st.hand_card(side, m.uid).get("id", "")))
+	if card.get("type", "") != "spell" or not _is_removal(card):
+		return 0.0
+	var t = st.units[m.target]
+	if t.is_hero or t.side == side:
+		return 0.0
+	return maxf(0.0, WASTE_WEIGHT * float(card.cost) - _unit_value(t))
+
+
+## A card that destroys or transforms a minion the player picks (Fury's Lash, Circe's Draught...).
+static func _is_removal(card: Dictionary) -> bool:
+	for e in card.get("effects", []):
+		if e.do in ["destroy", "transform"] and str(e.get("target", "")).begins_with("choose_"):
+			return true
+	return false
 
 
 # ---------------------------------------------------------------- rules (Easy)
@@ -379,6 +411,12 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 						threat += u.attack
 					if threat < 5:
 						return {}
+			"destroy":
+				# Hard removal is kept for a minion worth it, never spent on a token (Easy used to pick any target).
+				if tt != "":
+					target = _best_destroy(st, tt)
+					if target == -1 and card.type == "spell":
+						return {}
 			"transform":
 				if tt != "":
 					target = _best_transform(st, str(e.card))
@@ -485,6 +523,19 @@ func _best_transform(st: BattleState, into: String) -> int:
 		var v := _value(u) - base + (_silence_value(u) * 0.5)
 		if v > best_v:
 			best_v = v
+			best = u.uid
+	return best
+
+
+## The enemy minion most worth destroying (the highest value, Ward does not matter), or -1 when none is worth a removal
+## card (WASTE_FLOOR: a 1/1 token is not).
+func _best_destroy(st: BattleState, tt: String) -> int:
+	var valid := st.valid_targets(side, tt)
+	var best := -1
+	var best_v := WASTE_FLOOR - 0.01
+	for u in st.sides[1 - side].board:
+		if valid.has(u.uid) and _value(u) > best_v:
+			best_v = _value(u)
 			best = u.uid
 	return best
 

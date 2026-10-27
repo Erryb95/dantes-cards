@@ -3,6 +3,7 @@ extends Node
 ## Obols are earned by playing; a pack costs 100 and holds 5 cards (at least one rare or better).
 
 const PATH := "user://collection.cfg"
+const SaveFile := preload("res://scripts/core/save_file.gd")
 const PACK_PRICE := 100
 const PACK_SIZE := 5
 const WIN_REWARD := 100
@@ -33,17 +34,30 @@ func _ready() -> void:
 
 
 func _load() -> void:
-	var cfg := ConfigFile.new()
-	if cfg.load(PATH) != OK:
-		# First run: three packs are waiting.
-		packs = START_PACKS
-	else:
-		owned = cfg.get_value("collection", "owned", {})
-		obols = cfg.get_value("collection", "obols", 0)
-		packs = cfg.get_value("collection", "packs", 0)
-		packs_since_legendary = cfg.get_value("collection", "pity", 0)
-		opened_total = cfg.get_value("collection", "opened", 0)
-		decks = cfg.get_value("collection", "decks", [])
+	load_from(PATH)
+	save()
+
+
+## Reads a collection file. A missing file is a first run (three packs are waiting); a damaged one is set aside by
+## SaveFile and the collection starts over; values of the wrong type and malformed custom decks are dropped, so a bad
+## save never crashes the menus. Tests and tooling (`Game.debug_run`) only read: nothing is copied or written.
+func load_from(path: String) -> void:
+	var cfg := SaveFile.open(path, not Game.debug_run())
+	var fresh := cfg.get_sections().is_empty()
+	owned = {}
+	var raw: Dictionary = SaveFile.value(cfg, "collection", "owned", {})
+	for id in raw:
+		if (id is String or id is StringName) and typeof(raw[id]) in [TYPE_INT, TYPE_FLOAT]:
+			owned[str(id)] = maxi(0, int(raw[id]))
+	obols = maxi(0, SaveFile.value(cfg, "collection", "obols", 0))
+	packs = maxi(0, SaveFile.value(cfg, "collection", "packs", START_PACKS if fresh else 0))
+	packs_since_legendary = maxi(0, SaveFile.value(cfg, "collection", "pity", 0))
+	opened_total = maxi(0, SaveFile.value(cfg, "collection", "opened", 0))
+	decks = []
+	for d in SaveFile.value(cfg, "collection", "decks", []):
+		var clean := _clean_deck(d)
+		if not clean.is_empty():
+			decks.append(clean)
 	# The starter decks are always owned (they can grow between versions). The other preconstructed decks are
 	# played from Choose your path without owning their cards.
 	for d in CardDB.decks():
@@ -51,12 +65,32 @@ func _load() -> void:
 			continue
 		for id in d.cards:
 			owned[id] = maxi(int(owned.get(id, 0)), int(d.cards[id]))
-	save()
+
+
+## A saved custom deck as the menus expect it ({name, cls, cards: {id: n}}), or {} when it cannot be used.
+static func _clean_deck(d: Variant) -> Dictionary:
+	if not (d is Dictionary) or not (d.get("cards") is Dictionary) or not str(d.get("cls", "")) in CardDB.classes():
+		return {}
+	var cards := {}
+	for id in d.cards:
+		if (id is String or id is StringName) and typeof(d.cards[id]) in [TYPE_INT, TYPE_FLOAT] and int(d.cards[id]) > 0:
+			cards[str(id)] = int(d.cards[id])
+	var out: Dictionary = d.duplicate(true) # any other field the deck builder keeps stays as it was
+	out.name = str(d.get("name", "Deck"))
+	out.cls = str(d.cls)
+	out.cards = cards
+	return out
 
 
 func save() -> void:
 	if Game.debug_run(): # tests and tooling never write the player's real collection
 		return
+	save_to(PATH)
+	changed.emit()
+
+
+## Writes the collection to `path` (`save` writes the player's file; the save tests use a scratch file).
+func save_to(path: String) -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("collection", "owned", owned)
 	cfg.set_value("collection", "obols", obols)
@@ -64,8 +98,7 @@ func save() -> void:
 	cfg.set_value("collection", "pity", packs_since_legendary)
 	cfg.set_value("collection", "opened", opened_total)
 	cfg.set_value("collection", "decks", decks)
-	cfg.save(PATH)
-	changed.emit()
+	cfg.save(path)
 
 
 func copies(id: String) -> int:

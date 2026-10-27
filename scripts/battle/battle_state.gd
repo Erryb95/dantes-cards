@@ -256,6 +256,8 @@ static func _freeze_spent(u: Unit) -> bool:
 
 
 func _fire_turn_triggers(side: int, trigger: String) -> void:
+	if winner != -1:
+		return # the game already ended (fatigue at the start of the turn): nothing may follow "game_over"
 	for u in sides[side].board.duplicate():
 		if u.dead or u.silenced:
 			continue
@@ -288,6 +290,12 @@ func draw(side: int, n: int) -> void:
 		var c := {"uid": _uid(), "id": id}
 		s.hand.append(c)
 		_emit({"t": "draw", "side": side, "uid": c.uid, "id": id, "deck": s.deck.size()})
+
+
+## A card made for a full hand (an added card or a copy) burns like an overdraw, so the player sees it was lost.
+## `made`: the view shows it appearing, not leaving the deck pile (the deck count is unchanged).
+func _burn_made(side: int, id: String) -> void:
+	_emit({"t": "burn", "side": side, "id": id, "deck": sides[side].deck.size(), "made": true})
 
 
 func _uid() -> int:
@@ -420,6 +428,8 @@ func play_card(side: int, hand_uid: int, target_uid: int = -1, index: int = -1) 
 		source = _summon(side, c.id, index, hand_uid)
 	var ruse_shown := false
 	for e in card.get("effects", []):
+		if winner != -1:
+			break # an earlier effect ended the game: nothing may follow "game_over"
 		if e.get("on", "play") == "play":
 			if e.get("ruse", false):
 				if not ruse:
@@ -572,7 +582,8 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 			var gs := sides[side]
 			for i in int(e.get("count", 1)):
 				if gs.hand.size() >= MAX_HAND:
-					break
+					_burn_made(side, str(e.card))
+					continue
 				var gc := {"uid": _uid(), "id": e.card}
 				gs.hand.append(gc)
 				_emit({"t": "draw", "side": side, "uid": gc.uid, "id": e.card, "deck": gs.deck.size()})
@@ -600,30 +611,40 @@ func _copy(e: Dictionary, side: int, source: Unit, targets: Array[Unit], ttype: 
 	var steal: bool = e.get("steal", false)
 	var ids: Array[String] = []
 	if from == "enemy_hand" or from == "enemy_deck":
+		# "Copy 2 random cards": two different cards (positions) of the hand or deck, never one card twice.
+		var pool: Array[int] = []
+		if not steal:
+			for k in (foe.hand.size() if from == "enemy_hand" else foe.deck.size()):
+				pool.append(k)
 		for i in int(e.get("count", 1)):
+			# Nothing is stolen without room for it: the cards taken so far are not in the hand yet.
+			if steal and me.hand.size() + ids.size() >= MAX_HAND:
+				break
 			if from == "enemy_hand":
-				if foe.hand.is_empty():
-					break
-				var k := rng.randi_range(0, foe.hand.size() - 1)
-				var hc: Dictionary = foe.hand[k]
 				if steal:
-					if me.hand.size() >= MAX_HAND:
-						break # nothing is taken when there is no room for it
+					if foe.hand.is_empty():
+						break
+					var k := rng.randi_range(0, foe.hand.size() - 1)
+					var hc: Dictionary = foe.hand[k]
 					foe.hand.remove_at(k)
 					_emit({"t": "steal", "side": side, "from": 1 - side, "uid": hc.uid, "id": hc.id, "zone": "hand"})
-				ids.append(str(hc.id))
+					ids.append(str(hc.id))
+				else:
+					if pool.is_empty():
+						break
+					ids.append(str(foe.hand[pool.pop_at(rng.randi_range(0, pool.size() - 1))].id))
 			else:
-				if foe.deck.is_empty():
-					break
 				if steal:
-					if me.hand.size() >= MAX_HAND:
+					if foe.deck.is_empty():
 						break
 					var top: String = foe.deck.pop_back()
 					ids.append(top)
 					_emit({"t": "steal", "side": side, "from": 1 - side, "uid": -1, "id": top, "zone": "deck",
 						"deck": foe.deck.size()})
 				else:
-					ids.append(foe.deck[rng.randi_range(0, foe.deck.size() - 1)])
+					if pool.is_empty():
+						break
+					ids.append(foe.deck[pool.pop_at(rng.randi_range(0, pool.size() - 1))])
 	else:
 		for t in targets:
 			if not t.is_hero:
@@ -644,7 +665,8 @@ func _copy(e: Dictionary, side: int, source: Unit, targets: Array[Unit], ttype: 
 		return
 	for id in ids:
 		if me.hand.size() >= MAX_HAND:
-			break
+			_burn_made(side, id) # a copy (never a stolen card: nothing is stolen into a full hand) burns
+			continue
 		var gc := {"uid": _uid(), "id": id}
 		me.hand.append(gc)
 		# View hint first (where the copy comes from), then the usual card-to-hand event.
@@ -785,7 +807,8 @@ func _cleanup() -> void:
 			_emit({"t": "death", "uid": u.uid, "side": u.side})
 		for d in died:
 			var u: Unit = d[0]
-			if u.has("rebirth") and not u.silenced:
+			# Silence already took the keyword away; one given back afterwards (Absolved in Advance) still works.
+			if u.has("rebirth"):
 				var r := _summon(u.side, u.id, mini(int(d[1]), sides[u.side].board.size()))
 				if r != null:
 					r.keywords.erase("rebirth")

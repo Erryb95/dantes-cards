@@ -800,7 +800,9 @@ func _present(ev: Dictionary) -> void:
 			await _on_transform(ev)
 		"burn":
 			var c := CardView.new().setup(ev.id, -1, true)
-			c.position = deck_views[ev.side].position
+			# An overdraw leaves the deck pile; a card made for a full hand (an added card, a copy) appears at the hand.
+			c.position = deck_views[ev.side].position if not ev.get("made", false) else \
+				Vector2(V.x / 2, V.y - 120.0 if ev.side == 0 else 120.0)
 			c.scale = Vector2(0.4, 0.4)
 			hand_layer.add_child(c)
 			_set_deck_count(ev.side, ev.deck)

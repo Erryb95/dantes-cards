@@ -8,6 +8,8 @@ const COLLECTION := "res://scenes/collection.tscn"
 const PACKS := "res://scenes/pack_opening.tscn"
 const DECK_BUILDER := "res://scenes/deck_builder.tscn"
 const INTRO := "res://scenes/intro.tscn"
+const PROGRESS := "user://progress.cfg" ## wins / losses and the last arena
+const SaveFile := preload("res://scripts/core/save_file.gd")
 
 var player_deck := "pilgrim" ## the player's class
 var enemy_deck := "ferry" ## the opponent's class
@@ -53,10 +55,19 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--snap="):
 			_snap(a.substr(7))
-	var cfg := ConfigFile.new()
-	if cfg.load("user://progress.cfg") == OK:
-		stats = cfg.get_value("run", "stats", stats)
-		last_arena = str(cfg.get_value("run", "last_arena", ""))
+	load_progress(PROGRESS)
+
+
+## Reads the run progress (wins / losses, the last arena). A missing, damaged or hand-edited file gives defaults
+## for what cannot be read (SaveFile), never a crash.
+func load_progress(path: String) -> void:
+	var cfg := SaveFile.open(path, not debug_run())
+	var saved: Dictionary = SaveFile.value(cfg, "run", "stats", {})
+	stats = {"wins": 0, "losses": 0}
+	for k in stats:
+		if typeof(saved.get(k)) in [TYPE_INT, TYPE_FLOAT]:
+			stats[k] = maxi(0, int(saved[k]))
+	last_arena = str(SaveFile.value(cfg, "run", "last_arena", ""))
 
 
 ## The first match keeps the intro's promise ("At the river Acheron, Charon is waiting."): on a fresh profile the
@@ -176,10 +187,9 @@ func record_result(winner: int) -> void:
 func _save_progress(key: String, value: Variant) -> void:
 	if debug_run():
 		return
-	var cfg := ConfigFile.new()
-	cfg.load("user://progress.cfg")
+	var cfg := SaveFile.open(PROGRESS)
 	cfg.set_value("run", key, value)
-	cfg.save("user://progress.cfg")
+	cfg.save(PROGRESS)
 
 
 ## The opening cinematic plays once, on the first launch, before the main menu. Never in headless runs (tests), with

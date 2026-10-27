@@ -2,6 +2,7 @@ extends Node
 ## Player options, saved to user://settings.cfg. Creates the Music / SFX buses at startup.
 
 const PATH := "user://settings.cfg"
+const SaveFile := preload("res://scripts/core/save_file.gd")
 const DIFFICULTY_NAMES := ["Easy", "Medium", "Hard"]
 const FRAME_LIMITS := [30, 60, 90, 120, 144, 240, 0] ## Engine.max_fps choices; 0 is no limit of our own
 const FRAME_LIMIT_NAMES := ["30", "60", "90", "120", "144", "240", "No limit"]
@@ -30,27 +31,27 @@ func _ready() -> void:
 	apply()
 
 
-func load_settings() -> void:
-	var cfg := ConfigFile.new()
-	if cfg.load(PATH) != OK:
-		return
-	music_volume = cfg.get_value("audio", "music", music_volume)
-	sfx_volume = cfg.get_value("audio", "sfx", sfx_volume)
-	fullscreen = cfg.get_value("video", "fullscreen", fullscreen)
-	frame_limit = int(cfg.get_value("video", "frame_limit", frame_limit))
+func load_settings(path: String = PATH) -> void:
+	# A missing file keeps the defaults; a damaged one is set aside (SaveFile) and a value of the wrong type keeps its
+	# default, so a bad settings file never stops the game from starting.
+	var cfg := SaveFile.open(path, not Game.debug_run())
+	music_volume = clampf(SaveFile.value(cfg, "audio", "music", music_volume), 0.0, 1.0)
+	sfx_volume = clampf(SaveFile.value(cfg, "audio", "sfx", sfx_volume), 0.0, 1.0)
+	fullscreen = SaveFile.value(cfg, "video", "fullscreen", fullscreen)
+	frame_limit = SaveFile.value(cfg, "video", "frame_limit", frame_limit)
 	if not FRAME_LIMITS.has(frame_limit):
 		frame_limit = 60
-	vsync = cfg.get_value("video", "vsync", vsync)
-	show_fps = cfg.get_value("video", "show_fps", show_fps)
-	fast_animations = cfg.get_value("game", "fast_animations", fast_animations)
-	subtitles = cfg.get_value("game", "subtitles", subtitles)
-	intro_seen = cfg.get_value("game", "intro_seen", intro_seen)
+	vsync = SaveFile.value(cfg, "video", "vsync", vsync)
+	show_fps = SaveFile.value(cfg, "video", "show_fps", show_fps)
+	fast_animations = SaveFile.value(cfg, "game", "fast_animations", fast_animations)
+	subtitles = SaveFile.value(cfg, "game", "subtitles", subtitles)
+	intro_seen = SaveFile.value(cfg, "game", "intro_seen", intro_seen)
 	# Before three levels there was an on/off "easy opponent": off meant the search AI, now Hard.
 	if cfg.has_section_key("game", "easy_opponent"):
-		difficulty = 0 if cfg.get_value("game", "easy_opponent") else 2
-	difficulty = clampi(int(cfg.get_value("game", "difficulty", difficulty)), 0, DIFFICULTY_NAMES.size() - 1)
-	coach_seen = cfg.get_value("game", "coach_seen", coach_seen)
-	deck_choice = cfg.get_value("game", "deck_choice", deck_choice)
+		difficulty = 0 if SaveFile.value(cfg, "game", "easy_opponent", true) else 2
+	difficulty = clampi(SaveFile.value(cfg, "game", "difficulty", difficulty), 0, DIFFICULTY_NAMES.size() - 1)
+	coach_seen = SaveFile.value(cfg, "game", "coach_seen", coach_seen)
+	deck_choice = SaveFile.value(cfg, "game", "deck_choice", deck_choice)
 
 
 ## Tests and tooling runs (`Game.debug_run()`) keep their changes in memory: the player's real settings are never written.
