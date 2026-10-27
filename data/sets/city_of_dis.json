@@ -147,7 +147,10 @@
    "rarity": "rare",
    "cost": 3,
    "attack": 2,
-   "health": 4,
+   "health": 2,
+   "keywords": [
+    "swift"
+   ],
    "effects": [
     {
      "on": "play",
@@ -155,7 +158,7 @@
      "amount": 1
     }
    ],
-   "text": "On Play: Draw a card.",
+   "text": "Swift. On Play: Draw a card.",
    "flavor": "A great teacher of the law, still lecturing as he runs.",
    "circle": "violence",
    "art": "A scholar in a jurist's cap running across burning sand, clutching a thick law book."
@@ -184,16 +187,21 @@
    "type": "minion",
    "rarity": "common",
    "cost": 3,
-   "attack": 2,
-   "health": 4,
+   "attack": 1,
+   "health": 3,
    "effects": [
     {
      "on": "play",
      "do": "ramp",
      "amount": 1
+    },
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
     }
    ],
-   "text": "On Play: Gain an empty Mana Crystal.",
+   "text": "On Play: Gain an empty Mana Crystal. Draw a card.",
    "flavor": "The grammarian who wrote the rules, and still walks by them in the sand.",
    "circle": "violence",
    "art": "A white-haired scholar holds an open book while walking across a burning sandy plain."
@@ -362,8 +370,11 @@
    "type": "minion",
    "rarity": "epic",
    "cost": 4,
-   "attack": 3,
+   "attack": 2,
    "health": 5,
+   "keywords": [
+    "guard"
+   ],
    "effects": [
     {
      "on": "play",
@@ -371,7 +382,7 @@
      "target": "choose_enemy_minion"
     }
    ],
-   "text": "On Play: Freeze an enemy minion.",
+   "text": "Guard. On Play: Freeze an enemy minion.",
    "flavor": "One look, and the attacker is turned to stone.",
    "circle": "dis",
    "art": "A woman with serpents for hair stares out from behind tall iron gates."
@@ -647,9 +658,14 @@
      "on": "play",
      "do": "silence",
      "target": "choose_enemy_minion"
+    },
+    {
+     "on": "play",
+     "do": "freeze",
+     "target": "choose_enemy_minion"
     }
    ],
-   "text": "Silence an enemy minion.",
+   "text": "Silence an enemy minion and Freeze it.",
    "flavor": "The lid slides shut, and the sinner can no longer speak.",
    "circle": "heresy",
    "art": "A stone tomb lid slides shut over an open coffin with a faint glow inside."
@@ -686,9 +702,14 @@
      "on": "play",
      "do": "bounce",
      "target": "choose_enemy_minion"
+    },
+    {
+     "on": "play",
+     "do": "draw",
+     "amount": 1
     }
    ],
-   "text": "Return an enemy minion to its owner's hand.",
+   "text": "Return an enemy minion to its owner's hand. Draw a card.",
    "flavor": "A push at the gate sends the demon back where it came from.",
    "circle": "dis",
    "art": "A heavy iron gate swings open onto a dark road."

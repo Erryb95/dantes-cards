@@ -47,12 +47,17 @@
         {
           "on": "play",
           "do": "damage",
-          "target": "choose_any",
+          "target": "choose_enemy_minion",
           "amount": 2
+        },
+        {
+          "on": "play",
+          "do": "freeze",
+          "target": "choose_enemy_minion"
         }
       ],
-      "text": "Deal 2 damage.",
-      "flavor": "The pitch scalds whoever tries to climb out.",
+      "text": "Deal 2 damage to an enemy minion and Freeze it.",
+      "flavor": "The pitch scalds whoever tries to climb out, and holds them under.",
       "circle": "malebolge",
       "art": "A bubbling cauldron of black pitch with a single hand reaching up from the surface."
     },
@@ -66,11 +71,11 @@
       "effects": [
         {
           "on": "play",
-          "do": "ramp",
-          "amount": 1
+          "do": "mana",
+          "amount": 2
         }
       ],
-      "text": "Gain an empty Mana Crystal.",
+      "text": "Gain 2 Mana this turn only.",
       "flavor": "One false story, and the gates open from the inside.",
       "circle": "malebolge",
       "art": "A large wooden horse standing outside a city wall at dusk."
@@ -179,10 +184,16 @@
           "on": "play",
           "do": "freeze",
           "target": "choose_enemy_minion"
+        },
+        {
+          "on": "play",
+          "do": "armor",
+          "target": "own_hero",
+          "amount": 2
         }
       ],
-      "text": "Freeze an enemy minion.",
-      "flavor": "Their tears froze before they could fall.",
+      "text": "Freeze an enemy minion. Gain 2 Armor.",
+      "flavor": "Their tears freeze into a visor of ice.",
       "circle": "cocytus",
       "art": "A single tear of clear ice hanging from the cheek of a pale face."
     },
@@ -319,10 +330,16 @@
           "on": "play",
           "do": "damage",
           "target": "choose_enemy_minion",
-          "amount": 3
+          "amount": 2
+        },
+        {
+          "on": "play",
+          "do": "damage",
+          "target": "all_enemy_minions",
+          "amount": 1
         }
       ],
-      "text": "Deal 3 damage to an enemy minion.",
+      "text": "Deal 2 damage to an enemy minion, then 1 damage to all enemy minions.",
       "flavor": "The ground opened and took him, chariot and all.",
       "circle": "malebolge",
       "art": "A deep crack opening in the ground beneath a horse-drawn chariot."
@@ -399,27 +416,6 @@
       "flavor": "He carries his own severed head like a lantern.",
       "circle": "malebolge",
       "art": "A man holding his own severed head up by the hair, facing forward."
-    },
-    {
-      "id": "mc_ulysses",
-      "name": "Ulysses, the Schemer",
-      "set": "neutral",
-      "type": "minion",
-      "rarity": "rare",
-      "cost": 4,
-      "attack": 3,
-      "health": 3,
-      "effects": [
-        {
-          "on": "play",
-          "do": "bounce",
-          "target": "choose_enemy_minion"
-        }
-      ],
-      "text": "On Play: Return an enemy minion to its owner's hand.",
-      "flavor": "His clever counsel sent a whole fleet to the bottom.",
-      "circle": "malebolge",
-      "art": "A helmeted man at a ship's prow beside a lit beacon fire on dark water."
     },
     {
       "id": "mc_guido",
