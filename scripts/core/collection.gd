@@ -177,7 +177,7 @@ func deck_problem(d: Dictionary) -> String:
 		return "%d/%d cards" % [n, DECK_SIZE]
 	for id in d.cards:
 		if not fits_class(id, d.cls):
-			return "%s is not a %s card" % [CardDB.card(id).get("name", id), d.cls]
+			return "%s is not a %s card" % [CardDB.card(id).get("name", id), CardDB.class_title(d.cls)]
 		if int(d.cards[id]) > mini(max_copies(id), copies(id)):
 			return "not enough copies of %s" % CardDB.card(id).get("name", id)
 	return ""
