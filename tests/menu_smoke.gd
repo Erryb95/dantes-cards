@@ -5,7 +5,12 @@ extends Node
 ## - Delete asks first, and "Keep it" keeps the deck;
 ## - Back with no changes asks nothing;
 ## - buying a pack while one is bursting open still reveals the opened pack (it used to sweep the cards away and hang);
-## - a deck problem names the class by its title.
+## - a deck problem names the class by its title;
+## - Choose your path: picking a deck shows it (without starting a battle), the class plaque's "i" opens the class
+##   guide and Esc closes it, View cards lists the deck and Esc closes a zoomed card before the list, a key card
+##   shown big closes on Esc without leaving the screen;
+## - the collection shows the class strip on a class filter (a note on Neutral, nothing on All), and its Class guide
+##   button opens the guide.
 
 var fails := 0
 
@@ -17,6 +22,8 @@ func _ready() -> void:
 	await _builder_delete()
 	await _pack_buy_while_opening()
 	_problem_text()
+	await _deck_select()
+	await _collection_class()
 	print("MENU SMOKE: %d failures" % fails)
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -124,3 +131,101 @@ func _problem_text() -> void:
 	var p := Collection.deck_problem({"name": "x", "cls": "pilgrim", "cards": cards})
 	if not p.ends_with("not a %s card" % CardDB.class_title("pilgrim")):
 		_fail("deck problem does not name the class title: '%s'" % p)
+
+
+func _guide_open(scene: Node) -> bool:
+	var d := scene.get_node_or_null("Dialog")
+	return d != null and not d.is_queued_for_deletion() and d.find_child("ClassGuide", true, false) != null
+
+
+func _deck_select() -> void:
+	Settings.deck_choice = {}
+	var s := _open(Game.DECK_SELECT)
+	await _frames(4)
+	var decks := s.find_children("*", "Button", true, false).filter(func(b): return b.has_meta("key"))
+	if decks.size() < 2 * CardDB.classes().size():
+		_fail("Choose your path shows %d decks" % decks.size())
+		s.queue_free()
+		return
+	var pick: Button = decks[1]
+	pick.pressed.emit()
+	await _frames()
+	if s._selected != str(pick.get_meta("key")):
+		_fail("picking a deck did not show it (%s)" % s._selected)
+	if not s.is_inside_tree() or get_tree().current_scene != self:
+		_fail("picking a deck left the screen")
+	# Every class has its plaque, and its "i" opens that class's guide.
+	var strips := s.find_children("ClassStrip", "", true, false)
+	if strips.size() != CardDB.classes().size():
+		_fail("expected a class plaque per class, got %d" % strips.size())
+	if not strips.is_empty():
+		(strips[0].find_child("GuideButton", true, false) as Button).pressed.emit()
+		await _frames()
+		if not _guide_open(s):
+			_fail("the class plaque's i did not open the class guide")
+		if not UI.cancel_dialog(s):
+			_fail("Esc did not close the class guide")
+		await _frames()
+		if _guide_open(s):
+			_fail("the class guide stayed open after Esc")
+	# View cards: the whole list; a zoomed card closes first on Esc, then the list.
+	s._cards_btn.pressed.emit()
+	await _frames()
+	var d: Node = s.get_node_or_null("Dialog")
+	if d == null:
+		_fail("View cards did not open the deck list")
+	else:
+		var e: Dictionary = s._find(s._selected)
+		var slots := d.find_children("*", "CardView", true, false)
+		if slots.size() != e.cards.size():
+			_fail("the deck list shows %d cards, the deck has %d" % [slots.size(), e.cards.size()])
+		CardZoom.open(d, str(e.cards.keys()[0]))
+		await _frames()
+		UI.cancel_dialog(s)
+		await _frames()
+		if d.is_queued_for_deletion() or d.get_node_or_null("CardZoom") != null:
+			_fail("Esc on a zoomed card did not close just the zoom")
+		UI.cancel_dialog(s)
+		await _frames()
+		if is_instance_valid(d) and not d.is_queued_for_deletion():
+			_fail("Esc did not close the deck list")
+	# A key card shown big (hover / tap) closes on Esc, and the screen stays.
+	var c: CardView = s._cards.get_children().filter(func(n): return n is CardView)[0]
+	s._peek_card(c.card_id, c)
+	await _frames()
+	if s._peek == null:
+		_fail("a key card was not shown big")
+	s.go_back()
+	await _frames()
+	if s._peek != null or not s.is_inside_tree():
+		_fail("Esc did not close the key card, or left the screen")
+	s.queue_free()
+	await _frames()
+
+
+func _collection_class() -> void:
+	var s := _open(Game.COLLECTION)
+	await _frames()
+	var cls: String = CardDB.classes()[0]
+	s._set_filter(cls)
+	await _frames()
+	var strip := s.find_child("ClassStrip", true, false)
+	if strip == null:
+		_fail("no class strip on the %s filter" % cls)
+	else:
+		(strip.find_child("GuideButton", true, false) as Button).pressed.emit()
+		await _frames()
+		if not _guide_open(s):
+			_fail("Class guide did not open the guide in the collection")
+		UI.cancel_dialog(s)
+		await _frames()
+	s._set_filter("neutral")
+	await _frames()
+	if s.find_children("ClassStrip", "", true, false).filter(func(n): return not n.is_queued_for_deletion()).size() != 1:
+		_fail("Neutral shows no note (or more than one strip)")
+	s._set_filter("all")
+	await _frames()
+	if not s.find_children("ClassStrip", "", true, false).filter(func(n): return not n.is_queued_for_deletion()).is_empty():
+		_fail("All shows a class strip")
+	s.queue_free()
+	await _frames()

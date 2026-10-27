@@ -246,6 +246,37 @@ static func tip_box() -> StyleBox:
 	return s
 
 
+static var _parchment: Texture2D
+
+
+## The painted parchment plate (a pale sheet inside a thin bronze rule) as a 9-slice style, `pad` px of room inside
+## it left / right and `pad_y` above / below: set dark ink on it (descriptions, a class's playstyle).
+## The painting is used at half size, so its bronze rule sits about 15 px inside the edge and short plates keep room
+## for text.
+static func parchment_box(pad: float = 30.0, pad_y: float = 18.0) -> StyleBox:
+	if not UiSkin.has("plate_parchment_wide"):
+		var flat := box(Color(0.82, 0.7, 0.5), GOLD_DARK, 2, 6)
+		flat.content_margin_left = pad
+		flat.content_margin_right = pad
+		flat.content_margin_top = pad_y
+		flat.content_margin_bottom = pad_y
+		return flat
+	if _parchment == null:
+		var img := UiSkin.tex("plate_parchment_wide").get_image()
+		if img.is_compressed():
+			img.decompress()
+		img.resize(img.get_width() / 2, img.get_height() / 2, Image.INTERPOLATE_LANCZOS)
+		_parchment = ImageTexture.create_from_image(img)
+	var s := StyleBoxTexture.new()
+	s.texture = _parchment
+	s.set_texture_margin_all(18)
+	s.content_margin_left = pad
+	s.content_margin_right = pad
+	s.content_margin_top = pad_y
+	s.content_margin_bottom = pad_y
+	return s
+
+
 ## Tint of the painted field (assets/ui/panel_bg.jpg) inside plaques: dark enough for bone text.
 const FIELD := Color(0.55, 0.45, 0.4)
 

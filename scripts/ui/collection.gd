@@ -1,10 +1,13 @@
 extends Control
-## Card gallery with set filters; click a card to see it large.
+## Card gallery with set filters; click a card to see it large. A class filter shows the class's strip over the grid
+## (hero, tagline, hero power, keywords, and a Class guide button for the whole guide: ClassInfoPanel); Neutral and
+## Tokens get a short note.
 
 var _grid: GridContainer
 var _filter := "all"
 var _zoom: Control
 var _tabs := {} ## filter -> Button
+var _class_bar: Control ## holds the strip about the filtered class (empty on "All")
 
 
 func _ready() -> void:
@@ -59,6 +62,8 @@ func _ready() -> void:
 		tabs.add_child(b)
 		_tabs[f[0]] = b
 	UI.even_text(_tabs.values())
+	_class_bar = VBoxContainer.new()
+	root.add_child(_class_bar)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -77,12 +82,12 @@ func _ready() -> void:
 	_grid.add_theme_constant_override("v_separation", 26)
 	center.add_child(_grid)
 	resized.connect(_fill)
-	_fill()
+	_set_filter(_filter)
 
 
 ## Esc / the back gesture (Game.back): closes the enlarged card, else like Back.
 func go_back() -> void:
-	if _zoom != null:
+	if is_instance_valid(_zoom) and not _zoom.is_queued_for_deletion():
 		_zoom.queue_free()
 		_zoom = null
 	else:
@@ -91,6 +96,14 @@ func go_back() -> void:
 
 func _set_filter(f: String) -> void:
 	_filter = f
+	for c in _class_bar.get_children():
+		_class_bar.remove_child(c)
+		c.queue_free()
+	var w := get_viewport_rect().size.x - 80.0
+	if f in CardDB.classes():
+		_class_bar.add_child(ClassInfoPanel.strip(f, w, true))
+	elif ClassInfoPanel.NOTES.has(f):
+		_class_bar.add_child(ClassInfoPanel.note_strip(f, w))
 	_fill()
 
 
@@ -142,57 +155,8 @@ func _fill() -> void:
 		_grid.add_child(slot)
 
 
+## The card big over a veil, with its name, flavour and keyword tips (CardZoom); any press closes it.
 func _show_zoom(id: String) -> void:
-	if _zoom != null:
+	if is_instance_valid(_zoom):
 		_zoom.queue_free()
-	_zoom = ColorRect.new()
-	(_zoom as ColorRect).color = Color(0, 0, 0, 0.75)
-	_zoom.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(_zoom)
-	var vs := get_viewport_rect().size
-	var c := CardView.new().setup(id, -1, true)
-	c.position = Vector2(vs.x * 0.4, vs.y / 2)
-	c.scale = Vector2(0.6, 0.6)
-	_zoom.add_child(c)
-	c.create_tween().tween_property(c, "scale", Vector2(1.9, 1.9) * minf(1.0, vs.y / 1080.0), 0.18).set_trans(Tween.TRANS_BACK)
-	var card := CardDB.card(id)
-	# The name and flavour on a framed plate beside the card.
-	var w := minf(620.0, vs.x * 0.34)
-	var plate := PanelContainer.new()
-	plate.add_theme_stylebox_override("panel", UI.tip_box())
-	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	plate.custom_minimum_size = Vector2(w, 0)
-	var pv := VBoxContainer.new()
-	pv.add_theme_constant_override("separation", 14)
-	pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	plate.add_child(pv)
-	var name_l := UI.label(str(card.get("name", "")), 34, "title", UI.GOLD, 4, Color.BLACK)
-	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	pv.add_child(name_l)
-	var flavor := str(card.get("flavor", ""))
-	if flavor != "":
-		var info := UI.label(flavor, 28, "italic", UI.BONE, 3, Color.BLACK)
-		info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		info.custom_minimum_size = Vector2(w - 100, 0)
-		pv.add_child(info)
-	var holder := CenterContainer.new()
-	holder.position = Vector2(vs.x * 0.58, 0)
-	holder.size = Vector2(w + 40, vs.y)
-	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Under the plate, a tip for each keyword the card uses (Guard, Last Breath, Freeze...).
-	var side := VBoxContainer.new()
-	side.add_theme_constant_override("separation", 10)
-	side.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	side.add_child(plate)
-	var tips := UI.tip_column(card, false, w - 100.0)
-	if tips != null:
-		side.add_child(tips)
-	holder.add_child(side)
-	_zoom.add_child(holder)
-	Sfx.play("page", -6.0)
-	_zoom.gui_input.connect(func(e):
-		if e is InputEventMouseButton and e.pressed:
-			_zoom.queue_free()
-			_zoom = null)
+	_zoom = CardZoom.open(self, id)

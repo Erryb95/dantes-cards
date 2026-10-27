@@ -15,7 +15,7 @@
 | `scripts/battle/battle_view.gd` | the board: replays events as animations, handles input |
 | `scripts/battle/{card,minion,hero}_view.gd` | the pieces; `fx.gd`, `shapes.gd`, `target_arrow.gd` for the juice |
 | `scripts/battle/vfx.gd`, `vfx_data.gd`, `data/vfx.json` | per-card spell looks: 15 schools (colours, textures, sounds; default from the card's circle) x single-target "hit" patterns x board-wide "mass" patterns; every spell has a profile (tested). Staged as anticipation, travel, impact (shake, hit-stop), aftermath. Painted sprites `assets/vfx/vfx_*.png` via `tools/vfx/import_vfx.py`; review with `tests/vfx_preview.tscn -- --out=<dir> --spells` + `tools/vfx/contact_sheet.py` |
-| `scripts/ui/` | main menu, deck select, deck builder, pack opening, collection, options, credits (`credits_panel.gd`, from Options; keep it in step with `assets/CREDITS.md`), shared look (`ui.gd`, incl. the painted `UI.dialog`), the deck name's gold-ink caret (`ink_caret.gd`), painted skin loader (`ui_skin.gd`) |
+| `scripts/ui/` | main menu, deck select, deck builder, pack opening, collection, options, credits (`credits_panel.gd`, from Options; keep it in step with `assets/CREDITS.md`), shared look (`ui.gd`, incl. the painted `UI.dialog`), the deck name's gold-ink caret (`ink_caret.gd`), painted skin loader (`ui_skin.gd`), the class plaque / class guide (`class_info_panel.gd`, from `CardDB.class_info`), a card shown big (`card_zoom.gd`), the mana curve (`mana_curve.gd`) |
 | `scripts/intro/`, `scenes/intro.tscn` | the opening cinematic (see "Opening cinematic" below) |
 | `assets/shaders/` | `card_fx` (art mask, hit flash, burn-away dissolve, legendary foil), `river`, `fog`, `crack` (Dis embers / Cocytus frost), `wind` (Lust), `heat_haze` |
 | `tools/cards/art_jobs.py` | builds the ComfyUI jobs from the data and imports the results |
@@ -73,8 +73,8 @@ him, card by card. / At the river Acheron, Charon is waiting."
 
 - Decks (as in Hearthstone): exactly 30 cards, your class (Pilgrim, Ferryman, Wanderer or Wrathful) plus Neutral, at most 2 copies
   of a card and 1 of a legendary.
-- Preconstructed decks (`data/decks.json`), three per class, picked with the arrows on Choose your path (the last
-  pick per class is saved in `Settings.deck_choice`); the opponent plays a random one of the other class
+- Preconstructed decks (`data/decks.json`), three per class, picked on Choose your path (the last pick and the
+  library filter are saved in `Settings.deck_choice`); the opponent plays a random one of the other class
   (`Game.pick_enemy_deck`, never the same one twice in a row). Custom decks face a random one too.
 - **First match:** the intro ends "At the river Acheron, Charon is waiting.", so on a fresh profile (`Game.first_match()`:
   no win or loss recorded yet) the arena is the Acheron and the opponent plays Charon's starter, *The Ferryman's Host*
@@ -138,6 +138,24 @@ rules, card list and AI notes: `docs/HERO_WRATH.md`.
 
 Balance check: `run_tests.gd` plays 300 starter-deck games with alternating seats. At v0.2 it reports
 Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman class pool needs more power.
+
+## Choose your path and class info
+- **Library** (`deck_select.gd`): decks are physical decks, grouped by class. Each class has a plaque (hero portrait,
+  class name, tagline, an "i" disc for the class guide) over its decks and a New deck slot. A deck is a stack of
+  cards (its gilded edges show under the face; fewer for a thin deck) whose face is its key card's painting, with a
+  corner tag (Starter / Premade / Custom), its card count on a bronze disc (red when not playable) and its name on an
+  engraved plaque. The selected deck lifts and burns with a gold aura; a click on it again plays it. Class filters
+  above (emblem plates once the names no longer fit); the library scrolls, the bronze discs step a class or a row.
+- **Showcase**: hero power (disc, name, text) | hero | mana curve, the name ribbon, the class tagline and the plan
+  inked on parchment, the three key cards (hover lifts one and shows it big beside the panel with its keyword tips;
+  a tap keeps it until the next press), View cards (the whole list on a painted panel, each card zoomable, view only),
+  Class guide, Play, Edit (own decks).
+- **Class info** (`ClassInfoPanel`, text only from `CardDB.class_info` / `data/cards.json`): `strip()` (the class
+  plaque; with `full` also the hero power and tappable keyword chips, used over the Collection grid on a class
+  filter), `guide()` (portrait, tagline, hero power, playstyle on parchment, keywords with their help, tips), `open()`
+  (the guide as a modal "Dialog": Esc, back, Close or a press outside closes it). Neutral and Tokens get a note strip.
+- Review: `tests/screen_audit.tscn -- --what=deck_peek|deck_list|deck_list_zoom|deck_guide|collection_class|collection_guide|collection_neutral --cls=<class>`;
+  optional painted pieces are listed in `art_src/deck_ui_art.json`.
 
 ## Collection and packs (v0.2)
 - 296 cards: core 27 + Pilgrim's Journey 35 + Infernal Host 35 + Upper Hell (33: Filippo Argenti and the Wrathful

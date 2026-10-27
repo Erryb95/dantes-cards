@@ -1,0 +1,34 @@
+{
+ "_doc": "Optional painted pieces for Choose your path and the class guide (scripts/ui/deck_select.gd, scripts/ui/class_info_panel.gd). The screens look finished without them: each one replaces a piece built from existing art (noted in 'replaces'). One take each, no text in the image. Install as assets/ui/<id>.png (alpha) and wire it where 'replaces' says.",
+ "style": "hand-tinted 19th century wood engraving in the style of Gustave Dore, dense fine crosshatching, aged bronze and dark iron, glowing ember orange and deep crimson highlights, game UI asset, centered, no text, no letters, no symbols",
+ "assets": [
+  {
+   "id": "deck_box_frame",
+   "size": [512, 720],
+   "alpha": true,
+   "replaces": "the stacked card borders of a deck in the library (_stack_card / _border): the face art shows through the open window",
+   "prompt": "Front view of an ornate closed deck box for playing cards, slightly turned so its right side and the gilded page edges of the stacked cards inside show, heavy aged bronze frame with riveted corners and scrollwork, the large rectangular front window left completely empty and transparent, dark iron sides, isolated on a transparent background"
+  },
+  {
+   "id": "deck_seal_starter",
+   "size": [192, 96],
+   "alpha": true,
+   "replaces": "the STARTER corner tag (_tag): the word stays set in code on it",
+   "prompt": "A small horizontal brass label plate with a gold rim and a smooth blank centre, two tiny rivets at the ends, warm polished gold, isolated on a transparent background"
+  },
+  {
+   "id": "deck_seal_custom",
+   "size": [192, 96],
+   "alpha": true,
+   "replaces": "the CUSTOM corner tag (_tag): the word stays set in code on it",
+   "prompt": "A small horizontal label plate of dark red enamel set in a thin bronze rim, blank smooth centre, a drip of red sealing wax at one end, isolated on a transparent background"
+  },
+  {
+   "id": "class_emblem_frame",
+   "size": [256, 256],
+   "alpha": true,
+   "replaces": "the power_disc behind a class's emblem in the class plaques and the guide (ClassInfoPanel.power_disc)",
+   "prompt": "A round heraldic medallion frame of aged bronze with a thin ember-red enamel ring and small scrollwork at four points, the inner circle left empty and transparent, isolated on a transparent background"
+  }
+ ]
+}
