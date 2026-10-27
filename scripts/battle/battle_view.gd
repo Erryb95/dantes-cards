@@ -2296,9 +2296,11 @@ func _on_press(p: Vector2) -> void:
 	_coach.dismiss()
 	if guide != null and guide.wants_tap():
 		guide.tap() # Virgil is talking: the tap moves his lesson on
+		_refresh_highlights() # his next step decides what may glow (and attack) now
 		return
 	if guide != null:
 		guide.on_press() # a passing remark goes away with the first touch
+		_refresh_highlights()
 	if _mull_waiting:
 		var mc := _pick_hand(p)
 		if mc != null:
@@ -2327,7 +2329,9 @@ func _on_press(p: Vector2) -> void:
 		_layout_hand(0)
 		return
 	var u = _pick_unit(p)
-	if u is MinionView and u.side == 0 and u.can_attack:
+	# Judged live, not from the glow: a lesson step may have changed since the board last refreshed.
+	if u is MinionView and u.side == 0 and _my_turn() and st.can_attack(st.units.get(u.uid)) \
+			and _allowed({"act": "attack", "card": u.card_id}):
 		mode = Mode.AIM_ATTACK
 		aim_attacker = u.uid
 		_start_aim(u.position, st.attack_targets(0))

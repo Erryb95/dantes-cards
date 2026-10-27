@@ -12,8 +12,8 @@ extends Node
 ## - the collection shows the class strip on a class filter (a note on Neutral, nothing on All), and its Class guide
 ##   button opens the guide;
 ## - Virgil's lessons: a plaque per lesson, How to Play opens from it with every chapter (the classes as their guides)
-##   and Esc closes it; the first-launch question marks itself asked; a lesson played as Virgil teaches is won through
-##   the battle scene (a wrong move refused) and ends on its result; a lesson's pause menu restarts, skips or leaves it.
+##   and Esc closes it; the first-launch question marks itself asked; every lesson played as Virgil teaches is won
+##   through the battle's own input (taps, presses, aims) (a wrong move refused) and ends on its result; a lesson's pause menu restarts, skips or leaves it.
 ## - the profile: the name rules (length, characters, spaces cleaned); the title screen has the
 ##   player plaque and Virgil's medallion; the plaque opens the profile, an invalid name is refused with a red error,
 ##   a valid one saves (cleaned) with the avatar picked and redraws the plaque, Back and Esc close without saving.
@@ -386,27 +386,12 @@ func _profile() -> void:
 
 
 func _lesson_battle() -> void:
+	for l in Lessons.all():
+		await _play_lesson(str(l.id))
 	var first := str(Lessons.all()[0].id)
-	if not Game.prepare_lesson(first):
-		_fail("the first lesson could not be prepared")
-		return
-	var b: Node2D = _open(Game.BATTLE)
-	var r: Dictionary = await LessonDriver.run(get_tree(), b, Callable(), 240.0)
-	if not r.won:
-		_fail("lesson %s was not won as taught: %s" % [first, r])
-	if not r.refused:
-		_fail("lesson %s let End Turn through while Virgil was talking" % first)
-	var wait := 0.0 # the result follows the death throes of the last hero
-	while b.find_child("LessonResult", true, false) == null and wait < 10.0:
-		await get_tree().process_frame
-		wait += get_process_delta_time()
-	if b.find_child("LessonResult", true, false) == null:
-		_fail("lesson %s ended without its result" % first)
-	b.queue_free()
-	await _frames()
 	# The pause menu of a lesson: no Concede, but Restart, Skip and Leave.
 	Game.prepare_lesson(first)
-	b = _open(Game.BATTLE)
+	var b: Node2D = _open(Game.BATTLE)
 	await _frames(30)
 	b._open_pause()
 	await _frames()
@@ -530,4 +515,28 @@ func _drop_rates() -> void:
 		if d != null and not d.is_queued_for_deletion():
 			_fail("the drop-rates sheet stayed open after Esc")
 	s.queue_free()
+	await _frames()
+
+
+## Lesson `id` played as Virgil teaches it, through the battle's own input (taps, presses, aims): it must be won.
+func _play_lesson(id: String) -> void:
+	if not Game.prepare_lesson(id):
+		_fail("lesson %s could not be prepared" % id)
+		return
+	var b: Node2D = _open(Game.BATTLE)
+	var r: Dictionary = await LessonDriver.run(get_tree(), b, Callable(), 240.0)
+	# A lesson that ends in free play (The Trial) is finished by the AI for the player: it may lose that match.
+	var free: bool = Lessons.get_lesson(id).steps.any(func(st): return str(st.get("until", "")) == "win")
+	if not (r.over if free else r.won):
+		_fail("lesson %s was not %s as taught: %s" % [id, "finished" if free else "won", r])
+	var taps: bool = Lessons.get_lesson(id).steps.any(func(st): return str(st.get("wait", "")) == "tap")
+	if taps and not r.refused: # a lesson of free play only (The Trial) has no line to talk over
+		_fail("lesson %s let End Turn through while Virgil was talking" % id)
+	var wait := 0.0 # the result follows the death throes of the last hero
+	while b.find_child("LessonResult", true, false) == null and wait < 10.0:
+		await get_tree().process_frame
+		wait += get_process_delta_time()
+	if b.find_child("LessonResult", true, false) == null:
+		_fail("lesson %s ended without its result" % id)
+	b.queue_free()
 	await _frames()

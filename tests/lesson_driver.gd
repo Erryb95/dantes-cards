@@ -4,7 +4,8 @@ extends RefCounted
 ## free play is left to the AI (the battle's autoplay). Used by menu_smoke (the flow) and screen_audit (the shots).
 ##   var r = await LessonDriver.run(tree, battle, on_step)
 ## `on_step(index, step)` is awaited on every new line Virgil shows, before it is answered (a screenshot hook).
-## Returns {"won": bool, "steps": how many lines were shown, "refused": whether a wrong action was turned away}.
+## Returns {"won": bool, "over": whether the match ended, "steps": how many lines were shown, "refused": whether a
+## wrong action was turned away}.
 
 
 static func run(tree: SceneTree, battle: Node2D, on_step: Callable = Callable(), max_time: float = 300.0) -> Dictionary:
@@ -41,7 +42,7 @@ static func run(tree: SceneTree, battle: Node2D, on_step: Callable = Callable(),
 				var turn := st.turn
 				battle._end_turn()
 				refused = st.turn == turn and st.current == 0
-			g.tap()
+			battle._on_press(Vector2(-4000, -4000)) # a tap anywhere, through the battle's own input path
 		elif s.has("do"):
 			var want: Dictionary = s.do
 			if str(want.act) == "inspect":
@@ -62,6 +63,19 @@ static func run(tree: SceneTree, battle: Node2D, on_step: Callable = Callable(),
 			if not battle._allowed(action):
 				push_error("lesson driver: the guide refused its own step %d: %s" % [g.index, action])
 				return {"won": false, "steps": shown, "refused": refused}
+			if m.do == "attack":
+				# As a player does it: press the minion (it must take aim), then pick the target.
+				var a = battle.unit_views.get(int(m.attacker))
+				var tv = battle.unit_views.get(int(m.target))
+				if a == null or tv == null:
+					push_error("lesson driver: step %d has no view for its attacker or target" % g.index)
+					return {"won": false, "steps": shown, "refused": refused}
+				battle._on_press(a.global_position)
+				if battle.mode != battle.Mode.AIM_ATTACK:
+					push_error("lesson driver: pressing %s at step %d did not take aim" % [action.card, g.index])
+					return {"won": false, "steps": shown, "refused": refused}
+				battle._finish_aim(tv.global_position)
+				continue
 			var hit: bool = g.hits(action)
 			if BattleAI.apply(st, 0, m):
 				battle._did(action, hit)
@@ -71,4 +85,4 @@ static func run(tree: SceneTree, battle: Node2D, on_step: Callable = Callable(),
 			g.on_press()
 		elif str(s.get("until", "")) == "win":
 			battle.autoplay = true # free play: the AI finishes the match for the player
-	return {"won": battle.st.winner == 0, "steps": shown, "refused": refused}
+	return {"won": battle.st.winner == 0, "over": battle.over, "steps": shown, "refused": refused}
