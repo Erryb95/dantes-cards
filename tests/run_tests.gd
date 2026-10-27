@@ -102,6 +102,7 @@ func _test_data() -> void:
 	ok(CardDB.arenas().size() >= 1, "at least one arena")
 	_test_arenas()
 	_test_vfx()
+	_test_living_art()
 
 
 ## data/vfx.json: every spell has a profile and every name in it is one Vfx knows.
@@ -125,6 +126,45 @@ func _test_vfx() -> void:
 		ok(s.hit in VfxData.HITS and (s.mass in VfxData.MASSES), "school %s default patterns" % name)
 	for v in VfxData.CIRCLE_SCHOOL.values():
 		ok(VfxData.SCHOOLS.has(v), "circle school %s" % v)
+
+
+## Living art (data/living_art.json, ArtLiving): every entry names a card with its painting and mask, the config loads
+## into the card shader's uniforms, and a card without an entry is left exactly as it was.
+func _test_living_art() -> void:
+	var d = JSON.parse_string(FileAccess.get_file_as_string("res://data/living_art.json"))
+	ok(d is Dictionary and d.get("cards") is Dictionary, "living_art.json parses")
+	var cards: Dictionary = d.get("cards", {}) if d is Dictionary else {}
+	for id in cards:
+		ok(not CardDB.card(id).is_empty(), "living art %s names a card" % id)
+		ok(ArtLiving.has(id), "living art %s has its painting and mask" % id)
+		for key in cards[id]:
+			ok(key == "mask" or ArtLiving.PARAMS.has(key), "living art %s: known key %s" % [id, key])
+	ok(cards.has("francesca") and not CardDB.living("francesca").is_empty(), "francesca has living art")
+	var u := ArtLiving.params(CardDB.living("francesca"))
+	ok(u.size() == ArtLiving.PARAMS.size(), "living params: one uniform per key")
+	ok(u.living_swirl > 0.0 and u.living_vortex is Vector2 and u.living_ember_color is Color, "living params typed")
+	ok(ArtLiving.params({}).living_swirl == 0.0, "living params: defaults for missing keys")
+	ok(CardDB.art_loop("francesca") == null, "a card with living art never plays its Wan loop")
+	var shader: Shader = load("res://assets/shaders/card_fx.gdshader")
+	var keep := ArtLiving.forced
+	ArtLiving.forced = ArtLiving.FULL
+	var m := ShaderMaterial.new()
+	m.shader = shader
+	ok(ArtLiving.setup_card(m, "francesca", 0.686, 0.42), "francesca's living art sets up")
+	ok(m.get_shader_parameter("living_level") == ArtLiving.FULL and m.get_shader_parameter("living_mask") != null,
+		"francesca's material is alive")
+	for id in ["ugolino", "minos", "cd_guy_montfort"]:
+		var plain := ShaderMaterial.new()
+		plain.shader = shader
+		ok(CardDB.living(id).is_empty() and not ArtLiving.setup_card(plain, id, 0.686, 0.42), "%s has no living art" % id)
+		ok(plain.get_shader_parameter("living_level") in [null, 0] and plain.get_shader_parameter("living_mask") == null,
+			"%s's material is untouched" % id)
+	ArtLiving.forced = ArtLiving.OFF
+	var off := ShaderMaterial.new()
+	off.shader = shader
+	ok(not ArtLiving.setup_card(off, "francesca", 0.686, 0.42) and off.get_shader_parameter("living_level") in [null, 0],
+		"living art switched off keeps the still painting")
+	ArtLiving.forced = keep
 
 
 ## Arena data: every entry is complete, its sounds exist, and the Acheron (the fallback) is always playable.

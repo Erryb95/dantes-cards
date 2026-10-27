@@ -158,6 +158,7 @@ func _build_face() -> void:
 		art.texture = CardDB.art_framed(card_id, art.size.x / art.size.y)
 		_art_mat.set_shader_parameter("mask_mode", 1)
 	_depth = ArtDepth.setup_card(_art_mat, card_id, art.size.x / art.size.y, 0.45 if is_spell else 0.36, ArtDepth.CARD)
+	ArtLiving.setup_card(_art_mat, card_id, art.size.x / art.size.y, 0.45 if is_spell else 0.36)
 	if art.texture == null:
 		art.texture = _placeholder()
 	_face.add_child(art)
@@ -275,6 +276,7 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	_art_mat.set_shader_parameter("mask_mode", 2)
 	_art_mat.set_shader_parameter("corner", 0.07)
 	_depth = ArtDepth.setup_card(_art_mat, card_id, art.size.x / art.size.y, 0.42, ArtDepth.CARD)
+	ArtLiving.setup_card(_art_mat, card_id, art.size.x / art.size.y, 0.42)
 	art.material = _art_mat
 	_face.add_child(art)
 	ArtLoop.attach(_face, _face, art, _art_mat, card_id, art.size.x / art.size.y, 0.42)

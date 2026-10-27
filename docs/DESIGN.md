@@ -18,7 +18,8 @@
 | `scripts/ui/` | main menu, deck select, deck builder, pack opening, collection, options, credits (`credits_panel.gd`, from Options; keep it in step with `assets/CREDITS.md`), shared look (`ui.gd`, incl. the painted `UI.dialog`), the deck name's gold-ink caret (`ink_caret.gd`), painted skin loader (`ui_skin.gd`), the class plaque / class guide (`class_info_panel.gd`, from `CardDB.class_info`), a card shown big (`card_zoom.gd`), the mana curve (`mana_curve.gd`) |
 | `data/lessons.json`, `scripts/tutorial/` | Virgil's lessons: the lesson data (schema at its top), `Lessons` (progress, rewards, setting a lesson's match up), `LessonAI` (the opponent's scripted turns), `LessonGuide` (Virgil's lines, pointer and arrows on the board, which actions a step allows), `Virgil` (his portrait, his dialog); the screen is `scripts/ui/lessons.gd`, How to Play `scripts/ui/how_to_play.gd` |
 | `scripts/intro/`, `scenes/intro.tscn` | the opening cinematic (see "Opening cinematic" below) |
-| `assets/shaders/` | `card_fx` (art mask, hit flash, burn-away dissolve, legendary foil), `river`, `fog`, `crack` (Dis embers / Cocytus frost), `wind` (Lust), `heat_haze` |
+| `assets/shaders/` | `card_fx` (art mask, hit flash, burn-away dissolve, legendary foil; includes `living_art.gdshaderinc`), `river`, `fog`, `crack` (Dis embers / Cocytus frost), `wind` (Lust), `heat_haze` |
+| `data/living_art.json`, `scripts/battle/art_living.gd` | **living art**: a legendary's still painting animated in the card shader (the whirl flows and churns, flames rise, flicker and shimmer, hair and cloth flutter, embers turn), per card from data: motion parameters plus a mask recipe that `tools/cards/living_mask.py` paints into `assets/cards/living/<id>.png` (R whirl, G flames, B hair / cloth; faces black, birds kept out of the flow). Runs wherever the art is drawn (hand, collection, zoom, board portrait); a card with living art never plays its Wan loop. `ArtLiving.level()`: full, lite at the 30 fps frame limit (no haze or embers), `DV_LIVING=0/1/2` forces it. Only Francesca for now (one example before any batch). Review: `tests/living_preview.tscn` |
 | `tools/cards/art_jobs.py` | builds the ComfyUI jobs from the data and imports the results |
 | `tests/` | `run_tests.gd` (rules, 300-game starter soak, 400-game random-deck soak over the whole pool), `ui_smoke.tscn` (drives the real board with input events) |
 
@@ -313,5 +314,5 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
 2. Run map (Slay-the-Spire style) through the circles: Limbo, Minos, the Lustful, Cerberus...; card rewards
    after each win; deck building between fights.
 3. More keywords (Frenzy), weapons for heroes, secrets ("Judgements").
-4. Animated legendary art (Wan video loops), per-card sounds, voice lines.
+4. Animated legendary art (living art in the shader, piloted on Francesca; the Wan loops barely move), per-card sounds, voice lines.
 5. Proper release keystore for Android; store icons; iOS / macOS signing.
