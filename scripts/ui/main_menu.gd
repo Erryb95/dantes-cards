@@ -22,8 +22,22 @@ func _ready() -> void:
 	col.add_theme_constant_override("separation", 18)
 	add_child(col)
 
-	var title := UI.label("DANTE'S INFERNO", 92, "title", UI.GOLD, 14, Color(0.12, 0.01, 0.0))
-	col.add_child(title)
+	# The logo engraved on its painted cartouche (the text sits on the plate's dark centre panel).
+	var title := UI.label("DANTE'S INFERNO", 80, "title", UI.GOLD, 14, Color(0.12, 0.01, 0.0))
+	if UiSkin.has("title_plate"):
+		var logo := Control.new()
+		logo.custom_minimum_size = Vector2(780, 173)
+		logo.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		logo.add_child(UiSkin.rect("title_plate", logo.custom_minimum_size))
+		title.position = Vector2(125, 48)
+		title.size = Vector2(555, 80)
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		UI.fit_label(title, 530.0, 40)
+		logo.add_child(title)
+		col.add_child(logo)
+	else:
+		col.add_child(title)
 	# The subtitle on the charred banner under the logo.
 	var sub := UI.banner("THE CARD GAME", 34, UI.BONE)
 	sub.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
