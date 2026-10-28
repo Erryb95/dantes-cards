@@ -240,6 +240,19 @@ func _set_burn(v: float) -> void:
 	_art_mat.set_shader_parameter("burn", v)
 
 
+## One card_fx uniform on the whole piece (frame and portrait): DeathFx drives the hero's defeat through it.
+func set_fx(param: String, value) -> void:
+	_mat.set_shader_parameter(param, value)
+	_art_mat.set_shader_parameter(param, value)
+
+
+## The defeat begins (DeathFx): the target glow and the hero power go out.
+func dying(fade: float) -> void:
+	_target_glow.set_on(false)
+	if is_instance_valid(power):
+		power.create_tween().tween_property(power, "modulate:a", 0.0, fade)
+
+
 func contains_point(global_point: Vector2) -> bool:
 	var p := to_local(global_point)
 	return pow(p.x / (W * 0.55), 2) + pow(p.y / (H * 0.55), 2) <= 1.0

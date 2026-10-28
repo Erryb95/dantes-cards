@@ -100,6 +100,10 @@ Board blockouts (Blender 5.2, always with a `timeout`):
 `python tools/arena/passes.py art_src/arena/blockout_<id>` and `python tools/arena/upload_blockout.py <id>`
 (uploads only, never queues a job).
 
+Deaths review (one kill per killer school, a trade, Venom, Rebirth, a clear at full and lite level, a hero's
+defeat; captioned): `timeout 900 $G --path . res://tests/death_preview.tscn --resolution 1280x720 --write-movie <file.avi>
+--fixed-fps 30 [-- --only=<segment,...>] [--fast]`, then `ffmpeg -i <file.avi> -c:v libx264 -crf 20 -pix_fmt yuv420p <file.mp4>`.
+
 Intro: `-- --intro` plays the cinematic even if it was seen, `-- --no-intro` never; screenshots of every shot:
 `$G --path . res://scenes/intro.tscn -- --intro-shots=<dir> [--only=<shot id>] [--shot-size=2400x1080]`.
 The intro is never played in headless runs. Settings: `user://settings.cfg` (`[game] intro_seen`).

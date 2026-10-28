@@ -84,6 +84,8 @@ vec3 gold_ramp(float t) {
 	return mix(band, low, clamp((t - 0.58) / 0.3, 0.0, 1.0));
 }
 
+#include "res://assets/shaders/death_fx.gdshaderinc"
+
 void vertex() {
 	world = (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy;
 	puv = vec3(UV, 1.0);
@@ -177,7 +179,9 @@ void fragment() {
 	}
 	c.rgb = mix(c.rgb, vec3(dot(c.rgb, vec3(0.3, 0.59, 0.11))), desat);
 	c.rgb = mix(c.rgb, flash_color.rgb, flash * 0.75);
-	if (burn > 0.0) {
+	if (death_mode > 0) {
+		c = death_fx(c, world); // a death in the killer's school (death_fx.gdshaderinc)
+	} else if (burn > 0.0) {
 		float n = fbm(world * noise_scale);
 		float th = burn * 1.3 - 0.15;
 		float e = n - th;

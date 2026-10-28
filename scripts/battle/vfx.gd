@@ -203,61 +203,10 @@ static func buff(view, m: Node2D, src: String) -> bool:
 	return true
 
 
-## A minion dying in its own school's way: the fire-born burn, ice shatters, souls rise, stone crumbles, venom
-## melts... The dissolve's rim takes the school's colours; size grows with the minion's cost. The caller starts the
-## dissolve (m.burn_away) after this.
-static func death(view, m: Node2D, id: String) -> void:
-	var p := VfxData.profile(id)
-	var s := VfxData.school(p)
-	var fx: Node2D = view.fx_layer
-	var pos := m.position
-	var big: float = 1.0 + 0.6 * p.power
-	if m.has_method("set_burn_colors"):
-		m.set_burn_colors(s.color, s.hot)
-	var art: String = {"ice": "vfx_death_ice_shards", "stone": "vfx_death_stone", "venom": "vfx_death_venom",
-		"fire": "vfx_death_ash", "pitch": "vfx_death_ash", "blood": "vfx_death_blood"}.get(p.school, "")
-	if art != "" and UiSkin.has(art):
-		_paint(fx, [art], pos, 300.0 * big, 0.8, Color.WHITE)
-	elif p.school != "stone": # its painted impact is a glowing lava crack: a crumbling statue only raises dust
-		_paint(fx, s.impact, pos, 260.0 * big, 0.6, _mid(s))
-	match p.school:
-		"fire", "pitch", "judgment":
-			_paint(fx, ["vfx_fire_explosion", "fire_burst"] if p.big else ["fire_burst"], pos, 300.0 * big, 0.7,
-				Color.WHITE)
-			FxLight.add(fx, pos, s, 360.0 * big, 1.2, 0.9)
-			Fx.burst(fx, pos, UI.EMBER, int(40 * big), 180.0, 1.4, 10.0, -140.0, 120.0)
-			Fx.smoke(fx, pos, Color(0.2, 0.17, 0.15, 0.75) if p.school != "pitch" else Color(0.08, 0.06, 0.05, 0.85),
-				220.0 * big)
-		"ice":
-			_sparks(view, pos, s, int(24 * big))
-			var shards := _motes(view, pos, s, int(18 * big), 420.0, 26.0, 0.8, 180.0, 900.0,
-				"vfx_ice_shard" if UiSkin.has("vfx_ice_shard") else "k_star_08")
-			shards.angle_min = -180.0
-			shards.angle_max = 180.0
-			Sfx.play("glass", -6.0, 0.7)
-			Sfx.play("ice", -8.0, 0.9)
-		"soul", "shadow":
-			_rise(view, pos, s, ["vfx_death_soul", "vfx_skull_wisp", "k_light_02"] if p.school == "soul"
-				else ["vfx_death_shadow", "k_magic_05"], 220.0 * big)
-			Fx.smoke(fx, pos, Color(s.color.r * 0.25, s.color.g * 0.25, s.color.b * 0.3, 0.7), 220.0 * big)
-			_motes(view, pos, s, int(26 * big), 120.0, 14.0, 1.4, 60.0, -160.0)
-			Sfx.play("wail" if p.school == "soul" else "sigh", -12.0, 1.2)
-		"stone":
-			Fx._debris(fx, pos + Vector2(0, 30), 70.0 * big, int(22 * big))
-			Fx.dust(fx, pos + Vector2(0, 60), 180.0 * big, 30)
-			Fx.smoke(fx, pos, Color(0.35, 0.3, 0.25, 0.6), 240.0 * big)
-			Sfx.play("rubble", -6.0, 0.9)
-		"gold":
-			_coins(view, pos, int(14 * big))
-		"venom", "water", "blood":
-			_motes(view, pos, s, int(30 * big), 260.0, 16.0, 0.9, 120.0, 700.0)
-			Sfx.play("splash", -8.0, 0.8)
-		_:
-			_motes(view, pos, s, int(30 * big), 220.0, 14.0, 1.1, 180.0, -100.0 if s.rise else 300.0)
-			Fx.smoke(fx, pos, Color(s.color.r * 0.3, s.color.g * 0.3, s.color.b * 0.3, 0.6), 220.0 * big)
-	if p.big:
-		Fx.shockwave(fx, pos, s.color, 360.0 * big, 0.6)
-		view.shake(6.0)
+## A minion dying with nothing known about its killer: it dies in its own school's way (DeathFx; the battle view
+## passes the rules' death event so it dies in its killer's). Returns the seconds until it is gone; the caller frees it.
+static func death(view, m: Node2D, id: String) -> float:
+	return DeathFx.play(view, m, id, {})
 
 
 ## A legendary's own entrance on top of the shared one (cut-in, golden circle): its signature sprite blooms
@@ -375,11 +324,6 @@ static func pilfer(view, pos: Vector2) -> void:
 ## A drawn card catching the light as it turns face up.
 static func draw_glow(view, pos: Vector2) -> void:
 	_paint(view.fx_layer, ["vfx_draw_glow"], pos, 340.0, 0.45, Color.WHITE)
-
-
-## The losing hero bursting apart at the end of the match.
-static func hero_death(view, h: Node2D) -> void:
-	_paint(view.fx_layer, ["vfx_hero_death", "vfx_fire_explosion", "fire_burst"], h.position, 760.0, 1.2, Color.WHITE)
 
 
 ## The motes a minion's school throws while it drops onto the board (the landing itself keeps the rarity colour).

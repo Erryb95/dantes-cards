@@ -64,6 +64,50 @@ func _drag(a: Vector2, b: Vector2) -> void:
 	_mouse(b, false)
 
 
+## Every killer school's death through the battle view's queue (DeathFx): one enemy minion staged and killed per
+## school, then a clear of four at once; each view must be gone afterwards and nothing may error.
+func _deaths() -> void:
+	var uid := 9800
+	var shown := 0
+	for school in VfxData.SCHOOLS:
+		var how := "venom" if school == "venom" else "effect"
+		var killer := ""
+		for c in CardDB.all_cards():
+			if DeathStyle.killer_school(c.id, how) == school:
+				killer = c.id
+				break
+		if killer == "":
+			_fail("no card kills with %s" % school)
+			continue
+		var batch: Array = []
+		for k in (4 if school == "fire" else 1):
+			uid += 1
+			var snap := {"uid": uid, "id": "lost_pilgrim", "side": 1, "is_hero": false, "attack": 1, "health": 1,
+				"max_health": 1, "armor": 0, "keywords": [], "sleeping": false, "frozen": false, "silenced": false}
+			var m := MinionView.new().setup(snap)
+			battle.board_layer.add_child(m)
+			battle.board_views[1].append(m)
+			battle.unit_views[uid] = m
+			batch.append(m)
+		battle._layout_board(1)
+		for m in batch:
+			battle.queue.append({"t": "damage", "uid": m.uid, "amount": 1, "hp": 0, "armor": 0, "source": -1,
+				"src": killer})
+		for m in batch:
+			battle.queue.append({"t": "death", "uid": m.uid, "side": 1, "killer": killer, "how": how, "by": -1})
+		var t := 0.0
+		while (not battle.queue.is_empty() or battle.playing) and t < 10.0:
+			await get_tree().process_frame
+			t += get_process_delta_time()
+		await get_tree().create_timer(1.2).timeout
+		for m in batch:
+			if is_instance_valid(m):
+				_fail("the %s death left its minion behind" % school)
+			else:
+				shown += 1
+	print("UI SMOKE: %d deaths played in %d killer schools" % [shown, VfxData.SCHOOLS.size()])
+
+
 ## Opens the battle in every arena (one without its painted board on the Acheron stand-in) and taps each of its
 ## toys and its divider, so every arena's VFX and reactions run at least once.
 func _arenas() -> void:
@@ -129,6 +173,9 @@ func _run() -> void:
 		_mouse(p, true)
 		_mouse(p, false)
 		await get_tree().create_timer(0.3).timeout
+	if battle.st.winner == -1:
+		await _idle()
+	await _deaths()
 	await _arenas()
 	print("UI SMOKE: played %d minions, %d failures" % [played, fails])
 	get_tree().quit(1 if fails > 0 or played == 0 else 0)
