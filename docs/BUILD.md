@@ -9,6 +9,7 @@ timeout 240 $G --headless --path . res://tests/ui_smoke.tscn          # input sm
 timeout 300 $G --headless --path . res://tests/menu_smoke.tscn        # menu dialogs, pack opening, deck problems, lessons flow
 timeout 300 $G --headless --path . res://tests/intro_test.tscn        # opening cinematic data + player + skip
 timeout 180 $G --path . res://tests/ink_centering.tscn --resolution 1920x1080 -- --out=<dir> --max=2   # text centred in its frames, on drawn pixels (needs a window)
+timeout 900 $G --path . res://tests/rules_centering.tscn --resolution 1920x1080 -- --out=<dir> --max=2 # every card's rules text on its parchment, clear of the gems (needs a window)
 timeout 600 $G --headless --path . --export-release "Windows Desktop" build/windows/DantesInfernoCards.exe
 timeout 600 $G --headless --path . --export-debug   "Android"         build/android/DantesInfernoCards.apk
 ```

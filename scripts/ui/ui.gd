@@ -720,57 +720,74 @@ static func text_layout(f: Font, size: int, text: String, wrap_width: float = -1
 	var key := "%d|%d|%.1f|%.1f|%.1f|%s" % [f.get_instance_id(), size, wrap_width, line_spacing, paragraph_spacing, text]
 	if _ink_cache.has(key):
 		return _ink_cache[key]
-	var ts := TextServerManager.get_primary_interface()
-	var ink := Rect2()
-	var have := false
-	var y := 0.0
-	var widest := 0.0
-	var count := 0
-	var paras := text.split("\n")
-	for pi in paras.size():
+	var acc := {"ink": Rect2(), "have": false, "y": 0.0, "widest": 0.0, "lines": 0}
+	for para in text.split("\n"):
 		var tp := TextParagraph.new()
-		tp.add_string(paras[pi], f, size)
-		tp.break_flags = TextServer.BREAK_MANDATORY
-		if wrap_width > 0.0:
-			tp.width = wrap_width
-			tp.break_flags = TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND | TextServer.BREAK_ADAPTIVE
-		for li in tp.get_line_count():
-			var rid := tp.get_line_rid(li)
-			var base := y + tp.get_line_ascent(li)
-			var glyphs := ts.shaped_text_get_glyphs(rid)
-			# The line's width as it is centred: trailing spaces left out (a wrapped line ends in one).
-			var w := 0.0
-			var end := glyphs.size()
-			while end > 0 and int(glyphs[end - 1]["flags"]) & TextServer.GRAPHEME_IS_SPACE:
-				end -= 1
-			for gi in end:
-				w += float(glyphs[gi]["advance"]) * int(glyphs[gi]["repeat"])
-			widest = maxf(widest, w)
-			var x := -w / 2.0
-			for gi in end:
-				var g: Dictionary = glyphs[gi]
-				var r: Variant = _glyph_box(ts, g["font_rid"], int(g["font_size"]), int(g["index"]))
-				var off: Vector2 = g["offset"]
-				var k_draw := MSDF_DRAW_K if ts.font_is_multichannel_signed_distance_field(g["font_rid"]) else 1.0
-				for k in int(g["repeat"]):
-					if r != null:
-						var gr: Rect2 = r
-						gr = Rect2(gr.position * k_draw, gr.size * k_draw) # as drawn: about the glyph's origin
-						gr.position += Vector2(x, base) + off
-						ink = gr if not have else ink.merge(gr)
-						have = true
-					x += float(g["advance"])
-			y += tp.get_line_size(li).y + line_spacing
-			count += 1
-		y += paragraph_spacing
-	var block_h := maxf(0.0, y - line_spacing - paragraph_spacing)
-	ink.position.y -= block_h / 2.0
-	if not have:
-		ink = Rect2()
+		tp.add_string(para, f, size)
+		_measure_lines(tp, wrap_width, line_spacing, acc)
+		acc["y"] += paragraph_spacing
+	var lay := _finish_layout(acc, line_spacing + paragraph_spacing)
 	if _ink_cache.size() > 4000:
 		_ink_cache.clear()
-	var lay := {"ink": ink, "block": Vector2(widest, block_h), "lines": count}
 	_ink_cache[key] = lay
+	return lay
+
+
+## Adds the lines of `tp` (wrapped at `wrap_width` when > 0) to a layout being measured: `acc` keeps the ink so far,
+## whether there is any, the y of the next line, the widest line and the line count.
+static func _measure_lines(tp: TextParagraph, wrap_width: float, line_spacing: float, acc: Dictionary) -> void:
+	var ts := TextServerManager.get_primary_interface()
+	tp.break_flags = TextServer.BREAK_MANDATORY
+	if wrap_width > 0.0:
+		tp.width = wrap_width
+		tp.break_flags = TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND | TextServer.BREAK_ADAPTIVE
+	for li in tp.get_line_count():
+		var rid := tp.get_line_rid(li)
+		var base: float = acc["y"] + tp.get_line_ascent(li)
+		var glyphs := ts.shaped_text_get_glyphs(rid)
+		# The line's width as it is centred: trailing spaces left out (a wrapped line ends in one).
+		var w := 0.0
+		var end := glyphs.size()
+		while end > 0 and int(glyphs[end - 1]["flags"]) & TextServer.GRAPHEME_IS_SPACE:
+			end -= 1
+		for gi in end:
+			w += float(glyphs[gi]["advance"]) * int(glyphs[gi]["repeat"])
+		acc["widest"] = maxf(acc["widest"], w)
+		var x := -w / 2.0
+		for gi in end:
+			var g: Dictionary = glyphs[gi]
+			var r: Variant = _glyph_box(ts, g["font_rid"], int(g["font_size"]), int(g["index"]))
+			var off: Vector2 = g["offset"]
+			var k_draw := MSDF_DRAW_K if ts.font_is_multichannel_signed_distance_field(g["font_rid"]) else 1.0
+			for k in int(g["repeat"]):
+				if r != null:
+					var gr: Rect2 = r
+					gr = Rect2(gr.position * k_draw, gr.size * k_draw) # as drawn: about the glyph's origin
+					gr.position += Vector2(x, base) + off
+					acc["ink"] = gr if not acc["have"] else (acc["ink"] as Rect2).merge(gr)
+					acc["have"] = true
+				x += float(g["advance"])
+		# Each line's box (from the top of the layout): [advance width, top, bottom, ascent, descent].
+		var lh := tp.get_line_size(li).y
+		if acc.has("boxes"):
+			acc["boxes"].append([w, acc["y"], acc["y"] + lh, tp.get_line_ascent(li), tp.get_line_descent(li)])
+		acc["y"] += lh + line_spacing
+		acc["lines"] += 1
+
+
+## The layout dictionary of a measured `acc` (see text_layout): the ink centred on the block of line boxes.
+## `trailing` is the spacing added after the last line, which is not part of the block.
+static func _finish_layout(acc: Dictionary, trailing: float) -> Dictionary:
+	var block_h := maxf(0.0, acc["y"] - trailing)
+	var ink: Rect2 = acc["ink"] if acc["have"] else Rect2()
+	if acc["have"]:
+		ink.position.y -= block_h / 2.0
+	var lay := {"ink": ink, "block": Vector2(acc["widest"], block_h), "lines": acc["lines"]}
+	if acc.has("boxes"):
+		var boxes := []
+		for b in acc["boxes"]:
+			boxes.append([b[0], b[1] - block_h / 2.0, b[2] - block_h / 2.0, b[3], b[4]])
+		lay["line_boxes"] = boxes
 	return lay
 
 
@@ -1007,24 +1024,74 @@ static func dot_texture() -> Texture2D:
 
 
 ## Keywords are shown in bold in rules text.
-## The largest font size (max_size down to min_size) at which `plain` text wraps inside width x height, for a
-## RichTextLabel (bold keywords run a little wider, so the width keeps a 6% margin).
-static func fit_rules_size(plain: String, width: float, height: float, max_size: int, min_size: int = 12) -> int:
-	var f := font("body")
+const RULES_BOLD := ["On Play:", "Last Breath:", "End of Turn:", "Start of Turn:", "Ruse:", "Wrath:", "Frenzy:", "Guard",
+	"Swift", "Ward", "Drain", "Venom", "Rebirth", "Freeze", "Silence"]
+static var _rules_bold: FontVariation
+
+
+## The bold face of rules text (the body font, emboldened): one shared variation.
+static func rules_bold_font() -> FontVariation:
+	if _rules_bold == null:
+		_rules_bold = FontVariation.new()
+		_rules_bold.base_font = font("body")
+		_rules_bold.variation_embolden = 0.4
+	return _rules_bold
+
+
+## The largest font size (max_size down to min_size) at which rules text wraps inside width x height, laid out the
+## way its RichTextLabel lays it out (bold keywords run wider: rules_layout measures them in their own face).
+## `italic`: flavour text, all in the italic face.
+static func fit_rules_size(plain: String, width: float, height: float, max_size: int, min_size: int = 12,
+		italic := false) -> int:
 	var s := max_size
 	while s > min_size:
-		var box := f.get_multiline_string_size(plain, HORIZONTAL_ALIGNMENT_CENTER, width * 0.94, s)
-		if box.y <= height:
+		if (rules_layout(plain, s, width, italic)["block"] as Vector2).y <= height:
 			break
 		s -= 1
 	return s
 
 
+## text_layout for rules text as rules_bbcode shows it: the keywords in rules_bold_font, the rest in the body font
+## (`italic`: everything in the italic face), wrapped at `width` and centred. It also has "line_boxes": per line
+## [advance width, top, bottom, ascent, descent], y from the block's centre like the ink.
+static func rules_layout(plain: String, size: int, width: float, italic := false) -> Dictionary:
+	var key := "rules|%d|%.1f|%s|%s" % [size, width, italic, plain]
+	if _ink_cache.has(key):
+		return _ink_cache[key]
+	var tp := TextParagraph.new()
+	if italic:
+		tp.add_string(plain, font("italic"), size)
+	else:
+		for span in _rules_spans(plain):
+			tp.add_string(span[0], rules_bold_font() if span[1] else font("body"), size)
+	var acc := {"ink": Rect2(), "have": false, "y": 0.0, "widest": 0.0, "lines": 0, "boxes": []}
+	_measure_lines(tp, width, 0.0, acc)
+	var lay := _finish_layout(acc, 0.0)
+	_ink_cache[key] = lay
+	return lay
+
+
+## `text` cut into [piece, bold] runs, bold where rules_bbcode puts [b].
+static func _rules_spans(text: String) -> Array:
+	var spans := []
+	var bb := rules_bbcode(text).trim_prefix("[center]").trim_suffix("[/center]")
+	var bold := false
+	for part in bb.split("[b]"):
+		for i in part.split("[/b]").size():
+			var piece: String = part.split("[/b]")[i]
+			# After a "[b]" the first piece is bold; whatever follows its "[/b]" is not.
+			var is_bold := bold and i == 0
+			if piece != "":
+				spans.append([piece, is_bold])
+		bold = true
+	return spans
+
+
 static func rules_bbcode(text: String) -> String:
 	var t := text
-	for k in ["On Play:", "Last Breath:", "End of Turn:", "Start of Turn:", "Ruse:", "Wrath:", "Frenzy:", "Guard", "Swift",
-			"Ward", "Drain", "Venom", "Rebirth", "Freeze", "Silence"]:
-		t = t.replace(k, "[b]" + k + "[/b]")
+	for k in RULES_BOLD:
+		# A keyword of two or three words never breaks across lines ("On / Play:"): non-breaking spaces.
+		t = t.replace(k, "[b]" + k.replace(" ", "\u00a0") + "[/b]")
 	return "[center]" + t + "[/center]"
 
 

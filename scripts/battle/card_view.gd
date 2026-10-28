@@ -5,6 +5,18 @@ extends Node2D
 const W := 250.0
 const H := 360.0
 const CARD_FX := preload("res://assets/shaders/card_fx.gdshader")
+## Where the rules text's letters are centred: the middle of the plate's visible parchment, measured on the
+## paintings (the minion cartouche's parchment runs 45..273 of its 315 px, the spell scroll's, between its ornament
+## lines, 69..255 of 285). tests/rules_centering.tscn checks every card on real pixels.
+const MINION_TEXT_CENTER := Vector2(W / 2.0, 292.5)
+const SPELL_TEXT_CENTER := Vector2(W / 2.0, 306.0)
+## A minion's rules text: the box widths tried (widest first), the most height its lines may take (the parchment is
+## 78 px tall), and the gems' corners: the attack's crossed swords reach x 63 from y 296 down (the health drop stays
+## further out), so a line whose letters run below MINION_GEM_TOP keeps within MINION_GEM_CLEAR px of the middle.
+const MINION_TEXT_WIDTHS := [150.0, 140.0, 130.0, 122.0]
+const MINION_TEXT_ROOM := 70.0
+const MINION_GEM_TOP := 296.0
+const MINION_GEM_CLEAR := 57.0
 
 var uid := -1
 var card_id := ""
@@ -328,21 +340,17 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	txt.bbcode_enabled = true
 	txt.scroll_active = false
 	txt.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Inside the plate; on minions the box narrows so lines stay clear of the attack and health gems in the
-	# lower corners, on spells it stays between the scroll's rolled ends.
+	# Inside the plate, between the spell scroll's rolled ends; a minion's box width is chosen per text (see
+	# _fit_minion_rules) so lines stay clear of the attack and health gems in the plate's lower corners.
 	if painted:
 		txt.position = Vector2(38, ry + 68) if is_spell else Vector2(50, ry + 61)
-		txt.size = Vector2(W - 76, 72) if is_spell else Vector2(W - 100, 60)
+		txt.size = Vector2(W - 76, 72) if is_spell else Vector2(W - 100, MINION_TEXT_ROOM)
 	else:
 		txt.position = Vector2(20 if is_spell else 44, ry + 58)
 		txt.size = Vector2(W - 40 if is_spell else W - 88, 72 if is_spell else 66)
 	txt.use_parent_material = true
-	var body := UI.font("body")
-	var bold := FontVariation.new()
-	bold.base_font = body
-	bold.variation_embolden = 0.4
-	txt.add_theme_font_override("normal_font", body)
-	txt.add_theme_font_override("bold_font", bold)
+	txt.add_theme_font_override("normal_font", UI.font("body"))
+	txt.add_theme_font_override("bold_font", UI.rules_bold_font())
 	txt.add_theme_font_override("italics_font", UI.font("italic"))
 	if painted:
 		txt.add_theme_color_override("default_color", Color(0.12, 0.07, 0.04))
@@ -351,15 +359,35 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 		txt.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
 		txt.add_theme_constant_override("outline_size", 5)
 	var rules: String = card.get("text", "")
-	var size := UI.fit_rules_size(rules, txt.size.x, txt.size.y, 20)
-	if rules == "":
-		rules = "[i]" + card.get("flavor", "") + "[/i]"
-		size = UI.fit_rules_size(card.get("flavor", ""), txt.size.x, txt.size.y, 17)
+	var plain := rules
+	var flavour := rules == ""
+	var max_size := 20
+	if flavour:
+		plain = card.get("flavor", "")
+		rules = "[i]" + plain + "[/i]"
+		max_size = 17
 		txt.add_theme_color_override("default_color", Color(0.3, 0.2, 0.12) if painted else Color(0.85, 0.78, 0.66))
+	# Fitted 3% narrower than the box, so no line runs right to its edges.
+	var size := UI.fit_rules_size(plain, txt.size.x * 0.97, txt.size.y, max_size, 12, flavour)
+	if painted and not is_spell:
+		var fit := _fit_minion_rules(plain, max_size, flavour)
+		size = fit[0]
+		txt.size.x = fit[1]
 	for k in ["normal_font_size", "bold_font_size", "italics_font_size"]:
 		txt.add_theme_font_size_override(k, size)
 	txt.text = UI.rules_bbcode(rules)
 	txt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	if painted:
+		# Optical centring (Enrico: "le scritte dentro le carte non sono sempre centrate"): the letters' ink, not
+		# their line boxes, goes on the middle of the plate's visible parchment. A text too long for the box even at
+		# the smallest size gets the room it needs (the parchment is taller than the box).
+		var lay := UI.rules_layout(plain, size, txt.size.x, flavour)
+		var block: Vector2 = lay["block"]
+		if block.y > txt.size.y:
+			txt.size.y = ceilf(block.y) + 2.0
+		var ink: Rect2 = lay["ink"]
+		var target := SPELL_TEXT_CENTER if is_spell else MINION_TEXT_CENTER
+		txt.position = (target - txt.size / 2.0 - ink.get_center()).round()
 	_face.add_child(txt)
 
 	# Gems.
@@ -376,6 +404,30 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 		_face.add_child(_atk_label)
 		_hp_label = _stat_label(str(int(card.get("health", 0))), hp_at + UI.gem_number_offset("gem_health", 74), 34)
 		_face.add_child(_hp_label)
+
+
+## The font size and box width of a minion's rules text: the largest size (then the widest box) at which the text,
+## centred on the parchment, fits MINION_TEXT_ROOM and keeps every line that runs down into the gems' corners
+## (below MINION_GEM_TOP) within MINION_GEM_CLEAR of the middle (2 px spare for an italic overhang). Lines higher up may be wider: a short last line
+## leaves a long text its size.
+func _fit_minion_rules(plain: String, max_size: int, italic: bool) -> Array:
+	for s in range(max_size, 11, -1):
+		for w in MINION_TEXT_WIDTHS:
+			var lay := UI.rules_layout(plain, s, w, italic)
+			if (lay["block"] as Vector2).y > MINION_TEXT_ROOM:
+				continue
+			# The block's centre sits where the ink's centre lands on the parchment's middle.
+			var mid: float = MINION_TEXT_CENTER.y - (lay["ink"] as Rect2).get_center().y
+			var clear := true
+			for b in lay["line_boxes"]:
+				# A line's descenders end about a quarter of its descent above its box's bottom.
+				var bottom: float = mid + b[2] - b[4] * 0.25
+				if bottom > MINION_GEM_TOP and b[0] / 2.0 > MINION_GEM_CLEAR:
+					clear = false
+					break
+			if clear:
+				return [s, w]
+	return [12, MINION_TEXT_WIDTHS[-1]]
 
 
 func _stat_label(text: String, center: Vector2, size: int) -> Label:
