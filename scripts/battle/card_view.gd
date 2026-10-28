@@ -624,6 +624,11 @@ func _set_burn(v: float) -> void:
 	_param("burn", v)
 
 
+## The dissolve's progress by hand: 0 whole, 1 gone (the title screen's showcase burns cards away and raises new ones).
+func set_burn(v: float) -> void:
+	_param("burn", v)
+
+
 ## The colours of the dissolve's glowing rim (a spell burns away in its school's colours).
 func set_burn_colors(edge: Color, hot: Color) -> void:
 	_param("burn_edge", edge)
