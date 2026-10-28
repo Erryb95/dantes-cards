@@ -22,6 +22,7 @@ func _initialize() -> void:
 		return
 	_test_data()
 	_test_export_presets()
+	_test_art_import()
 	_test_class_info()
 	_test_rules()
 	_test_freeze()
@@ -74,6 +75,24 @@ func _test_export_presets() -> void:
 				ok(cf.get_value(opts, "permissions/access_network_state", false) == true,
 					"the Android export asks for ACCESS_NETWORK_STATE")
 	ok(android > 0, "there is an Android export preset")
+
+
+## Card paintings are imported lossy (WebP): lossless, the 308 of them took about 146 MB of the APK, lossy about 20.
+## A painting added later gets Godot's default (lossless) until its .import is set like the others.
+func _test_art_import() -> void:
+	var dir := DirAccess.open("res://assets/cards/art")
+	ok(dir != null, "assets/cards/art opens")
+	if dir == null:
+		return
+	var n := 0
+	for f in dir.get_files():
+		if not f.ends_with(".jpg.import"):
+			continue
+		var cf := ConfigFile.new()
+		ok(cf.load("res://assets/cards/art/" + f) == OK, "%s loads" % f)
+		n += 1
+		ok(int(cf.get_value("params", "compress/mode", 0)) == 1, "%s imports lossy (compress/mode=1)" % f)
+	ok(n >= 300, "every card painting has its .import (%d)" % n)
 
 
 func ok(cond: bool, what: String) -> void:

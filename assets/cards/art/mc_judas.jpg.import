@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/mc_judas.jpg-02b3f51c3642944d195b58157e3d7051
 
 [params]
 
-compress/mode=0
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.9
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
