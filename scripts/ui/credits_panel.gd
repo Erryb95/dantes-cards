@@ -24,6 +24,11 @@ const SECTIONS := [
 	["Sound effects", "CC0 sounds by Kenney, rubberduck, Vehicle, bart, JaggedStone, qubodup, Ogrebane, artisticdude, "
 		+ "Voltiment555, AntumDeluge, Andrastos87, Henrythetrain, Divinux, xXx_JPMC_xXx, nene, aoristos, uagadugu, "
 		+ "Umplix and others, from Freesound, OpenGameArt and kenney.nl. Particle textures by Kenney (CC0)."],
+	["Character voices", "Every character's cries, growls, sighs and laughs are CC0 recordings (no speech, no AI audio), "
+		+ "cut, pitched and layered for each card: by rubberduck, HaelDB, mieki256, Stormyman (Christopher Hahn), "
+		+ "Nocturnal_Vanguard, StarNinjas, Exewin, thebardofblasphemy, Darsycho, qubodup, Badre-Eddine, AntumDeluge, "
+		+ "ArcadeParty, OwlishMedia, artisticdude, EmoPreben, Reitanna, LookIMadeAThing and more than 200 other "
+		+ "Freesound and OpenGameArt contributors (all listed in CREDITS.md)."],
 	["Fonts", "Cinzel by Natanael Gama and IM Fell English by Igino Marini (SIL Open Font Licence)."],
 	["Engine", "Made with Godot Engine (MIT licence), by Juan Linietsky, Ariel Manzur and the Godot Engine contributors."],
 ]

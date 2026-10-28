@@ -73,6 +73,21 @@ battle through the server. A
 bot opponent: `timeout 900 $G --headless --path . res://tests/online_smoke.tscn -- --bot [--idle-turn=4]` (it sits
 out turn 4 or 5, so the rope burns).
 
+Character voices (assets/audio/voices/, see "Character voices" in docs/DESIGN.md), always with `python -I`
+(the source packs are untrusted downloads: the tool only reads them through ffmpeg):
+```sh
+python -I tools/audio/character_voices.py pool  [--src <voices_src>]   # split + measure + tag the source clips -> art_src/voices/pool.json
+python -I tools/audio/character_voices.py build [--only id,id] [--dry] # render the .ogg files, SOURCES.md, art_src/voices/voices.csv, the CREDITS.md block
+python -I tools/audio/character_voices.py check                       # identical files / fingerprint distance under 1.0 fail
+python -I tools/audio/character_voices.py reel --out <dir>            # review reel: heroes, legendaries, 12 minions (+ list, + CSV)
+python -I tools/audio/character_voices.py arch                        # the archetype of every character (* = data/voices.json)
+```
+The sources (one folder per pack with its `meta.json`: page URL, author, licence checked on the page) were downloaded on
+2026-10-28 outside the repo, by default into the session scratchpad (`voices_src`); `--src` points elsewhere. Only
+CC0 sources are read (OpenGameArt pages whose licence field offers CC0, Freesound HQ previews of sounds whose page
+says CC0, Stormyman's itch.io pack), and the game's own CC0 sfx are used as element layers. Every output's sources:
+assets/audio/voices/SOURCES.md. After a build run `--import`.
+
 Art depth maps (parallax): `python -I tools/cards/make_depth.py [--sheet <out.png>]` writes assets/cards/depth/<id>.png
 (and depth/heroes/<id>.png) for new or changed art only, with Depth Anything V2 **Small** (Apache-2.0; never the
 CC-BY-NC Base / Large / Giant) from `C:/Progetti/Tools/depth/da2_small_onnx/model.onnx` (onnx-community export), then

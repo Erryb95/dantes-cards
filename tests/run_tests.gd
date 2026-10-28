@@ -102,6 +102,54 @@ func _test_data() -> void:
 	ok(CardDB.arenas().size() >= 1, "at least one arena")
 	_test_arenas()
 	_test_vfx()
+	_test_voices()
+
+
+## Every character's own sounds (tools/audio/character_voices.py): each minion a play and a death sound, each hero a
+## start and a defeat sound; every file loads, is short, and no two are the same file. Their sources are CC0 only.
+func _test_voices() -> void:
+	var dir := "res://assets/audio/voices/" # Sfx.CHAR_DIR
+	var want := {}
+	for c in CardDB.all_cards():
+		if c.type == "minion":
+			want[c.id + "_play"] = c.id
+			want[c.id + "_death"] = c.id
+	for cls in CardDB.classes():
+		var h := CardDB.class_hero(cls)
+		want["hero_" + h] = h
+		want["hero_%s_defeat" % h] = h
+	var md5s := {}
+	for n in want:
+		var path: String = dir + n + ".ogg"
+		ok(ResourceLoader.exists(path), "voice %s exists" % n)
+		if not ResourceLoader.exists(path):
+			continue
+		var s: AudioStream = load(path)
+		ok(s != null and s.get_length() > 0.25 and s.get_length() < 2.0, "voice %s loads and is short" % n)
+		var h := FileAccess.get_md5(path)
+		ok(not md5s.has(h), "voice %s is not the same file as %s" % [n, md5s.get(h, "")])
+		md5s[h] = n
+	for f in DirAccess.get_files_at(dir):
+		if f.ends_with(".ogg"):
+			ok(want.has(f.get_basename()), "voice file %s belongs to a character" % f)
+	# The licences: the voices' block of assets/CREDITS.md lists only CC0 / public-domain sources.
+	var credits := FileAccess.get_file_as_string("res://assets/CREDITS.md")
+	var a := credits.find("<!-- voices:begin")
+	var b := credits.find("<!-- voices:end -->")
+	ok(a >= 0 and b > a, "CREDITS.md has the voices block")
+	var rows := 0
+	for line in credits.substr(a, b - a).split("\n"):
+		if not line.begins_with("| ") or line.begins_with("| Source") or line.begins_with("|---"):
+			continue
+		var cells := line.split(" | ")
+		rows += 1
+		ok(cells.size() >= 4 and cells[cells.size() - 2].strip_edges() in ["CC0", "Public domain"],
+			"voice source is CC0: %s" % line.left(90))
+	ok(rows >= 5, "the voices block lists its sources (%d)" % rows)
+	var sources := FileAccess.get_file_as_string(dir + "SOURCES.md")
+	for n in want:
+		if not ("| %s.ogg |" % n) in sources:
+			ok(false, "SOURCES.md lists %s.ogg" % n)
 
 
 ## data/vfx.json: every spell has a profile and every name in it is one Vfx knows.

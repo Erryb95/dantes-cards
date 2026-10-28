@@ -1,13 +1,22 @@
 extends Node
 ## Sound effects and music. play("slam") picks a random assets/audio/sfx/slam_N.ogg (or slam.ogg);
-## a few short card sounds (swish, tick, chime) are synthesised at startup.
+## a few short card sounds (swish, tick, chime) are synthesised at startup. play_char("<id>_play") plays a
+## character's own sound from assets/audio/voices/ (false when it has none).
 
 const SFX_DIR := "res://assets/audio/sfx/"
 const UI_DIR := "res://assets/audio/ui/"
 const MUSIC_DIR := "res://assets/audio/music/"
+## Every character's own sound (tools/audio/character_voices.py): <id>_play, <id>_death, hero_<id>, hero_<id>_defeat.
+const CHAR_DIR := "res://assets/audio/voices/"
 const VOICES := 12
 
 var _cache := {}
+var _char := {} ## name -> AudioStream, or null when the character has no file (the caller falls back)
+var _char_last := {} ## name -> msec it last started (the same sound asked twice at once plays once)
+var _char_players: Array[AudioStreamPlayer] = [] ## their own players: a burst of effects never cuts a voice off
+var _char_next := 0
+## The character sounds played, newest last (tests read it; capped).
+var char_log: Array[String] = []
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
 var _music: AudioStreamPlayer
@@ -24,6 +33,11 @@ func _ready() -> void:
 		p.bus = "SFX"
 		add_child(p)
 		_players.append(p)
+	for i in 4:
+		var p := AudioStreamPlayer.new()
+		p.bus = "SFX"
+		add_child(p)
+		_char_players.append(p)
 	_music = AudioStreamPlayer.new()
 	_music.bus = "Music"
 	add_child(_music)
@@ -69,6 +83,40 @@ func play(name: String, volume_db: float = 0.0, pitch: float = 1.0, pitch_var: f
 	p.volume_db = volume_db
 	p.pitch_scale = maxf(0.1, pitch + randf_range(-pitch_var, pitch_var))
 	p.play()
+
+
+## The stream of a character sound, null when it has none.
+func char_stream(name: String) -> AudioStream:
+	if not _char.has(name):
+		var path := CHAR_DIR + name + ".ogg"
+		_char[name] = load(path) if ResourceLoader.exists(path) else null
+	return _char[name]
+
+
+func has_char(name: String) -> bool:
+	return char_stream(name) != null
+
+
+## Plays a character's own sound on the SFX bus (so the effects volume applies). False when the character has no
+## such file: the caller then plays its generic sound instead.
+func play_char(name: String, volume_db: float = -3.0, pitch: float = 1.0) -> bool:
+	var s := char_stream(name)
+	if s == null:
+		return false
+	var now := Time.get_ticks_msec()
+	if now - int(_char_last.get(name, -100000)) < 250:
+		return true # already sounding (two events for the same thing)
+	_char_last[name] = now
+	var p := _char_players[_char_next]
+	_char_next = (_char_next + 1) % _char_players.size()
+	p.stream = s
+	p.volume_db = volume_db
+	p.pitch_scale = pitch
+	p.play()
+	char_log.append(name)
+	if char_log.size() > 64:
+		char_log.remove_at(0)
+	return true
 
 
 ## Plays the playlist in assets/audio/music/<folder>/ (whole pieces, cN_0.ogg). A piece is never cut: when the

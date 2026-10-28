@@ -86,6 +86,32 @@ func _arenas() -> void:
 	Game.force_arena = ""
 
 
+## The characters' own sounds in the battle: both heroes announced themselves, the minions played above spoke,
+## a batch of tokens speaks once, a death cries, and a character without a file falls back (no error).
+func _voices() -> void:
+	var heard: Array[String] = Sfx.char_log
+	if not heard.any(func(n): return n.begins_with("hero_")):
+		_fail("no hero start sound was played (%s)" % [heard])
+	if not heard.any(func(n): return n.ends_with("_play")):
+		_fail("no minion play sound was played (%s)" % [heard])
+	print("UI SMOKE: character sounds in the battle: %s" % ", ".join(heard.slice(0, 12)))
+	Sfx.char_log.clear()
+	battle._summon_voice_ms = -100000
+	battle._summon_voice("lost_soul", false)
+	battle._summon_voice("lost_soul", false) # same batch: silent
+	battle._summon_voice("harpy", false) # still the same batch
+	if Sfx.char_log.size() != 1:
+		_fail("a batch of summoned tokens played %d sounds" % Sfx.char_log.size())
+	battle._death_voice_ms.clear()
+	if not battle._death_voice("cerberus") or Sfx.char_log[-1] != "cerberus_death":
+		_fail("Cerberus' death cry did not play")
+	if battle._summon_voice("no_such_card", true) or battle._death_voice("no_such_card"):
+		_fail("a character without a sound file must fall back to the generic sounds")
+	for id in ["dante", "charon", "ulysses", "filippo"]:
+		battle._hero_voice(id, true)
+	print("UI SMOKE: character sounds ok (%d played)" % Sfx.char_log.size())
+
+
 func _run() -> void:
 	var played := 0
 	for turn in 4:
@@ -129,6 +155,7 @@ func _run() -> void:
 		_mouse(p, true)
 		_mouse(p, false)
 		await get_tree().create_timer(0.3).timeout
+	_voices()
 	await _arenas()
 	print("UI SMOKE: played %d minions, %d failures" % [played, fails])
 	get_tree().quit(1 if fails > 0 or played == 0 else 0)

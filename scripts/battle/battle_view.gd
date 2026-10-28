@@ -46,6 +46,8 @@ var _pending_card := {} ## hand uid -> CardView waiting for its summon
 var _copy_start := {} ## where the next drawn card flies in from (a copy or a stolen card): pos, rot, scl
 var _stolen: Array[Dictionary] = [] ## where each stolen card was handed over; its copy event picks it up there
 var _morph := {} ## the minion being transformed (uid, side, view): it keeps its slot for its new form
+var _summon_voice_ms := -100000 ## when a minion summoned by an effect last spoke (a batch of tokens speaks once)
+var _death_voice_ms: Array[int] = [] ## when the last death sounds started (a board wipe voices only a few)
 var _ruse_cast := false ## the Ruse flash was already shown on the spell being cast
 
 var cam: Camera2D
@@ -806,6 +808,8 @@ func _present(ev: Dictionary) -> void:
 				var t := h.create_tween().set_parallel(true)
 				t.tween_property(h, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 				t.tween_property(h, "modulate:a", 1.0, 0.4)
+				# Each hero announces itself as it appears: yours first, then the opponent's.
+				get_tree().create_timer(0.3 + 1.1 * i).timeout.connect(_hero_voice.bind(h.hero_id, false))
 		"turn":
 			_last_aoe = ""
 			for w in _stolen: # never left behind (each is normally picked up by its copy event)
@@ -1242,6 +1246,7 @@ func _on_summon(ev: Dictionary) -> void:
 		board_views[side][board_views[side].find(old)] = m
 		old.queue_free()
 		_layout_board(side, m)
+		_summon_voice(snap.id, false)
 		await _morph_in(m)
 		return
 	var idx := clampi(int(ev.index), 0, board_views[side].size())
@@ -1279,10 +1284,11 @@ func _on_summon(ev: Dictionary) -> void:
 		clampf((cost - 2) / 6.0, 0.0, 1.0))
 	Sfx.play("slam", -4.0)
 	Sfx.play("card_place", -6.0)
-	if cost >= 6:
-		Sfx.play("roar", -8.0, 0.9)
-	elif cost >= 4:
-		Sfx.play("growl", -12.0, 1.0, 0.1)
+	if not _summon_voice(snap.id, card != null):
+		if cost >= 6:
+			Sfx.play("roar", -8.0, 0.9)
+		elif cost >= 4:
+			Sfx.play("growl", -12.0, 1.0, 0.1)
 	if rarity == "legendary":
 		shake(18.0)
 		Fx.shockwave(fx_layer, m.position, UI.GOLD, 520.0, 0.7)
@@ -1445,12 +1451,52 @@ func _on_death(ev: Dictionary) -> void:
 	if _morph.get("uid", -1) == ev.uid:
 		return # transformed, not killed: the swirl already took it and its new form keeps the slot
 	board_views[ev.side].erase(m)
-	Sfx.play("moan", -14.0, 1.0, 0.12)
-	Sfx.play("creature_die", -12.0, 1.1)
+	if _death_voice(m.card_id):
+		Sfx.play("creature_die", -22.0, 1.1) # the body falling, under the character's own cry
+	else:
+		Sfx.play("moan", -14.0, 1.0, 0.12)
+		Sfx.play("creature_die", -12.0, 1.1)
 	Vfx.death(self, m, m.card_id)
 	m.burn_away(0.85 / _speed())
 	get_tree().create_timer(0.85 / _speed()).timeout.connect(_remove_dead.bind(m, ev.side))
 	await _wait(0.22)
+
+
+## A minion's own play sound as it lands (assets/audio/voices/<id>_play.ogg). Played cards always speak; minions
+## an effect summons speak once per batch (three tokens at once make one sound). False when the minion has no
+## sound of its own, so the caller plays the generic one.
+func _summon_voice(id: String, played: bool) -> bool:
+	var name := id + "_play"
+	if not Sfx.has_char(name):
+		return false
+	var now := Time.get_ticks_msec()
+	if not played:
+		if now - _summon_voice_ms < int(900.0 / _speed()):
+			return true # the batch already spoke
+		_summon_voice_ms = now
+	return Sfx.play_char(name, -3.0)
+
+
+## A minion's own death cry; when many die at once only the first two cry (the rest get the generic fall).
+func _death_voice(id: String) -> bool:
+	var name := id + "_death"
+	if not Sfx.has_char(name):
+		return false
+	var now := Time.get_ticks_msec()
+	_death_voice_ms = _death_voice_ms.filter(func(t): return now - t < 450)
+	if _death_voice_ms.size() >= 2:
+		Sfx.play("creature_die", -14.0, 1.1)
+		return true
+	_death_voice_ms.append(now)
+	return Sfx.play_char(name, -4.0 if _death_voice_ms.size() == 1 else -6.0)
+
+
+## A hero's own sound: hero_<id> as the duel starts, hero_<id>_defeat when it falls (the start sound, lower and
+## slower, when there is no defeat file). Nothing when the hero has neither.
+func _hero_voice(hero_id: String, defeat: bool) -> void:
+	if defeat and Sfx.play_char("hero_%s_defeat" % hero_id, -2.0):
+		return
+	Sfx.play_char("hero_%s" % hero_id, -3.0, 0.85 if defeat else 1.0)
 
 
 func _remove_dead(m: Node2D, side: int) -> void:
@@ -1672,6 +1718,7 @@ func _on_game_over(ev: Dictionary) -> void:
 		var h: HeroView = heroes[loser]
 		shake(30.0)
 		Sfx.play("thunder", 0.0, 0.7)
+		_hero_voice(h.hero_id, true)
 		Fx.burst(fx_layer, h.position, UI.EMBER, 120, 700.0, 1.6, 16.0, 200.0)
 		Fx.shockwave(fx_layer, h.position, UI.EMBER, 1400.0, 1.0)
 		Vfx.hero_death(self, h)
