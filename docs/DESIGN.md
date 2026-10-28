@@ -192,7 +192,13 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
 ## Title screen, info surfaces and the profile
 - **Title screen**: the stack is Play, Collection, Open Packs, Options, Quit. Learn to Play is Virgil's round medallion
   (his face on the bronze disc, its name on a red ribbon) beside Play. The player plaque in the top-right corner shows
-  the avatar, the name ("Choose your name" before there is one) and the record, and opens the profile.
+  the avatar, the name ("Choose your name" before there is one) and the record, and opens the profile. The three cards
+  on the right are a rotating showcase: every epic and legendary minion and spell (`CardDB.showcase_ids()`, read from
+  the data), in a fresh shuffled cycle per launch (`ShowcaseDeck`: no repeat before the whole pool was shown, never the
+  same card twice on screen, legendaries spread so one is nearly always in view). Every 6-8 s one card is swapped
+  (`MainMenu.rotate_now`): it burns away and the next rises from the embers, or it turns over to the card back and
+  reveals the new face. One swap at a time, never a card under the pointer; the old CardView is freed. They are plain
+  `CardView`s, so looping art plays there too. Review: `screen_audit --what=menu_rotate` (frame sequences) and `menu_living`.
 - **Info is inked on parchment**: every tooltip and info bubble (keyword tips, the engine's tooltips, the card zoom,
   the coach, Credits, a refused action, the result, dialog texts, deck hints) sits on the painted parchment with its
   thin bronze rule (`UI.tip_box` / `UI.parchment_box` / `UI.parchment_label`), in dark-brown ink (`UI.INK`) with

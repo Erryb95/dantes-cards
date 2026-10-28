@@ -110,6 +110,18 @@ static func all_cards() -> Array:
 	return _cards.values()
 
 
+## Ids of every epic and legendary minion and spell, sorted (the title screen's rotating showcase). Tokens, heroes
+## and anything of lower rarity are left out; the set is read from the data, so new cards join by themselves.
+static func showcase_ids() -> Array[String]:
+	_ensure()
+	var out: Array[String] = []
+	for c in _cards.values():
+		if str(c.get("rarity", "")) in ["epic", "legendary"] and str(c.get("type", "minion")) in ["minion", "spell"]:
+			out.append(str(c.id))
+	out.sort()
+	return out
+
+
 static func decks() -> Array:
 	_ensure()
 	return _decks

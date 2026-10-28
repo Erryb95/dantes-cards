@@ -2,9 +2,11 @@ extends Node
 ## Screenshots of the screens and overlays the plain `--snap` cannot reach (options, pause, banners, damage numbers,
 ## the legendary cut-in, the result, the collection zoom, the pack reveal, a filled deck), for the painted-UI audit.
 ##   Godot --path . res://tests/screen_audit.tscn --resolution 1920x1080 -- --out=<dir> --what=<mode>
-## Modes: menu (the title screen; `--named` with a player name), profile (the profile panel; `--named`),
-## profile_online (the panel with its Online section: needs `-- --online-config=<file>`), online_search (the search
-## overlay, then its error shot; same config),
+## Modes: menu (the title screen; `--named` with a player name), menu_living (Francesca, a card with looping art, put
+## in the showcase: two shots a second apart), menu_rotate (the title screen's showcase after a rotation: shots before
+## and after, and a frame sequence of a burn swap and a flip swap in <out>/seq_burn, seq_flip), profile (the profile
+## panel; `--named`), profile_online (the panel with its Online section: needs `-- --online-config=<file>`),
+## online_search (the search overlay, then its error shot; same config),
 ## profile_error (an invalid name typed), menu_options, credits, builder, builder_name, builder_long, builder_empty, builder_leave, builder_edit,
 ## builder_delete, builder_tip, collection_zoom, collection_class (the class strip and a keyword chip's tip),
 ## collection_guide, collection_neutral, deck_peek (a key card shown big), deck_list (View cards), deck_list_zoom,
@@ -71,6 +73,43 @@ func _ready() -> void:
 			await _snap("online_search")
 			await _wait(3.0)
 			await _snap("online_error")
+		"menu_rotate":
+			var s: Node = load("res://scenes/main_menu.tscn").instantiate()
+			get_tree().root.add_child.call_deferred(s)
+			await get_tree().process_frame
+			get_tree().current_scene = s
+			await _wait(1.8)
+			print("showcase before: ", s.showcase_ids())
+			await _snap("menu_rotate_0")
+			for style in ["burn", "flip"]:
+				var dir := "%s/seq_%s" % [out, style]
+				DirAccess.make_dir_recursive_absolute(dir)
+				var slot: int = s.rotate_now(1, false, style)
+				var n := 0
+				var done := [false]
+				s.swapped.connect(func(_i): done[0] = true, CONNECT_ONE_SHOT)
+				while not done[0] and n < 200:
+					await _wait(1.0 / 20.0)
+					get_viewport().get_texture().get_image().save_png("%s/f%03d.png" % [dir, n])
+					n += 1
+				print("showcase after %s on slot %d (%d frames): " % [style, slot, n], s.showcase_ids())
+				await _wait(0.8)
+				await _snap("menu_rotate_" + style)
+			await _wait(0.5)
+			await _snap("menu_rotate")
+		"menu_living":
+			# A card with looping ("living") art in the showcase goes through the same CardView path: its video plays.
+			var s: Node = load("res://scenes/main_menu.tscn").instantiate()
+			get_tree().root.add_child.call_deferred(s)
+			await get_tree().process_frame
+			get_tree().current_scene = s
+			await _wait(1.5)
+			s._replace(1, "francesca", true)
+			await _wait(2.0)
+			await _snap("menu_living_a")
+			await _wait(0.9)
+			await _snap("menu_living_b")
+			print("looping art on the showcase card: ", s._showcase[1].find_children("*", "ArtLoop", true, false).size(), " player(s)")
 		"menu_options", "credits":
 			# The title screen as the current scene, so Options shows its title-screen row (Watch intro, Credits).
 			var s: Node = load("res://scenes/main_menu.tscn").instantiate()

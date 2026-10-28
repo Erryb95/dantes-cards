@@ -1,7 +1,22 @@
 extends Control
 ## Title screen.
 
+## The showcase on the right: three epic / legendary cards (CardDB.showcase_ids) that take turns. Every SWAP_MIN..SWAP_MAX
+## seconds one card is swapped for the next of a shuffled cycle (ShowcaseDeck), by burning away and rising from its
+## embers or by turning over to its back and revealing the new face. Never a card under the pointer, never two at once.
+const SHOWCASE_SLOTS := 3
+const SWAP_MIN := 6.0
+const SWAP_MAX := 8.0
+const SWAP_FIRST := 8.0 ## the first swap, after the cards have faded in
+
+signal swapped(slot: int) ## a showcase card was replaced (after its transition)
+
 var _showcase: Array[CardView] = []
+var _deck: ShowcaseDeck
+var _flip := [1.0, 1.0, 1.0] ## the cards' horizontal squeeze while one turns over
+var _swapping := false
+var _next_swap := SWAP_FIRST
+var _last_slot := -1
 var _t := 0.0
 
 
@@ -96,16 +111,15 @@ func _ready() -> void:
 	credit.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	add_child(credit)
 
-	# A fan of legendary cards floating on the right.
-	for id in ["minos", "francesca", "ugolino"]:
-		var c := CardView.new().setup(id, -1, true)
-		add_child(c)
-		_showcase.append(c)
-	for i in _showcase.size():
-		_showcase[i].modulate.a = 0.0
-		var t := _showcase[i].create_tween()
-		t.tween_interval(0.3 + i * 0.25)
-		t.tween_property(_showcase[i], "modulate:a", 1.0, 0.8)
+	# A fan of epic and legendary cards floating on the right; they rotate through the whole pool, one at a time.
+	_deck = ShowcaseDeck.new(CardDB.showcase_ids())
+	var first: Array[String] = ["", "", ""]
+	first[1] = _deck.take(first, true) # the middle one, the big one, is a legendary when there is one
+	first[0] = _deck.take(first)
+	first[2] = _deck.take(first)
+	for id in first:
+		if id != "":
+			_showcase.append(_make_card(id, true, 0.3 + _showcase.size() * 0.25))
 	col.modulate.a = 0.0
 	create_tween().tween_property(col, "modulate:a", 1.0, 1.0)
 	if Lessons.offer_due():
@@ -301,12 +315,143 @@ func go_back() -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	var vs := get_viewport_rect().size
-	var cx := vs.x * 0.72
 	for i in _showcase.size():
-		var c := _showcase[i]
-		var k := i - 1.0
-		c.position = Vector2(cx + k * 210.0, vs.y * 0.5 + absf(k) * 40.0 + sin(_t * 0.8 + i) * 12.0)
-		c.rotation = k * 0.16 + sin(_t * 0.6 + i * 2.0) * 0.03
-		c.scale = Vector2.ONE * (0.95 if i == 1 else 0.82)
-		c.z_index = 2 if i == 1 else 1
+		_place(i)
+	if _swapping or _showcase.size() < SHOWCASE_SLOTS or not is_visible_in_tree():
+		return
+	_next_swap -= delta
+	if _next_swap <= 0.0:
+		_next_swap = 0.5 # no card free right now (the pointer is on it): try again soon
+		rotate_now()
+
+
+## Where showcase card `i` floats (the layout of the fan: left, middle, right).
+func _place(i: int) -> void:
+	var c := _showcase[i]
+	var cx := get_viewport_rect().size.x * 0.72
+	var cy := get_viewport_rect().size.y * 0.5
+	var k := i - 1.0
+	c.position = Vector2(cx + k * 210.0, cy + absf(k) * 40.0 + sin(_t * 0.8 + i) * 12.0)
+	c.rotation = k * 0.16 + sin(_t * 0.6 + i * 2.0) * 0.03
+	c.scale = Vector2((0.95 if i == 1 else 0.82) * _flip[i], 0.95 if i == 1 else 0.82)
+	c.z_index = 2 if i == 1 else 1
+
+
+## A showcase card; `fade_in` >= 0 fades it in after that many seconds (the title screen's entrance).
+func _make_card(id: String, face_up: bool = true, fade_in: float = -1.0) -> CardView:
+	var c := CardView.new().setup(id, -1, face_up)
+	add_child(c)
+	if fade_in >= 0.0:
+		c.modulate.a = 0.0
+		var t := c.create_tween()
+		t.tween_interval(fade_in)
+		t.tween_property(c, "modulate:a", 1.0, 0.8)
+	return c
+
+
+## The ids on show, left to right.
+func showcase_ids() -> Array[String]:
+	var out: Array[String] = []
+	for c in _showcase:
+		out.append(c.card_id)
+	return out
+
+
+func _slot_hovered(i: int) -> bool:
+	var c := _showcase[i]
+	return is_instance_valid(c) and c.contains_point(get_global_mouse_position())
+
+
+## Swaps one showcase card for the next of the order: `slot` (-1: a random one that is not under the pointer and not
+## the one swapped last), `instant` (no transition: tests), `style` ("burn", "flip" or "" for either). Returns the slot,
+## or -1 when nothing was swapped (one swap at a time; the pointer is on every candidate).
+func rotate_now(slot: int = -1, instant: bool = false, style: String = "") -> int:
+	if _swapping or _showcase.size() < SHOWCASE_SLOTS or _deck == null:
+		return -1
+	if slot < 0:
+		var free: Array[int] = []
+		for i in SHOWCASE_SLOTS:
+			if i != _last_slot and not _slot_hovered(i):
+				free.append(i)
+		if free.is_empty():
+			return -1
+		slot = free[randi() % free.size()]
+	var shown := showcase_ids()
+	var legend_left := false # keeps one legendary in view: if this card is the only one, the next must be one too
+	for i in SHOWCASE_SLOTS:
+		if i != slot and ShowcaseDeck.is_legendary(shown[i]):
+			legend_left = true
+	var id := _deck.take(shown, not legend_left)
+	if id == "":
+		return -1
+	_last_slot = slot
+	_next_swap = randf_range(SWAP_MIN, SWAP_MAX)
+	if instant:
+		_replace(slot, id, true)
+		swapped.emit(slot)
+		return slot
+	_swap(slot, id, style if style != "" else ("burn" if randf() < 0.5 or ShowcaseDeck.is_legendary(id) else "flip"))
+	return slot
+
+
+## Puts a new card in `slot` and frees the old one.
+func _replace(slot: int, id: String, face_up: bool) -> CardView:
+	var old := _showcase[slot]
+	var c := _make_card(id, face_up)
+	_showcase[slot] = c
+	_flip[slot] = 1.0
+	remove_child(old)
+	old.queue_free()
+	_place(slot)
+	return c
+
+
+func _swap(slot: int, id: String, style: String) -> void:
+	_swapping = true
+	var k := 1.0 / Settings.anim_speed()
+	var old := _showcase[slot]
+	var c: CardView
+	if style == "flip":
+		# Turns edge-on, shows its back, and turns back with the new face.
+		Sfx.play("card_flip", -10.0)
+		await _tween_flip(slot, 0.02, 0.26 * k, Tween.EASE_IN)
+		if not is_inside_tree():
+			return
+		c = _replace(slot, id, false)
+		_flip[slot] = 0.02
+		await _tween_flip(slot, 1.0, 0.26 * k, Tween.EASE_OUT)
+		await get_tree().create_timer(0.35 * k).timeout
+		if not is_inside_tree():
+			return
+		await _tween_flip(slot, 0.02, 0.24 * k, Tween.EASE_IN)
+		if not is_instance_valid(c) or not is_inside_tree():
+			return
+		Sfx.play("card_flip", -12.0)
+		c.set_face_up(true)
+		await _tween_flip(slot, 1.0, 0.3 * k, Tween.EASE_OUT)
+	else:
+		# Burns away in its own embers; the next one rises out of them.
+		var spot := old.position
+		Fx.burst(self, spot + Vector2(0, 40), UI.EMBER, 36, 300.0, 1.0, 11.0, -140.0, 60.0)
+		Fx.smoke(self, spot, Color(0.2, 0.15, 0.13, 0.55), 200.0, 5)
+		var t := create_tween()
+		t.tween_method(old.set_burn, 0.0, 1.0, 1.0 * k)
+		await t.finished
+		if not is_inside_tree():
+			return
+		c = _replace(slot, id, true)
+		c.set_burn(1.0)
+		Fx.burst(self, c.position + Vector2(0, 60), UI.EMBER, 44, 280.0, 1.2, 10.0, -150.0, 50.0)
+		var t2 := create_tween()
+		t2.tween_method(c.set_burn, 1.0, 0.0, 1.2 * k)
+		await t2.finished
+		if is_instance_valid(c):
+			c.set_burn(0.0)
+	_swapping = false
+	swapped.emit(slot)
+
+
+func _tween_flip(slot: int, to: float, dur: float, ease_type: Tween.EaseType) -> void:
+	var t := create_tween().set_trans(Tween.TRANS_SINE).set_ease(ease_type)
+	t.tween_method(func(v: float): _flip[slot] = maxf(v, 0.02), _flip[slot], to, dur)
+	await t.finished

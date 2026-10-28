@@ -23,7 +23,10 @@ const LessonDriver := preload("res://tests/lesson_driver.gd")
 ## - the collection's sort plaque cycles through the orders (cost, rarity high / low, name, owned), keeps
 ##   the choice in the settings, orders the cards as it says, and puts a divider per rarity when sorted by rarity;
 ## - the pack screen's Drop rates plaque opens the odds sheet (numbers from Collection.ODDS, the pity counter) and Esc
-##   closes it.
+##   closes it;
+## - the title screen's showcase rotates through the epic and legendary cards: a rotation tick (instant and animated, both
+##   transitions) puts new ids in, always epic or legendary, unique, always three, never a card the pointer is on,
+##   at least one legendary on show, and no card comes round again before the whole pool has been shown.
 
 var fails := 0
 
@@ -42,6 +45,7 @@ func _ready() -> void:
 	await _lesson_offer()
 	_profile_rules()
 	await _profile()
+	await _showcase_rotation()
 	await _lesson_battle()
 	await _collection_sort()
 	await _drop_rates()
@@ -366,6 +370,99 @@ func _lesson_offer() -> void:
 	var d := m.get_node_or_null("Dialog")
 	if d != null and not d.is_queued_for_deletion():
 		_fail("Esc did not close the first-launch question")
+	m.queue_free()
+	await _frames()
+
+
+func _is_showcase_rarity(id: String) -> bool:
+	return str(CardDB.card(id).get("rarity", "")) in ["epic", "legendary"]
+
+
+func _showcase_check(m: Node, what: String) -> void:
+	var ids: Array[String] = m.showcase_ids()
+	if ids.size() != 3:
+		_fail("showcase %s: %d cards on show, not 3" % [what, ids.size()])
+	var seen := {}
+	var legend := false
+	for id in ids:
+		if seen.has(id):
+			_fail("showcase %s: %s is on show twice" % [what, id])
+		seen[id] = true
+		if not _is_showcase_rarity(id):
+			_fail("showcase %s: %s is %s" % [what, id, CardDB.card(id).get("rarity", "?")])
+		legend = legend or ShowcaseDeck.is_legendary(id)
+	if not legend:
+		_fail("showcase %s: no legendary on show (%s)" % [what, ids])
+	var views := 0
+	for c in m.get_children():
+		if c is CardView:
+			views += 1
+	if views != 3:
+		_fail("showcase %s: %d CardViews alive, not 3 (old ones not freed)" % [what, views])
+
+
+func _showcase_rotation() -> void:
+	var pool := CardDB.showcase_ids()
+	if pool.size() < 6:
+		_fail("showcase pool too small: %d" % pool.size())
+	var kinds := {}
+	for id in pool:
+		kinds[str(CardDB.card(id).get("type", ""))] = true
+		if not _is_showcase_rarity(id):
+			_fail("showcase pool holds %s (%s)" % [id, CardDB.card(id).get("rarity", "?")])
+	if not (kinds.has("minion") and kinds.has("spell")):
+		_fail("showcase pool lacks minions or spells: %s" % [kinds.keys()])
+	# The order: a full cycle shows every card once, and a new cycle never puts one on screen twice.
+	var deck := ShowcaseDeck.new(pool, 1234)
+	var shown := {}
+	var on: Array = []
+	for i in pool.size():
+		var id := deck.take(on, false)
+		if shown.has(id):
+			_fail("showcase deck repeated %s inside one cycle" % id)
+		shown[id] = true
+		on = [id]
+	if shown.size() != pool.size():
+		_fail("showcase deck showed %d of %d cards in a cycle" % [shown.size(), pool.size()])
+	var m := _open(Game.MENU)
+	await _frames()
+	_showcase_check(m, "at launch")
+	var before: Array[String] = m.showcase_ids()
+	var history := {}
+	for i in before:
+		history[i] = true
+	# Instant ticks: each changes exactly its slot, to a card that was not on show.
+	for step in 12:
+		var prev: Array[String] = m.showcase_ids()
+		var slot: int = m.rotate_now(-1, true)
+		if slot < 0:
+			_fail("showcase: the rotation tick %d did nothing" % step)
+			continue
+		var now: Array[String] = m.showcase_ids()
+		for i in 3:
+			if (i == slot) == (now[i] == prev[i]):
+				_fail("showcase tick %d: slot %d (swapped %d): %s -> %s" % [step, i, slot, prev[i], now[i]])
+		if history.has(now[slot]) and history.size() < pool.size():
+			_fail("showcase tick %d: %s came round again before the pool was done" % [step, now[slot]])
+		history[now[slot]] = true
+		_showcase_check(m, "after tick %d" % step)
+	# Animated, both transitions: one at a time, finished with the new card in place.
+	for style in ["burn", "flip"]:
+		var prev: Array[String] = m.showcase_ids()
+		var slot: int = m.rotate_now(-1, false, style)
+		if slot < 0:
+			_fail("showcase: the %s swap did not start" % style)
+			continue
+		if m.rotate_now(-1, true) != -1:
+			_fail("showcase: a second swap started during the %s transition" % style)
+		var s: int = await m.swapped
+		if s != slot:
+			_fail("showcase %s: finished slot %d, started %d" % [style, s, slot])
+		await _frames()
+		var now: Array[String] = m.showcase_ids()
+		if now[slot] == prev[slot]:
+			_fail("showcase %s: the card did not change" % style)
+		_showcase_check(m, "after the %s swap" % style)
 	m.queue_free()
 	await _frames()
 
