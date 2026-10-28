@@ -36,6 +36,7 @@ func _initialize() -> void:
 	_test_damage_edges()
 	_test_copy_state()
 	_test_rebirth()
+	_test_killers()
 	_test_variety()
 	_test_ai_edges()
 	_test_easy_guard()
@@ -50,6 +51,7 @@ func _initialize() -> void:
 	_test_replay(8, "ulysses")
 	_test_replay(8, "wrath")
 	_test_online_mirror(24)
+	print("DEATHS: %d in soaks, replays and duels, %d with no killer" % [_deaths[0], _deaths[1]])
 	print("TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures > 0 else 0)
 
@@ -407,6 +409,7 @@ func _soak(games: int) -> void:
 		var swap := g % 2 == 1
 		var d0 := a if not swap else b
 		var d1 := b if not swap else a
+		_watch_deaths(st, "soak")
 		st.start(CardDB.deck_list(d0.id), d0.hero, CardDB.deck_list(d1.id), d1.hero, 1000 + g)
 		var ais := [BattleAI.new(0), BattleAI.new(1)]
 		var steps := 0
@@ -459,6 +462,7 @@ func _soak_random(games: int) -> void:
 	var wins := [0, 0, 0]
 	for g in games:
 		var st := BattleState.new()
+		_watch_deaths(st, "random soak")
 		st.start(random_deck("pilgrim", rng), "dante", random_deck("ferry", rng), "charon", 5000 + g)
 		var ais := [BattleAI.new(0, BattleAI.Level.EASY), BattleAI.new(1, BattleAI.Level.EASY)]
 		var steps := 0
@@ -532,6 +536,8 @@ func _test_replay(games: int, cls: String = "") -> void:
 			else:
 				BattleAI.apply(rp, rp.current, m)
 		ok(rp.winner == st.winner and log_a.size() == log_b.size(), "replay %s %d ends the same" % [cls, g])
+		for ev in log_a:
+			_check_death(ev, "replay %s %d" % [cls, g])
 		ok(str(log_a) == str(log_b), "replay %s %d matches event for event" % [cls, g])
 
 
@@ -599,6 +605,7 @@ func _soak_random_classes(games: int) -> void:
 
 ## Plays a battle to the end with the given AIs, checking the invariants after every step.
 func _play_out(st: BattleState, ais: Array, what: String, played: Dictionary = {}) -> void:
+	_watch_deaths(st, what)
 	var steps := 0
 	while st.winner == -1 and steps < 6000:
 		steps += 1
@@ -1006,6 +1013,141 @@ func _test_game_end() -> void:
 	ok(st.winner == 0 and st.sides[1].hero.health == 0 and evs.back().t == "game_over",
 		"a card stops resolving once the game is over (hp %d)" % st.sides[1].hero.health)
 	ok(not st.play_card(0, _give(st, 0, "cd_burning_sand"), st.sides[1].hero.uid), "no card can be played after the end")
+
+
+var _deaths := [0, 0] ## death events seen in the soaks, replays and duels; of them, sourceless ones
+
+
+func _watch_deaths(st: BattleState, what: String) -> void:
+	st.event.connect(func(ev): _check_death(ev, what))
+
+
+## Every death (and every fallen hero) says what killed it, or is explicitly sourceless (killer "", how "none").
+func _check_death(ev: Dictionary, what: String) -> void:
+	var infos: Array = []
+	if ev.t == "death":
+		infos.append(ev)
+	elif ev.t == "game_over":
+		ok(ev.has("fallen"), what + ": game_over lists the fallen heroes")
+		infos.append_array(ev.get("fallen", []))
+	for e in infos:
+		_deaths[0] += 1
+		var known: bool = e.has("killer") and e.has("how") and e.has("by")
+		var sourceless: bool = known and str(e.killer) == "" and e.how == "none"
+		if sourceless:
+			_deaths[1] += 1
+		if not (known and (str(e.killer) != "" or sourceless)):
+			ok(false, "%s: a death without its killer (%s)" % [what, e])
+		elif str(e.killer) != "" and not DeathStyle.STYLE_OF.has(DeathStyle.school_for(e, "lost_pilgrim")):
+			ok(false, "%s: the killer %s has no death style" % [what, e.killer])
+
+
+## The killer of every death (view only: DeathFx stages a death in the killer's school). It changes no rule and no
+## checksum; every school has a death style and the styles' sounds exist.
+func _test_killers() -> void:
+	for name in VfxData.SCHOOLS:
+		ok(DeathStyle.STYLE_OF.has(name) and DeathStyle.STYLES.has(DeathStyle.STYLE_OF.get(name, "")),
+			"school %s has a death style" % name)
+	for sty in DeathStyle.STYLES:
+		var d: Dictionary = DeathStyle.STYLES[sty]
+		ok(int(d.mode) > 0 and float(d.pre) > 0.0 and float(d.pre) < 0.6, "death style %s timing" % sty)
+		for a in d.sfx + d.late:
+			ok(_sfx_exists(a[0]), "death style %s sound %s" % [sty, a[0]])
+	for sc in DeathStyle.SCHOOL_SFX:
+		ok(VfxData.SCHOOLS.has(sc), "death sound school %s" % sc)
+		for a in DeathStyle.SCHOOL_SFX[sc]:
+			ok(_sfx_exists(a[0]), "death sound %s for %s" % [a[0], sc])
+	for cls in CardDB.classes():
+		var h := CardDB.class_hero(cls)
+		ok(VfxData.has_own("power_" + h, "school"), "hero %s power has a school (its attacks and defeats)" % h)
+		ok(DeathStyle.killer_school(h, "attack") == VfxData.profile("power_" + h).school, "a hero kills with its power")
+	ok(DeathStyle.killer_school("she_wolf", "attack") == "blood", "a neutral body strikes a plain blow")
+	ok(DeathStyle.killer_school("farinata", "attack") == "fire", "a fire minion's blow burns")
+	ok(DeathStyle.killer_school("harpy", "venom") == "venom", "Venom kills with venom")
+	ok(DeathStyle.killer_school("power_charon", "effect") == VfxData.profile("power_charon").school, "a hero power's school")
+	ok(DeathStyle.killer_school("fatigue", "fatigue") == "shadow", "fatigue kills with shadow")
+	ok(DeathStyle.killer_school("", "none") == "", "a sourceless death has no killer school")
+	ok(DeathStyle.school_for({"killer": "", "how": "none"}, "ih_ephialtes") == "ice", "sourceless: the victim's own school")
+	ok(DeathStyle.style_for(DeathStyle.school_for({"killer": "cd_burning_sand", "how": "effect"}, "ih_ephialtes")) == "burn",
+		"an ice giant killed by fire burns")
+	for c in CardDB.all_cards():
+		ok(DeathStyle.STYLE_OF.has(DeathStyle.killer_school(c.id, "attack" if c.type == "minion" else "effect")),
+			"%s kills in a known style" % c.id)
+
+	# A trade: each minion dies to the other's blow.
+	var st := _blank()
+	var evs := []
+	st.event.connect(func(ev): evs.append(ev))
+	var a := _put(st, 0, "phlegyas") # 4/4
+	var b := _put(st, 1, "ih_briareus") # 4/4
+	var before := st.checksum()
+	st.attack(0, a.uid, b.uid)
+	var da := _death_of(evs, a.uid)
+	var db := _death_of(evs, b.uid)
+	ok(da.get("killer") == b.id and da.get("how") == "attack" and int(da.get("by", 0)) == b.uid,
+		"a trade: the attacker dies to the defender (%s)" % da)
+	ok(db.get("killer") == a.id and db.get("how") == "attack" and int(db.get("by", 0)) == a.uid,
+		"a trade: the defender dies to the attacker (%s)" % db)
+	ok(before != st.checksum(), "the attack changed the game")
+
+	# A spell, a board-wide spell (several hits: the last one counts), a destroy, Venom.
+	st = _blank()
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	var w := _put(st, 1, "she_wolf") # 3/2
+	st.play_card(0, _give(st, 0, "cd_burning_sand"), w.uid)
+	ok(_death_of(evs, w.uid).get("killer") == "cd_burning_sand" and _death_of(evs, w.uid).get("how") == "effect",
+		"a spell kills with its own card")
+	var w2 := _put(st, 1, "she_wolf")
+	w2.health = 1
+	st._damage(w2, 1, null, "cd_burning_sand")
+	st._damage(w2, 1, null, "minotaur_rampage")
+	st._cleanup()
+	ok(_death_of(evs, w2.uid).get("killer") == "minotaur_rampage", "the last hit is the killer")
+	var g := _put(st, 1, "cerberus")
+	st.play_card(0, _give(st, 0, "cd_furys_lash"), g.uid)
+	ok(_death_of(evs, g.uid).get("killer") == "cd_furys_lash" and _death_of(evs, g.uid).get("how") == "destroy",
+		"a destroy names its card")
+	var hv := _put(st, 0, "harpy")
+	var big := _put(st, 1, "cerberus")
+	st.attack(0, hv.uid, big.uid)
+	ok(_death_of(evs, big.uid).get("how") == "venom" and _death_of(evs, big.uid).get("killer") == "harpy",
+		"Venom kills with its minion")
+
+	# Heroes: a hero power's blow, fatigue.
+	st = _blank()
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	st.sides[0].hero.health = 2
+	st._resolve({"do": "damage", "target": "enemy_hero", "amount": 2}, 1, null, -1, "power_charon")
+	st._cleanup()
+	var fallen: Array = evs.back().get("fallen", []) if evs.back().t == "game_over" else []
+	ok(fallen.size() == 1 and fallen[0].killer == "power_charon" and int(fallen[0].uid) == st.sides[0].hero.uid,
+		"the fallen hero names the hero power that killed it (%s)" % [fallen])
+	st = _blank()
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
+	st.sides[1].deck.clear()
+	st.sides[1].hero.health = 1
+	st.end_turn()
+	fallen = evs.back().get("fallen", []) if evs.back().t == "game_over" else []
+	ok(fallen.size() == 1 and fallen[0].killer == "fatigue" and fallen[0].how == "fatigue", "fatigue kills a hero")
+
+	# The killer is view only: the checksum and the snapshots never see it.
+	var ck := st.checksum()
+	for u in st.units.values():
+		u.killer = "somebody"
+		u.kill_how = "attack"
+		u.kill_by = 99
+	ok(st.checksum() == ck, "the killer fields are not in the checksum")
+	ok(not st.sides[0].hero.snapshot().has("killer"), "the killer fields are not in a snapshot")
+
+
+static func _death_of(evs: Array, uid: int) -> Dictionary:
+	for ev in evs:
+		if ev.t == "death" and ev.uid == uid:
+			return ev
+	return {}
 
 
 ## The variety pass (2026-10-27): cards that combine existing effects in an order that matters.
@@ -2027,6 +2169,8 @@ func _test_online_mirror(games: int) -> void:
 					printerr("online %d: event %d differs: %s / %s" % [g, i, logs[0][i], logs[1][i]])
 					break
 		ok(same, "online %d: identical events in canonical order (%d / %d)" % [g, logs[0].size(), logs[1].size()])
+		for ev in logs[1]:
+			_check_death(ev, "online %d" % g)
 	# Out-of-order delivery is held back until its turn; a replayed (old) seq is dropped.
 	var ds := DuelSync.new()
 	ds.push(DuelSync.S_TURN, {"seq": 2})

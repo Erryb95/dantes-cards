@@ -15,6 +15,7 @@
 | `scripts/battle/battle_view.gd` | the board: replays events as animations, handles input |
 | `scripts/battle/{card,minion,hero}_view.gd` | the pieces; `fx.gd`, `shapes.gd`, `target_arrow.gd` for the juice |
 | `scripts/battle/vfx.gd`, `vfx_data.gd`, `data/vfx.json` | per-card spell looks: 15 schools (colours, textures, sounds; default from the card's circle) x single-target "hit" patterns x board-wide "mass" patterns; every spell has a profile (tested). Staged as anticipation, travel, impact (shake, hit-stop), aftermath. Painted sprites `assets/vfx/vfx_*.png` via `tools/vfx/import_vfx.py`; review with `tests/vfx_preview.tscn -- --out=<dir> --spells` + `tools/vfx/contact_sheet.py` |
+| `scripts/battle/death_fx.gd`, `death_style.gd`, `assets/shaders/death_fx.gdshaderinc` | deaths in the killer's school (see "Deaths" below) |
 | `scripts/ui/` | main menu, deck select, deck builder, pack opening, collection, options, credits (`credits_panel.gd`, from Options; keep it in step with `assets/CREDITS.md`), shared look (`ui.gd`, incl. the painted `UI.dialog`), the deck name's gold-ink caret (`ink_caret.gd`), painted skin loader (`ui_skin.gd`), the class plaque / class guide (`class_info_panel.gd`, from `CardDB.class_info`), a card shown big (`card_zoom.gd`), the mana curve (`mana_curve.gd`) |
 | `data/lessons.json`, `scripts/tutorial/` | Virgil's lessons: the lesson data (schema at its top), `Lessons` (progress, rewards, setting a lesson's match up), `LessonAI` (the opponent's scripted turns), `LessonGuide` (Virgil's lines, pointer and arrows on the board, which actions a step allows), `Virgil` (his portrait, his dialog); the screen is `scripts/ui/lessons.gd`, How to Play `scripts/ui/how_to_play.gd` |
 | `scripts/intro/`, `scenes/intro.tscn` | the opening cinematic (see "Opening cinematic" below) |
@@ -25,6 +26,26 @@
 The view never changes game values. It queues `BattleState.event` dictionaries and plays them one by one;
 input is accepted only while the queue is empty. This is what keeps the animations in sync with the rules,
 and it is the seam for PvP later (events over the network).
+
+## Deaths (in the killer's school)
+- **The killer:** `BattleState` marks the last blow on each unit (`Unit.killer` / `kill_how` / `kill_by`, set by `_mark`)
+  and puts it on the `death` event (`killer`: card id, `power_<hero>` or `fatigue`; `how`: attack, venom, effect,
+  destroy, transform, bounce, fatigue, or `none` for a sourceless death; `by`: the striking unit's uid) and on
+  `game_over` (`fallen`: the same per fallen hero). View only: never read by the rules, not in the checksum or the
+  snapshots (tested; the same duels give the same checksums as before the fields existed).
+- **The look** (`DeathStyle`, pure): a minion's blow kills in its school (a neutral body: `blood`, a plain blow), Venom
+  always in venom, fatigue in shadow, a spell / effect / destroy in its card's school, a hero power or hero in the
+  power's school. Styles: fire and judgment burn from the edges, pitch is tar, ice frosts and shatters, venom melts
+  down, soul and shadow are drawn up into streaks, stone petrifies and crumbles, wind shreds along the gust, water
+  sinks it, blood and thorn split it from the point of impact, holy and word wash out into motes, gold breaks into
+  coins. The victim's own school is a thin line in the rim and a few motes (steam for ice and water).
+- **Staging** (`DeathFx`): a short lead (the impact and the damage number, lifted above a dying minion), the pre phase
+  in the killer's colours, the dissolve (`death_fx.gdshaderinc`, called from `card_fx` while `death_mode` > 0), the
+  style's particles, sound and remains; about 1 s, divided by `_speed()`. Deaths queued back to back are one batch
+  (staggered 0.07 s, one shared particle budget); a minion with Rebirth finishes dying before it rises; the fallen
+  hero dies the same way, bigger (a concession: the winner's power school). Quality: `DeathStyle.level()` is LITE
+  (half the particles, no extra lights) on phones and at a 30 fps frame limit; `DV_DEATHFX=0/1/2` forces it.
+- Review: `tests/death_preview.tscn` (see BUILD.md).
 
 ## Opening cinematic (about 95 s)
 Recycled from the sister FPS (which keeps its own story and title). Doré's public-domain Inferno plates, animated by

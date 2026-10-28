@@ -196,6 +196,5 @@ func _die(id: String) -> void:
 	await get_tree().create_timer(0.2).timeout
 	Vfx.strike(battle, m, foes[2], (foes[2].position - m.position).normalized(), m.attack)
 	await get_tree().create_timer(0.3).timeout
-	Vfx.death(battle, m, id)
-	await m.burn_away(0.85)
+	await get_tree().create_timer(Vfx.death(battle, m, id)).timeout
 	m.queue_free()

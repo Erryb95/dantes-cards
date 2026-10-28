@@ -31,6 +31,11 @@ class Unit:
 	var wrath := 0 ## Wrath: the Attack it gains while damaged (0: none; Silence takes it away)
 	var rage := 0 ## the Wrath bonus included in `attack` right now (0 while undamaged)
 	var frenzied := false ## its Frenzy already went off (it fires once)
+	# The last blow (view only: it picks the look of the death). Never read by the rules, never in the checksum or a
+	# snapshot, so it changes nothing an online duel or a replay compares. See `_mark`.
+	var killer := "" ## card id (a minion, a spell, "power_<hero>"), or "fatigue"; "" when nothing has hit it
+	var kill_how := "" ## attack (a blow or a fight), venom, effect, destroy, transform, bounce, fatigue
+	var kill_by := -1 ## uid of the unit that struck the blow (attack / venom), else -1
 
 	func has(k: String) -> bool:
 		return keywords.has(k)
@@ -206,6 +211,9 @@ static func _copy_unit(u: Unit) -> Unit:
 	c.wrath = u.wrath
 	c.rage = u.rage
 	c.frenzied = u.frenzied
+	c.killer = u.killer
+	c.kill_how = u.kill_how
+	c.kill_by = u.kill_by
 	return c
 
 
@@ -311,7 +319,7 @@ func end_turn() -> void:
 	current = 1 - current
 	if turn >= TURN_LIMIT:
 		winner = 2
-		_emit({"t": "game_over", "winner": 2})
+		_emit({"t": "game_over", "winner": 2, "fallen": []})
 		return
 	_begin_turn()
 
@@ -651,7 +659,7 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 			for t in targets:
 				if ttype.begins_with("choose_") and not t.is_hero:
 					_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "bounce"})
-				_bounce(t)
+				_bounce(t, from_id)
 		"freeze":
 			_emit_spread(ttype, side, targets, from_id, "freeze")
 			for t in targets:
@@ -692,6 +700,7 @@ func _resolve(e: Dictionary, side: int, source: Unit, chosen: int, from_id: Stri
 			for t in targets:
 				_emit({"t": "projectile", "from": origin, "to": t.uid, "id": from_id, "kind": "destroy"})
 				t.dead = true
+				_mark(t, from_id, "destroy")
 		"copy":
 			_copy(e, side, source, targets, ttype, from_id)
 		"transform":
@@ -815,7 +824,8 @@ func _transform(t: Unit, into: String, from_id: String) -> void:
 	owner.board.erase(t)
 	units.erase(t.uid)
 	t.dead = true
-	_emit({"t": "death", "uid": t.uid, "side": t.side})
+	_mark(t, from_id, "transform")
+	_emit_death(t)
 	_summon(t.side, into, idx) # a fresh minion: it cannot attack this turn unless it has Swift
 
 
@@ -885,11 +895,19 @@ func _damage(t: Unit, amount: int, source: Unit, src: String = "") -> int:
 		t.armor -= soak
 		to_hp -= soak
 	t.health -= to_hp
+	if to_hp > 0:
+		if source != null:
+			_mark(t, source.id, "attack", source.uid)
+		elif src != "":
+			_mark(t, src, "effect")
+		else:
+			_mark(t, "fatigue", "fatigue") # the only damage with neither a unit nor a card behind it
 	_emit({"t": "damage", "uid": t.uid, "amount": amount, "hp": t.health, "armor": t.armor,
 		"source": source.uid if source != null else -1, "src": src})
 	if source != null:
 		if source.has("venom") and not t.is_hero and t.health > 0:
 			t.dead = true
+			_mark(t, source.id, "venom", source.uid)
 			_emit({"t": "venom", "uid": t.uid, "source": source.uid})
 		if source.has("drain"):
 			_heal(sides[source.side].hero, amount, "drain")
@@ -958,14 +976,15 @@ func _fire_frenzies() -> void:
 		_cleanup()
 
 
-func _bounce(t: Unit) -> void:
+func _bounce(t: Unit, from_id: String = "") -> void:
 	if t.is_hero:
 		return
 	var owner := sides[t.side]
 	owner.board.erase(t)
 	units.erase(t.uid)
 	if owner.hand.size() >= MAX_HAND:
-		_emit({"t": "death", "uid": t.uid, "side": t.side})
+		_mark(t, from_id, "bounce") # no room in the hand: it is lost, to the card that sent it back
+		_emit_death(t)
 		return
 	var c := {"uid": _uid(), "id": t.id}
 	owner.hand.append(c)
@@ -990,7 +1009,7 @@ func _cleanup() -> void:
 			u.dead = true
 			sides[u.side].board.erase(u)
 			units.erase(u.uid)
-			_emit({"t": "death", "uid": u.uid, "side": u.side})
+			_emit_death(u)
 		for d in died:
 			var u: Unit = d[0]
 			# Silence already took the keyword away; one given back afterwards (Absolved in Advance) still works.
@@ -1019,6 +1038,30 @@ func _cleanup() -> void:
 	_fire_frenzies()
 
 
+## Records the blow that would kill `t` (view only, see Unit.killer): the last one wins, so with several hits at
+## once the death follows the one that landed last.
+static func _mark(t: Unit, id: String, how: String, by: int = -1) -> void:
+	t.killer = id
+	t.kill_how = how
+	t.kill_by = by
+
+
+## The killer fields of a death or a fallen hero: `killer` (card id, "power_<hero>" or "fatigue"), `how`, `by`
+## (uid of the striking unit, or -1). A unit nothing has marked is explicitly sourceless: killer "", how "none".
+static func _kill_info(u: Unit) -> Dictionary:
+	if u.killer == "":
+		return {"uid": u.uid, "killer": "", "how": "none", "by": -1}
+	return {"uid": u.uid, "killer": u.killer, "how": u.kill_how, "by": u.kill_by}
+
+
+## The "death" event. Its killer fields are a view hint only (the look of the death).
+func _emit_death(u: Unit) -> void:
+	var ev := _kill_info(u)
+	ev.t = "death"
+	ev.side = u.side
+	_emit(ev)
+
+
 func _check_end() -> void:
 	if winner != -1:
 		return
@@ -1026,4 +1069,9 @@ func _check_end() -> void:
 	var d1 := sides[1].hero.health <= 0
 	if d0 or d1:
 		winner = 2 if (d0 and d1) else (1 if d0 else 0)
-		_emit({"t": "game_over", "winner": winner})
+		# View only: the fallen heroes and what struck each last blow (hero uids are the same on both online clients).
+		var fallen := []
+		for s in sides:
+			if s.hero.health <= 0:
+				fallen.append(_kill_info(s.hero))
+		_emit({"t": "game_over", "winner": winner, "fallen": fallen})

@@ -1417,7 +1417,10 @@ func _on_damage(ev: Dictionary) -> void:
 	var v = unit_views.get(ev.uid)
 	if v == null:
 		return
-	Fx.number(fx_layer, v.position, "-%d" % ev.amount, Color(0.75, 0.05, 0.03), true)
+	# A lethal hit's number pops above the minion, so its death (DeathFx) reads under it.
+	var lethal: bool = v is MinionView and int(ev.hp) <= 0
+	Fx.number(fx_layer, v.position + (Vector2(0, -MinionView.H * 0.62) if lethal else Vector2.ZERO),
+		"-%d" % ev.amount, Color(0.75, 0.05, 0.03), true)
 	v.flash()
 	if v is HeroView:
 		v.set_health(ev.hp, ev.armor)
@@ -1437,6 +1440,13 @@ func _set_unit_hp(v, hp: int) -> void:
 		v.apply({"health": hp})
 
 
+var _dead_pos := {} ## uid -> where a minion died, so a death later in the same blow still knows where it came from
+var _death_batch := [0, 0] ## the deaths being played back to back (a board-wide clear): [how many, how many so far]
+
+
+## A minion dies in its killer's school (DeathFx, from the event's killer fields); the killer's hit has just landed
+## with the damage event. Deaths queued back to back (a clear, or both sides of a trade) are one batch: staggered a
+## little and sharing one particle budget. A minion about to come back (Rebirth) finishes dying first.
 func _on_death(ev: Dictionary) -> void:
 	var m = unit_views.get(ev.uid)
 	unit_views.erase(ev.uid)
@@ -1445,12 +1455,41 @@ func _on_death(ev: Dictionary) -> void:
 	if _morph.get("uid", -1) == ev.uid:
 		return # transformed, not killed: the swirl already took it and its new form keeps the slot
 	board_views[ev.side].erase(m)
-	Sfx.play("moan", -14.0, 1.0, 0.12)
-	Sfx.play("creature_die", -12.0, 1.1)
-	Vfx.death(self, m, m.card_id)
-	m.burn_away(0.85 / _speed())
-	get_tree().create_timer(0.85 / _speed()).timeout.connect(_remove_dead.bind(m, ev.side))
-	await _wait(0.22)
+	_dead_pos[ev.uid] = m.position
+	if _death_batch[1] >= _death_batch[0]:
+		_death_batch = [1 + _deaths_queued(), 0]
+	var n: int = _death_batch[0]
+	var i: int = _death_batch[1]
+	_death_batch[1] = i + 1
+	if i == 0:
+		Sfx.play("moan", -14.0, 1.0, 0.12)
+	m.busy = true
+	var gone := DeathFx.play(self, m, m.card_id, ev, n, i)
+	get_tree().create_timer(gone).timeout.connect(_remove_dead.bind(m, ev.side))
+	if _rebirth_follows(m.card_id, ev.side):
+		await get_tree().create_timer(gone).timeout
+	else:
+		await _wait(0.07 if n > 1 else 0.22)
+
+
+## How many more deaths come straight after this one in the queue.
+func _deaths_queued() -> int:
+	var k := 0
+	while k < queue.size() and queue[k].t == "death":
+		k += 1
+	return k
+
+
+## True when this minion comes back (a Rebirth summon of the same card on its side) before the next action.
+func _rebirth_follows(id: String, side: int) -> bool:
+	for k in queue.size():
+		var e: Dictionary = queue[k]
+		if e.t in ["play", "attack", "power", "turn_end", "game_over"]:
+			return false
+		if e.t == "rebirth" and k > 0 and queue[k - 1].t == "summon" and queue[k - 1].side == side \
+				and queue[k - 1].unit.id == id:
+			return true
+	return false
 
 
 func _remove_dead(m: Node2D, side: int) -> void:
@@ -1669,14 +1708,21 @@ func _on_game_over(ev: Dictionary) -> void:
 	elif ev.winner == 1:
 		loser = 0
 	if loser != -1:
+		# The fallen hero dies in its killer's school, grander (the blow's killer fields come with the event; a
+		# concession or a timeout has none: the winner's hero power takes it).
 		var h: HeroView = heroes[loser]
+		var info: Dictionary = {}
+		for f in ev.get("fallen", []):
+			if int(f.uid) == h.uid:
+				info = f
+		if str(info.get("killer", "")) == "":
+			info = {"killer": "power_" + heroes[1 - loser].hero_id, "how": "effect", "by": -1}
+		var hot: Color = VfxData.SCHOOLS[DeathStyle.school_for(info, "power_" + h.hero_id)].hot
 		shake(30.0)
 		Sfx.play("thunder", 0.0, 0.7)
-		Fx.burst(fx_layer, h.position, UI.EMBER, 120, 700.0, 1.6, 16.0, 200.0)
-		Fx.shockwave(fx_layer, h.position, UI.EMBER, 1400.0, 1.0)
-		Vfx.hero_death(self, h)
-		_screen_flash(Color(1, 0.5, 0.2), 0.6)
-		await h.burn_away(1.4)
+		_screen_flash(Color(hot.r, hot.g, hot.b), 0.6)
+		h.busy = true
+		await get_tree().create_timer(DeathFx.play(self, h, "power_" + h.hero_id, info, 1, 0, true)).timeout
 	if guide != null:
 		guide.on_turn(1) # Virgil steps aside for the result
 	if not lesson.is_empty():

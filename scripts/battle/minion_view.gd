@@ -371,6 +371,22 @@ func set_burn_colors(edge: Color, hot: Color) -> void:
 		m.set_shader_parameter("burn_hot", hot)
 
 
+## One card_fx uniform on the whole piece (frame and portrait): DeathFx drives its dissolve through it.
+func set_fx(param: String, value) -> void:
+	_mat.set_shader_parameter(param, value)
+	_art_mat.set_shader_parameter(param, value)
+
+
+## A death begins (DeathFx): its dressing goes out (the glows, Wrath's fire, the frost and ward overlays).
+func dying(fade: float) -> void:
+	_glow.set_on(false)
+	_rage.set_on(false)
+	_embers.emitting = false
+	for n in [_frost, _ward]:
+		if n != null and n.visible:
+			n.create_tween().tween_property(n, "modulate:a", 0.0, fade)
+
+
 func contains_point(global_point: Vector2) -> bool:
 	var p := to_local(global_point)
 	return pow(p.x / (W * 0.55), 2) + pow(p.y / (H * 0.55), 2) <= 1.0
