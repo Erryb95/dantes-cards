@@ -4,9 +4,13 @@ extends Node
 ##     --quit-after 170 -- --what=zoom|places|side|collection [--card=<id>] [--level=0|1|2]
 ## zoom: the card opened as the collection's zoom (CardZoom.open); places: the card at every size it appears (zoom,
 ## collection, hand, board portrait, a tilted hand card); side: the still (left) and the living art (right) at zoom
-## size; collection: the Collection screen on the card's class, legendaries first. --level forces ArtLiving's level.
+## size; art: the whole picture, still (left) and living (right), each ART_H px tall centred in its half of a
+## 1920x1080 frame (what tools/cards/living_review.py measures); collection: the Collection screen on the card's
+## class, legendaries first. --level forces ArtLiving's level.
 ## --frozen stops the cards' own motion (tilt, parallax drift, foil sweep), so a measure sees only the living art.
 ## Without --write-movie, `--snap=<file.png> [--snap-delay=s]` (the Game autoload) saves one frame.
+
+const ART_H := 1000 ## the "art" view: each picture's height in pixels, its top at y = 40
 
 var card := "francesca"
 var what := "zoom"
@@ -55,6 +59,27 @@ func _ready() -> void:
 				l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 				root.add_child(l)
 			ArtLiving.forced = keep
+		"art":
+			var tex := CardDB.art(card)
+			var sz := Vector2(roundf(ART_H * float(tex.get_width()) / tex.get_height()), ART_H)
+			for i in 2:
+				var r := TextureRect.new()
+				r.texture = tex
+				r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				r.stretch_mode = TextureRect.STRETCH_SCALE
+				r.size = sz
+				r.position = Vector2(roundf(vs.x * (0.25 + 0.5 * i) - sz.x / 2), 40)
+				if i == 1:
+					var mat := ShaderMaterial.new()
+					mat.shader = preload("res://assets/shaders/card_fx.gdshader")
+					ArtLiving.setup_card(mat, card, float(tex.get_width()) / tex.get_height(), 0.5)
+					r.material = mat
+				root.add_child(r)
+				var l := UI.label("Still" if i == 0 else "Living art", 24, "title", UI.BONE)
+				l.position = Vector2(vs.x * (0.25 + 0.5 * i) - 120, 4)
+				l.size = Vector2(240, 34)
+				l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				root.add_child(l)
 		"places":
 			var big := CardView.new().setup(card, -1, true)
 			big.auto_tilt = false
