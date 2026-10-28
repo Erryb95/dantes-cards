@@ -133,6 +133,7 @@ static func chip(kw: String, px: int = 20) -> Button:
 		b.add_theme_stylebox_override(st[0], UI.plaque_box(16, 5, st[1]))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	UI.add_field(b)
+	UI.center_ink(b) # the word's ink on the plaque's middle
 	b.set_meta("keyword", kw)
 	b.mouse_entered.connect(func():
 		Sfx.play("ui_hover", -14.0)
@@ -383,7 +384,9 @@ static func guide(cls: String, width: float) -> Control:
 	prow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	left.add_child(prow)
 	var dc := MarginContainer.new()
+	# Room above for the cost gem that overhangs the disc, and as much below, so the disc stays level with its text.
 	dc.add_theme_constant_override("margin_top", 12)
+	dc.add_theme_constant_override("margin_bottom", 12)
 	dc.add_child(power_disc(info, 78.0))
 	prow.add_child(dc)
 	var pv := VBoxContainer.new()

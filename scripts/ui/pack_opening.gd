@@ -66,11 +66,11 @@ func _ready() -> void:
 	_obols_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(_obols_label)
 	# The odds, one plaque away, on the right at the height of the purse.
-	var rates := UI.button("Drop rates", 300, 64)
+	var rates := UI.button("Drop rates", 340, 64) # wide enough for the letters at the purse's size
 	rates.name = "DropRatesButton"
 	rates.add_theme_font_size_override("font_size", 30)
 	UI.fit_text(rates)
-	rates.position = Vector2(V.x - 300 - 56, 128)
+	rates.position = Vector2(V.x - rates.custom_minimum_size.x - 56, 128)
 	rates.pressed.connect(func(): DropRatesPanel.open(self))
 	ui.add_child(rates)
 	_buttons = HBoxContainer.new()
@@ -80,20 +80,24 @@ func _ready() -> void:
 	var back := UI.button("Back", 300, 80)
 	back.pressed.connect(func(): Game.go(Game.MENU))
 	_buttons.add_child(back)
-	var buy := UI.button("Buy pack (%d)" % Collection.PACK_PRICE, 380, 80)
+	var buy := UI.button("Buy pack (%d)" % Collection.PACK_PRICE, 400, 80)
 	buy.name = "Buy"
 	buy.pressed.connect(_buy)
 	_buttons.add_child(buy)
-	var again := UI.button("Open next", 300, 80)
+	var again := UI.button("Open next", 340, 80)
 	again.name = "Next"
 	again.pressed.connect(_next_pack)
 	_buttons.add_child(again)
+	UI.even_text([back, buy, again]) # one letter size along the row (each plate fitted alone, "Open next" set smaller)
 	_flash = ColorRect.new()
 	_flash.color = Color(1, 1, 1, 0)
 	_flash.size = V
 	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(_flash)
 	_refresh()
+	# Level with the purse: the two plates share their middle line (the purse sizes itself around its text, set now).
+	purse.reset_size()
+	rates.position.y = purse.position.y + (purse.size.y - rates.get_combined_minimum_size().y) / 2.0
 	_spawn_pack()
 	if "--autoplay" in OS.get_cmdline_user_args():
 		_auto()
@@ -175,7 +179,9 @@ func _spawn_pack() -> void:
 		var l := UI.label("No packs left. Win battles to earn Obols." if Collection.obols < Collection.PACK_PRICE
 			else "Buy a pack to continue.", 34, "italic", UI.INK)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		plate.add_child(l)
+		UI.center_ink(l) # on the sheet's middle
 		return
 	var old := ui.get_node_or_null("Empty")
 	if old:
