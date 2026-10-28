@@ -13,6 +13,8 @@ const KEYWORD_GROUPS := [
 	["Effects", ["wrath", "fight", "freeze", "silence"]],
 ]
 
+const MARGIN := 100.0 ## the panel's side margins: the chapter plates' scrollwork stays off the frame
+
 static var last_chapter := 0 ## reopens where the player left it
 
 
@@ -45,10 +47,10 @@ func _ready() -> void:
 	var panel := PanelContainer.new()
 	var s := UI.frame_box("panel_frame_filled", 96, 0,
 		UI.box(Color(0.09, 0.05, 0.04, 0.97), UI.GOLD, 3, 14, Color(0, 0, 0, 0.7), 30))
-	s.content_margin_left = 76
-	s.content_margin_right = 76
+	s.content_margin_left = MARGIN # clear of the painted frame's inner edge, like the options panel
+	s.content_margin_right = MARGIN
 	s.content_margin_top = 66 # the banner overhangs the frame's top edge
-	s.content_margin_bottom = 56
+	s.content_margin_bottom = 80 # Done clear of the frame's bottom moulding
 	panel.add_theme_stylebox_override("panel", s)
 	center.add_child(panel)
 	var v := VBoxContainer.new()
@@ -70,8 +72,8 @@ func _ready() -> void:
 		_tabs.append(b)
 	UI.even_text(_tabs)
 	# The pages in the room the screen leaves (a phone at 1080 px high, a 4:3 tablet taller).
-	_w = clampf(vs.x - 2.0 * 76.0 - 300.0 - 26.0 - 30.0 - 120.0, 760.0, 1240.0)
-	var h := clampf(vs.y - 66.0 - 56.0 - 80.0 - 14.0 - 76.0 - 14.0 - 60.0, 560.0, 900.0)
+	_w = clampf(vs.x - 2.0 * MARGIN - 320.0 - 26.0 - 30.0 - 104.0, 760.0, 1240.0)
+	var h := clampf(vs.y - 66.0 - 80.0 - 80.0 - 14.0 - 76.0 - 14.0 - 60.0, 560.0, 900.0)
 	_scroll = ScrollContainer.new()
 	_scroll.name = "Pages"
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED

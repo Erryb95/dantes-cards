@@ -59,9 +59,9 @@ func _ready() -> void:
 		col.add_child(logo)
 	else:
 		col.add_child(title)
-	# The subtitle on the charred banner under the logo.
+	# The subtitle on the charred banner, centred under the logo's cartouche (the column is the logo's width).
 	var sub := UI.banner("THE CARD GAME", 40, UI.BONE)
-	sub.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	sub.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(sub)
 	var spacer := Control.new()
 	spacer.custom_minimum_size = Vector2(0, 16)
@@ -79,7 +79,15 @@ func _ready() -> void:
 	play_row.add_child(play)
 	var learn := _learn_medallion()
 	learn.pressed.connect(func(): Game.go(Game.LESSONS))
-	play_row.add_child(learn)
+	# The medallion is taller than the Play plate: it hangs centred on the plate's row without making the row taller,
+	# so the plates below keep the same gap as the others.
+	var learn_holder := Control.new()
+	learn_holder.custom_minimum_size = Vector2(learn.custom_minimum_size.x, 0)
+	learn_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	learn_holder.add_child(learn)
+	learn.size = learn.custom_minimum_size
+	learn_holder.resized.connect(func(): learn.position = (learn_holder.size - learn.size) / 2.0)
+	play_row.add_child(learn_holder)
 	var coll := UI.button("Collection", 460)
 	coll.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	coll.pressed.connect(func(): Game.go(Game.COLLECTION))
