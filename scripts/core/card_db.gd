@@ -250,6 +250,17 @@ static func living_mask(id: String) -> Texture2D:
 	return _tex("res://assets/cards/living/%s.png" % id)
 
 
+## The living art's flow map (assets/cards/living/<id>_flow.png: RG the flow's direction, B the ripple), or null when
+## its recipe gives no directions.
+static func living_flowmap(id: String) -> Texture2D:
+	return _tex("res://assets/cards/living/%s_flow.png" % id)
+
+
+## The living art's layer slots (assets/cards/living/<id>_fx.png: one channel per entry "layers" item), or null.
+static func living_fx(id: String) -> Texture2D:
+	return _tex("res://assets/cards/living/%s_fx.png" % id)
+
+
 ## The hero's portrait, or the Acheron landscape (like a card without its painting) until it arrives.
 static func hero_art(id: String) -> Texture2D:
 	var t := _tex("res://assets/cards/heroes/%s.jpg" % id)

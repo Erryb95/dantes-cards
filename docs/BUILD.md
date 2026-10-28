@@ -82,9 +82,14 @@ run `--import`. A card without a depth map just has no parallax. Preview:
 `timeout 60 $G --path . res://tests/depth_preview.tscn --resolution 1920x1080 -- --out=<file.png> [--board] [--sweep=h]`
 (also writes <file>_flat.png). Effect lights (scripts/battle/fx_light.gd) can be switched off with `DV_NOFXLIGHT=1`.
 
-Living art (data/living_art.json, ArtLiving): `python -I tools/cards/living_mask.py [--only id] [--preview <out.png>]`
-paints each listed card's mask into assets/cards/living/<id>.png (no GPU), then run `--import`. Review or record it
-with the movie maker (`--what=zoom|places|side|collection`, `--frozen` stops the tilt / drift / foil, `--level=0|1|2`):
+Living art (data/living_art.json, ArtLiving; the authoring guide is docs/LIVING_ART.md):
+`python -I tools/cards/living_mask.py [--only id] [--check] [--preview <dir>]` paints each listed card's masks into
+assets/cards/living/<id>.png (+ <id>_flow.png, <id>_fx.png when the recipe needs them; no GPU), then run `--import`;
+`--grid id --preview <dir>` saves the picture with a UV grid for reading coordinates. Review:
+`python -I tools/cards/living_review.py <id>[,id] --out <dir> [--views art,zoom] [--level 1]` records each view with
+the movie maker (every Godot run has a timeout), writes <id>_<view>.mp4 and <id>_heat.png and prints the motion
+numbers against the targets. By hand (`--what=zoom|places|side|art|collection`, `--frozen` stops the tilt / drift /
+foil, `--level=0|1|2`):
 `timeout 300 $G --path . res://tests/living_preview.tscn --fixed-fps 30 --write-movie <dir>/f.png --quit-after 180 -- --what=zoom`
 (the frames are f00000000.png...; join them with ffmpeg). `DV_LIVING=0` shows the still paintings.
 

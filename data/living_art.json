@@ -1,8 +1,11 @@
 {
   "_doc": [
-    "Living art: a legendary's still painting brought to life in the card shader (assets/shaders/living_art.gdshaderinc,",
-    "ArtLiving). A card is listed here only once its look is approved; a card with living art never plays its Wan loop.",
+    "Living art: a card's still painting brought to life in the card shader (assets/shaders/living_art.gdshaderinc,",
+    "ArtLiving). THE AUTHORING GUIDE, with every key, layer kind and mask shape, is docs/LIVING_ART.md (the mask",
+    "vocabulary is also at the top of tools/cards/living_mask.py). A card with living art never plays its Wan loop.",
     "All positions are in the full picture's UV (0..1 across assets/cards/art/<id>.jpg, y down).",
+    "Francesca's entry is the original whirl format (legacy mask keys swirl / flame / sway / figures / still / protect,",
+    "described below); every other card paints its masks with 'regions' and may add up to three 'layers'.",
     "Motion: vortex [x, y] is the centre of the whirl; swirl is its flow speed (UV per second) and spiral how much of it",
     "  turns inward; churn the amplitude (UV) of a crisp wave running along the whirl's arms; period the flow cycle",
     "  in seconds (the drift is reset every cycle, cross-faded, so it never tears).",
@@ -63,6 +66,154 @@
           [0.120, 0.630, 0.100, 0.055], [0.880, 0.700, 0.085, 0.055], [0.200, 0.860, 0.125, 0.065],
           [0.370, 0.870, 0.070, 0.040], [0.870, 0.900, 0.140, 0.085], [0.150, 0.950, 0.120, 0.050]
         ]
+      }
+    },
+    "mc_lucifer": {
+      "note": "Cocytus: the icy water ripples and glints, snow drifts down, the fire veins on his chest and his eyes glow, the wings stir, the clouds drift, a flame licks his hip.",
+      "period": 2.4,
+      "flow": 0.006,
+      "ripple": 0.0016, "ripple_scale": 150, "ripple_speed": 1.6, "ripple_light": 0.2,
+      "sway": 0.0032, "wind": [1.0, -0.4],
+      "rise": 0.012, "flicker": 0.45, "glow": 0.08, "haze": 0.0012,
+      "layers": [
+        {"name": "veins", "kind": "glow", "strength": 0.6, "speed": 1.1, "flicker": 0.35, "spread": 5.0, "color": [1.0, 0.5, 0.15]},
+        {"name": "frost", "kind": "glint", "strength": 1.1, "density": 0.5, "size": 0.007, "speed": 0.45, "bright": 0.5},
+        {"name": "snow", "kind": "fall", "density": 0.35, "speed": 0.035, "size": 0.0035, "flutter": 0.8, "brightness": 0.6, "color": [0.85, 0.88, 0.95], "dir": [0.25, 1.0]}
+      ],
+      "mask": {
+        "regions": [
+          {"layer": "flow", "rect": [0.25, 0.0, 0.75, 0.2], "dir": [1, 0], "feather": 0.04, "note": "the clouds between the wings drift"},
+          {"layer": "ripple", "rect": [0.0, 0.78, 1.0, 1.0], "dir": [1, 0], "feather": 0.025},
+          {"layer": "ripple", "op": "sub", "poly": [[0.15, 0.80], [0.20, 0.70], [0.80, 0.70], [0.85, 0.80]], "feather": 0.01, "note": "not across the body at the waterline"},
+          {"layer": "fire", "ellipse": [0.675, 0.765, 0.05, 0.055], "warm": [0.12, 0.3], "bright": [0.25, 0.5]},
+          {"layer": "sway", "poly": [[0.0, 0.0], [0.12, 0.02], [0.27, 0.2], [0.31, 0.32], [0.30, 0.45], [0.24, 0.55], [0.2, 0.66], [0.08, 0.62], [0.0, 0.55]], "ramp": {"from": [0.32, 0.45], "to": [0.06, 0.25]}},
+          {"layer": "sway", "poly": [[1.0, 0.0], [0.88, 0.02], [0.73, 0.2], [0.69, 0.32], [0.70, 0.45], [0.76, 0.55], [0.8, 0.66], [0.92, 0.62], [1.0, 0.55]], "ramp": {"from": [0.68, 0.45], "to": [0.94, 0.25]}},
+          {"layer": "veins", "poly": [[0.30, 0.43], [0.70, 0.43], [0.73, 0.6], [0.70, 0.79], [0.30, 0.79], [0.27, 0.6]], "warm": [0.25, 0.45], "bright": [0.35, 0.6]},
+          {"layer": "veins", "over": true, "ellipse": [[0.468, 0.322, 0.014, 0.009], [0.524, 0.322, 0.014, 0.009]], "feather": 0.006, "value": 0.8, "note": "his eyes"},
+          {"layer": "frost", "rect": [0.0, 0.74, 1.0, 1.0], "bright": [0.45, 0.7]},
+          {"layer": "snow", "all": true}
+        ],
+        "protect": [[0.49, 0.335, 0.065, 0.075], [0.355, 0.365, 0.045, 0.06], [0.625, 0.365, 0.045, 0.06]]
+      }
+    },
+    "phlegyas": {
+      "note": "The Styx: the water runs past the boat and ripples, moonlight glints on it and the moon breathes, fog creeps over the far water, the clouds drift, the trees and his hair stir.",
+      "period": 1.8,
+      "flow": 0.014,
+      "ripple": 0.0022, "ripple_scale": 130, "ripple_speed": 2.4, "ripple_light": 0.25,
+      "sway": 0.003, "wind": [1.0, -0.2],
+      "layers": [
+        {"name": "moon", "kind": "glow", "strength": 0.35, "speed": 0.8, "flicker": 0.0, "color": [0.85, 0.88, 0.9]},
+        {"name": "shine", "kind": "glint", "strength": 0.9, "density": 0.4, "size": 0.008, "speed": 0.6, "bright": 0.45},
+        {"name": "fog", "kind": "mist", "strength": 0.35, "speed": 0.012, "scale": 4.0, "softness": 0.22, "color": [0.62, 0.64, 0.66], "dir": [1, 0]}
+      ],
+      "mask": {
+        "regions": [
+          {"layer": ["flow", "ripple"], "rect": [0.0, 0.42, 1.0, 1.0], "dir": [-1, 0.12], "feather": 0.03, "note": "the Styx runs right to left past the boat"},
+          {"layer": "flow", "rect": [0.22, 0.0, 0.85, 0.3], "bright": [0.22, 0.42], "dir": [1, 0], "value": 0.4, "feather": 0.05, "note": "the clouds, not the dark branches"},
+          {"layer": "sway", "rect": [0.0, 0.0, 0.25, 0.45], "dark": [0.15, 0.3], "ramp": {"from": [0.1, 0.45], "to": [0.1, 0.05]}, "value": 0.8},
+          {"layer": "sway", "rect": [0.74, 0.0, 1.0, 0.42], "dark": [0.15, 0.3], "ramp": {"from": [0.85, 0.42], "to": [0.85, 0.05]}, "value": 0.8},
+          {"layer": "sway", "ellipse": [0.335, 0.27, 0.05, 0.07], "ramp": {"from": [0.40, 0.25], "to": [0.29, 0.30]}, "note": "his hair"},
+          {"layer": "moon", "ellipse": [0.715, 0.165, 0.06, 0.05], "bright": [0.4, 0.7], "feather": 0.02},
+          {"layer": "shine", "rect": [0.0, 0.40, 1.0, 0.80], "bright": [0.45, 0.7]},
+          {"layer": "fog", "rect": [0.35, 0.37, 1.0, 0.50], "feather": 0.03}
+        ],
+        "figures": [
+          [[0.21, 0.35], [0.26, 0.40], [0.30, 0.52], [0.60, 0.56], [0.70, 0.52], [0.73, 0.43], [0.77, 0.37], [0.81, 0.38],
+           [0.82, 0.48], [0.78, 0.58], [0.70, 0.66], [0.62, 0.72], [0.45, 0.70], [0.30, 0.65], [0.20, 0.56]],
+          [[0.30, 0.25], [0.42, 0.17], [0.55, 0.20], [0.70, 0.27], [0.68, 0.37], [0.60, 0.40], [0.62, 0.55], [0.30, 0.55], [0.29, 0.40]],
+          [[0.08, 0.66], [0.12, 0.68], [0.67, 0.31], [0.64, 0.28]],
+          [[0.0, 0.70], [0.08, 0.69], [0.20, 0.69], [0.32, 0.70], [0.40, 0.76], [0.46, 0.86], [0.46, 1.0], [0.0, 1.0]],
+          [[0.52, 0.86], [0.60, 0.83], [0.75, 0.72], [0.86, 0.72], [0.95, 0.79], [1.0, 0.85], [1.0, 1.0], [0.52, 1.0]],
+          [[0.80, 0.46], [0.84, 0.42], [0.92, 0.43], [1.0, 0.47], [1.0, 0.62], [0.85, 0.61]],
+          [[0.0, 0.44], [0.07, 0.45], [0.09, 0.53], [0.0, 0.56]]
+        ],
+        "still": [[0.715, 0.165, 0.05, 0.04]],
+        "protect": [[0.47, 0.275, 0.05, 0.05], [0.87, 0.465, 0.04, 0.045], [0.945, 0.53, 0.04, 0.045], [0.03, 0.48, 0.04, 0.05],
+                    [0.10, 0.76, 0.06, 0.06], [0.305, 0.765, 0.06, 0.065], [0.81, 0.79, 0.06, 0.065]]
+      }
+    },
+    "cd_capaneus": {
+      "note": "Fire rain: burning drops stream down across the sky, the flames rise and flicker, the smoke rolls up, the firelight trembles on his armour, the plume and the cloak stir.",
+      "period": 1.6,
+      "flow": 0.010,
+      "rise": 0.016, "flicker": 0.4, "glow": 0.12, "haze": 0.0018,
+      "sway": 0.003, "wind": [1.0, -0.3],
+      "layers": [
+        {"name": "rain", "kind": "fall", "density": 0.2, "speed": 0.28, "size": 0.0032, "streak": 5.0, "brightness": 1.3, "color": [1.0, 0.55, 0.18], "dir": [-0.33, 1.0]},
+        {"name": "armour", "kind": "glow", "strength": 0.3, "speed": 2.2, "flicker": 0.75, "spread": 2.0, "flicker_scale": 5.0, "color": [1.0, 0.55, 0.2]},
+        {"name": "smoke", "kind": "mist", "strength": 0.3, "speed": 0.02, "scale": 3.5, "softness": 0.25, "color": [0.2, 0.18, 0.17], "dir": [0.3, -1.0]}
+      ],
+      "mask": {
+        "regions": [
+          {"layer": "fire", "all": true, "warm": [0.14, 0.34], "bright": [0.24, 0.55]},
+          {"layer": "flow", "rect": [0.0, 0.12, 0.30, 0.68], "dir": [0.25, -1], "value": 0.6, "feather": 0.04, "note": "the smoke on the left rolls up"},
+          {"layer": "flow", "rect": [0.80, 0.15, 1.0, 0.55], "dir": [-0.2, -1], "value": 0.6, "feather": 0.04},
+          {"layer": "sway", "ellipse": [0.53, 0.10, 0.07, 0.05], "ramp": {"from": [0.47, 0.08], "to": [0.60, 0.14]}, "note": "the plume"},
+          {"layer": "sway", "poly": [[0.66, 0.30], [0.74, 0.40], [0.80, 0.62], [0.78, 0.75], [0.70, 0.72], [0.67, 0.55]], "ramp": {"from": [0.66, 0.35], "to": [0.78, 0.70]}, "value": 0.7, "note": "the cloak"},
+          {"layer": "rain", "rect": [0.0, 0.0, 1.0, 0.8], "ramp": {"from": [0.5, 0.82], "to": [0.5, 0.62]}, "feather": 0.04},
+          {"layer": "armour", "poly": [[0.43, 0.09], [0.51, 0.09], [0.55, 0.20], [0.67, 0.27], [0.72, 0.40], [0.68, 0.55], [0.62, 0.58], [0.65, 0.75], [0.68, 0.90], [0.62, 0.92], [0.55, 0.80], [0.50, 0.68], [0.45, 0.80], [0.38, 0.92], [0.30, 0.90], [0.33, 0.72], [0.30, 0.57], [0.27, 0.55], [0.28, 0.40], [0.33, 0.27], [0.42, 0.21]], "bright": [0.3, 0.65], "feather": 0.01},
+          {"layer": "smoke", "rect": [0.0, 0.10, 0.32, 0.70], "feather": 0.05},
+          {"layer": "smoke", "rect": [0.78, 0.12, 1.0, 0.58], "feather": 0.05}
+        ],
+        "figures": [
+          [[0.43, 0.09], [0.51, 0.09], [0.55, 0.20], [0.67, 0.27], [0.72, 0.40], [0.68, 0.55], [0.62, 0.58], [0.65, 0.75], [0.68, 0.90], [0.62, 0.92], [0.55, 0.80], [0.50, 0.68], [0.45, 0.80], [0.38, 0.92], [0.30, 0.90], [0.33, 0.72], [0.30, 0.57], [0.27, 0.55], [0.28, 0.40], [0.33, 0.27], [0.42, 0.21]]
+        ],
+        "protect": [[0.47, 0.205, 0.045, 0.045]]
+      }
+    },
+    "minos": {
+      "note": "The judge: his eyes and the serpent's burn and pulse, his chest swells slowly, the fires on both sides rise and flicker, smoke drifts up past the pillars and the clouds roll.",
+      "period": 2.0,
+      "flow": 0.014,
+      "rise": 0.02, "flicker": 0.55, "glow": 0.14, "haze": 0.002,
+      "layers": [
+        {"name": "eyes", "kind": "glow", "strength": 0.9, "speed": 1.6, "flicker": 0.25, "spread": 2.0, "color": [1.0, 0.35, 0.1]},
+        {"name": "smoke", "kind": "mist", "strength": 0.7, "speed": 0.035, "scale": 3.0, "softness": 0.22, "color": [0.55, 0.52, 0.5], "dir": [0.2, -1.0]},
+        {"name": "chest", "kind": "breathe", "amount": 0.07, "speed": 1.3, "center": [0.49, 0.45]}
+      ],
+      "mask": {
+        "regions": [
+          {"layer": "fire", "rect": [[0.03, 0.40, 0.22, 0.64], [0.77, 0.44, 0.96, 0.65]], "warm": [0.12, 0.32], "bright": [0.2, 0.5], "feather": 0.03},
+          {"layer": "flow", "rect": [[0.03, 0.30, 0.20, 0.55], [0.79, 0.34, 0.96, 0.56]], "dir": [0, -1], "value": 0.8, "feather": 0.04, "note": "smoke rising off the fires"},
+          {"layer": "flow", "rect": [0.58, 0.04, 0.92, 0.33], "bright": [0.25, 0.45], "dir": [1, -0.2], "value": 0.9, "feather": 0.05, "note": "the clouds behind the serpent"},
+          {"layer": "eyes", "over": true, "ellipse": [[0.462, 0.245, 0.014, 0.01], [0.514, 0.245, 0.014, 0.01], [0.793, 0.212, 0.012, 0.01]], "feather": 0.006},
+          {"layer": "smoke", "rect": [[0.0, 0.25, 0.24, 0.62], [0.76, 0.28, 1.0, 0.62]], "feather": 0.05},
+          {"layer": "smoke", "rect": [0.58, 0.02, 0.92, 0.32], "feather": 0.05, "value": 0.6},
+          {"layer": "chest", "ellipse": [0.49, 0.43, 0.13, 0.11], "feather": 0.04}
+        ],
+        "figures": [
+          [[0.72, 0.18], [0.80, 0.18], [0.85, 0.25], [0.80, 0.30], [0.72, 0.35], [0.65, 0.40], [0.60, 0.34], [0.68, 0.28]]
+        ],
+        "still": [[0.80, 0.23, 0.06, 0.05]],
+        "protect": [[0.49, 0.27, 0.06, 0.075], [0.80, 0.225, 0.05, 0.04]]
+      }
+    },
+    "pj_harpy_of_the_wood": {
+      "note": "The wood of the suicides: the bare branches sway, fog drifts between the far trees, the wounds in the trees glow and their blood trickles, the wing feathers stir.",
+      "period": 2.2,
+      "flow": 0.008,
+      "sway": 0.004, "wind": [1.0, 0.3],
+      "layers": [
+        {"name": "branches", "kind": "sway", "amount": 0.006, "speed": 1.0, "scale": 14.0, "gust": 0.6, "dir": [1, 0]},
+        {"name": "fog", "kind": "mist", "strength": 0.7, "speed": 0.022, "scale": 3.2, "softness": 0.22, "color": [0.72, 0.72, 0.75], "dir": [1, -0.1]},
+        {"name": "wounds", "kind": "glow", "strength": 0.8, "speed": 1.0, "flicker": 0.2, "spread": 3.0, "color": [1.0, 0.25, 0.08]}
+      ],
+      "mask": {
+        "regions": [
+          {"layer": "branches", "rect": [0.0, 0.0, 1.0, 0.16], "dark": [0.2, 0.4], "feather": 0.02},
+          {"layer": "branches", "rect": [[0.0, 0.0, 0.16, 0.62], [0.84, 0.0, 1.0, 0.18]], "dark": [0.2, 0.4], "ramp": {"from": [0.5, 0.62], "to": [0.5, 0.2]}, "feather": 0.02},
+          {"layer": "branches", "rect": [0.70, 0.78, 1.0, 1.0], "ramp": {"from": [0.85, 1.0], "to": [0.85, 0.8]}, "value": 0.7, "note": "the leaves at the bottom right"},
+          {"layer": "fog", "rect": [0.0, 0.0, 1.0, 0.75], "depth": [0.0, 0.3], "feather": 0.03},
+          {"layer": "wounds", "ellipse": [[0.42, 0.80, 0.06, 0.05], [0.895, 0.225, 0.025, 0.025], [0.67, 0.72, 0.03, 0.04]], "warm": [0.15, 0.35], "feather": 0.02},
+          {"layer": "flow", "ellipse": [[0.67, 0.74, 0.03, 0.05], [0.33, 0.89, 0.07, 0.08]], "warm": [0.15, 0.35], "dir": [0, 1], "value": 0.8, "feather": 0.02, "note": "the blood trickles down"},
+          {"layer": "sway", "poly": [[0.33, 0.20], [0.20, 0.15], [0.05, 0.30], [0.02, 0.60], [0.10, 0.72], [0.30, 0.50], [0.36, 0.35]], "ramp": {"from": [0.33, 0.35], "to": [0.06, 0.62]}},
+          {"layer": "sway", "poly": [[0.60, 0.11], [0.75, 0.15], [0.92, 0.40], [0.97, 0.70], [0.88, 0.72], [0.70, 0.55], [0.60, 0.30]], "ramp": {"from": [0.62, 0.25], "to": [0.94, 0.65]}}
+        ],
+        "figures": [
+          [[0.36, 0.17], [0.47, 0.16], [0.55, 0.20], [0.58, 0.35], [0.62, 0.55], [0.60, 0.70], [0.36, 0.72], [0.35, 0.50], [0.33, 0.30]]
+        ],
+        "protect": [[0.445, 0.265, 0.05, 0.065]]
       }
     }
   }

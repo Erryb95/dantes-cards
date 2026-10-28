@@ -148,32 +148,77 @@ func _test_vfx() -> void:
 		ok(VfxData.SCHOOLS.has(v), "circle school %s" % v)
 
 
-## Living art (data/living_art.json, ArtLiving): every entry names a card with its painting and mask, the config loads
-## into the card shader's uniforms, and a card without an entry is left exactly as it was.
+## Living art (data/living_art.json, ArtLiving): every entry is valid (known keys, layer kinds and layer names) and
+## names a card with its painting and every mask it needs, the config loads into the card shader's uniforms at every
+## level, Francesca keeps the original path, and a card without an entry is left exactly as it was.
 func _test_living_art() -> void:
 	var d = JSON.parse_string(FileAccess.get_file_as_string("res://data/living_art.json"))
 	ok(d is Dictionary and d.get("cards") is Dictionary, "living_art.json parses")
 	var cards: Dictionary = d.get("cards", {}) if d is Dictionary else {}
+	var shader: Shader = load("res://assets/shaders/card_fx.gdshader")
+	var keep := ArtLiving.forced
 	for id in cards:
+		var e: Dictionary = cards[id]
 		ok(not CardDB.card(id).is_empty(), "living art %s names a card" % id)
 		ok(ArtLiving.has(id), "living art %s has its painting and mask" % id)
-		for key in cards[id]:
-			ok(key == "mask" or ArtLiving.PARAMS.has(key), "living art %s: known key %s" % [id, key])
+		var bad := ArtLiving.problems(e)
+		ok(bad.is_empty(), "living art %s is valid %s" % [id, bad])
+		var layers: Array = e.get("layers", [])
+		ok(layers.is_empty() == (CardDB.living_fx(id) == null), "living art %s: a layer mask exactly when it has layers" % id)
+		var moves := false
+		for r in e.get("mask", {}).get("regions", []):
+			var ls = r.get("layer")
+			for l in (ls if ls is Array else [ls]):
+				moves = moves or (str(l) in ["flow", "ripple"] and r.get("op", "max") != "sub")
+		ok(not moves or CardDB.living_flowmap(id) != null, "living art %s: its flow map is installed" % id)
+		for lv in [ArtLiving.LITE, ArtLiving.FULL]:
+			ArtLiving.forced = lv
+			var mat := ShaderMaterial.new()
+			mat.shader = shader
+			ok(ArtLiving.setup_card(mat, id, 0.686, 0.42) and mat.get_shader_parameter("living_level") == lv
+				and mat.get_shader_parameter("living_mask") != null, "living art %s sets up at level %d" % [id, lv])
+			ok(mat.get_shader_parameter("living_ext") == (id != "francesca"), "living art %s: extension path" % id)
+			if not layers.is_empty():
+				var sl := ArtLiving.slots(e)
+				for i in ArtLiving.MAX_LAYERS:
+					var want: int = ArtLiving.KINDS[layers[i].kind][0] if i < layers.size() else 0
+					ok(sl["living_k%d" % i] == want and mat.get_shader_parameter("living_k%d" % i) == want,
+						"living art %s: slot %d is its layer's kind" % [id, i])
+		ArtLiving.forced = keep
 	ok(cards.has("francesca") and not CardDB.living("francesca").is_empty(), "francesca has living art")
+	ok(CardDB.living_flowmap("francesca") == null and CardDB.living_fx("francesca") == null,
+		"francesca keeps the original masks (no flow map, no layers)")
 	var u := ArtLiving.params(CardDB.living("francesca"))
 	ok(u.size() == ArtLiving.PARAMS.size(), "living params: one uniform per key")
 	ok(u.living_swirl > 0.0 and u.living_vortex is Vector2 and u.living_ember_color is Color, "living params typed")
 	ok(ArtLiving.params({}).living_swirl == 0.0, "living params: defaults for missing keys")
 	ok(CardDB.art_loop("francesca") == null, "a card with living art never plays its Wan loop")
-	var shader: Shader = load("res://assets/shaders/card_fx.gdshader")
-	var keep := ArtLiving.forced
+	# Every layer kind fills its slot, typed, with its defaults and the entry's own values.
+	for kind in ArtLiving.KINDS:
+		var sl := ArtLiving.slots({"wind": [0, 2], "layers": [{"kind": kind}, {"kind": kind, "color": [0.1, 0.2, 0.3]}]})
+		ok(sl.living_k0 == ArtLiving.KINDS[kind][0] and sl.living_k2 == 0 and sl.living_s0 is Vector4
+			and sl.living_c1.is_equal_approx(Color(0.1, 0.2, 0.3)) and is_equal_approx(sl.living_d0.length(), 1.0),
+			"layer kind %s fills its slot" % kind)
+	var fall := ArtLiving.slots({"layers": [{"kind": "fall", "density": 0.9, "life": 0.5, "dir": [3, 4]}]})
+	ok(is_equal_approx(fall.living_s0.x, 0.9) and is_equal_approx(fall.living_t0.w, 0.5)
+		and fall.living_d0.is_equal_approx(Vector2(0.6, 0.8)), "layer parameters land in their slot places")
+	var br := ArtLiving.slots({"layers": [{"kind": "breathe", "center": [0.3, 0.7]}]})
+	ok(is_equal_approx(br.living_s0.z, 0.3) and is_equal_approx(br.living_s0.w, 0.7), "breathe takes its centre")
+	ok(not ArtLiving.problems({"layers": [{"kind": "sparkles"}]}).is_empty(), "an unknown layer kind is caught")
+	ok(not ArtLiving.problems({"layers": [{"kind": "glow", "strenght": 1}]}).is_empty(), "a misspelt parameter is caught")
+	ok(not ArtLiving.problems({"mask": {"regions": [{"layer": "ghost", "all": true}]}}).is_empty(),
+		"a region painting a missing layer is caught")
+	ok(not ArtLiving.problems({"swirly": 1}).is_empty(), "an unknown entry key is caught")
+	ok(ArtLiving.problems({"layers": [{"kind": "glow", "name": "eyes"}],
+		"mask": {"regions": [{"layer": ["flow", "ripple"], "all": true}, {"layer": "eyes", "all": true}]}}).is_empty(),
+		"a valid entry passes")
 	ArtLiving.forced = ArtLiving.FULL
 	var m := ShaderMaterial.new()
 	m.shader = shader
 	ok(ArtLiving.setup_card(m, "francesca", 0.686, 0.42), "francesca's living art sets up")
 	ok(m.get_shader_parameter("living_level") == ArtLiving.FULL and m.get_shader_parameter("living_mask") != null,
 		"francesca's material is alive")
-	for id in ["ugolino", "minos", "cd_guy_montfort"]:
+	for id in ["lost_pilgrim", "she_wolf", "cd_guy_montfort"]:
 		var plain := ShaderMaterial.new()
 		plain.shader = shader
 		ok(CardDB.living(id).is_empty() and not ArtLiving.setup_card(plain, id, 0.686, 0.42), "%s has no living art" % id)
