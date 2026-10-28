@@ -10,6 +10,13 @@ const ENEMY_HAND_SCALE := 0.42
 const HOVER_SCALE := 1.12
 const HOVER_SPREAD := 70.0 ## hand cards beside a hovered one move this far aside
 const END_OVAL := Vector2(236, 150) ## the end-turn seal's visible oval, px
+## Where the seal's smooth inner oval (the field the words are engraved in) is centred, from the centre of its
+## visible oval, px: its rope rim is thicker on the left (measured on end_turn_seal.png).
+const END_FIELD := Vector2(4, 0)
+## The turn banner's painted ribbon is TURN_RIBBON_H px tall, centred on the banner label; its band (between the
+## gilded trims) is centred UI.BANNER_BAND of that height below.
+const TURN_RIBBON_H := 208.0
+const DECK_COUNT_BOX := Vector2(100, 52) ## the deck pile's count, centred on the top card
 const MINION_GAP := 40.0
 const PLAY_LINE := 0.70 ## releasing a dragged card above this fraction of the screen height plays it
 const INSPECT_SCALE := 0.95 ## the enlarged card shown beside a hovered minion
@@ -383,8 +390,8 @@ func _build_scene() -> void:
 		ribbon.set_anchors_preset(Control.PRESET_CENTER)
 		ribbon.offset_left = -560
 		ribbon.offset_right = 560
-		ribbon.offset_top = -104
-		ribbon.offset_bottom = 104
+		ribbon.offset_top = -TURN_RIBBON_H / 2.0
+		ribbon.offset_bottom = TURN_RIBBON_H / 2.0
 		ribbon.show_behind_parent = true
 		ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		banner.add_child(ribbon)
@@ -459,6 +466,8 @@ func _build_end_button() -> void:
 	_end_label.position = -_end_label.size / 2
 	_end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_end_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_end_label.position += END_FIELD if _end_seal != null else Vector2.ZERO
+	UI.center_ink(_end_label)
 	end_btn.add_child(_end_label)
 	# Blank and dim until the first turn starts (the mulligan is not a turn).
 	_end_label.text = ""
@@ -532,9 +541,11 @@ func _build_deck(side: int) -> Node2D:
 	var l := UI.label(str((Game.player_cards if side == 0 else Game.enemy_cards).size()), 30, "title", UI.BONE, 7,
 		Color.BLACK)
 	l.name = "Count"
-	l.size = Vector2(100, 40)
-	l.position = Vector2(-50, -20)
+	l.size = DECK_COUNT_BOX
+	l.position = -DECK_COUNT_BOX / 2.0
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	UI.center_ink(l) # the number's ink on the seal of the top card's back
 	n.add_child(l)
 	return n
 
@@ -548,7 +559,8 @@ func _set_deck_count(side: int, count: int) -> void:
 		if on:
 			top = i
 	var l := deck_views[side].get_node("Count") as Label
-	l.position = Vector2(-50, -20) + Vector2(maxi(top, 0) * 1.1, -maxi(top, 0) * 2.2)
+	l.position = -DECK_COUNT_BOX / 2.0 + Vector2(maxi(top, 0) * 1.1, -maxi(top, 0) * 2.2)
+	UI.center_ink(l)
 
 
 func _layout_static() -> void:
@@ -1929,14 +1941,17 @@ func _show_banner(text: String, color: Color, size: int = 96) -> void:
 	# The label keeps the text (tests read it), its letters then clear.
 	var word := UI.word_tex(text)
 	banner.text = text
+	# The letters go on the middle of the ribbon's dark band (BANNER_BAND below the painting's centre).
+	var band := Vector2(0, UI.BANNER_BAND * TURN_RIBBON_H if UiSkin.has("turn_banner") else 0.0)
 	if word != null:
 		# Inside the ribbon's dark band (about 76 px of its 208, between the gilded trims) and clear of its folds.
 		var wr := UI.word_rect(word, Vector2(700.0, 72.0))
-		wr.position = (banner.size - wr.size) / 2.0 + Vector2(0, 8)
+		UI.place_word(wr, banner.size / 2.0 + band)
 		banner.add_child(wr)
 	banner.add_theme_color_override("font_color", color if word == null else Color.TRANSPARENT)
 	banner.add_theme_color_override("font_outline_color", Color(0.15, 0.02, 0.0) if word == null else Color.TRANSPARENT)
 	banner.add_theme_font_size_override("font_size", size)
+	UI.center_ink(banner, band)
 	banner.pivot_offset = banner.size / 2
 	banner.scale = Vector2(1.4, 1.4)
 	var t := banner.create_tween()
@@ -1985,7 +2000,8 @@ func _set_end_button(side: int) -> void:
 		fs -= 1
 	_end_label.add_theme_font_size_override("font_size", fs)
 	_end_label.size = room
-	_end_label.position = -room / 2
+	_end_label.position = -room / 2 + (END_FIELD if _end_seal != null else Vector2.ZERO)
+	UI.center_ink(_end_label) # the words' ink on the field's middle, whichever words and size
 	_end_disc.set_fill(Color(0.38, 0.1, 0.05) if mine else Color(0.15, 0.12, 0.1))
 	if _end_seal != null:
 		_end_seal.modulate = Color.WHITE if mine else Color(0.45, 0.42, 0.4)
@@ -3041,8 +3057,10 @@ func _build_online() -> void:
 	_timer_plate.name = "TurnTimer"
 	_timer_label = UI.label("", 26, "title", UI.BONE, 4, Color(0.04, 0.01, 0.01))
 	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_timer_label.custom_minimum_size = Vector2(74, 0)
 	_timer_plate.add_child(_timer_label)
+	UI.center_ink(_timer_label) # on the plaque's middle, re-centred as the seconds change
 	_timer_plate.visible = false
 	ui.add_child(_timer_plate)
 	for side in 2:

@@ -1008,9 +1008,9 @@ func _count_disc(body: Control, face: Rect2, count: int, bad: bool) -> void:
 	if UiSkin.has("power_disc"):
 		UI.engraved(l, Color(0.55, 0.06, 0.03) if bad else Color(0.2, 0.08, 0.03))
 	l.size = d.size
-	l.position.y = 1
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	UI.center_ink(l) # the count's ink on the disc's middle
 	d.add_child(l)
 	body.add_child(d)
 
@@ -1048,7 +1048,8 @@ func _tag(body: Control, face: Rect2, kind: String) -> void:
 		w.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		w.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		w.size = Vector2(t.size.x - (18.0 if kind == "custom" else 8.0), t.size.y)
-		w.position.y = 1.0
+		w.position.y = 1.0 # the plate's field (left of the custom seal's wax drip, a px below the middle)
+		UI.center_ink(w) # the word's ink on the field's middle
 		w.use_parent_material = false
 		t.add_child(w)
 		body.add_child(t)
@@ -1060,7 +1061,9 @@ func _tag(body: Control, face: Rect2, kind: String) -> void:
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var l := UI.label(str(TAGS[kind][0]).to_upper(), 13, "title", TAGS[kind][1], 3, SHADE)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	p.add_child(l)
+	UI.center_ink(l)
 	body.add_child(p)
 	p.reset_size()
 	p.position = Vector2(face.end.x - p.size.x + 12.0, face.position.y - 9.0)

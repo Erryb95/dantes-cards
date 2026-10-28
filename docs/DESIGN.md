@@ -208,6 +208,30 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
 - Review: `tests/screen_audit.tscn -- --what=menu|profile|profile_error [--named]`; optional painted pieces in
   `art_src/profile_ui_art.json`.
 
+## Text in frames: optical centring
+Godot centres a line on its line box (the font's ascent + descent), not on its letters: Cinzel's capitals sit about
+0.045 em above that box's middle, IM Fell's 0.08 em, and a Label starts its lines at a whole px. On top of that our
+MSDF faces are drawn about 6.5% larger than their outlines, about each glyph's origin (`UI.MSDF_DRAW_K`, measured).
+So every text in a frame is centred on its **ink** instead:
+- `UI.text_layout(font, size, text, ...)` / `UI.ink_rect(...)`: the union of the glyph outlines (TextServer contours,
+  scaled as drawn) of the string as a Label lays it out (lines at "\n", optional wrap), relative to the text block's
+  centre; `UI.ink_offset(control)` for a Label or Button as it is set now.
+- `UI.center_ink(control, nudge = 0)`: puts the ink on the frame's centre (plus `nudge`, for a painting whose band is
+  off its middle) and keeps it there (it re-checks on each redraw: new text, refitted size, resize). The frame is the
+  PanelContainer of a sole Label (plaques, parchment notes, toasts: their top / bottom margins trade px, the size
+  stays), a Button's content box (every state's margins trade, the pressed sink kept), or else the Label's own rect
+  (its own margins, chosen so Label's int() rounding lands exactly; a single line is set left-aligned at the exact
+  px, since a centred Label ignores side margins).
+- Used by `UI.button`, `plaque_label`, `parchment_label`, `ribbon` (`RIBBON_BAND`: the name ribbon's band sits 2.1%
+  of its height above the middle), `banner` (`BANNER_BAND`: the charred band 3.1% below), `stat_number` (gems, on
+  `GEM_CENTER`), the card names on the ribbon in every layout, the turn banner and its painted words (`place_word`:
+  a painting is centred by its opaque part), the end-turn seal's field (`END_FIELD`), the deck pile count, the turn
+  timer, deck counts and tags, the class plaque's power cost. `UI.baseline(label)` gives the gilding shaders the
+  baseline after centring.
+- Tests: `menu_smoke` checks it headless from the outlines and the Labels' own layout (`get_character_bounds`);
+  `tests/ink_centering.tscn` measures drawn pixels (BUILD.md): 56 samples within 1.5 px (most within 0.8) at 1x,
+  where the old layout was up to 14 px off (ribbons), 2-3.4 px (plaques, notes, buttons) and 1.5 px (names, gems).
+
 ## Collection and packs (v0.2)
 - 296 cards: core 27 + Pilgrim's Journey 35 + Infernal Host 35 + Upper Hell (33: Filippo Argenti and the Wrathful
   Shade moved to the Wrathful), City of Dis (35 neutral), Malebolge and Cocytus (34 neutral: Ulysses, the Schemer moved
@@ -332,14 +356,3 @@ Pilgrim 57% / Ferryman 43%; the random-deck soak is Pilgrim 58%, so the Ferryman
 3. More keywords (Frenzy), weapons for heroes, secrets ("Judgements").
 4. Animated legendary art (living art in the shader, piloted on Francesca; the Wan loops barely move), per-card sounds, voice lines.
 5. Proper release keystore for Android; store icons; iOS / macOS signing.
-
-## Painted card names
-- `CardDB.name_tex(id)` = `assets/cards/names/<id>.png` (gilded lettering on transparency); a card without one uses the
-  gilded label, so any subset works. `CardView._add_name` builds the label always and the painting when there is one,
-  and `_update_name` shows the better one for the card's size on screen (global scale x the window's stretch):
-  the painting while its capitals (`NAME_CAP_K` = 0.58 of its height) stand at least `NAME_MIN_CAP` = 9 px, or are no
-  smaller than the label's (which drops a long name's epithet); below that the gilded label (a 0.12 s fade; 8% hysteresis
-  so a hovering card does not flicker). The painting is brightened by the `name_gain` uniform of `card_fx.gdshader`
-  (`NAME_GAIN` = 1.5, rolling off softly toward white: the painted gold was dimmer than the label on the dark ribbon).
-- Review: `tests/screen_audit.tscn -- --what=names` (names_hand 0.62 + deck showcase 0.34, names_collection 0.72,
-  names_inspect 0.95, names_zoom 1.9, on every painted name plus one without), `tests/name_preview.tscn`.

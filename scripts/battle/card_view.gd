@@ -53,23 +53,10 @@ var _cost_label: Label
 var _atk_label: Label
 var _hp_label: Label
 var _foil := -1.0
-var _name_label: Label ## the name in engraved gold (always built)
-var _name_painted: TextureRect ## the painted name, when the card has one (CardDB.name_tex)
-var _name_painted_cap := 0.0 ## capital height (px at scale 1) of each name: which one reads better at the card's scale
-var _name_label_cap := 0.0
-var _name_scale := -1.0 ## the screen scale the name was last judged at
-var _name_shows_painted := false
 var _ruse_pulse := false ## the Ruse glow is breathing (its strength is driven here, not by the Aura's fade)
 
 ## Ruse ready: a deep, warm gold that breathes slowly, so it never reads as the green "playable" glow.
 const RUSE_GLOW := [Color(1.0, 0.9, 0.5), Color(1.0, 0.5, 0.0)]
-
-## Painted card names: the smallest height of their capitals, in screen px, that still reads (the gilded label takes
-## over below it), the share of the painting's height those capitals take, and the brightness gain that brings the
-## painted gold up to the gilded label's on the dark ribbon.
-const NAME_MIN_CAP := 9.0
-const NAME_CAP_K := 0.58
-const NAME_GAIN := 1.5
 
 
 func setup(p_card_id: String, p_uid: int = -1, p_face_up: bool = true) -> CardView:
@@ -228,12 +215,13 @@ func _build_face() -> void:
 	# Name banner across the bottom of the art.
 	if UiSkin.has("name_ribbon"):
 		_face.add_child(UiSkin.rect("name_ribbon", Vector2(W + 24, 56), Vector2(-12, 188)))
+		_add_name(188 + 56 * (0.5 + UI.RIBBON_BAND), W - 40)
 	else:
 		var banner := UI.panel(Vector2(W - 20, 40), UI.box(UI.CRIMSON.darkened(0.15), UI.GOLD, 3, 6,
 			Color(0, 0, 0, 0.5), 6), Vector2(10, 196))
 		banner.use_parent_material = true
 		_face.add_child(banner)
-	_add_name(Vector2(10, 196), W - 40)
+		_add_name(216, W - 40)
 
 	# Rarity gem.
 	if rarity != "token" and UiSkin.has("rarity_" + rarity):
@@ -251,7 +239,7 @@ func _build_face() -> void:
 		var mana := Shapes.make(Shapes.Kind.GEM, Vector2(64, 64), Color(0.12, 0.35, 0.85), UI.GOLD, 4.0)
 		mana.position = mana_at
 		_face.add_child(mana)
-	_cost_label = _stat_label(str(int(card.get("cost", 0))), mana_at + UI.gem_number_offset("gem_mana", 76, 36), 36)
+	_cost_label = _stat_label(str(int(card.get("cost", 0))), mana_at + UI.gem_number_offset("gem_mana", 76), 36)
 	_face.add_child(_cost_label)
 	if not is_spell:
 		var atk_at := Vector2(26, H - 28)
@@ -266,9 +254,9 @@ func _build_face() -> void:
 			var hp := Shapes.make(Shapes.Kind.DROP, Vector2(58, 70), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
 			hp.position = hp_at
 			_face.add_child(hp)
-		_atk_label = _stat_label(str(int(card.get("attack", 0))), atk_at + UI.gem_number_offset("gem_attack", 74, 34), 34)
+		_atk_label = _stat_label(str(int(card.get("attack", 0))), atk_at + UI.gem_number_offset("gem_attack", 74), 34)
 		_face.add_child(_atk_label)
-		_hp_label = _stat_label(str(int(card.get("health", 0))), hp_at + UI.gem_number_offset("gem_health", 74, 34), 34)
+		_hp_label = _stat_label(str(int(card.get("health", 0))), hp_at + UI.gem_number_offset("gem_health", 74), 34)
 		_face.add_child(_hp_label)
 
 
@@ -321,7 +309,7 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	var ry := 196.0
 	if UiSkin.has("name_ribbon"):
 		_face.add_child(UiSkin.rect("name_ribbon", Vector2(W + 20, 54), Vector2(-10, ry - 6)))
-	_add_name(Vector2(10, ry), W - 64)
+	_add_name(ry - 6 + 54 * (0.5 + UI.RIBBON_BAND), W - 64)
 
 	# Rules text plate (Enrico: "anche sulle carte le scritte sono da disegnare"): a bronze cartouche on minions,
 	# whose concave lower corners leave room for the attack and health gems, an unrolled scroll on spells.
@@ -377,47 +365,42 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	# Gems.
 	var mana_at := Vector2(28, 28)
 	_face.add_child(UiSkin.rect("gem_mana", Vector2(74, 74), mana_at - Vector2(37, 37)))
-	_cost_label = _stat_label(str(int(card.get("cost", 0))), mana_at + UI.gem_number_offset("gem_mana", 76, 36), 36)
+	_cost_label = _stat_label(str(int(card.get("cost", 0))), mana_at + UI.gem_number_offset("gem_mana", 76), 36)
 	_face.add_child(_cost_label)
 	if not is_spell:
 		var atk_at := Vector2(28, H - 28)
 		var hp_at := Vector2(W - 28, H - 30)
 		_face.add_child(UiSkin.rect("gem_attack", Vector2(72, 72), atk_at - Vector2(36, 36)))
 		_face.add_child(UiSkin.rect("gem_health", Vector2(72, 72), hp_at - Vector2(36, 36)))
-		_atk_label = _stat_label(str(int(card.get("attack", 0))), atk_at + UI.gem_number_offset("gem_attack", 74, 34), 34)
+		_atk_label = _stat_label(str(int(card.get("attack", 0))), atk_at + UI.gem_number_offset("gem_attack", 74), 34)
 		_face.add_child(_atk_label)
-		_hp_label = _stat_label(str(int(card.get("health", 0))), hp_at + UI.gem_number_offset("gem_health", 74, 34), 34)
+		_hp_label = _stat_label(str(int(card.get("health", 0))), hp_at + UI.gem_number_offset("gem_health", 74), 34)
 		_face.add_child(_hp_label)
 
 
 func _stat_label(text: String, center: Vector2, size: int) -> Label:
-	var l := UI.raised(UI.label(text, size, "title", UI.NUMBER, 8, Color(0.05, 0.02, 0.02)))
-	l.size = Vector2(80, 60)
-	l.position = center - l.size / 2
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var l := UI.stat_number(text, size, center, Vector2(80, 64))
 	l.use_parent_material = true
 	return l
 
 
-## The card's name on the ribbon in engraved gold, in the 40 px band at `at` (W - 20 wide), at most `room` px wide.
+## The card's name on the ribbon in engraved gold, at most `room` px wide, its letters centred (optically: their
+## ink, UI.center_ink) on the card's middle and on the ribbon band's middle at `band_y`.
 ## Names over 22 letters drop their epithet ("Minos, Judge of the Damned" → "Minos").
-## A card with a painted name (CardDB.name_tex) shows that instead, whole, fitted in the same band, as long as its
-## capitals are big enough to read on screen (`_update_name`); below NAME_MIN_CAP px (a long name at hand size) the gilded
-## label, which shortens long names, takes over. Both are always built, so the card copes with any subset of painted names.
-func _add_name(at: Vector2, room: float) -> void:
+func _add_name(band_y: float, room: float) -> void:
 	var nm: String = card.get("name", card_id)
 	var short := nm.split(",")[0] if nm.length() > 22 else nm
 	var box := Vector2(W - 20, 40)
 	var name_l := UI.label(short, _fit_size(short, room, 22, "title"), "title", UI.GOLD, 4, Color(0.1, 0.02, 0.02))
-	name_l.position = at
+	name_l.name = "Name"
+	name_l.position = Vector2((W - box.x) / 2.0, band_y - box.y / 2.0)
 	name_l.size = box
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	UI.center_ink(name_l)
 	# Engraved gold through the card's own shader, so the name tilts and burns away with the card.
-	var f := name_l.get_theme_font("font")
 	var fs := name_l.get_theme_font_size("font_size")
-	var base := (box.y - f.get_height(fs)) / 2.0 + f.get_ascent(fs)
+	var base := UI.baseline(name_l)
 	var m := ShaderMaterial.new()
 	m.shader = CARD_FX
 	m.set_shader_parameter("resample", false)
@@ -426,71 +409,6 @@ func _add_name(at: Vector2, room: float) -> void:
 	m.set_shader_parameter("gild_top", base - fs * 0.7)
 	name_l.material = m
 	_face.add_child(name_l)
-	_name_label = name_l
-	_name_label_cap = fs * 0.7 # Cinzel's capitals stand about 0.7 em
-	var painted := CardDB.name_tex(card_id)
-	if painted != null:
-		_add_painted_name(painted, at, room)
-		_apply_name_mode(true)
-
-## The painted name `tex` fitted inside the ribbon's band (keeping its shape, a small margin all round) and centred on
-## it. Its own CARD_FX material (gild off: the gold is painted), so _collect_mats tilts, burns and dissolves it with
-## the card exactly like the set name.
-func _add_painted_name(tex: Texture2D, at: Vector2, room: float) -> void:
-	const MARGIN := Vector2(4, 4)
-	var box := Vector2(W - 20, 40)
-	var fit := Vector2(room, box.y) - MARGIN * 2.0
-	var k := minf(fit.x / tex.get_width(), fit.y / tex.get_height())
-	var r := TextureRect.new()
-	r.name = "PaintedName"
-	r.texture = tex
-	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	r.stretch_mode = TextureRect.STRETCH_SCALE
-	r.size = Vector2(tex.get_width(), tex.get_height()) * k
-	r.position = at + (box - r.size) / 2.0
-	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	r.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS # a 160 px painting shrunk to ~30 px
-	var m := ShaderMaterial.new()
-	m.shader = CARD_FX
-	m.set_shader_parameter("gild", false)
-	m.set_shader_parameter("name_gain", NAME_GAIN) # the painted gold is dimmer than the gilded label: lift it
-	r.material = m
-	_face.add_child(r)
-	_name_painted = r
-	_name_painted_cap = r.size.y * NAME_CAP_K
-
-
-## The painted name or the gilded label, whichever reads better at the card's size on screen: the painted one when
-## its capitals are at least NAME_MIN_CAP px tall (a little more to switch to it than to stay on it, so a hovering
-## card does not flicker), or when it is no smaller than the label's; else the label. The switch is a quick fade.
-func _update_name() -> void:
-	if _name_painted == null:
-		return
-	var s := get_global_transform().y.length()
-	var vp := get_viewport()
-	if vp != null:
-		s *= vp.get_final_transform().y.length()
-	if s < 0.01 or absf(s - _name_scale) < 0.02 * maxf(_name_scale, 0.01):
-		return
-	var first := _name_scale < 0.0
-	_name_scale = s
-	var need := NAME_MIN_CAP * (0.92 if _name_shows_painted else 1.08)
-	var painted := _name_painted_cap * s >= need or _name_painted_cap >= _name_label_cap
-	if painted != _name_shows_painted or first:
-		_apply_name_mode(painted, not first)
-
-
-func _apply_name_mode(painted: bool, fade := false) -> void:
-	_name_shows_painted = painted
-	var shown: Array = [_name_painted, _name_label]
-	for i in 2:
-		var n: CanvasItem = shown[i]
-		var a := 1.0 if (i == 0) == painted else 0.0
-		if fade and is_inside_tree():
-			create_tween().tween_property(n, "modulate:a", a, 0.12)
-		else:
-			n.modulate.a = a
-
 
 static func _fit_size(text: String, width: float, max_size: int, kind: String) -> int:
 	var f := UI.font(kind)
@@ -563,6 +481,7 @@ func set_face_up(v: bool) -> void:
 
 func set_cost(cost: int) -> void:
 	_cost_label.text = str(cost)
+	UI.center_ink(_cost_label)
 
 
 ## A minion's live numbers (the inspect view of a minion in play): raised values green, damaged health red, as on
@@ -572,6 +491,8 @@ func set_stats(attack: int, health: int, max_health: int) -> void:
 		return
 	_atk_label.text = str(attack)
 	_hp_label.text = str(health)
+	UI.center_ink(_atk_label)
+	UI.center_ink(_hp_label)
 	_atk_label.add_theme_color_override("font_color", UI.HEAL if attack > int(card.get("attack", 0)) else UI.NUMBER)
 	var hp_col := UI.NUMBER
 	if health < max_health:
@@ -613,7 +534,6 @@ func _tick_ruse_glow(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_tick_ruse_glow(delta)
-	_update_name()
 	# Velocity tilt while dragged: lean into the motion like a real card.
 	_vel = _vel.lerp((position - _last_pos) / maxf(delta, 0.001), 0.25)
 	_last_pos = position

@@ -10,7 +10,6 @@ static var _loaded := false
 static var _framed := {}
 static var _loops := {}
 static var _depths := {}
-static var _names := {}
 static var _living := {} ## card id -> its living-art entry (data/living_art.json "cards")
 
 
@@ -260,14 +259,6 @@ static func hero_art(id: String) -> Texture2D:
 ## card has none yet: then the art simply has no parallax. Cached. Pair it with `art_crop_uv` for a framed picture.
 static func art_depth(id: String) -> Texture2D:
 	return _depth("res://assets/cards/depth/%s.png" % id)
-
-
-## The card's name as painted gilded lettering (assets/cards/names/<id>.png, keyed on transparency by
-## tools/ui/import_ui_pieces.py), or null when it has none: then CardView sets the name in the title font. Cached.
-static func name_tex(id: String) -> Texture2D:
-	if not _names.has(id):
-		_names[id] = _tex("res://assets/cards/names/%s.png" % id)
-	return _names[id]
 
 
 ## The hero portrait's depth map, or null.
