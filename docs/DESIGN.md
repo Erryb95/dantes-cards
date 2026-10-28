@@ -22,6 +22,7 @@
 | `assets/shaders/` | `card_fx` (art mask, hit flash, burn-away dissolve, legendary foil; includes `living_art.gdshaderinc`), `river`, `fog`, `crack` (Dis embers / Cocytus frost), `wind` (Lust), `heat_haze` |
 | `data/living_art.json`, `scripts/battle/art_living.gd` | **living art**: an epic or legendary card's still painting animated in the card shader, per card from data. **Authoring guide: `docs/LIVING_ART.md`.** An entry holds motion parameters, up to three layers and a mask recipe (regions of shapes, colour / depth filters, ramps and directions; faces protected, figures and props kept still). `tools/cards/living_mask.py` paints the recipe into `assets/cards/living/<id>.png` (R flow, G fire, B sway), `<id>_flow.png` (the flow's direction and the ripple) and `<id>_fx.png` (the three layer slots). Base layers: flow (the whirl or a flow map: water, lava, smoke, clouds), ripple, fire (rise, flicker, glow, haze), sway. Layer kinds: glow, glint, mist, fall (ash, fire rain, snow, rain, sparks), flash, rays, sway (branches), haze, breathe. Runs wherever the art is drawn (hand, collection, zoom, board portrait); a card with living art never plays its Wan loop. `ArtLiving.level()`: full, lite at the 30 fps frame limit (no haze or embers, one particle layer, cheaper noise), `DV_LIVING=0/1/2` forces it. Francesca keeps the original whirl path exactly. Reference cards: mc_lucifer, phlegyas, cd_capaneus, minos, pj_harpy_of_the_wood. Review: `tools/cards/living_review.py` (mp4 + motion numbers through `tests/living_preview.tscn`) |
 | `tools/cards/art_jobs.py` | builds the ComfyUI jobs from the data and imports the results |
+| `assets/audio/voices/`, `data/voices.json`, `tools/audio/character_voices.py` | every character's own sound (see "Character voices" below): `<id>_play` / `<id>_death` per minion, `hero_<id>` / `hero_<id>_defeat` per hero; hand overrides in `data/voices.json`; per-file sources in `assets/audio/voices/SOURCES.md` |
 | `tests/` | `run_tests.gd` (rules, 300-game starter soak, 400-game random-deck soak over the whole pool), `ui_smoke.tscn` (drives the real board with input events) |
 
 The view never changes game values. It queues `BattleState.event` dictionaries and plays them one by one;
@@ -47,6 +48,26 @@ and it is the seam for PvP later (events over the network).
   hero dies the same way, bigger (a concession: the winner's power school). Quality: `DeathStyle.level()` is LITE
   (half the particles, no extra lights) on phones and at a 30 fps frame limit; `DV_DEATHFX=0/1/2` forces it.
 - Review: `tests/death_preview.tscn` (see BUILD.md).
+
+## Character voices
+As in Hearthstone every minion has its own play and death sound and every hero its own, but without speech:
+non-verbal vocal sounds (grunts, sighs, laughs, gasps, cries, growls, barks, hisses, roars) from CC0 recordings,
+made by `tools/audio/character_voices.py` (commands in docs/BUILD.md).
+- **Archetype** from the card's own words (name, art prompt, flavour, class, circle): man, young / old man, warrior,
+  king, scholar, cleric, glutton, brawler, mud sinner, trickster, madman, damned, sailor, crowd; woman, queen, witch,
+  siren, warrior woman, the Furies, harpy, Medusa; demon, imp, demon lord, giant, giant man; shade, angry shade,
+  mud creature; dog, hellhound, wolf, lion, leopard, horse, centaur, bull, serpent, serpent-man, pig, fire bird,
+  dragon-beast; angel, fallen angel. `data/voices.json` overrides it, and makes the 28 legendaries, the heroes and the
+  objects (the Trojan Horse, the Little Ship, the Red Towers, the weights, the reed, the stars) special: a lyre for
+  Homer, a horn for Nimrod, three roars and six wings for Lucifer, the swine around Circe.
+- **Unique:** each character's play and death come from source clips no other character uses (436 different clips),
+  plus a per-card treatment from the card id (pitch, tempo, EQ, room, a quiet layer of the card's school: fire,
+  ice, water, mud...). `character_voices.py check` fingerprints every file and fails on two that are too close.
+- **In battle** (`battle_view.gd`): a minion's play sound when it lands (it replaces the generic growl / roar); minions
+  an effect summons speak once per batch; a death plays the minion's cry with the generic fall under it (a board wipe
+  voices two, the rest fall quietly); each hero announces itself when the duel starts and cries when it falls. A
+  character without a file keeps the generic sounds. Online duels replay the same events, so they sound the same.
+  `Sfx.play_char()` plays them on the SFX bus (the effects volume) on four players of their own.
 
 ## Opening cinematic (about 95 s)
 Recycled from the sister FPS (which keeps its own story and title). Doré's public-domain Inferno plates, animated by
@@ -381,5 +402,6 @@ So every text in a frame is centred on its **ink** instead:
 2. Run map (Slay-the-Spire style) through the circles: Limbo, Minos, the Lustful, Cerberus...; card rewards
    after each win; deck building between fights.
 3. More keywords (Frenzy), weapons for heroes, secrets ("Judgements").
-4. Animated legendary art (living art in the shader, piloted on Francesca; the Wan loops barely move), per-card sounds, voice lines.
+4. Animated art for every epic and legendary (living art in the shader; the Wan loops barely moved). Per-card
+   sounds are in (see "Character voices"); spoken voice lines are not (no cleared voices).
 5. Proper release keystore for Android; store icons; iOS / macOS signing.
