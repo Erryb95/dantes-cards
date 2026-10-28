@@ -6,12 +6,21 @@ const S := 0.58 ## card scale in the grid
 const COST_FILTERS := [-1, 0, 1, 2, 3, 4, 5, 6, 7]
 const GEM := 58.0 ## the painted mana gems of the cost filter
 const TAG_H := 44.0 ## the plaque under each card ("1 / 2", "Locked")
+const SIDE_W := 540.0 ## the deck panel on the right
+const SIDE_PAD := 44.0 ## its content's margin left and right, inside the carved frame
+const FIELD_PAD := 26.0 ## the text's inset in the name field and the hero plaque (clear of their bronze frames)
+const TAB_W := 190.0 ## Back, the set filters and "Any cost": one width, so the two filter rows share their columns
+const ROW_GAP := 12.0 ## between the plates of a row
+const CARD_GAP := 14.0 ## the least gap between the cards of the grid (the grid is spread to fill its width)
+const BAR_W := 26.0 ## the painted scroll bar beside the grid
 const LIT := Color(1.15, 1.05, 0.85) ## a filter that is on
 const DIM := Color(0.72, 0.66, 0.6) ## a filter that is off
 
 var deck := {}
 var _index := -1
 var _grid: GridContainer
+var _grid_scroll: ScrollContainer
+var _right: Control
 var _list: VBoxContainer
 var _count: Label
 var _problem: Label
@@ -59,15 +68,15 @@ func _ready() -> void:
 	left.add_theme_constant_override("separation", 12)
 	root.add_child(left)
 	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", 12)
+	top.add_theme_constant_override("separation", int(ROW_GAP))
 	left.add_child(top)
 	_saved = deck.duplicate(true)
-	var back := UI.button("Back", 170, 60)
+	var back := UI.button("Back", TAB_W, 60)
 	back.pressed.connect(_leave)
 	top.add_child(back)
 	var cls_name := CardDB.class_title(deck.cls)
 	for f in [["all", "All"], ["class", cls_name], ["neutral", "Neutral"]]:
-		var b := _small_button(f[1], 190)
+		var b := _small_button(f[1], TAB_W)
 		b.pressed.connect(func():
 			_set_filter = f[0]
 			_fill())
@@ -79,12 +88,13 @@ func _ready() -> void:
 		_show_unowned = not on
 		_fill())
 	top.add_child(_own_tab)
-	# The cost filter: a plate for "any cost", then the painted mana gems of the card frames, the chosen one lit.
+	# The cost filter: a plate for "any cost" (under Back, as wide), then the painted mana gems of the card frames, the
+	# chosen one lit; the first gem starts where "All" does above it.
 	var costs := HBoxContainer.new()
-	costs.add_theme_constant_override("separation", 10)
+	costs.add_theme_constant_override("separation", int(ROW_GAP))
 	left.add_child(costs)
 	for c in COST_FILTERS:
-		var b := _small_button("Any cost", 190) if c == -1 else _gem_button("7+" if c == 7 else str(c))
+		var b := _small_button("Any cost", TAB_W) if c == -1 else _gem_button("7+" if c == 7 else str(c))
 		b.pressed.connect(func():
 			_cost_filter = c
 			_fill())
@@ -93,24 +103,25 @@ func _ready() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	UI.paint_scroll(scroll)
+	UI.paint_scroll(scroll, int(BAR_W))
 	left.add_child(scroll)
-	var center := CenterContainer.new()
-	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(center)
+	_grid_scroll = scroll
+	# The grid starts at the filters' left edge and is spread to end at the scroll bar (_fill sets its gap).
 	_grid = GridContainer.new()
-	_grid.add_theme_constant_override("h_separation", 18)
+	_grid.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_grid.add_theme_constant_override("h_separation", int(CARD_GAP))
 	_grid.add_theme_constant_override("v_separation", 22)
-	center.add_child(_grid)
+	scroll.add_child(_grid)
 
 	# Right: the deck.
 	var right := PanelContainer.new()
-	right.custom_minimum_size = Vector2(540, 0)
+	right.custom_minimum_size = Vector2(SIDE_W, 0)
+	_right = right
 	# The content stays on the panel's dark field, clear of the frame's carved border.
 	var rs := UI.frame_box("panel_frame_filled", 96, 0,
 		UI.box(Color(0.07, 0.035, 0.03, 0.92), UI.GOLD_DARK, 3, 16, Color(0, 0, 0, 0.6), 20))
-	rs.content_margin_left = 44
-	rs.content_margin_right = 44
+	rs.content_margin_left = SIDE_PAD
+	rs.content_margin_right = SIDE_PAD
 	rs.content_margin_top = 52
 	rs.content_margin_bottom = 56
 	right.add_theme_stylebox_override("panel", rs)
@@ -125,6 +136,11 @@ func _ready() -> void:
 	# An engraved name plate (UI.name_field): the bronze frame around the painted field, lit while it is being edited.
 	_name = UI.name_field(deck.name, "Name your deck", 24)
 	_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# The letters further in than the shared field's 18 px: a long name ran right up to the bronze frame.
+	for st in ["normal", "focus"]:
+		var fs := _name.get_theme_stylebox(st)
+		fs.content_margin_left = FIELD_PAD
+		fs.content_margin_right = FIELD_PAD
 	_name.text_changed.connect(func(t: String):
 		deck.name = t
 		_fit_name())
@@ -141,7 +157,7 @@ func _ready() -> void:
 	var hero := CardDB.hero(CardDB.class_hero(deck.cls))
 	# Hero line with the card count on its right, so the count never crowds the bottom of the deck list.
 	# Both engraved on a plaque like the name's.
-	var hp := UI.plaque(18, 4)
+	var hp := UI.plaque(FIELD_PAD, 4) # the hero's name starts under the deck's name
 	rv.add_child(hp)
 	var hr := HBoxContainer.new()
 	hr.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -178,21 +194,28 @@ func _ready() -> void:
 	_problem.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_problem.custom_minimum_size = Vector2(400, 0)
 	_problem_plate.add_child(_problem)
+	UI.center_ink(_problem) # on the sheet's middle
+	# The two rows of plates span the panel's width, edge to edge: Auto-fill starts where Save does and the last plate
+	# (Clear, or the Delete disc) ends where Play does.
+	var row_w := SIDE_W - 2.0 * SIDE_PAD
+	var half := floorf((row_w - ROW_GAP) / 2.0)
 	var r1 := HBoxContainer.new()
 	r1.alignment = BoxContainer.ALIGNMENT_CENTER
-	r1.add_theme_constant_override("separation", 6)
+	r1.add_theme_constant_override("separation", int(ROW_GAP))
 	rv.add_child(r1)
-	var fill := _small_button("Auto-fill", 220 if _index < 0 else 200)
+	var small := half if _index < 0 else floorf((row_w - 60.0 - 2.0 * ROW_GAP) / 2.0) # beside the 60 px Delete disc
+	var fill := _small_button("Auto-fill", small)
 	fill.pressed.connect(func():
 		Collection.autofill(deck)
 		Sfx.play("swish_long", -6.0)
 		_refresh())
 	r1.add_child(fill)
-	var clear := _small_button("Clear", 170 if _index < 0 else 160)
+	var clear := _small_button("Clear", row_w - small - ROW_GAP if _index < 0 else small)
 	clear.pressed.connect(func():
 		deck.cards.clear()
 		_refresh())
 	r1.add_child(clear)
+	UI.even_text([fill, clear]) # one letter size on the row (Auto-fill shrinks on its narrower plate beside Delete)
 	if _index >= 0:
 		# Delete on a bronze disc with an engraved cross (as a third plate the row left each label about 56 px).
 		var del := _disc("Delete this deck", _draw_cross, "icon_delete")
@@ -200,14 +223,14 @@ func _ready() -> void:
 		r1.add_child(del)
 	var r2 := HBoxContainer.new()
 	r2.alignment = BoxContainer.ALIGNMENT_CENTER
-	r2.add_theme_constant_override("separation", 10)
+	r2.add_theme_constant_override("separation", int(ROW_GAP))
 	rv.add_child(r2)
-	var save := UI.button("Save", 200, 70)
+	var save := UI.button("Save", half, 70)
 	save.pressed.connect(func():
 		_save()
 		Game.go(Game.DECK_SELECT))
 	r2.add_child(save)
-	_play = UI.button("Play", 220, 70)
+	_play = UI.button("Play", row_w - half - ROW_GAP, 70)
 	_play.pressed.connect(func():
 		_save()
 		Game.start_with(Collection.deck_cards(deck.cards), CardDB.class_hero(deck.cls)))
@@ -325,11 +348,11 @@ func _gem_button(text: String) -> Button:
 	var fallback := UI.box(Color(0.1, 0.16, 0.32), Color(0.5, 0.65, 0.95), 2, int(GEM / 2))
 	for st in [["normal", Color.WHITE], ["hover", Color(1.25, 1.2, 1.1)], ["pressed", Color(0.8, 0.8, 0.85)]]:
 		var sb := UI.frame_box("gem_mana", 0, 0, fallback, st[1])
-		sb.content_margin_top = 4 # Cinzel's digits sit high in the line box
 		if plus:
 			sb.content_margin_right = 14 # the digit sits left, the drawn "+" right
 		b.add_theme_stylebox_override(st[0], sb)
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	UI.center_ink(b) # the digit's ink on the gem's middle (left of the drawn "+" on "7+")
 	b.pivot_offset = b.custom_minimum_size / 2
 	b.mouse_entered.connect(func():
 		Sfx.play("ui_hover", -12.0)
@@ -372,8 +395,16 @@ func _fill() -> void:
 	_badges.clear()
 	_views.clear()
 	_hide_tips()
-	var w := size.x - 480 - 100
-	_grid.columns = maxi(2, int(w / (CardView.W * S + 18)))
+	# The grid's width: the scroll's, less its bar (estimated from the screen before the first layout).
+	var w := _grid_scroll.size.x - BAR_W
+	if _grid_scroll.size.x <= 0.0:
+		w = size.x - 60.0 - 24.0 - maxf(SIDE_W, _right.get_combined_minimum_size().x) - BAR_W
+	var cw := CardView.W * S
+	var cols := maxi(2, int((w + CARD_GAP) / (cw + CARD_GAP)))
+	_grid.columns = cols
+	# The columns spread so the grid ends at the bar as it starts at the filters (within reason).
+	var gap := clampf(floorf((w - cols * cw) / (cols - 1)), CARD_GAP, 2.0 * CARD_GAP)
+	_grid.add_theme_constant_override("h_separation", int(gap))
 	for c in _pool():
 		var slot := Control.new()
 		slot.custom_minimum_size = Vector2(CardView.W * S, CardView.H * S + TAG_H + 4)
@@ -513,9 +544,9 @@ func _refresh() -> void:
 			gem.add_child(UiSkin.rect("gem_mana", gem.size))
 		var cost := UI.raised(UI.label(str(int(c.cost)), 20, "title", UI.NUMBER, 5, Color(0, 0.02, 0.08)))
 		cost.size = gem.size
-		cost.position = Vector2(0, 0.0625 * 20)
 		cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cost.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		UI.center_ink(cost) # the digit's ink on the gem's middle
 		gem.add_child(cost)
 		row.add_child(gem)
 		if UiSkin.has("deck_row"):

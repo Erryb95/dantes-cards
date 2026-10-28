@@ -9,6 +9,9 @@ const SORTS := [["cost", "Cost"], ["rarity", "Rarity"], ["rarity_asc", "Low rari
 	["owned", "Owned"]]
 const SORT_FONT := 26
 const GAP := 26.0
+const SCALE := 0.72 ## the cards in the grid
+const BAR_W := 26.0 ## the painted scroll bar right of the grid
+const TAB_GAP := 14.0
 
 var _body: VBoxContainer ## the card sections (one grid, or one per rarity)
 var _scroll: ScrollContainer
@@ -71,12 +74,14 @@ func _ready() -> void:
 		filters.append([cls, CardDB.class_title(cls)])
 	filters.append_array([["neutral", "Neutral"], ["token", "Tokens"]])
 	# The filters get a row of their own under the title bar: squeezed beside the banner, a long class name on its
-	# plate shrank to about 17 px. The plates narrow only when more classes arrive than the screen holds.
+	# plate shrank to about 17 px. The row is as wide as the card grid under it (same left and right edges); the
+	# plates narrow only when more classes arrive than that holds.
 	var tabs := HBoxContainer.new()
 	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
-	tabs.add_theme_constant_override("separation", 14)
+	tabs.add_theme_constant_override("separation", int(TAB_GAP))
 	root.add_child(tabs)
-	var fw := clampf((get_viewport_rect().size.x - 80.0 - 14.0 * (filters.size() - 1)) / filters.size(), 150.0, 230.0)
+	var fw := clampf((_grid_width(get_viewport_rect().size.x) - TAB_GAP * (filters.size() - 1)) / filters.size(),
+		150.0, 320.0)
 	for f in filters:
 		var b := UI.button(f[1], fw, 60)
 		b.add_theme_font_size_override("font_size", 26)
@@ -90,12 +95,14 @@ func _ready() -> void:
 	_scroll = scroll
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	UI.paint_scroll(scroll)
+	UI.paint_scroll(scroll, int(BAR_W))
 	root.add_child(scroll)
-	# A little room above the first row, so the copies discs pinned over the cards' corners are not cut off.
+	# A little room above the first row, so the copies discs pinned over the cards' corners are not cut off; on the
+	# left as much as the scroll bar takes on the right, so the grid is centred on the screen like the filters.
 	var pad := MarginContainer.new()
 	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pad.add_theme_constant_override("margin_top", 18)
+	pad.add_theme_constant_override("margin_left", int(BAR_W))
 	scroll.add_child(pad)
 	var center := CenterContainer.new()
 	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -177,6 +184,17 @@ func _visible_cards() -> Array:
 	return cards
 
 
+## The grid's columns on a screen `w` px wide (inside the margins, the scroll bar and the room the grid keeps on its
+## left to stay centred), and the width they take.
+func _columns(w: float) -> int:
+	return maxi(2, int((w - 80.0 - 2.0 * BAR_W + GAP) / (CardView.W * SCALE + GAP)))
+
+
+func _grid_width(w: float) -> float:
+	var cols := _columns(w)
+	return cols * CardView.W * SCALE + (cols - 1) * GAP
+
+
 ## A rarity's heading over its cards: gilded capitals (tinted by the rarity) over a thin bronze rod.
 func _divider(cap: String, key: String, room: float) -> Control:
 	var v := VBoxContainer.new()
@@ -207,8 +225,8 @@ func _fill() -> void:
 	for c in _body.get_children():
 		_body.remove_child(c)
 		c.queue_free()
-	var s := 0.72
-	var cols := maxi(2, int((size.x - 80) / (CardView.W * s + GAP)))
+	var s := SCALE
+	var cols := _columns(size.x)
 	var cards := _visible_cards()
 	# Sorted by rarity, each rarity gets a divider and a grid of its own; otherwise it is one grid.
 	var dividers := _sort in ["rarity", "rarity_asc"] and _filter != "token"

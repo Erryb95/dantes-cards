@@ -25,6 +25,11 @@ const HEAD_H := 62.0 ## a class plaque over its decks
 const SECTION_GAP := 18.0
 const FRAME_PAD := 64.0 ## room the bronze frame's ornament takes on each side of a big panel
 const ARROW_SIZE := 62.0
+const ROW_SEP := 36.0 ## between the showcase and the library (and between their columns in the header above them)
+const TAB_GAP := 10.0 ## between the library's filter plates
+const TAB_ENDS := 80.0 ## what a small plate's scrollwork ends take of its width (UI.fit_text keeps letters off them)
+const TAB_PAD := 40.0 ## what an engraved plaque tab's frame and margins take of its width
+const TAB_PX := [24, 16] ## the filter tabs' letter size range: the largest that lets the whole row fit
 const PLAQUE_TEXT_H := 100.0 ## tagline + plan text inside the showcase's parchment
 const FEATURED_SCALE := 0.34 ## the three featured cards in the showcase, on a 1080 px tall screen
 const FEATURED_SCALE_MAX := 0.5 ## the most they grow on a taller screen (three still fit the showcase's width)
@@ -82,7 +87,7 @@ func _ready() -> void:
 	root.add_child(_header())
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 36)
+	row.add_theme_constant_override("separation", int(ROW_SEP))
 	row.custom_minimum_size = Vector2(0, _row_height())
 	root.add_child(row)
 	row.add_child(_showcase())
@@ -197,6 +202,8 @@ func _kind(e: Dictionary) -> String:
 
 ## The next arena on an engraved plaque, beside the opponent's strength (a click steps Easy > Medium > Hard, saved
 ## at once). The arena is drawn now (a different one from last match), so the player knows where the fight will be.
+## The plaque is as wide as the showcase under it and the two plates fill the library's width, so the header's
+## edges and its gap line up with the panels'.
 func _header() -> Control:
 	var arena := CardDB.arena(Game.pick_arena())
 	var where := str(arena.get("name", ""))
@@ -204,8 +211,10 @@ func _header() -> Control:
 		where += "  ·  " + str(arena.circle)
 	var head := HBoxContainer.new()
 	head.alignment = BoxContainer.ALIGNMENT_CENTER
-	head.add_theme_constant_override("separation", 24)
+	head.add_theme_constant_override("separation", int(ROW_SEP))
+	var lib_w := LIB_COLS * DECK_W + (LIB_COLS - 1) * DECK_GAP + 2.0 * FRAME_PAD
 	var plaque := PanelContainer.new()
+	plaque.custom_minimum_size.x = SHOW_W
 	var sb := UI.frame_box("deck_row", 10, 0, UI.box(Color(0.08, 0.04, 0.035, 0.9), UI.GOLD_DARK, 2, 8))
 	sb.content_margin_left = 30
 	sb.content_margin_right = 30
@@ -214,11 +223,17 @@ func _header() -> Control:
 	plaque.add_theme_stylebox_override("panel", sb)
 	UI.add_field(plaque)
 	var sub := UI.label("Next arena:  " + where, 26, "italic", UI.BONE, 4, Color.BLACK)
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_fit_label(sub, 760.0, 18)
+	_fit_label(sub, SHOW_W - 60.0 - 12.0, 18)
 	plaque.add_child(sub)
+	UI.center_ink(sub) # on the plaque's middle
 	head.add_child(plaque)
-	var diff := UI.button("Opponent: " + Settings.DIFFICULTY_NAMES[Settings.difficulty], 400, 60)
+	var plates := HBoxContainer.new()
+	plates.add_theme_constant_override("separation", 24)
+	head.add_child(plates)
+	var pw := floorf((lib_w - 24.0) / 2.0)
+	var diff := UI.button("Opponent: " + Settings.DIFFICULTY_NAMES[Settings.difficulty], pw, 60)
 	diff.add_theme_font_size_override("font_size", 30)
 	diff.pressed.connect(func():
 		Settings.difficulty = (Settings.difficulty + 1) % Settings.DIFFICULTY_NAMES.size()
@@ -226,13 +241,13 @@ func _header() -> Control:
 		diff.text = "Opponent: " + Settings.DIFFICULTY_NAMES[Settings.difficulty]
 		diff.add_theme_font_size_override("font_size", 30)
 		UI.fit_text(diff))
-	head.add_child(diff)
+	plates.add_child(diff)
 	# Online: the selected deck against another player (OnlineOverlay searches, then the battle opens).
-	var online := UI.button("Play online", 360, 60)
+	var online := UI.button("Play online", lib_w - 24.0 - pw, 60)
 	online.name = "PlayOnline"
 	online.add_theme_font_size_override("font_size", 30)
 	online.pressed.connect(func(): _play_online(_find(_selected)))
-	head.add_child(online)
+	plates.add_child(online)
 	return head
 
 
@@ -709,18 +724,39 @@ func _library() -> Control:
 	p.add_child(v)
 	var top := HBoxContainer.new()
 	top.alignment = BoxContainer.ALIGNMENT_CENTER
-	top.add_theme_constant_override("separation", 12)
+	top.add_theme_constant_override("separation", int(TAB_GAP))
 	v.add_child(top)
-	# One filter per class after "All"; the plates narrow as classes are added so the row fits the panel, and once a
-	# name would no longer fit, the class plates show the class's emblem (its hero power icon) instead.
+	# One filter per class after "All". Each tab is as wide as its name needs, all at the largest letter size that lets
+	# the row fit the library's width, and the room left over is shared out, so the row spans the class plaques below
+	# edge to edge. The painted button plates while the names fit them at 20 px or more; with more classes, engraved
+	# plaques like the class plaques below (their thin frame leaves the letters far more room than the plates'
+	# scrollwork ends, which cut "Ferryman" and "Wrathful" off at 16 px); once even those no longer fit, the class
+	# tabs show the class's emblem (its hero power icon) instead of the name.
 	var filters := [["all", "All"]] # as in the collection; "All decks" set the whole row's letters smallest
 	for cls in CardDB.classes():
 		filters.append([cls, CardDB.class_title(cls)])
-	var fw := minf(210.0, (inner - 12.0 * (filters.size() - 1)) / filters.size())
-	var emblems := fw < 128.0
+	var tab_room := inner - TAB_GAP * (filters.size() - 1)
+	var fit := _tab_fit(filters, TAB_ENDS, 20, tab_room)
+	var plates := fit > 0
+	if not plates:
+		fit = _tab_fit(filters, TAB_PAD, TAB_PX[1], tab_room)
+	var emblems := fit == 0
+	var px: int = fit if fit > 0 else TAB_PX[1]
+	var ends := TAB_ENDS if plates else TAB_PAD
+	var need := 0.0
 	for f in filters:
-		var b := UI.button(f[1], fw, 56)
-		b.add_theme_font_size_override("font_size", 24)
+		need += _tab_w(str(f[1]), px, ends)
+	var fw := floorf(tab_room / filters.size())
+	var spare := floorf((tab_room - need) / filters.size())
+	var used := 0.0
+	for i in filters.size():
+		var f: Array = filters[i]
+		var w := fw if emblems else _tab_w(str(f[1]), px, ends) + spare
+		if i == filters.size() - 1:
+			w = tab_room - used # the last tab takes the rounding, so the row ends exactly at the library's edge
+		used += w
+		var b := UI.button(f[1], w, 56) if plates else _plaque_tab(f[1], w, px)
+		b.add_theme_font_size_override("font_size", px)
 		if emblems and f[0] != "all":
 			var icon := str(CardDB.class_info(f[0]).power_icon)
 			if UiSkin.has(icon):
@@ -734,7 +770,6 @@ func _library() -> Control:
 			_refill())
 		_tabs[f[0]] = b
 		top.add_child(b)
-	UI.even_text(_tabs.values().filter(func(b): return b.text != ""))
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER # wheel, drag and the bronze discs scroll it
@@ -1048,7 +1083,8 @@ func _tag(body: Control, face: Rect2, kind: String) -> void:
 		w.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		w.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		w.size = Vector2(t.size.x - (18.0 if kind == "custom" else 8.0), t.size.y)
-		w.position.y = 1.0 # the plate's field (left of the custom seal's wax drip, a px below the middle)
+		# The plate's field: inside its rivets (left of the custom seal's wax drip), a px below the middle.
+		w.position = Vector2(0.0 if kind == "custom" else 4.0, 1.0)
 		UI.center_ink(w) # the word's ink on the field's middle
 		w.use_parent_material = false
 		t.add_child(w)
@@ -1172,6 +1208,49 @@ func _mark_selected() -> void:
 
 
 # --- Helpers -----------------------------------------------------------------------------------------------------
+
+## The largest letter size from TAB_PX[0] down to `least` at which the tabs `filters` ([id, name]), each its name's
+## width plus `ends`, fit `room` px; 0 when none does.
+func _tab_fit(filters: Array, ends: float, least: int, room: float) -> int:
+	for px in range(TAB_PX[0], least - 1, -1):
+		var need := 0.0
+		for f in filters:
+			need += _tab_w(str(f[1]), px, ends)
+		if need <= room:
+			return px
+	return 0
+
+
+## A tab's width for `text` at `px` with `ends` px of frame: never under 120 px for the painted plates (UI.button
+## draws a narrower one as a plain box).
+func _tab_w(text: String, px: int, ends: float) -> float:
+	var w := ceilf(UI.font("title").get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x) + ends
+	return maxf(w, 120.0) if ends == TAB_ENDS else w
+
+
+## A filter tab as an engraved plaque (the class plaques' thin bronze frame on the painted iron field), `w` px wide:
+## gold letters, lit when hovered.
+func _plaque_tab(text: String, w: float, px: int) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(w, 56)
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_override("font", UI.font("title"))
+	b.add_theme_font_size_override("font_size", px)
+	b.add_theme_color_override("font_color", UI.GOLD)
+	for c in ["font_hover_color", "font_pressed_color", "font_hover_pressed_color"]:
+		b.add_theme_color_override(c, Color(1.0, 0.9, 0.6))
+	b.add_theme_constant_override("outline_size", 5)
+	b.add_theme_color_override("font_outline_color", SHADE)
+	for st in [["normal", Color.WHITE], ["hover", Color(1.35, 1.2, 0.95)], ["pressed", Color(1.2, 1.05, 0.85)]]:
+		b.add_theme_stylebox_override(st[0], UI.plaque_box(TAB_PAD / 2.0, 6, st[1]))
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	UI.add_field(b)
+	UI.center_ink(b) # the name's ink on the plaque's middle
+	b.mouse_entered.connect(func(): Sfx.play("ui_hover", -10.0))
+	b.pressed.connect(func(): Sfx.play("ui_confirm", -6.0))
+	return b
+
 
 ## A round button: the painted bronze disc with an engraved arrow (-1 = previous / up, 1 = next / down).
 func _arrow_button(dir: int) -> Button:
