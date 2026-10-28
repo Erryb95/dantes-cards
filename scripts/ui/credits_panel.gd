@@ -4,6 +4,9 @@ extends Control
 ## the charred banner, then one framed plate per section in a painted scroll, then Done. Keep it in step with
 ## assets/CREDITS.md when assets are added; the AI-generated art is always named as such.
 
+const BAR_W := 22 ## the painted scroll bar
+const BAR_ROOM := 30.0 ## the scroll bar and its gap, right of the sheets
+
 ## [heading, text] per section, in reading order.
 const SECTIONS := [
 	["Art", "The card, hero, arena and card-back paintings, the painted frames, plates and gems of the interface and the "
@@ -58,8 +61,8 @@ func _ready() -> void:
 	var panel := PanelContainer.new()
 	var s := UI.frame_box("panel_frame_filled", 96, 0,
 		UI.box(Color(0.09, 0.05, 0.04, 0.97), UI.GOLD, 3, 14, Color(0, 0, 0, 0.7), 30))
-	s.content_margin_left = 80
-	s.content_margin_right = 80
+	s.content_margin_left = 100 # clear of the painted frame's inner edge, like the options panel
+	s.content_margin_right = 100
 	s.content_margin_top = 56
 	s.content_margin_bottom = 64
 	panel.add_theme_stylebox_override("panel", s)
@@ -72,12 +75,26 @@ func _ready() -> void:
 	var w := minf(1000.0, vs.x - 280.0)
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.custom_minimum_size = Vector2(w + 30.0, minf(760.0, vs.y - 120.0 - 83.0 - 76.0 - 32.0 - 120.0))
-	UI.paint_scroll(scroll, 22)
-	v.add_child(scroll)
+	scroll.custom_minimum_size = Vector2(w + BAR_ROOM, minf(760.0, vs.y - 120.0 - 83.0 - 76.0 - 32.0 - 120.0))
+	UI.paint_scroll(scroll, BAR_W)
+	# The scroll bar's room mirrored on the left, so the parchment sheets, and not sheets plus bar, are centred under
+	# the banner and over Done.
+	var srow := HBoxContainer.new()
+	srow.add_theme_constant_override("separation", 0)
+	var pad := Control.new()
+	pad.custom_minimum_size.x = BAR_ROOM
+	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	srow.add_child(pad)
+	srow.add_child(scroll)
+	v.add_child(srow)
+	# The sheets w wide: the scroll fits its content to its width less the bar's, the rest of BAR_ROOM is the gap.
+	var gap := MarginContainer.new()
+	gap.add_theme_constant_override("margin_right", int(BAR_ROOM) - BAR_W)
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	scroll.add_child(gap)
 	var list := VBoxContainer.new()
 	list.add_theme_constant_override("separation", 10)
-	scroll.add_child(list)
+	gap.add_child(list)
 	for sec in SECTIONS:
 		list.add_child(_section(sec[0], sec[1], w))
 	var ver := UI.label("Dante's Inferno: The Card Game  ·  version %s" %

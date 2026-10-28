@@ -54,10 +54,10 @@ func _ready() -> void:
 	_panel = PanelContainer.new()
 	var s := UI.frame_box("panel_frame_filled", 96, 0, UI.box(Color(0.09, 0.05, 0.04, 0.97), UI.GOLD, 3, 14,
 		Color(0, 0, 0, 0.7), 30))
-	s.content_margin_left = 84
-	s.content_margin_right = 84
+	s.content_margin_left = 100 # clear of the painted frame's inner edge, like the options panel
+	s.content_margin_right = 100
 	s.content_margin_top = 52
-	s.content_margin_bottom = 58
+	s.content_margin_bottom = 80 # Save and Back clear of the frame's bottom moulding
 	_panel.add_theme_stylebox_override("panel", s)
 	_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_center.add_child(_panel)

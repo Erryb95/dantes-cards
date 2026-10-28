@@ -52,6 +52,7 @@ func _ready() -> void:
 	await _collection_sort()
 	await _drop_rates()
 	await _ink_centring()
+	await _menu_grid()
 	print("MENU SMOKE: %d failures" % fails)
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -827,5 +828,55 @@ func _check_ink(what: String, l: Label, want: Vector2) -> void:
 	var d := got - want
 	if int(lay["lines"]) > 1:
 		d.x = 0.0
+	if is_nan(want.x): # a left-aligned label: only its height is centred
+		d.x = 0.0
 	if absf(d.x) > INK_TOL or absf(d.y) > INK_TOL:
 		_fail("%s: its letters sit (%+.2f, %+.2f) px off their frame's centre" % [what, d.x, d.y])
+
+
+## The title screen and its Options on one grid: the menu plates evenly spaced (Virgil's medallion beside Play does not
+## widen its gap); in Options every row of both columns ROW_H tall and level with its neighbour across, every control
+## of a column on the same left and right edges, every label's letters centred on its row.
+func _menu_grid() -> void:
+	var m := _open(Game.MENU)
+	await _frames(3)
+	var plates: Array[Rect2] = []
+	for b in m.find_children("*", "Button", true, false):
+		if (b as Button).text in ["Play", "Collection", "Options", "Quit"] or (b as Button).text.begins_with("Open Packs"):
+			plates.append((b as Button).get_global_rect())
+	plates.sort_custom(func(a: Rect2, b: Rect2): return a.position.y < b.position.y)
+	for i in range(1, plates.size() - 1):
+		var g0 := plates[i].position.y - plates[i - 1].end.y
+		var g1 := plates[i + 1].position.y - plates[i].end.y
+		if absf(g0 - g1) > 0.5:
+			_fail("title screen plates unevenly spaced: %.1f px, then %.1f px" % [g0, g1])
+	var o := OptionsPanel.new()
+	m.add_child(o)
+	await _frames(3)
+	var cols: Array = [o.find_child("Left", true, false), o.find_child("Right", true, false)]
+	if cols.has(null):
+		_fail("the options panel has no Left / Right columns")
+		m.queue_free()
+		return
+	var tops: Array = [[], []]
+	for ci in 2:
+		var edges := Vector2(-1, -1)
+		for row in (cols[ci] as Control).get_children():
+			var r := (row as Control).get_global_rect()
+			tops[ci].append(r.position.y)
+			if absf(r.size.y - OptionsPanel.ROW_H) > 0.01:
+				_fail("options row %s is %.1f px tall, not %.0f" % [row.get_child(0).text, r.size.y, OptionsPanel.ROW_H])
+			var ctl := (row as Control).get_child(-1) as Control
+			var e := Vector2(ctl.get_global_rect().position.x, ctl.get_global_rect().end.x)
+			if edges.x < 0.0:
+				edges = e
+			elif e.distance_to(edges) > 0.01:
+				_fail("options control in row '%s' spans %s, the column's others %s" % [row.get_child(0).text, e, edges])
+			var l := (row as Control).get_child(0) as Label
+			if l.text != "":
+				_check_ink("options label " + l.text, l, Vector2(NAN, r.get_center().y))
+	for i in mini(tops[0].size(), tops[1].size()):
+		if absf(tops[0][i] - tops[1][i]) > 0.01:
+			_fail("options row %d is not level across the columns (%.1f, %.1f)" % [i, tops[0][i], tops[1][i]])
+	m.queue_free()
+	await _frames()

@@ -57,6 +57,18 @@ static func portrait(size: Vector2, named: bool = true) -> Control:
 	return c
 
 
+## How wide the painted part of a `portrait` is: its ring and its ribbon without their transparent edges (the glow
+## behind is not counted).
+static func painted_width(p: Control) -> float:
+	var w := p.size.x
+	for t in p.find_children("*", "TextureRect", true, false):
+		var tr := t as TextureRect
+		if tr.texture == null or tr.texture == UI.dot_texture() or tr.name == "Art":
+			continue
+		w = maxf(w, tr.size.x * UI.opaque_rect(tr.texture).size.x / tr.texture.get_size().x)
+	return w
+
+
 ## A question from Virgil: his portrait beside `title` and `text` on the big bronze-framed panel over a dim veil, then
 ## one plate per choice ([label, callable or null]). Built like UI.dialog (named "Dialog", the last choice is the one
 ## Esc / the Android back gesture picks), so Game.back and UI.cancel_dialog treat it the same way.
@@ -67,11 +79,14 @@ static func dialog(parent: Node, title: String, text: String, choices: Array) ->
 	var col := panel.get_child(0) as VBoxContainer
 	panel.remove_child(col)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 56)
 	panel.add_child(row)
+	# The holder is as wide as the portrait's painted part (the ring or the name ribbon, whichever reaches further),
+	# so the panel's margin is the same on its left (from the paint) as on its right (from the text and buttons).
+	var pic := portrait(Vector2(210, 268))
 	var holder := CenterContainer.new()
-	holder.custom_minimum_size = Vector2(250, 0)
-	holder.add_child(portrait(Vector2(210, 268)))
+	holder.custom_minimum_size = Vector2(maxf(210.0, painted_width(pic)), 0)
+	row.add_theme_constant_override("separation", int(56.0 - (holder.custom_minimum_size.x - 250.0) / 2.0))
+	holder.add_child(pic)
 	row.add_child(holder)
 	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(col)

@@ -3036,12 +3036,15 @@ func _open_pause() -> void:
 			_leave_lesson(Lessons.next_after(lesson.id))])
 		entries.append(["Leave Lesson", func(): _leave_lesson("")])
 	box.add_theme_constant_override("separation", 22 if entries.size() <= 4 else 14)
+	var plates: Array = [] # one letter size, so one plate height: a long label does not make its plate shorter
 	for entry in entries:
-		var b := UI.button(entry[0], 380, 84 if entries.size() <= 4 else 74)
+		var b := UI.button(entry[0], 420, 84 if entries.size() <= 4 else 80)
 		b.pressed.connect(entry[1])
 		var c := CenterContainer.new()
 		c.add_child(b)
 		box.add_child(c)
+		plates.append(b)
+	UI.even_text(plates)
 
 
 ## "Concede this match?" on the charred banner over the pause dim: Concede ends the match as a loss, Keep playing

@@ -1,6 +1,15 @@
 class_name OptionsPanel
 extends Control
 ## Modal options: volumes, fullscreen and V-Sync (desktop), frame limit, FPS counter, animation speed. Saves on close.
+## Laid out on one grid: two columns of rows ROW_H tall, ROW_GAP apart, each row a label LABEL_W wide (its letters
+## centred on the row's height) and a control CONTROL_W wide; the page plates (Watch intro, How to Play, Credits) sit in
+## the controls' column, so every plate and slider in a column shares the same left and right edges.
+
+const ROW_H := 92.0 ## every row, slider or plate (a plate with 34 px letters needs 91 px: its margins and the line)
+const ROW_GAP := 12
+const LABEL_W := 290.0
+const LABEL_GAP := 30
+const CONTROL_W := 400.0
 
 
 func _ready() -> void:
@@ -32,8 +41,8 @@ func _ready() -> void:
 	var cols := HBoxContainer.new()
 	cols.add_theme_constant_override("separation", 64)
 	v.add_child(cols)
-	var left := _column(cols)
-	var right := _column(cols)
+	var left := _column(cols, "Left")
+	var right := _column(cols, "Right")
 	left.add_child(_slider("Music", Settings.music_volume, func(x):
 		Settings.music_volume = x
 		Settings.apply()))
@@ -61,20 +70,18 @@ func _ready() -> void:
 	right.add_child(_toggle("Intro subtitles", Settings.subtitles, func(on): Settings.subtitles = on))
 	var plates: Array = [] # the three page plates share one letter size
 	if get_tree().current_scene and get_tree().current_scene.scene_file_path == Game.MENU:  # not mid-battle
-		var intro := UI.button("Watch intro", 400, 64)
+		var intro := UI.button("Watch intro", CONTROL_W, ROW_H)
 		intro.pressed.connect(func():
 			Settings.save()
 			Game.play_intro())
-		var ic := CenterContainer.new()
-		ic.add_child(intro)
-		right.add_child(ic)
 		plates.append(intro)
-	var how := HowToPlayPanel.open_button(self)
-	right.add_child(how)
-	plates.append(how)
-	var credits := CreditsPanel.open_button(self)
-	right.add_child(credits)
-	plates.append(credits)
+	plates.append(HowToPlayPanel.open_button(self))
+	plates.append(CreditsPanel.open_button(self))
+	for b in plates: # in the controls' column, under the switches, with no label of their own
+		var h := _row("")
+		_fit_control(b)
+		h.add_child(b)
+		right.add_child(h)
 	UI.even_text(plates)
 	var close := UI.button("Done", 300)
 	close.pressed.connect(_close)
@@ -83,9 +90,10 @@ func _ready() -> void:
 	v.add_child(cc)
 
 
-func _column(parent: Control) -> VBoxContainer:
+func _column(parent: Control, id: String) -> VBoxContainer:
 	var c := VBoxContainer.new()
-	c.add_theme_constant_override("separation", 12)
+	c.name = id
+	c.add_theme_constant_override("separation", ROW_GAP)
 	parent.add_child(c)
 	return c
 
@@ -95,14 +103,26 @@ func _close() -> void:
 	queue_free()
 
 
+## A grid row: the label (or the empty room of one), its letters centred on the row's height; the caller adds the
+## control (`_fit_control`).
 func _row(text: String) -> HBoxContainer:
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 30)
+	h.add_theme_constant_override("separation", LABEL_GAP)
+	h.custom_minimum_size.y = ROW_H
 	var l := UI.label(text, 32, "title", UI.BONE)
-	l.custom_minimum_size = Vector2(290, 64) # one row height, so a slider's label sits level with a plate's
+	l.custom_minimum_size = Vector2(LABEL_W, ROW_H)
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	if text != "":
+		UI.center_ink(l) # the letters on the row's middle, level with the plate's
 	h.add_child(l)
 	return h
+
+
+## A control in the controls' column: CONTROL_W by ROW_H, whatever size it was made at.
+func _fit_control(c: Control) -> void:
+	c.custom_minimum_size = Vector2(CONTROL_W, ROW_H)
+	c.size_flags_horizontal = Control.SIZE_FILL
+	c.size_flags_vertical = Control.SIZE_FILL
 
 
 func _slider(text: String, value: float, on_change: Callable) -> HBoxContainer:
@@ -112,7 +132,7 @@ func _slider(text: String, value: float, on_change: Callable) -> HBoxContainer:
 	s.max_value = 1.0
 	s.step = 0.05
 	s.value = value
-	s.custom_minimum_size = Vector2(340, 64)
+	_fit_control(s)
 	s.add_theme_stylebox_override("slider", UI.frame_box("slider_track", 14, 6, UI.box(Color(0.2, 0.1, 0.08), UI.GOLD_DARK, 2, 8)))
 	if UiSkin.has("slider_grabber"):
 		s.add_theme_icon_override("grabber", UI.scaled_tex("slider_grabber", 46))
@@ -130,7 +150,7 @@ func _slider(text: String, value: float, on_change: Callable) -> HBoxContainer:
 ## A plate button that steps through `names` on each click and reports the new index.
 func _cycle(text: String, names: Array, value: int, on_change: Callable) -> HBoxContainer:
 	var h := _row(text)
-	var b := UI.button(names[value], 340, 64)
+	var b := UI.button(names[value], CONTROL_W, ROW_H)
 	b.pressed.connect(func():
 		var i := (names.find(b.text) + 1) % names.size()
 		b.text = names[i]
@@ -144,7 +164,7 @@ func _cycle(text: String, names: Array, value: int, on_change: Callable) -> HBox
 ## An On / Off switch on a painted plate: lit when on, dimmed when off.
 func _toggle(text: String, value: bool, on_change: Callable) -> HBoxContainer:
 	var h := _row(text)
-	var b := UI.button("On" if value else "Off", 340, 64) # the same plate as the cycle buttons
+	var b := UI.button("On" if value else "Off", CONTROL_W, ROW_H) # the same plate as the cycle buttons
 	b.toggle_mode = true
 	b.button_pressed = value
 	b.add_theme_font_size_override("font_size", 34)
