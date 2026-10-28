@@ -95,6 +95,24 @@ func device_id() -> String:
 	return made
 
 
+## This install's id for its own win and loss counters in the account's save (ProgressMerge.record_section). Unlike
+## the device id it never changes on a sign-in or on Play as guest.
+func install_id() -> String:
+	var path := "user://online_install%s.txt" % _suffix()
+	if FileAccess.file_exists(path):
+		var f := FileAccess.open(path, FileAccess.READ)
+		if f != null:
+			var id := f.get_as_text().strip_edges()
+			if id.length() >= 10:
+				return id
+	var made := "in-" + Crypto.new().generate_random_bytes(8).hex_encode()
+	if not Game.debug_run():
+		var w := FileAccess.open(path, FileAccess.WRITE)
+		if w != null:
+			w.store_string(made)
+	return made
+
+
 static func _new_device_id() -> String:
 	return "dc-" + Crypto.new().generate_random_bytes(16).hex_encode()
 
@@ -153,6 +171,7 @@ func sign_in_with(provider: String, token_value: String) -> String:
 		if a.has("error"):
 			return str(a.error)
 		# Another account (the provider's own): its save and this install's are merged at the next sync step.
+		_account_gen += 1
 		_need_login_sync = true
 		_synced = ""
 		_sync_t = 0.5
@@ -183,6 +202,7 @@ func play_as_guest() -> void:
 	_save_device_id(_new_device_id())
 	client.close_socket()
 	client.token = ""
+	_account_gen += 1
 	_synced = ""
 	_sync_t = 0.5 # the new guest account gets this install's progress
 
@@ -235,6 +255,7 @@ func _connect_now() -> String:
 		if client.user_id != was:
 			# A sign-in (not the same account's renewal): merge with the account's save. A renewal needs no merge (a
 			# refused upload merges anyway), and a merge every 100 min could reorder the decks under the deck builder.
+			_account_gen += 1
 			_need_login_sync = true
 		await client.set_display_name(display_name(), avatar_url())
 	if not client.socket_open():
@@ -577,6 +598,7 @@ signal progress_applied ## the account's save replaced or completed this install
 const SAVE_COLLECTION := "dantes_save"
 const SAVE_KEY := "progress"
 const SYNC_EVERY := 10.0 ## seconds between checks for changes (so at most one write every 10 s)
+const PULL_EVERY := 30.0 ## seconds between reads of the account's save while the main menu is open
 const RETRY_OFFLINE := 60.0
 
 var sync_state := "" ## "", "syncing", "saved", "offline"
@@ -588,6 +610,11 @@ var _local_changed_ms := 0 ## when the local progress last changed (saved_at_ms 
 var _need_login_sync := false
 var _sync_t := 0.0
 var _syncing := false
+var _account_gen := 0 ## bumps on every switch of account: a sync step begun on the old one then leaves the flags alone
+var _pull_now := false
+var _pulled_ms := 0 ## ticks of the last read of the account's save
+var _rec_base := {} ## "record" / "online" -> ProgressMerge.record_base at the last merge with the account ({} before it)
+var _install := ""
 var _quitting := false
 var cloud_forced := false ## tests: sync even in a debug run (apply then writes no file)
 var last_applied := {} ## tests: the last blob apply() would have put into the game
@@ -624,6 +651,8 @@ func _load_sync_meta() -> void:
 	if cfg.load(_sync_meta_path()) == OK:
 		_local_changed_ms = int(cfg.get_value("sync", "local_changed_ms", 0))
 		_last_local = str(cfg.get_value("sync", "last_local", ""))
+		var rb: Variant = cfg.get_value("sync", "record_base", {})
+		_rec_base = rb if rb is Dictionary else {}
 
 
 func _save_sync_meta() -> void:
@@ -632,6 +661,7 @@ func _save_sync_meta() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("sync", "local_changed_ms", _local_changed_ms)
 	cfg.set_value("sync", "last_local", _last_local)
+	cfg.set_value("sync", "record_base", _rec_base)
 	cfg.save(_sync_meta_path())
 
 
@@ -645,15 +675,30 @@ func gather() -> Dictionary:
 		"collection": {"owned": Collection.owned.duplicate(), "obols": Collection.obols, "packs": Collection.packs,
 			"pity": Collection.packs_since_legendary, "opened": Collection.opened_total,
 			"decks": Collection.decks.duplicate(true), "deleted_decks": Collection.deck_tombs.duplicate()},
-		"record": {"wins": int(Game.stats.wins), "losses": int(Game.stats.losses),
-			"class_games": Game.class_games.duplicate()},
-		"online": record(),
+		"record": _section("record", {"wins": int(Game.stats.wins), "losses": int(Game.stats.losses),
+			"class_games": Game.class_games.duplicate()}),
+		"online": _section("online", record()),
 		"profile": {"name": Settings.player_name, "avatar": Settings.player_avatar},
 		"settings": {"lessons": Settings.lessons.duplicate(), "lessons_offered": Settings.lessons_offered,
 			"intro_seen": Settings.intro_seen, "coach_seen": Settings.coach_seen.duplicate(),
 			"difficulty": Settings.difficulty, "deck_choice": Settings.deck_choice.duplicate(true),
 			"fast_animations": Settings.fast_animations, "subtitles": Settings.subtitles}}
 	return ProgressMerge.blob(data, _local_changed_ms)
+
+
+func _section(sec: String, totals: Dictionary) -> Dictionary:
+	if _install == "":
+		_install = install_id()
+	return ProgressMerge.record_section(totals, _rec_base.get(sec, {}), _install)
+
+
+## After a merge with the account: this install counts its own games from what the merged save holds.
+func _adopt_record_base(merged: Dictionary) -> void:
+	if _install == "":
+		_install = install_id()
+	var d: Dictionary = merged.get("data", {})
+	_rec_base = {"record": ProgressMerge.record_base(d.get("record", {}), _install),
+		"online": ProgressMerge.record_base(d.get("online", {}), _install)}
 
 
 ## Puts a save blob's progress into the game and its files (a backup of each file is kept first: <file>.bak).
@@ -747,19 +792,58 @@ func cloud_sync() -> void:
 			_sync_t = RETRY_OFFLINE
 			_syncing = false
 			return
+	var gen := _account_gen
 	if _need_login_sync or _synced == "":
-		await _merge_with_account(local)
+		await _merge_with_account(local, gen)
 	elif now_canon != _synced:
-		await _push(local)
+		await _push(local, gen)
+	elif _pull_due():
+		await _pull(local, gen)
 	_syncing = false
+
+
+## Asks for a read of the account's save soon (the main menu opened, the app came back from the background), so
+## progress made on another device meanwhile shows here without restarting the game.
+func request_pull() -> void:
+	_pull_now = true
+	_sync_t = minf(_sync_t, 0.5)
+
+
+## A read is due when one was asked for or PULL_EVERY has passed, and only on the main menu, out of any duel: a merge
+## elsewhere could change the decks under the deck builder or the collection on screen.
+func _pull_due() -> bool:
+	if state != State.IDLE:
+		return false
+	var s := get_tree().current_scene
+	if s == null or s.scene_file_path != Game.MENU:
+		return false
+	return _pull_now or Time.get_ticks_msec() - _pulled_ms >= int(PULL_EVERY * 1000.0)
+
+
+## Reads the account's save; when another device wrote it since this install last did, merges it in.
+func _pull(local: Dictionary, gen: int) -> void:
+	_pull_now = false
+	_pulled_ms = Time.get_ticks_msec()
+	var got := await client.storage_read(SAVE_COLLECTION, SAVE_KEY)
+	if gen != _account_gen:
+		return
+	if got.has("error"):
+		_set_sync("offline")
+		return
+	if str(got.get("version", "*")) != _server_version:
+		await _merge_with_account(local, gen, got)
 
 
 ## After a sign-in: read the account's save, merge it with this install's, apply what changed here, write what changed
 ## there. A write refused because the save moved on meanwhile reads, merges and writes again (once).
-func _merge_with_account(local: Dictionary) -> void:
+func _merge_with_account(local: Dictionary, gen: int, read := {}) -> void:
 	_set_sync("syncing")
 	for attempt in 2:
-		var got := await client.storage_read(SAVE_COLLECTION, SAVE_KEY)
+		var got := read
+		if attempt > 0 or read.is_empty():
+			got = await client.storage_read(SAVE_COLLECTION, SAVE_KEY)
+		if gen != _account_gen: # the player switched accounts meanwhile: the next step merges with the new one
+			return
 		if got.has("error"):
 			_set_sync("offline")
 			return
@@ -769,6 +853,7 @@ func _merge_with_account(local: Dictionary) -> void:
 		_server_version = str(got.version) if got.has("version") else "*"
 		_server_blob = server
 		var merged := ProgressMerge.merge(local, server)
+		_adopt_record_base(merged)
 		if not ProgressMerge.same(merged, local):
 			apply(merged)
 			_last_local = ProgressMerge.canon(gather().data)
@@ -780,6 +865,8 @@ func _merge_with_account(local: Dictionary) -> void:
 			_set_sync("saved")
 			return
 		var w := await client.storage_write(SAVE_COLLECTION, SAVE_KEY, merged, _server_version)
+		if gen != _account_gen:
+			return
 		if not w.has("error"):
 			_server_version = str(w.version)
 			_server_blob = merged
@@ -796,15 +883,17 @@ func _merge_with_account(local: Dictionary) -> void:
 
 ## Uploads this install's progress (it changed since the last sync), keeping what the account holds that this build
 ## cannot show.
-func _push(local: Dictionary) -> void:
+func _push(local: Dictionary, gen: int) -> void:
 	_set_sync("syncing")
 	var out := ProgressMerge.keep_foreign(local, _server_blob,
 		func(id: String) -> bool: return not CardDB.card(id).is_empty(),
 		func(cls: String) -> bool: return cls in CardDB.classes())
 	var w := await client.storage_write(SAVE_COLLECTION, SAVE_KEY, out, _server_version)
+	if gen != _account_gen:
+		return
 	if w.has("error"):
 		if w.get("conflict", false):
-			await _merge_with_account(local)
+			await _merge_with_account(local, gen)
 		else:
 			_set_sync("offline")
 		return
@@ -822,6 +911,7 @@ func _notification(what: int) -> void:
 		_hb_t = 0.0
 		if state in [State.SEARCHING, State.IN_MATCH] and not _reconnecting:
 			check_alive()
+		request_pull() # another device may have played meanwhile
 		return
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and cloud_on() and not _quitting:
 		_quitting = true

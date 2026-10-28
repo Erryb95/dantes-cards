@@ -107,6 +107,7 @@ func _ready() -> void:
 		col.add_child(quit)
 	# The player's plaque in the top-right corner: avatar, name, record; it opens the profile.
 	_add_profile_plaque()
+	Online.request_pull() # progress made on another device since shows here (the plaque refreshes)
 
 	# The version engraved on a small plaque in the bottom-right corner (what made the art and the music is in the credits).
 	var credit := UI.plaque_label("v%s" % ProjectSettings.get_setting("application/config/version"), 20, "body",

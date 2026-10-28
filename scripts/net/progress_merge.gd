@@ -15,6 +15,12 @@ extends RefCounted
 ## are united, coach tips seen are united. A deleted (or renamed) deck leaves a tombstone (`collection.deleted_decks`,
 ## "cls|name" -> unix ms), and a deck is united only if it was saved (`saved_ms`) after its tombstone: deleted decks
 ## no longer come back from another device's save.
+##
+## Records (`record`, `online`) count per install, so the games of two devices add up: a section holds its totals (what
+## the menus show) plus `legacy` (the totals from before per-install counting, which can only be kept as the larger
+## of two) and `devices` (install id -> that install's own counters, which only it ever raises). Merging unites the
+## installs (the larger count of each) and the totals are legacy plus every install. A section without `devices` (a
+## save from 0.9.1 or older) is all legacy: what it holds beyond the other side's installs.
 
 const VERSION := 1
 
@@ -73,19 +79,9 @@ static func merge(local: Dictionary, server: Dictionary) -> Dictionary:
 	if not tombs.is_empty() or nc.has("deleted_decks") or oc.has("deleted_decks"): # (a save from 0.8.1 has none)
 		nc["deleted_decks"] = tombs
 	n["collection"] = nc
-	# Records only grow.
+	# Records: every install's games add up, none is lost.
 	for sec in ["record", "online"]:
-		var a: Dictionary = n.get(sec, {})
-		var b: Dictionary = o.get(sec, {})
-		for k in b:
-			if typeof(b[k]) in [TYPE_INT, TYPE_FLOAT]:
-				a[k] = maxi(int(a.get(k, 0)), int(b[k]))
-		if b.get("class_games") is Dictionary:
-			var cg: Dictionary = (a.get("class_games", {}) as Dictionary).duplicate()
-			for c in b.class_games:
-				cg[c] = maxi(int(cg.get(c, 0)), int(b.class_games[c]))
-			a["class_games"] = cg
-		n[sec] = a
+		n[sec] = merge_record(n.get(sec, {}), o.get(sec, {}))
 	# Lessons ("done" beats "skipped") and coach tips are united.
 	var ns: Dictionary = n.get("settings", {})
 	var old_s: Dictionary = o.get("settings", {})
@@ -216,3 +212,113 @@ static func same(a: Dictionary, b: Dictionary) -> bool:
 ## server has stored them).
 static func canon(v: Variant) -> String:
 	return JSON.stringify(JSON.parse_string(JSON.stringify(v)), "", true)
+
+
+# ---------------------------------------------------------------- records counted per install
+
+## A record section's totals: its counters (ints, and `class_games`) without `legacy` and `devices`.
+static func counters(sec: Variant) -> Dictionary:
+	var out := {}
+	if not (sec is Dictionary):
+		return out
+	for k in sec:
+		if k == "legacy" or k == "devices":
+			continue
+		if typeof(sec[k]) in [TYPE_INT, TYPE_FLOAT]:
+			out[str(k)] = maxi(0, int(sec[k]))
+		elif sec[k] is Dictionary:
+			var d := {}
+			for c in sec[k]:
+				if typeof(sec[k][c]) in [TYPE_INT, TYPE_FLOAT]:
+					d[str(c)] = maxi(0, int(sec[k][c]))
+			out[str(k)] = d
+	return out
+
+
+## Counters combined key by key (and one level down, for `class_games`): `op` is "add", "max" or "sub" (never below 0).
+static func combine(a: Dictionary, b: Dictionary, op: String) -> Dictionary:
+	var out := counters(a)
+	var cb := counters(b)
+	for k in cb:
+		var bv: Variant = cb[k]
+		if bv is Dictionary:
+			var d: Dictionary = out.get(k, {}) if out.get(k) is Dictionary else {}
+			for c in bv:
+				d[c] = _op(int(d.get(c, 0)), int(bv[c]), op)
+			out[k] = d
+		else:
+			out[k] = _op(int(out.get(k, 0)) if not (out.get(k) is Dictionary) else 0, int(bv), op)
+	return out
+
+
+static func _op(x: int, y: int, op: String) -> int:
+	match op:
+		"add":
+			return x + y
+		"sub":
+			return maxi(0, x - y)
+	return maxi(x, y)
+
+
+## Every install's counters added up.
+static func devices_sum(devices: Variant) -> Dictionary:
+	var out := {}
+	if devices is Dictionary:
+		for id in devices:
+			out = combine(out, devices[id] if devices[id] is Dictionary else {}, "add")
+	return out
+
+
+## A section from this install: its `totals` (what the game shows), with `base` ({legacy, devices}: what the account
+## held from before per-install counting and from the other installs, at the last merge). This install's own counters
+## are what the totals hold beyond the base. With no base yet (before the first merge with the account), the section
+## is the totals alone, which a merge reads as legacy.
+static func record_section(totals: Dictionary, base: Dictionary, me: String) -> Dictionary:
+	var out := counters(totals)
+	if base.is_empty():
+		return out
+	var legacy := counters(base.get("legacy", {}))
+	var devices := {}
+	for id in base.get("devices", {}):
+		if str(id) != me and base.devices[id] is Dictionary:
+			devices[str(id)] = counters(base.devices[id])
+	devices[me] = combine(out, combine(legacy, devices_sum(devices), "add"), "sub")
+	out["legacy"] = legacy
+	out["devices"] = devices
+	return out
+
+
+## What this install keeps after a merge to count its own games from: the section's legacy and the other installs.
+static func record_base(sec: Variant, me: String) -> Dictionary:
+	if not (sec is Dictionary) or not (sec.get("devices") is Dictionary):
+		return {"legacy": counters(sec), "devices": {}}
+	var devices := {}
+	for id in sec.devices:
+		if str(id) != me and sec.devices[id] is Dictionary:
+			devices[str(id)] = counters(sec.devices[id])
+	return {"legacy": counters(sec.get("legacy", {})), "devices": devices}
+
+
+## Two record sections merged: installs united (the larger count of each), legacy the larger, totals recomputed. A
+## section without installs (an older save) is legacy for what it holds beyond the other side's installs; two such
+## sections keep the larger count of each, as before.
+static func merge_record(a: Variant, b: Variant) -> Dictionary:
+	var sa: Dictionary = a if a is Dictionary else {}
+	var sb: Dictionary = b if b is Dictionary else {}
+	var da: Variant = sa.get("devices")
+	var db: Variant = sb.get("devices")
+	if not (da is Dictionary) and not (db is Dictionary):
+		return combine(sa, sb, "max")
+	var devices := {}
+	for src in [da, db]:
+		if src is Dictionary:
+			for id in src:
+				if src[id] is Dictionary:
+					devices[str(id)] = combine(devices.get(str(id), {}), src[id], "max")
+	var la := counters(sa.get("legacy", {})) if da is Dictionary else combine(sa, devices_sum(db), "sub")
+	var lb := counters(sb.get("legacy", {})) if db is Dictionary else combine(sb, devices_sum(da), "sub")
+	var legacy := combine(la, lb, "max")
+	var out := combine(legacy, devices_sum(devices), "add")
+	out["legacy"] = legacy
+	out["devices"] = devices
+	return out

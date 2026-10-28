@@ -2555,6 +2555,31 @@ func _test_progress_merge() -> void:
 	ok(int(m.data.record.wins) == 4 and int(m.data.record.losses) == 5 and int(m.data.record.class_games.pilgrim) == 6
 		and int(m.data.record.class_games.ferry) == 7, "save: the AI record only grows")
 	ok(int(m.data.online.wins) == 1 and int(m.data.online.losses) == 3, "save: the online record only grows")
+	# Records per install: the games of two devices add up.
+	var legacy := {"wins": 5, "losses": 1, "class_games": {"pilgrim": 6}}
+	var base_pc := ProgressMerge.record_base(legacy, "pc")
+	var base_ph := ProgressMerge.record_base(legacy, "phone")
+	var sec_pc := ProgressMerge.record_section({"wins": 7, "losses": 1, "class_games": {"pilgrim": 8}}, base_pc, "pc")
+	ok(int(sec_pc.devices.pc.wins) == 2 and int(sec_pc.devices.pc.class_games.pilgrim) == 2,
+		"record: an install's own games are its totals beyond the base")
+	var sec_ph := ProgressMerge.record_section({"wins": 8, "losses": 2, "class_games": {"pilgrim": 6, "ferry": 4}},
+		base_ph, "phone")
+	var mr := ProgressMerge.merge_record(sec_pc, sec_ph)
+	ok(int(mr.wins) == 10 and int(mr.losses) == 2 and int(mr.class_games.pilgrim) == 8 and int(mr.class_games.ferry) == 4,
+		"record: two devices' wins and losses add up")
+	ok(ProgressMerge.merge_record(mr, sec_pc) == mr and ProgressMerge.merge_record(sec_ph, mr) == mr,
+		"record: merging again counts nothing twice")
+	var base2 := ProgressMerge.record_base(mr, "pc")
+	var again := ProgressMerge.record_section({"wins": 11, "losses": 2, "class_games": {"pilgrim": 9, "ferry": 4}},
+		base2, "pc")
+	ok(int(again.devices.pc.wins) == 3 and int(ProgressMerge.merge_record(again, mr).wins) == 11,
+		"record: after a merge an install keeps counting its own games")
+	var old_side := {"wins": 7, "losses": 1, "class_games": {"pilgrim": 8}} # an older build that saw the PC's games
+	ok(int(ProgressMerge.merge_record(sec_pc, old_side).wins) == 7, "record: an older save is not counted twice")
+	ok(ProgressMerge.record_section({"wins": 3}, {}, "pc") == {"wins": 3}, "record: no base yet, totals alone")
+	var bl := ProgressMerge.blob({"collection": {"owned": {"a": 1}, "opened": 1}, "record": sec_pc}, 5)
+	var br := ProgressMerge.blob({"collection": {"owned": {"b": 1}, "opened": 1}, "record": sec_ph}, 6)
+	ok(int(ProgressMerge.merge(bl, br).data.record.wins) == 10, "save: records add up through the whole merge")
 	ok(m.data.settings.lessons == {"l1": "done", "l2": "done", "l3": "skipped"}, "save: lessons are united, done wins")
 	ok(m.data.settings.coach_seen.size() == 2, "save: coach tips seen are united")
 	ok(str(m.data.profile.avatar) == "charon" and int(m.saved_at_ms) == 9000, "save: the newer profile and time")
