@@ -119,19 +119,26 @@ func _tile(l: Dictionary, i: int) -> Button:
 	var x := 18.0 + icon_px + 22.0
 	var right_w := 250.0
 	var text_w := TILE.x - x - right_w - 30.0
+	var learn := UI.label(str(l.learn), 24, "body", UI.BONE, 3, Color(0.04, 0.01, 0.01))
+	learn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	learn.max_lines_visible = 2
+	# Its lines evened out (no lone word under a full line), and the whole column (number, title, what it teaches)
+	# centred on the plaque's height: a one-line lesson does not hang from the top.
+	var learn_w := UI.balanced_width(learn.get_theme_font("font"), 24, learn.text, text_w)
+	var lines := mini(2, int(UI.text_layout(learn.get_theme_font("font"), 24, learn.text, learn_w)["lines"]))
+	# (A wrapped line advances about 4 px more than get_line_height, and the plaque's painted field sits 2 px high:
+	# measured on the drawn ink.)
+	var y0 := roundf((TILE.y - (76.0 + lines * (learn.get_line_height() + 4.0))) / 2.0) - 2.0
 	var num := UI.label("LESSON %d" % (i + 1), 22, "title", Color(0.85, 0.7, 0.45), 3, Color.BLACK)
-	num.position = Vector2(x, 12)
+	num.position = Vector2(x, y0)
 	b.add_child(num)
 	var title := UI.label(str(l.title), 38, "title", UI.GOLD, 5, Color(0.08, 0.02, 0.0))
-	title.position = Vector2(x, 34)
+	title.position = Vector2(x, y0 + 22)
 	title.size = Vector2(text_w, 50)
 	UI.fit_label(title, text_w, 24)
 	b.add_child(title)
-	var learn := UI.label(str(l.learn), 24, "body", UI.BONE, 3, Color(0.04, 0.01, 0.01))
-	learn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	learn.position = Vector2(x, 88)
-	learn.size = Vector2(text_w, 60)
-	learn.max_lines_visible = 2
+	learn.position = Vector2(x, y0 + 76)
+	learn.size = Vector2(learn_w, 60)
 	b.add_child(learn)
 	# The right-hand column: the reward still to win, or "Completed"; the recommended lesson wears a ribbon.
 	var right := VBoxContainer.new()

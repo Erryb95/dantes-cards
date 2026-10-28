@@ -77,8 +77,22 @@ func _ready() -> void:
 	if not first in heroes and not heroes.is_empty():
 		first = heroes[0]
 	choose(first, false)
+	_even_taglines.call_deferred()
 	root.modulate.a = 0.0
 	create_tween().tween_property(root, "modulate:a", 1.0, 0.5)
+
+
+## Every plaque's tagline as tall as the tallest one, once they are laid out (a wrapped label only knows its height
+## at its final width): the hero powers under them then sit on one line across the row.
+func _even_taglines() -> void:
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	var h := 0.0
+	for b in _cards.values():
+		h = maxf(h, (b.find_child("Tagline", true, false) as Label).size.y)
+	for b in _cards.values():
+		(b.find_child("Tagline", true, false) as Label).custom_minimum_size.y = h
 
 
 ## Esc / the back gesture (Game.back): to the lessons screen.
@@ -100,7 +114,8 @@ func _virgil_line() -> Control:
 	var l := say.get_node("Text") as Label
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	l.custom_minimum_size = Vector2(980, 0)
+	# Its two lines evened out (no "own starter deck." left alone under a full line); the parchment hugs them.
+	l.custom_minimum_size = Vector2(UI.balanced_width(l.get_theme_font("font"), 27, l.text, 980.0), 0)
 	row.add_child(say)
 	return row
 
@@ -152,6 +167,10 @@ func _card(hero: String, w: float) -> Button:
 	var tag := ClassInfoPanel.text(str(info.tagline), 21, "italic", Color(0.95, 0.82, 0.55), room)
 	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tag.max_lines_visible = 2
+	# A short tagline is centred in the height of the tallest one (_even_taglines), so the hero powers line up.
+	tag.name = "Tagline"
+	tag.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	UI.balance_lines(tag, room)
 	v.add_child(tag)
 	var hp: Dictionary = info.power
 	var power := HBoxContainer.new()
@@ -166,6 +185,7 @@ func _card(hero: String, w: float) -> Button:
 	var pt := ClassInfoPanel.text(str(hp.get("text", "")), 18, "body", UI.BONE, room)
 	pt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pt.max_lines_visible = 3
+	UI.balance_lines(pt, room)
 	v.add_child(pt)
 	var decks := CardDB.class_decks(cls)
 	if not decks.is_empty():

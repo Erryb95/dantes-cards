@@ -1098,7 +1098,8 @@ func _mulligan_wait() -> void:
 	# The instructions inked on a parchment sheet under the title.
 	var sub_row := CenterContainer.new()
 	sub_row.size = Vector2(V.x, 64)
-	sub_row.position = Vector2(0, V.y * 0.12 + 84)
+	# Clear of the banner's painted ribbon, which overhangs its 80 px layout box by 14 px below.
+	sub_row.position = Vector2(0, V.y * 0.12 + 102)
 	sub_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# "Click" with a mouse, "Tap" on a touch screen.
 	var how := "   %s the cards you want to replace." % UI.tap_word()
@@ -1912,7 +1913,9 @@ func _show_lesson_result(winner: int) -> void:
 	var line := str(lesson.get("outro", "")) if won else "Even the bravest stumble here. Try again: I will be at your side."
 	var sub := UI.label(line, 32, "italic", UI.INK, 0)
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	sub.custom_minimum_size = Vector2(minf(820.0, V.x - 700.0), 0)
+	# Centred over the reward under it, its lines evened out; the parchment hugs the words.
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.custom_minimum_size = Vector2(UI.balanced_width(sub.get_theme_font("font"), 32, line, minf(820.0, V.x - 700.0)), 0)
 	pv.add_child(sub)
 	if not paid.is_empty():
 		pv.add_child(LessonsScreen.reward_badge(paid, "Reward:  ", true))
@@ -1987,14 +1990,18 @@ func _legendary_cutin(id: String) -> void:
 	root.add_child(band)
 	root.move_child(band, 0)
 	var parts := str(card.get("name", "")).split(",")
-	# The name on the charred banner, the epithet on the red ribbon under it.
+	# The card and its titles as one group centred on the screen: the card left of the middle, the name and the
+	# epithet centred on one column right of it (both on the same axis, whatever their widths).
+	var card_x := V.x / 2 - 340.0 * ky
+	var col_x := V.x / 2 + 220.0 * ky
+	# The name on the charred banner, drifting slowly across the column's axis.
 	var name_l := UI.banner(parts[0].strip_edges().to_upper(), 76, UI.RARITY.legendary)
-	name_l.position = Vector2(V.x * 0.4 - 60, V.y / 2 - 30 - name_l.size.y)
+	name_l.position = Vector2(col_x - name_l.size.x / 2 - 20, V.y / 2 - 30 - name_l.size.y)
 	name_l.modulate.a = 0.0
 	root.add_child(name_l)
 	# The epithet on the red ribbon under the name.
 	var epithet := UI.ribbon(parts[1].strip_edges() if parts.size() > 1 else "Legendary", 640, 38)
-	epithet.position = Vector2(V.x * 0.4 - 50, V.y / 2 + 22)
+	epithet.position = Vector2(col_x - epithet.size.x / 2, V.y / 2 + 22)
 	epithet.modulate.a = 0.0
 	root.add_child(epithet)
 	var cv := CardView.new().setup(id, -1, true)
@@ -2010,12 +2017,12 @@ func _legendary_cutin(id: String) -> void:
 	t.tween_property(bars[0], "position:y", 0.0, 0.25 / sp).set_ease(Tween.EASE_OUT)
 	t.tween_property(bars[1], "position:y", V.y - bar_h, 0.25 / sp).set_ease(Tween.EASE_OUT)
 	t.tween_property(band, "color:a", 0.75, 0.3 / sp)
-	t.tween_property(cv, "position", Vector2(V.x * 0.25, V.y / 2), 0.45 / sp).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(cv, "position", Vector2(card_x, V.y / 2), 0.45 / sp).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	t.tween_property(cv, "rotation", -0.06, 0.45 / sp).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	t.tween_property(name_l, "modulate:a", 1.0, 0.3 / sp).set_delay(0.2 / sp)
-	t.tween_property(name_l, "position:x", V.x * 0.4 - 20, 1.4 / sp).set_delay(0.2 / sp)
+	t.tween_property(name_l, "position:x", col_x - name_l.size.x / 2 + 20, 1.4 / sp).set_delay(0.2 / sp)
 	t.tween_property(epithet, "modulate:a", 1.0, 0.3 / sp).set_delay(0.35 / sp)
-	Fx.burst(fx_layer, Vector2(V.x * 0.25, V.y / 2), UI.GOLD, 50, 600.0, 1.0, 12.0, 100.0)
+	Fx.burst(fx_layer, Vector2(card_x, V.y / 2), UI.GOLD, 50, 600.0, 1.0, 12.0, 100.0)
 	await get_tree().create_timer(1.3 / sp).timeout
 	var out := root.create_tween().set_parallel(true)
 	out.tween_property(cv, "position:x", V.x + 300, 0.3 / sp).set_ease(Tween.EASE_IN)
@@ -2960,7 +2967,8 @@ func _tick_hand_tips() -> void:
 
 func _show_hero_tip(h: HeroView) -> void:
 	var def := CardDB.hero(h.hero_id)
-	_add_tip(def.get("name", ""), "Hero power: %s (%d mana). %s" % [def.power.name, def.power.cost, def.power.text])
+	# A no-break space keeps "(2 mana)" on one line.
+	_add_tip(def.get("name", ""), "Hero power: %s (%d\u00a0mana). %s" % [def.power.name, def.power.cost, def.power.text])
 	# Right of the hero power disc (which sits right of the portrait), so the tip never hides it.
 	# Kept on screen and clear of the mana trays in the top and bottom corners.
 	_tips.position = Vector2(minf(h.position.x + 260, V.x - 430.0), clampf(h.position.y - 60, 110.0, V.y - 330.0))

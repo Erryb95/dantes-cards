@@ -188,6 +188,31 @@ static func even_text(buttons: Array) -> void:
 		(b as Button).add_theme_font_size_override("font_size", px)
 
 
+## The narrowest wrap width (px) at which `text` still takes as many lines as at `width`: wrapping a label at it
+## evens its lines out, so no lone word is left on the last one ("...ending your" / "turn.").
+static func balanced_width(f: Font, px: int, text: String, width: float) -> float:
+	var lines: int = text_layout(f, px, text, width)["lines"]
+	if lines <= 1:
+		return width
+	var lo := width / lines
+	var hi := width
+	for i in 10:
+		var mid := (lo + hi) / 2.0
+		if int(text_layout(f, px, text, mid)["lines"]) > lines:
+			lo = mid
+		else:
+			hi = mid
+	return minf(width, ceilf(hi) + 2.0)
+
+
+## Wraps the autowrapping Label `l` at its balanced width inside `width` px (see balanced_width): its minimum width
+## becomes that and it is centred in its container cell.
+static func balance_lines(l: Label, width: float) -> void:
+	l.custom_minimum_size.x = balanced_width(l.get_theme_font("font"), l.get_theme_font_size("font_size"),
+		l.text.to_upper() if l.uppercase else l.text, width)
+	l.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+
+
 static func _press_depth(b: Button, s: float) -> void:
 	if b.disabled and s > 1.0:
 		return

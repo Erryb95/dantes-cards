@@ -35,7 +35,7 @@
    "after": "easy",
    "outro": "The ferryman yields, and the boat is ours. On to the next crossing.",
    "steps": [
-    {"say": "Welcome, pilgrim. I am Virgil, and I will be your guide. That is Charon, the ferryman. Bring his Health, the number on the red drop, down to 0 and you win.",
+    {"say": "Welcome, pilgrim. I am Virgil, and I will be your guide. That is Charon, the ferryman. Bring his Health, the number on the red drop, down to zero and you win.",
      "point": "foe_hero", "wait": "tap"},
     {"say": "This is your mana. You gain one more crystal every turn, up to ten, and they all refill when your turn begins.",
      "point": "mana", "wait": "tap"},
