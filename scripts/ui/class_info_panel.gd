@@ -73,9 +73,9 @@ static func power_disc(info: Dictionary, px: float) -> Control:
 	var cost := UI.raised(UI.label(str(int(info.get("power", {}).get("cost", 2))), fs, "title", UI.NUMBER, 4,
 		Color(0, 0.02, 0.08)))
 	cost.size = gem.size
-	cost.position = Vector2(0, 0.0625 * fs)
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	UI.center_ink(cost) # the number's ink on the gem's middle
 	gem.add_child(cost)
 	c.add_child(gem)
 	return c

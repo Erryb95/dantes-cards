@@ -27,6 +27,8 @@ const LessonDriver := preload("res://tests/lesson_driver.gd")
 ## - the title screen's showcase rotates through the epic and legendary cards: a rotation tick (instant and animated, both
 ##   transitions) puts new ids in, always epic or legendary, unique, always three, never a card the pointer is on,
 ##   at least one legendary on show, and no card comes round again before the whole pool has been shown.
+## - optical centring: card names, stat numbers, banner headings, ribbons, plaques, notes and plate buttons have their
+##   letters' ink on their frame's centre, and the painted card names are gone.
 
 var fails := 0
 
@@ -49,7 +51,7 @@ func _ready() -> void:
 	await _lesson_battle()
 	await _collection_sort()
 	await _drop_rates()
-	await _painted_names()
+	await _ink_centring()
 	print("MENU SMOKE: %d failures" % fails)
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -571,73 +573,6 @@ func _lesson_battle() -> void:
 	Game.lesson = ""
 
 
-## Painted card names: a card with one shows it when it is big enough to read and falls back to the gilded label when
-## not (a long name at hand size), a card without one has only the label, and the painting is brightened.
-func _painted_names() -> void:
-	var painted: Array[String] = []
-	var dir := DirAccess.open("res://assets/cards/names")
-	for f in dir.get_files() if dir != null else PackedStringArray():
-		if f.ends_with(".png"):
-			painted.append(f.get_basename())
-	if painted.is_empty():
-		return
-	# The legibility rule reads the card's size on screen: a headless window is 64 px wide, so give it the design size.
-	var win := get_window()
-	var keep_size := win.size
-	win.size = Vector2i(1920, 1080)
-	await _frames(2)
-	for id in painted:
-		var big := CardView.new().setup(id, -1, true)
-		big.scale = Vector2.ONE * 1.9
-		add_child(big)
-		var tiny := CardView.new().setup(id, -1, true)
-		tiny.scale = Vector2.ONE * 0.2
-		add_child(tiny)
-		await _frames(3)
-		if big._name_painted == null or not big._name_shows_painted:
-			_fail("%s zoomed shows no painted name" % id)
-		elif float(big._name_painted.material.get_shader_parameter("name_gain")) <= 1.0:
-			_fail("the painted name of %s is not brightened" % id)
-		if tiny._name_shows_painted and tiny._name_painted_cap * 0.2 < CardView.NAME_MIN_CAP 				and tiny._name_painted_cap < tiny._name_label_cap:
-			_fail("%s at 0.2 scale keeps a painted name too small to read" % id)
-		# Growing a card switches it to the painted name, shrinking it back to the label, with no stale half-fade.
-		tiny.scale = Vector2.ONE * 1.9
-		await _frames(2)
-		await get_tree().create_timer(0.3).timeout
-		if not tiny._name_shows_painted or tiny._name_painted.modulate.a < 0.99 or tiny._name_label.modulate.a > 0.01:
-			_fail("%s did not switch to its painted name when enlarged" % id)
-		big.queue_free()
-		tiny.queue_free()
-	# A long name at hand size reads better as the gilded label; a card with no painted name never has a painting.
-	var long_id := ""
-	for id in painted:
-		var w: float = CardDB.name_tex(id).get_width()
-		if w > 1500.0:
-			long_id = id
-	if long_id != "":
-		var hand := CardView.new().setup(long_id, -1, true)
-		hand.scale = Vector2.ONE * 0.62
-		add_child(hand)
-		await _frames(3)
-		if hand._name_shows_painted or hand._name_label.modulate.a < 0.99:
-			_fail("%s at hand size keeps its too-small painted name" % long_id)
-		hand.queue_free()
-	var plain := ""
-	for c in CardDB.all_cards():
-		if CardDB.name_tex(str(c.id)) == null:
-			plain = str(c.id)
-			break
-	if plain != "":
-		var v := CardView.new().setup(plain, -1, true)
-		add_child(v)
-		await _frames(2)
-		if v._name_painted != null or v._name_label == null or v._name_label.modulate.a < 0.99:
-			_fail("%s has no painted name but is not drawn with the gilded label" % plain)
-		v.queue_free()
-	win.size = keep_size
-	await _frames()
-
-
 func _collection_sort() -> void:
 	Settings.collection_sort = "cost"
 	var s := _open(Game.COLLECTION)
@@ -773,3 +708,124 @@ func _play_lesson(id: String, hero := "") -> void:
 		_fail("lesson %s ended without its result" % id)
 	b.queue_free()
 	await _frames()
+
+
+## Optical centring (UI.center_ink), checked headless from the glyph outlines and the Labels' own layout
+## (get_character_bounds: where Godot really sets the line): the ink of card names, stat numbers, banner headings,
+## ribbons, plaques and notes is centred on its frame within INK_TOL px; a plate button keeps its size; painted words
+## are centred by their opaque part; the cards have no painted names left. tests/ink_centering.tscn measures the
+## same on drawn pixels.
+const INK_TOL := 0.75
+
+
+func _ink_centring() -> void:
+	var db_funcs: Array = (load("res://scripts/core/card_db.gd") as Script).get_script_method_list().map(func(m): return m.name)
+	if "name_tex" in db_funcs or DirAccess.dir_exists_absolute("res://assets/cards/names"):
+		_fail("painted card names are back (CardDB.name_tex / assets/cards/names)")
+	var holder := Control.new()
+	add_child(holder)
+	# Card names on the ribbon's band, stat numbers on the gems' visual centres, also after the values change.
+	for id in ["minos", "francesca", "pj_beatrice", "lost_pilgrim", "harpy"]:
+		var c := CardView.new().setup(id, -1, true)
+		c.position = Vector2(400, 300)
+		holder.add_child(c)
+		await _frames(2)
+		var face := c.position - Vector2(CardView.W, CardView.H) / 2.0
+		var name_l: Label = c.find_child("Name", true, false)
+		if name_l == null:
+			_fail("%s has no gilded name label" % id)
+			continue
+		if name_l.material == null or (name_l.material as ShaderMaterial).get_shader_parameter("gild") != true:
+			_fail("%s's name is not gilded" % id)
+		_check_ink("%s name" % id, name_l, face + Vector2(CardView.W / 2.0, 190.0 + 54.0 * (0.5 + UI.RIBBON_BAND)))
+		var is_spell: bool = CardDB.card(id).get("type", "minion") == "spell"
+		_check_ink("%s cost" % id, c._cost_label, face + Vector2(28, 28))
+		if not is_spell:
+			c.set_stats(10, 1, 30)
+			await _frames(1)
+			_check_ink("%s attack 10" % id, c._atk_label, face + Vector2(28, CardView.H - 28) + UI.GEM_CENTER.gem_attack * 74.0)
+			_check_ink("%s health 1" % id, c._hp_label, face + Vector2(CardView.W - 28, CardView.H - 30) + UI.GEM_CENTER.gem_health * 74.0)
+		c.queue_free()
+	# Banner headings (in the font) on the charred band, name ribbons on their band.
+	for t in ["Choose Your Hero", "Options", "DISCONNECTED"]:
+		var ban := UI.banner(t, 54, UI.GOLD, 0.0, 0.0, 1.8)
+		ban.position = Vector2(50, 50)
+		holder.add_child(ban)
+		await _frames(2)
+		var h := roundf(54 * 1.8)
+		var band := UI.BANNER_BAND * h if UiSkin.has("turn_banner") else 0.0
+		_check_ink("banner " + t, ban.get_node("Text"), ban.get_global_rect().get_center() + Vector2(0, band))
+		ban.queue_free()
+	for r in [["Start here", 230.0, 28], ["The Pilgrim's Way", 700.0, 40]]:
+		var rib := UI.ribbon(r[0], r[1], r[2])
+		holder.add_child(rib)
+		rib.position = Vector2(100, 100)
+		await _frames(2)
+		var h: float = float(r[1]) * 144.0 / 768.0
+		_check_ink("ribbon " + r[0], rib.get_node("Text"), rib.get_global_rect().get_center() + Vector2(0, UI.RIBBON_BAND * h))
+		rib.queue_free()
+	# Plaques and parchment notes: on the panel's middle, the panel no bigger than its text needs.
+	for p in [UI.plaque_label("Wrath", 30, "title", UI.EMBER), UI.parchment_label("Not enough mana", 30, "title", UI.INK_RED),
+			UI.parchment_label("Your opponent left.\nYou win the duel.", 30, "italic"), UI.plaque_label("v0.8.2", 20, "body")]:
+		holder.add_child(p)
+		p.position = Vector2(80, 80)
+		await _frames(2)
+		p.reset_size()
+		await _frames(1)
+		var l: Label = p.get_node("Text")
+		_check_ink("plate '%s'" % l.text.replace("\n", " / "), l, p.get_global_rect().get_center())
+		var sb: StyleBox = p.get_theme_stylebox("panel")
+		var base: Array = sb.get_meta("_ink_base", [])
+		if base.size() == 4 and absf(sb.get_margin(SIDE_TOP) + sb.get_margin(SIDE_BOTTOM) - base[0] - base[1]) > 0.01:
+			_fail("plate '%s' changed its height to centre its text" % l.text)
+		p.queue_free()
+	# A plate button: its letters moved by trading its margins, so it keeps its size; refitted text re-centres.
+	var b := UI.button("Sign in with Google", 300, 84)
+	holder.add_child(b)
+	await _frames(2)
+	for st in ["normal", "hover", "pressed", "disabled"]:
+		var sb := b.get_theme_stylebox(st)
+		var base: Array = sb.get_meta("_ink_base", [])
+		if base.size() != 4 or absf(sb.get_margin(SIDE_TOP) + sb.get_margin(SIDE_BOTTOM) - base[0] - base[1]) > 0.01:
+			_fail("button %s margins do not keep their sum" % st)
+	var want := UI.ink_offset(b)
+	var nb := b.get_theme_stylebox("normal")
+	var nbase: Array = nb.get_meta("_ink_base")
+	var moved: float = (nb.get_margin(SIDE_TOP) - nb.get_margin(SIDE_BOTTOM) - (float(nbase[0]) - float(nbase[1]))) / 2.0
+	if absf(moved + want.y) > 0.01:
+		_fail("button text moved %.2f px, its ink needs %.2f" % [moved, -want.y])
+	b.queue_free()
+	# Painted words: their opaque part on the given centre.
+	var word := UI.word_tex("YOUR TURN")
+	if word != null:
+		var wr := UI.word_rect(word, Vector2(700, 72))
+		UI.place_word(wr, Vector2(500, 300))
+		var o := UI.opaque_rect(word)
+		var k := wr.size / word.get_size()
+		var ctr := wr.position + (o.position + o.size / 2.0) * k
+		if ctr.distance_to(Vector2(500, 300)) > 0.01:
+			_fail("painted words centred at %s, not on (500, 300)" % ctr)
+		wr.free()
+	holder.queue_free()
+	await _frames()
+
+
+## `l`'s ink centre, from where Godot sets its first line (its character bounds) and the glyph outlines, against
+## `want` (global px).
+func _check_ink(what: String, l: Label, want: Vector2) -> void:
+	var f := l.get_theme_font("font")
+	var lay := UI.text_layout(f, l.get_theme_font_size("font_size"), l.text, -1.0, l.get_theme_constant("line_spacing"),
+		l.get_theme_constant("paragraph_spacing"))
+	var ink: Rect2 = lay["ink"]
+	var block: Vector2 = lay["block"]
+	var first := l.get_character_bounds(0)
+	# ink_rect is relative to the block's centre, its first line starting at x = -(that line's width) / 2: with one line
+	# the block's width; a block of lines is checked up and down only.
+	var line_w := f.get_string_size(l.text.split("\n")[0], HORIZONTAL_ALIGNMENT_LEFT, -1, l.get_theme_font_size("font_size")).x
+	var local := first.position + Vector2(line_w / 2.0, block.y / 2.0) + ink.get_center()
+	var got := l.get_global_transform() * local
+	var d := got - want
+	if int(lay["lines"]) > 1:
+		d.x = 0.0
+	if absf(d.x) > INK_TOL or absf(d.y) > INK_TOL:
+		_fail("%s: its letters sit (%+.2f, %+.2f) px off their frame's centre" % [what, d.x, d.y])

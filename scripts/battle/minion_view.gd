@@ -137,11 +137,11 @@ func _build() -> void:
 	var atk: Node2D = UiSkin.sprite("gem_attack", Vector2(64, 64)) if painted else 		Shapes.make(Shapes.Kind.SWORD, Vector2(50, 58), Color(0.85, 0.62, 0.2), Color(0.35, 0.2, 0.05), 3.0)
 	atk.position = Vector2(-W / 2 + 12, H / 2 - 22)
 	add_child(atk)
-	_atk_l = _stat(atk.position + UI.gem_number_offset("gem_attack", 64, 30))
+	_atk_l = _stat(atk.position + UI.gem_number_offset("gem_attack", 64))
 	var hp: Node2D = UiSkin.sprite("gem_health", Vector2(62, 62)) if painted else 		Shapes.make(Shapes.Kind.DROP, Vector2(48, 58), Color(0.75, 0.08, 0.06), Color(0.3, 0.02, 0.02), 3.0)
 	hp.position = Vector2(W / 2 - 12, H / 2 - 24)
 	add_child(hp)
-	_hp_l = _stat(hp.position + UI.gem_number_offset("gem_health", 62, 30))
+	_hp_l = _stat(hp.position + UI.gem_number_offset("gem_health", 62))
 
 	# Asleep (can't attack yet): the painted smoke z's, or the letters without the painting.
 	if UiSkin.has("icon_sleep"):
@@ -155,11 +155,7 @@ func _build() -> void:
 
 
 func _stat(center: Vector2) -> Label:
-	var l := UI.raised(UI.label("0", 30, "title", UI.NUMBER, 8, Color(0.05, 0.02, 0.02)))
-	l.size = Vector2(70, 50)
-	l.position = center - l.size / 2
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var l := UI.stat_number("0", 30, center, Vector2(70, 52))
 	l.use_parent_material = true
 	add_child(l)
 	return l
@@ -231,6 +227,8 @@ func _tint() -> void:
 func _refresh() -> void:
 	_atk_l.text = str(attack)
 	_hp_l.text = str(health)
+	UI.center_ink(_atk_l)
+	UI.center_ink(_hp_l)
 	var atk_col := UI.HEAL if attack > base_attack else UI.NUMBER
 	if raging:
 		atk_col = Color(1.0, 0.55, 0.22) # the Wrath bonus burns in ember orange

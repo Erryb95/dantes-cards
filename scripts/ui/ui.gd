@@ -76,12 +76,25 @@ static func engraved(l: Label, ink: Color = Color(0.2, 0.08, 0.03)) -> Label:
 
 
 ## Where a stat number's label centre goes, relative to the centre of its painted gem `px` wide: on the gem's
-## visual centre (the shield's disc sits a little high, the drop's stone low), corrected for Cinzel's digits,
-## whose ink sits 0.0625 em above the centre of the line box.
+## visual centre (the shield's disc sits a little high, the drop's stone low). The numbers themselves are put on it
+## by `stat_number` (optical centring: their ink, not their line box).
 const GEM_CENTER := {"gem_attack": Vector2(0, -0.04), "gem_health": Vector2(0, 0.045), "gem_mana": Vector2.ZERO,
 	"gem_armor": Vector2(0, -0.03)}
-static func gem_number_offset(gem: String, px: float, font_size: int) -> Vector2:
-	return GEM_CENTER.get(gem, Vector2.ZERO) * px + Vector2(0, 0.0625 * font_size)
+static func gem_number_offset(gem: String, px: float) -> Vector2:
+	return GEM_CENTER.get(gem, Vector2.ZERO) * px
+
+
+## A stat number (cost, attack, health, armor) centred on `center`: a `box` big enough for any value with room to
+## spare (the optical centring trades its margins), the number's ink on the gem's visual centre whatever the value.
+static func stat_number(text: String, size: int, center: Vector2, box: Vector2, outline: int = 8,
+		outline_color: Color = Color(0.05, 0.02, 0.02)) -> Label:
+	var l := raised(label(text, size, "title", NUMBER, outline, outline_color))
+	l.size = box
+	l.position = center - box / 2.0
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	center_ink(l)
+	return l
 
 
 static func box(bg: Color, border: Color = Color.TRANSPARENT, border_w: int = 0, radius: int = 12,
@@ -138,6 +151,7 @@ static func button(text: String, width: float = 420.0, height: float = 84.0) -> 
 		b.add_theme_color_override("font_pressed_color", Color(0.12, 0.04, 0.02))
 		b.add_theme_color_override("font_disabled_color", Color(0.17, 0.13, 0.1, 0.9))
 	b.ready.connect(fit_text.bind(b))
+	center_ink(b) # the letters on the plate's middle, refitted text included
 	b.mouse_entered.connect(func(): Sfx.play("ui_hover", -10.0))
 	b.pressed.connect(func(): Sfx.play("ui_confirm", -6.0))
 	# Physical depth: the plate rises toward the pointer and sinks when pressed.
@@ -345,6 +359,7 @@ static func plaque_label(text: String, size: int, kind: String = "italic", color
 	if room > 0.0:
 		fit_label(l, room, maxi(14, size - 12))
 	p.add_child(l)
+	center_ink(l) # on the plaque's middle (its padding traded above and below)
 	return p
 
 
@@ -419,11 +434,20 @@ static func parchment_label(text: String, size: int, kind: String = "italic", co
 	if room > 0.0:
 		fit_label(l, room, maxi(14, size - 12))
 	p.add_child(l)
+	center_ink(l) # on the sheet's middle (its padding traded above and below)
 	return p
 
 
+## How far the middle of the name ribbon's band (assets/ui/name_ribbon.png, between its gilded trims, measured in the
+## flat middle where the name goes) sits from the painting's own centre, in parts of its height: a little above.
+const RIBBON_BAND := -0.021
+## The same for the charred banner (turn_banner.png): its band sits a little below the painting's centre.
+const BANNER_BAND := 0.031
+
+
 ## The red name ribbon `width` px wide with `text` in its flat middle (about 64% of the width, between the folded
-## tails), shrunk to fit. The ribbon is centred on (0, 0) of the returned control, so it can hang on a Node2D.
+## tails), shrunk to fit and centred optically on the band. The ribbon is centred on (0, 0) of the returned control,
+## so it can hang on a Node2D.
 static func ribbon(text: String, width: float, size: int, color: Color = BONE) -> Control:
 	var h := width * 144.0 / 768.0
 	var c := Control.new()
@@ -436,8 +460,9 @@ static func ribbon(text: String, width: float, size: int, color: Color = BONE) -
 	l.name = "Text"
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.size = Vector2(width, h * 0.78) # the ribbon's band sits a little above its middle (the tails hang below)
+	l.size = Vector2(width, h) # the whole ribbon; the letters go on its band's middle (RIBBON_BAND)
 	fit_label(l, width * 0.62, maxi(14, size - 16))
+	center_ink(l, Vector2(0, RIBBON_BAND * h))
 	gild(l, color if color != BONE else GOLD, l.size.y)
 	c.add_child(l)
 	return c
@@ -484,21 +509,20 @@ static func banner(text: String, size: int, color: Color = GOLD, width: float = 
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	l.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	# The band's middle sits a little below the ribbon's; Cinzel's letters sit high in their line box.
-	var dy := 0.02 * h + 0.06 * size
-	l.offset_top = dy
-	l.offset_bottom = dy
 	l.use_parent_material = true
+	# The band's middle sits a little below the ribbon's (BANNER_BAND); without the painting, the control's middle.
+	var band := Vector2(0, BANNER_BAND * h if painted else 0.0)
 	if painted:
 		fit_label(l, w - 2.0 * tail + 10.0, maxi(14, size - 20))
-		if word == null:
-			gild(l, color, c.custom_minimum_size.y)
+	center_ink(l, band)
+	if painted and word == null:
+		gild(l, color, c.custom_minimum_size.y)
 	c.add_child(l)
 	if word != null: # the painted words take the label's place (it stays, hidden, for code that reads its text)
 		l.visible = false
 		var room := minf(tw, w - 2.0 * tail + 10.0)
 		var wr := word_rect(word, Vector2(room, room * word.get_height() / word.get_width()))
-		wr.position = (c.size - wr.size) / 2.0 + Vector2(0, dy * 0.5)
+		place_word(wr, c.size / 2.0 + band)
 		wr.use_parent_material = true
 		c.add_child(wr)
 	return c
@@ -512,13 +536,12 @@ static var _gilded: Shader
 static func gild(l: Label, color: Color, box_h: float) -> void:
 	if _gilded == null:
 		_gilded = load("res://assets/shaders/gilded_text.gdshader")
-	var f := l.get_theme_font("font")
 	var fs := l.get_theme_font_size("font_size")
-	var baseline := (box_h - f.get_height(fs)) / 2.0 + f.get_ascent(fs)
+	var base := baseline(l, box_h) # where the letters sit once optically centred (center_ink first)
 	var m := ShaderMaterial.new()
 	m.shader = _gilded
-	m.set_shader_parameter("baseline", baseline)
-	m.set_shader_parameter("cap_top", baseline - fs * 0.7) # Cinzel's capitals stand about 0.7 em
+	m.set_shader_parameter("baseline", base)
+	m.set_shader_parameter("cap_top", base - fs * 0.7) # Cinzel's capitals stand about 0.7 em
 	m.set_shader_parameter("tint", color)
 	l.use_parent_material = false
 	l.material = m
@@ -540,6 +563,14 @@ static func word_tex(text: String) -> Texture2D:
 			slug += "_"
 	var path := "res://assets/ui/words/%s.png" % slug.trim_suffix("_")
 	return load(path) if ResourceLoader.exists(path) else null
+
+
+## Puts painted words (a word_rect) so that their letters (the opaque part of the painting) are centred on `center`,
+## in the parent's px.
+static func place_word(wr: TextureRect, center: Vector2) -> void:
+	var o := opaque_rect(wr.texture)
+	var k := wr.size / wr.texture.get_size()
+	wr.position = center - (o.position + o.size / 2.0) * k
 
 
 ## Painted words `tex` scaled to fit `box` (keeping their shape), centred in a control of their scaled size.
@@ -655,6 +686,305 @@ static func scaled_tex(name: String, px: int) -> Texture2D:
 		img.resize(px, px, Image.INTERPOLATE_LANCZOS)
 		_scaled[key] = ImageTexture.create_from_image(img)
 	return _scaled[key]
+
+
+# ================================================================ optical centring
+# Godot centres text on its line box: the font's ascent + descent, the same for every string. Cinzel's descent is a
+# third of its ascent and its letters are capitals (no descenders), so a centred all-caps word sits about 0.045 em
+# above the middle of its frame; IM Fell's letters sit 0.08 em high, its digits low. The helpers below centre the
+# letters themselves: the real ink of the string, from the glyph outlines (TextServer contours, the same at any
+# screen scale and in headless runs), on the frame's centre.
+
+static var _glyph_ink := {}
+static var _ink_cache := {}
+## Our fonts are drawn as MSDF (UI.font: 64 px source, 12 px range), and Godot draws such a glyph about 6.5% larger
+## than its outline, about the glyph's origin on the baseline (measured with tests/ink_centering.tscn -- --probe at
+## 240 px: caps 1.056-1.069 x taller and 1.06-1.07 x wider in both faces; the plain outlines draw at 1.000). The ink
+## is measured as it is drawn.
+const MSDF_DRAW_K := 1.065
+
+
+## The ink (the union of the glyph outlines) of `text` in `font` at `size` px, laid out the way a Label or a Button
+## centres it: in px from the centre of its text block (each line centred on x = 0, the block of line boxes centred on
+## y = 0). Lines split at "\n" and, with `wrap_width` > 0, wrap at word boundaries. Its centre is how far the letters
+## sit from where Godot thinks the text's middle is. An empty or blank string gives an empty rect at the origin.
+static func ink_rect(f: Font, size: int, text: String, wrap_width: float = -1.0, line_spacing: float = 0.0,
+		paragraph_spacing: float = 0.0) -> Rect2:
+	return text_layout(f, size, text, wrap_width, line_spacing, paragraph_spacing)["ink"]
+
+
+## `ink_rect` and the block it is measured in: {"ink": Rect2, "block": Vector2 (the widest line's advance, the
+## height of the line boxes and spacings), "lines": the number of lines}. Cached.
+static func text_layout(f: Font, size: int, text: String, wrap_width: float = -1.0, line_spacing: float = 0.0,
+		paragraph_spacing: float = 0.0) -> Dictionary:
+	var key := "%d|%d|%.1f|%.1f|%.1f|%s" % [f.get_instance_id(), size, wrap_width, line_spacing, paragraph_spacing, text]
+	if _ink_cache.has(key):
+		return _ink_cache[key]
+	var ts := TextServerManager.get_primary_interface()
+	var ink := Rect2()
+	var have := false
+	var y := 0.0
+	var widest := 0.0
+	var count := 0
+	var paras := text.split("\n")
+	for pi in paras.size():
+		var tp := TextParagraph.new()
+		tp.add_string(paras[pi], f, size)
+		tp.break_flags = TextServer.BREAK_MANDATORY
+		if wrap_width > 0.0:
+			tp.width = wrap_width
+			tp.break_flags = TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND | TextServer.BREAK_ADAPTIVE
+		for li in tp.get_line_count():
+			var rid := tp.get_line_rid(li)
+			var base := y + tp.get_line_ascent(li)
+			var glyphs := ts.shaped_text_get_glyphs(rid)
+			# The line's width as it is centred: trailing spaces left out (a wrapped line ends in one).
+			var w := 0.0
+			var end := glyphs.size()
+			while end > 0 and int(glyphs[end - 1]["flags"]) & TextServer.GRAPHEME_IS_SPACE:
+				end -= 1
+			for gi in end:
+				w += float(glyphs[gi]["advance"]) * int(glyphs[gi]["repeat"])
+			widest = maxf(widest, w)
+			var x := -w / 2.0
+			for gi in end:
+				var g: Dictionary = glyphs[gi]
+				var r: Variant = _glyph_box(ts, g["font_rid"], int(g["font_size"]), int(g["index"]))
+				var off: Vector2 = g["offset"]
+				var k_draw := MSDF_DRAW_K if ts.font_is_multichannel_signed_distance_field(g["font_rid"]) else 1.0
+				for k in int(g["repeat"]):
+					if r != null:
+						var gr: Rect2 = r
+						gr = Rect2(gr.position * k_draw, gr.size * k_draw) # as drawn: about the glyph's origin
+						gr.position += Vector2(x, base) + off
+						ink = gr if not have else ink.merge(gr)
+						have = true
+					x += float(g["advance"])
+			y += tp.get_line_size(li).y + line_spacing
+			count += 1
+		y += paragraph_spacing
+	var block_h := maxf(0.0, y - line_spacing - paragraph_spacing)
+	ink.position.y -= block_h / 2.0
+	if not have:
+		ink = Rect2()
+	if _ink_cache.size() > 4000:
+		_ink_cache.clear()
+	var lay := {"ink": ink, "block": Vector2(widest, block_h), "lines": count}
+	_ink_cache[key] = lay
+	return lay
+
+
+## One glyph's outline box (px, from its origin on the baseline, y down), or null for a blank glyph. Cached.
+static func _glyph_box(ts: TextServer, frid: RID, size: int, index: int) -> Variant:
+	var key := "%d|%d|%d" % [frid.get_id(), size, index]
+	if _glyph_ink.has(key):
+		return _glyph_ink[key]
+	var box: Variant = null
+	var c: Dictionary = ts.font_get_glyph_contours(frid, size, index)
+	var pts: PackedVector3Array = c.get("points", PackedVector3Array())
+	if not pts.is_empty():
+		var r := Rect2(Vector2(pts[0].x, pts[0].y), Vector2.ZERO)
+		for p in pts:
+			r = r.expand(Vector2(p.x, p.y))
+		box = r
+	_glyph_ink[key] = box
+	return box
+
+
+## How far the ink of `c`'s text (a Label or a Button, as it is set now) sits from the centre of its text block.
+static func ink_offset(c: Control) -> Vector2:
+	return (_layout_of(c)["ink"] as Rect2).get_center()
+
+
+static func _layout_of(c: Control) -> Dictionary:
+	var f := c.get_theme_font("font")
+	var px := c.get_theme_font_size("font_size")
+	if f == null or c.get("text") == null:
+		return {"ink": Rect2(), "block": Vector2.ZERO, "lines": 0}
+	var text: String = c.text
+	if c is Label:
+		var l := c as Label
+		if l.uppercase:
+			text = text.to_upper()
+		var wrap := -1.0
+		if l.autowrap_mode != TextServer.AUTOWRAP_OFF:
+			var sb := l.get_theme_stylebox("normal")
+			wrap = l.size.x - (sb.get_margin(SIDE_LEFT) + sb.get_margin(SIDE_RIGHT) if sb != null else 0.0)
+		return text_layout(f, px, text, wrap, l.get_theme_constant("line_spacing"),
+			l.get_theme_constant("paragraph_spacing"))
+	return text_layout(f, px, text)
+
+
+## Centres the letters of `c` (a Label or a Button) on its frame, optically, and keeps them there when its text or
+## size changes later (it re-checks on every redraw: text, font, size, fitting). The frame is:
+## - a Label that is the only child of a PanelContainer (a plaque, a parchment note, a toast): the panel's rect; the
+##   panel's top / bottom (left / right) content margins trade px, their sums stay, so the plaque keeps its size;
+## - a Button: its content box (the plate inside its margins, so the pressed / hovered sink is kept); the margins of
+##   every state trade px the same way;
+## - any other Label: its own rect (give it the size of the frame it sits in, with a few px to spare above and below
+##   its letters): its own "normal" style gets the shift as uneven content margins.
+## `nudge` moves the target off the frame's centre (px), for paintings whose band is not in the middle of the rect.
+## Horizontal centring too: the ink of "1" or of a slanted capital is not centred on its advance.
+static func center_ink(c: Control, nudge: Vector2 = Vector2.ZERO) -> void:
+	c.set_meta("_ink_nudge", nudge)
+	_apply_ink(c)
+	if not c.has_meta("_ink_hooked"):
+		c.set_meta("_ink_hooked", true)
+		c.draw.connect(_ink_redraw.bind(c))
+
+
+static func _ink_key(c: Control) -> String:
+	var f := c.get_theme_font("font")
+	# A Label laid out on its own rect is re-centred when that rect is resized too (its px are placed exactly).
+	return "%s|%d|%d|%s|%s" % [str(c.get("text")), f.get_instance_id() if f != null else 0,
+		c.get_theme_font_size("font_size"), c.size if c is Label else Vector2.ZERO, c.get_meta("_ink_nudge", Vector2.ZERO)]
+
+
+static func _ink_redraw(c: Control) -> void:
+	if is_instance_valid(c) and c.get_meta("_ink_key", "") != _ink_key(c):
+		_apply_ink.call_deferred(c)
+
+
+static func _apply_ink(c: Control) -> void:
+	if not is_instance_valid(c):
+		return
+	c.set_meta("_ink_key", _ink_key(c))
+	var s: Vector2 = c.get_meta("_ink_nudge", Vector2.ZERO) - ink_offset(c)
+	var p := c.get_parent()
+	if c is Button:
+		for st in ["normal", "hover", "pressed", "disabled", "hover_pressed", "focus"]:
+			if c.has_theme_stylebox_override(st):
+				_trade_margins(c, st, s)
+	elif p is PanelContainer and _only_child(p, c):
+		var sb := _owned_style(p, "panel")
+		var base: Array = sb.get_meta("_ink_base")
+		# The text block is centred in the panel's content box; that box's centre is off the panel's own by half the
+		# difference of the margins (plaque_box keeps 2 px more below): put the ink on the panel's centre.
+		var d := Vector2(base[2] - base[3], base[0] - base[1]) / 2.0
+		_set_margins(sb, base, s - d)
+	else:
+		var sb := _owned_style(c, "normal")
+		var base: Array = sb.get_meta("_ink_base")
+		var lay := _layout_of(c)
+		var block: Vector2 = lay["block"]
+		var l := c as Label
+		# The frame is the Label's rect; but a new, longer text set under the old margins can have grown it to its
+		# minimum size before this runs: then the frame is still the one measured last time.
+		var frame := c.size
+		var last: Vector2 = c.get_meta("_ink_frame", frame)
+		var grown := c.get_combined_minimum_size()
+		for ax in 2:
+			if frame[ax] > last[ax] and absf(frame[ax] - grown[ax]) < 0.01:
+				frame[ax] = last[ax]
+		c.set_meta("_ink_frame", frame)
+		if l.text.strip_edges() == "": # nothing to centre: no shift (it would only hold room for nothing)
+			_set_margins(sb, base, Vector2.ZERO)
+			if l.get_meta("_ink_center_x", false):
+				l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			return
+		var room := frame - Vector2(base[2] + base[3], base[0] + base[1])
+		var v := Vector2.ZERO # only the centred axes move
+		if l.vertical_alignment == VERTICAL_ALIGNMENT_CENTER:
+			v = _exact_margins(room.y, block.y, s.y)
+		sb.content_margin_top = base[0] + v.x
+		sb.content_margin_bottom = base[1] + v.y
+		# Across: a centred Label ignores its side margins and starts its lines at a whole px, so a single line is set
+		# left-aligned instead, its left margin putting it exactly where its ink is centred (a block of several lines
+		# stays centred line by line, within a px).
+		if l.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER:
+			l.set_meta("_ink_center_x", true)
+		var h := Vector2.ZERO
+		var across := (room.x - block.x) / 2.0 + s.x
+		if l.get_meta("_ink_center_x", false) and int(lay["lines"]) <= 1 and across >= 0.0 and across + block.x <= room.x:
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+			h = Vector2(across, 0.0)
+		elif l.get_meta("_ink_center_x", false):
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		sb.content_margin_left = base[2] + h.x
+		sb.content_margin_right = base[3] + h.y
+		if c.size != frame and c.get_parent() is not Container:
+			c.size = frame # back to the frame, now that the margins fit in it
+
+
+## The two margins (before, after) that put a block `size` px long at `shift` px from the middle of `room` px, for a
+## Label, which centres its text block at int((room - size - before - after) / 2) past `before`: the leftover is made
+## an odd whole number, so that int() lands exactly where wanted and the block sits to the fraction of a px. Without the
+## room for it (a label as small as its text), the plain uneven margins (the text then sits within half a px).
+static func _exact_margins(room: float, size: float, shift: float) -> Vector2:
+	var want := (room - size) / 2.0 + shift ## where the block should start, past the room's start
+	var k := floorf(minf(want, room - size - want - 1.0))
+	if k < 0.0:
+		return Vector2(maxf(0.0, 2.0 * shift), maxf(0.0, -2.0 * shift))
+	return Vector2(want - k, room - size - want - k - 1.0)
+
+
+static func _only_child(p: Node, c: Node) -> bool:
+	for n in p.get_children():
+		if n != c and n is Control and (n as Control).visible and not (n as Control).top_level:
+			return false
+	return true
+
+
+## `c`'s stylebox `st` as its own copy (so a shared or theme style is never shifted for everyone), with its original
+## content margins (top, bottom, left, right) kept in the meta "_ink_base".
+static func _owned_style(c: Control, st: String) -> StyleBox:
+	var sb := c.get_theme_stylebox(st)
+	if sb == null:
+		sb = StyleBoxEmpty.new()
+	if sb.get_meta("_ink_owner", 0) != c.get_instance_id():
+		var base: Array = sb.get_meta("_ink_base") if sb.has_meta("_ink_base") else \
+			[sb.get_margin(SIDE_TOP), sb.get_margin(SIDE_BOTTOM), sb.get_margin(SIDE_LEFT), sb.get_margin(SIDE_RIGHT)]
+		sb = sb.duplicate()
+		sb.set_meta("_ink_owner", c.get_instance_id())
+		sb.set_meta("_ink_base", base)
+		c.add_theme_stylebox_override(st, sb)
+	return sb
+
+
+static func _trade_margins(c: Control, st: String, s: Vector2) -> void:
+	var sb := _owned_style(c, st)
+	_set_margins(sb, sb.get_meta("_ink_base"), s)
+
+
+## Moves the content box by `s`: top / left margins grow by it, bottom / right shrink by it (sums kept while both stay
+## above zero).
+static func _set_margins(sb: StyleBox, base: Array, s: Vector2) -> void:
+	sb.content_margin_top = maxf(0.0, base[0] + s.y)
+	sb.content_margin_bottom = maxf(0.0, base[1] - s.y)
+	sb.content_margin_left = maxf(0.0, base[2] + s.x)
+	sb.content_margin_right = maxf(0.0, base[3] - s.x)
+
+
+## The baseline of a centred one-line Label's text, in its own px, in a box `box_h` tall (its height by default), with
+## its centring margins: where gilded lettering puts its gold (UI.gild, the card names).
+static func baseline(l: Label, box_h: float = -1.0) -> float:
+	var f := l.get_theme_font("font")
+	var px := l.get_theme_font_size("font_size")
+	var sb := l.get_theme_stylebox("normal")
+	var top := sb.get_margin(SIDE_TOP) if sb != null else 0.0
+	var bottom := sb.get_margin(SIDE_BOTTOM) if sb != null else 0.0
+	var h := box_h if box_h > 0.0 else l.size.y
+	return top + floorf((h - top - bottom - f.get_height(px)) / 2.0) + f.get_ascent(px) # Label places it at int()
+
+
+## The opaque part of a painted texture (lettering, a plate): the box of its pixels with any alpha, in its own px.
+## Cached.
+static var _opaque := {}
+static func opaque_rect(tex: Texture2D) -> Rect2:
+	var key := tex.get_instance_id()
+	if not _opaque.has(key):
+		var r := Rect2(Vector2.ZERO, tex.get_size())
+		var img := tex.get_image()
+		if img != null:
+			if img.is_compressed():
+				img = img.duplicate()
+				img.decompress()
+			var used := Rect2(img.get_used_rect())
+			if used.size.x > 0:
+				var k := tex.get_size() / Vector2(img.get_size())
+				r = Rect2(used.position * k, used.size * k)
+		_opaque[key] = r
+	return _opaque[key]
 
 
 ## Soft round particle sprite (generated once).
