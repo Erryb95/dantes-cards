@@ -32,10 +32,10 @@ position = Vector2(1800, 632)
 position = Vector2(1800, 312)
 
 [node name="ManaPlayer" type="Marker2D" parent="Sockets"]
-position = Vector2(1590, 1026)
+position = Vector2(1640, 1026)
 
 [node name="ManaEnemy" type="Marker2D" parent="Sockets"]
-position = Vector2(1590, 54)
+position = Vector2(1640, 54)
 
 [node name="PropBell" type="Marker2D" parent="Sockets"]
 position = Vector2(165, 300)

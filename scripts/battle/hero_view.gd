@@ -113,7 +113,10 @@ func _build() -> void:
 
 func _build_power(def: Dictionary) -> void:
 	power = Node2D.new()
-	power.position = Vector2(W / 2 + 90, 14 if side == 0 else -14) # mirrored about the divider, like the board sockets
+	# On the face of the board's power socket (board_blockout.py POWER_SOCKETS: 180 px right of the plinth). The
+	# painted faces sit a few px above the blockout's points (the drums are raised): measured on every board, 10 px
+	# below the player's hero and 17 px above the enemy's.
+	power.position = Vector2(W / 2 + 102, 10 if side == 0 else -17)
 	add_child(power)
 	_power_glow = Aura.make(Vector2(104, 104), true, 30.0)
 	power.add_child(_power_glow)

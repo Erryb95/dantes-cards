@@ -292,6 +292,8 @@ func set_frozen(v: bool) -> void:
 			_frost = UiSkin.sprite("frozen_overlay", Vector2(W, H) * 1.18)
 			_frost.use_parent_material = false
 			add_child(_frost)
+			# Over the portrait ring but under the ward, the keyword icons and the stat gems, which must still read.
+			move_child(_frost, _ring.get_index() + 1)
 			_frost.set_meta("base", _frost.scale)
 		_frost.visible = v
 		if v:

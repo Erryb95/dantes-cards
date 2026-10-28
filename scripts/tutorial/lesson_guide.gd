@@ -275,6 +275,8 @@ func _show_step() -> void:
 		_hide_box()
 	else:
 		_text.text = say
+		# Wrapped at its balanced width: even lines, and the plate's margins the same on both sides.
+		_text.custom_minimum_size.x = UI.balanced_width(_text.get_theme_font("font"), TEXT_PX, say, PLATE_W - 100.0)
 		var tap := str(s.get("wait", "")) == "tap"
 		_hint.text = ("%s to continue" % UI.tap_word()) if tap else ""
 		_hint.visible = tap

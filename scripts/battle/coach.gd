@@ -37,8 +37,10 @@ func _ready() -> void:
 	_bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label = UI.label("", 26, "body", UI.INK) # inked on the parchment tip sheet
 	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.custom_minimum_size = Vector2(380, 0)
 	_bubble.add_child(_label)
+	UI.center_ink(_label) # the letters on the middle of the parchment, whatever the tip
 	add_child(_bubble)
 	_arrow = Sprite2D.new()
 	_arrow.texture = UiSkin.tex("arrow_head")
@@ -80,6 +82,7 @@ func offer(id: String, target: Vector2, text: String = "") -> bool:
 	_id = id
 	_target = target
 	_label.text = (text if text != "" else str(TIPS[id])).format({"tap": "tap" if _touch() else "click"})
+	_label.custom_minimum_size.x = UI.balanced_width(_label.get_theme_font("font"), 26, _label.text, 380.0)
 	_session.append(id)
 	if not _forced and not Settings.coach_seen.has(id):
 		Settings.coach_seen.append(id)
