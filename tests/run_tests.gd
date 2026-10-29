@@ -447,6 +447,20 @@ func _test_rules() -> void:
 	var deck := CardDB.deck_list("pilgrim")
 	st.start(deck, "dante", CardDB.deck_list("ferry"), "charon", 3, true)
 	ok(st.in_mulligan() and st.turn == 0, "waiting for mulligan")
+	# Nothing happens before both opening hands are kept: no turn ends, no card, attack or hero power (the fuzzer
+	# ended a turn during the mulligan: it fired End of Turn triggers and began the other side's turn).
+	var ck := st.checksum()
+	st.end_turn()
+	ok(st.checksum() == ck and st.turn == 0 and st.in_mulligan(), "no turn ends during the mulligan")
+	st.sides[st.current].mana = 10
+	var early := _give(st, st.current, "cd_walls_of_dis")
+	var early_m := _put(st, st.current, "she_wolf")
+	ok(not st.can_play(st.current, early) and not st.play_card(st.current, early), "no card is played during the mulligan")
+	ok(not st.can_attack(early_m) and not st.can_use_power(st.current), "no attack or hero power during the mulligan")
+	st.sides[st.current].hand.erase(st.hand_card(st.current, early))
+	st.sides[st.current].board.erase(early_m)
+	st.units.erase(early_m.uid)
+	st.sides[st.current].mana = 0
 	var first: int = st.sides[0].hand[0].uid
 	st.finish_mulligan(0, [first])
 	ok(st.sides[0].hand.size() == 3 and st.hand_card(0, first).is_empty(), "card replaced")
@@ -2171,6 +2185,10 @@ func _test_lesson_hero_choice(l: Dictionary) -> void:
 		var st := Lessons.start_state(l, 7, h)
 		var foe: BattleAI = Lessons.make_ai(l)
 		var me := BattleAI.new(0, BattleAI.Level.EASY)
+		if st.in_mulligan(): # The Trial opens with the mulligan, as the battle view plays it: nothing happens before
+			st.finish_mulligan(1, foe.mulligan_choice(st))
+			st.finish_mulligan(0, me.mulligan_choice(st))
+		ok(not st.in_mulligan() and st.turn == 1, "lesson %s as %s: the mulligan is over" % [l.id, h])
 		var guard := 0
 		while st.winner == -1 and guard < 400:
 			guard += 1
