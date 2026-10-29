@@ -1,5 +1,5 @@
 {
- "_doc": "Card database. type: minion|spell. keywords: guard, swift, ward, drain, venom. effects[].on: play|death. Targets that start with 'choose_' are picked by the player; the rest resolve automatically. 'image' is the source picture in art_src/dore_cards (hand-tinted Dore engraving batch from the ComfyUI session).",
+ "_doc": "Card database. type: minion|spell. keywords: guard, swift, ward, drain, venom, rebirth; 'wrath': N (Wrath: +N Attack). effects[].on: play (the default)|death (Last Breath)|turn_start|turn_end|frenzy; 'ruse': true makes a play effect a Ruse. Targets that start with 'choose_' are picked by the player; the rest resolve automatically. 'image' is the source picture in art_src/dore_cards (hand-tinted Dore engraving batch from the ComfyUI session).",
  "cards": [
   {
    "id": "lost_pilgrim",

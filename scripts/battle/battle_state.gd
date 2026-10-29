@@ -303,8 +303,8 @@ func _begin_turn() -> void:
 
 
 func end_turn() -> void:
-	if winner != -1:
-		return
+	if winner != -1 or in_mulligan():
+		return # nothing ends a turn while the opening hands are still being chosen
 	_fire_turn_triggers(current, "turn_end")
 	if winner != -1:
 		return
@@ -435,7 +435,7 @@ func valid_targets(side: int, ttype: String) -> Array[int]:
 
 
 func can_play(side: int, hand_uid: int) -> bool:
-	if winner != -1 or side != current:
+	if winner != -1 or side != current or in_mulligan():
 		return false
 	var c := hand_card(side, hand_uid)
 	if c.is_empty():
@@ -450,7 +450,7 @@ func can_play(side: int, hand_uid: int) -> bool:
 
 
 func can_use_power(side: int) -> bool:
-	if winner != -1 or side != current or sides[side].power_used:
+	if winner != -1 or side != current or sides[side].power_used or in_mulligan():
 		return false
 	var h := CardDB.hero(sides[side].hero_id)
 	if int(h.power.cost) > sides[side].mana:
@@ -460,7 +460,7 @@ func can_use_power(side: int) -> bool:
 
 
 func can_attack(u: Unit) -> bool:
-	return u != null and not u.is_hero and not u.dead and u.side == current and winner == -1 \
+	return u != null and not u.is_hero and not u.dead and u.side == current and winner == -1 and not in_mulligan() \
 		and u.attack > 0 and not u.sleeping and u.attacks_made < 1 and not u.frozen
 
 
@@ -1022,20 +1022,26 @@ func _cleanup() -> void:
 				r.max_health = 1
 				if _place(r, mini(int(d[1]), sides[u.side].board.size())) != null:
 					_emit({"t": "rebirth", "uid": r.uid}) # view only: the rising flame
-			if u.silenced:
-				continue
-			for e in CardDB.card(u.id).get("effects", []):
-				if e.get("on", "") == "death":
-					if e.do == "summon":
-						var at := mini(int(d[1]), sides[u.side].board.size())
-						for i in int(e.get("count", 1)):
-							if _summon(u.side, e.card, at) != null:
-								at += 1
-					else:
-						_resolve(e, u.side, null, -1, u.id)
+			_last_breath(u, int(d[1]))
 	_check_end()
 	_refresh_wrath()
 	_fire_frenzies()
+
+
+## Resolves the Last Breath effects of minion `u`, which died at board index `at` (a silenced one has none). Called
+## once per death in `_cleanup`; a minion that leaves by transform or a bounce into a full hand never gets here.
+func _last_breath(u: Unit, at: int) -> void:
+	if u.silenced:
+		return
+	for e in CardDB.card(u.id).get("effects", []):
+		if e.get("on", "") == "death":
+			if e.do == "summon":
+				var i0 := mini(at, sides[u.side].board.size())
+				for i in int(e.get("count", 1)):
+					if _summon(u.side, e.card, i0) != null:
+						i0 += 1
+			else:
+				_resolve(e, u.side, null, -1, u.id)
 
 
 ## Records the blow that would kill `t` (view only, see Unit.killer): the last one wins, so with several hits at

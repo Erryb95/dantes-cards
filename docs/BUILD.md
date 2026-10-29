@@ -5,6 +5,7 @@
 ```sh
 timeout 300 $G --headless --path . -s res://tests/run_tests.gd        # rules + AI soak
 timeout 120 $G --headless --path . -s res://tests/run_tests.gd -- --only=lessons   # just Virgil's lessons
+timeout 900 $G --headless --path . -s res://tests/fuzz_rules.gd -- --games=200 --first=0   # rules fuzzer: invariants, replays, probes (shard with --first; --cards plays every card in odd spots; --game=N --verbose reruns one)
 timeout 240 $G --headless --path . res://tests/ui_smoke.tscn          # input smoke test
 timeout 300 $G --headless --path . res://tests/menu_smoke.tscn        # menu dialogs, pack opening, deck problems, lessons flow
 timeout 300 $G --headless --path . res://tests/intro_test.tscn        # opening cinematic data + player + skip
