@@ -31,11 +31,11 @@
     "pj_saint_lucy": 1,
     "pj_trembling_pilgrim": 1,
     "pj_lion_of_violence": 1,
-    "pj_brunetto_latini": 1,
     "pj_cleopatra": 1,
     "pj_cato": 1,
-    "lost_pilgrim": 2,
-    "pj_ciacco": 1
+    "pj_ciacco": 1,
+    "mc_thais": 2,
+    "cd_vitaliano": 1
    }
   },
   {
@@ -51,7 +51,6 @@
     "cerberus"
    ],
    "cards": {
-    "banner_chaser": 2,
     "stung_neutral": 2,
     "she_wolf": 2,
     "oar_strike": 2,
@@ -71,7 +70,8 @@
     "ih_cacus_stolen_herd": 1,
     "ih_rain_of_sand": 1,
     "ih_boiling_tide": 1,
-    "ih_ephialtes": 1
+    "ih_ephialtes": 1,
+    "uh_shore_soul": 2
    }
   },
   {
@@ -86,7 +86,6 @@
     "pj_lion_of_violence"
    ],
    "cards": {
-    "mc_manto": 1,
     "pj_veil_of_stillness": 1,
     "cd_pholus": 1,
     "cd_walls_of_dis": 1,
@@ -97,7 +96,6 @@
     "pj_saint_lucy": 1,
     "limbo_philosophers": 2,
     "cd_nameless_bush": 2,
-    "uh_sullen_one": 1,
     "farinata_tomb": 1,
     "pj_dantes_courage": 2,
     "pj_lion_of_violence": 2,
@@ -107,7 +105,9 @@
     "pj_virgins_mercy": 1,
     "pj_cato": 1,
     "pj_dantes_resolve": 2,
-    "mc_caiaphas": 1
+    "mc_caiaphas": 1,
+    "mc_ruggieri": 1,
+    "mc_thais": 1
    }
   },
   {
@@ -125,14 +125,14 @@
     "virgils_counsel": 2,
     "pj_saint_lucy": 2,
     "pj_horace": 2,
-    "pj_reed_of_humility": 2,
+    "pj_reed_of_humility": 1,
     "limbo_philosophers": 2,
     "uh_socrates": 1,
     "cd_pholus": 1,
     "virgil_guide": 2,
     "pj_ovid": 2,
     "centaur_arrows": 2,
-    "pj_dantes_courage": 2,
+    "pj_dantes_courage": 1,
     "pj_lucan": 1,
     "pj_statius": 2,
     "pj_stars_again": 1,
@@ -140,7 +140,9 @@
     "pj_dantes_resolve": 1,
     "pj_homer": 1,
     "pj_beatrice": 1,
-    "pj_brunetto_latini": 2
+    "pj_brunetto_latini": 2,
+    "cd_vitaliano": 1,
+    "mc_thais": 1
    }
   },
   {
@@ -158,8 +160,6 @@
     "ih_thief_serpent": 1,
     "she_wolf": 1,
     "ih_blood_swimmer": 2,
-    "ih_whip_demon": 2,
-    "banner_chaser": 2,
     "ih_barbed_imp": 2,
     "ih_thieves_bargain": 2,
     "furies": 2,
@@ -167,13 +167,15 @@
     "harpies_flock": 2,
     "ih_barbariccia": 2,
     "cd_hounds_of_lano": 1,
-    "cd_dionysius": 1,
     "uh_electra": 2,
     "ih_libicocco": 1,
     "mc_agnello": 1,
     "souls_of_the_styx": 2,
     "ih_malacoda": 1,
-    "oar_strike": 1
+    "oar_strike": 1,
+    "uh_shore_soul": 2,
+    "mc_thais": 1,
+    "ih_cocytus_chill": 2
    }
   },
   {
@@ -195,17 +197,17 @@
     "cd_burning_sand": 2,
     "ih_calcabrina": 2,
     "ih_thief_serpent": 1,
-    "she_wolf": 1,
+    "she_wolf": 2,
     "ih_pitch_sinner": 2,
     "ih_cacus_stolen_herd": 2,
     "oar_strike": 1,
     "ih_farfarello": 2,
     "uh_silencing_word": 1,
     "ih_barbariccia": 1,
-    "ih_graffiacane": 2,
+    "ih_graffiacane": 1,
     "ih_serpents_kiss": 2,
-    "mc_brutus": 2,
-    "uh_achilles": 1
+    "uh_achilles": 1,
+    "cd_accorso": 2
    }
   },
   {
@@ -221,13 +223,13 @@
     "ul_circe"
    ],
    "cards": {
-    "ul_ithacan_sailor": 2,
+    "ul_ithacan_sailor": 1,
     "ul_puccio": 1,
     "ul_tongue_of_flame": 2,
     "ul_old_companions": 2,
     "ul_beacon_keeper": 2,
     "ul_barbed_counsel": 1,
-    "ul_buoso": 2,
+    "ul_buoso": 1,
     "ul_oarsmen": 2,
     "ul_speech_of_fire": 2,
     "ul_burning_counsellor": 1,
@@ -241,7 +243,9 @@
     "mc_guido": 1,
     "ul_sweet_siren": 1,
     "cd_cavalcante": 1,
-    "ul_wandering_flames": 2
+    "ul_wandering_flames": 2,
+    "ul_past_the_pillars": 1,
+    "ul_calchas": 1
    }
   },
   {
@@ -258,8 +262,8 @@
    "cards": {
     "ul_ithacan_sailor": 2,
     "ul_puccio": 2,
-    "ul_sweet_siren": 2,
-    "ul_old_companions": 1,
+    "ul_sweet_siren": 1,
+    "ul_old_companions": 2,
     "ul_griffolino": 2,
     "ul_achaean_in_hiding": 2,
     "ul_potiphars_wife": 1,
@@ -274,9 +278,10 @@
     "ul_valley_of_flames": 1,
     "ul_beacon_keeper": 1,
     "ul_burning_counsellor": 1,
-    "mc_caiaphas": 2,
+    "mc_caiaphas": 1,
     "mc_ulysses": 1,
-    "mc_guido": 1
+    "mc_guido": 1,
+    "ul_calchas": 1
    }
   },
   {
@@ -300,8 +305,6 @@
     "ul_two_horned_flame": 2,
     "ul_valley_of_flames": 1,
     "ul_night_raid": 1,
-    "ul_past_the_pillars": 1,
-    "ul_false_beacon": 1,
     "ul_sweet_siren": 2,
     "ul_old_companions": 2,
     "ul_curio": 1,
@@ -309,7 +312,9 @@
     "ul_burning_counsellor": 2,
     "ul_eurypylus": 1,
     "ul_diomedes": 1,
-    "ul_gilded_hypocrite": 2
+    "ul_gilded_hypocrite": 2,
+    "uh_thorn_jab": 1,
+    "ul_spoils_of_troy": 1
    }
   },
   {
@@ -338,11 +343,11 @@
     "wr_rancorous_shade": 1,
     "wr_red_towers": 1,
     "uh_filippo_argenti": 1,
-    "wr_mire_hulk": 2,
+    "wr_mire_hulk": 1,
     "wr_athamas": 1,
     "wr_mud_colossus": 1,
-    "wr_brawl_in_the_mud": 1,
-    "wr_mud_brawler": 2
+    "wr_furies_nails": 2,
+    "wr_geri_del_bello": 2
    }
   },
   {
@@ -362,12 +367,10 @@
     "wr_marsh_warden": 2,
     "wr_black_guelph": 2,
     "wr_mud_caked_sinner": 2,
-    "wr_butting_heads": 1,
     "wr_stirring_the_mud": 2,
     "wr_brawling_shade": 2,
     "wr_mud_dweller": 2,
     "wr_mob_turns": 1,
-    "wr_brawl_in_the_mud": 1,
     "wr_boat_rides_low": 1,
     "wr_other_dogs": 1,
     "wr_marsh_champion": 2,
@@ -376,8 +379,9 @@
     "wr_red_towers": 1,
     "wr_erichtho": 1,
     "wr_wrathful_throng": 1,
-    "wr_storm_across_styx": 1,
-    "wr_tydeus": 1
+    "wr_tydeus": 1,
+    "wr_furies_nails": 1,
+    "wr_geri_del_bello": 2
    }
   },
   {
