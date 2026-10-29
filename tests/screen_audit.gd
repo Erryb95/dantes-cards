@@ -410,6 +410,16 @@ func _battle() -> void:
 	b._nope(b.heroes[0].position + Vector2(-420, 110), "Not enough mana")
 	await _wait(0.25)
 	await _snap("b_numbers")
+	# An online duel's name plates (a stand-in duel: only the names are read), by the mana trays.
+	var duel := DuelSync.new()
+	duel.names = ["Enrico the Pilgrim", "Mattia"]
+	b.net = duel
+	b._build_name_plates()
+	await _snap("b_names")
+	for p in b._name_plates:
+		p.queue_free()
+	b._name_plates = [null, null]
+	b.net = null
 	await _wait(1.5)
 	b._show_hero_tip(b.heroes[1])
 	await _wait(0.3)

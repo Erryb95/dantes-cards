@@ -3178,14 +3178,7 @@ func _build_online() -> void:
 	UI.center_ink(_timer_label) # on the plaque's middle, re-centred as the seconds change
 	_timer_plate.visible = false
 	ui.add_child(_timer_plate)
-	for side in 2:
-		var n := net.my_name() if side == 0 else net.opponent_name()
-		if n == "":
-			n = "You" if side == 0 else "Opponent"
-		var p := UI.plaque_label(n, 26, "title", UI.GOLD if side == 0 else Color(1.0, 0.72, 0.6), 300.0, 22, 6)
-		p.name = "Name%d" % side
-		ui.add_child(p)
-		_name_plates[side] = p
+	_build_name_plates()
 	Online.connection.connect(_on_connection)
 	# The mini chat (Nakama's direct channel between the two players; optional: a refusal only leaves it quiet).
 	chat = DuelChat.new()
@@ -3205,7 +3198,21 @@ func _build_online() -> void:
 	_layout_online()
 
 
+## The two players' names, each on a plaque by its mana tray (_layout_names).
+func _build_name_plates() -> void:
+	for side in 2:
+		var n := net.my_name() if side == 0 else net.opponent_name()
+		if n == "":
+			n = "You" if side == 0 else "Opponent"
+		var p := UI.plaque_label(n, 26, "title", UI.GOLD if side == 0 else Color(1.0, 0.72, 0.6), 300.0, 22, 6)
+		p.name = "Name%d" % side
+		ui.add_child(p)
+		_name_plates[side] = p
+	_layout_names()
+
+
 func _layout_online() -> void:
+	_layout_names()
 	if net == null or _rope == null:
 		return
 	var y := end_btn.position.y
@@ -3214,13 +3221,19 @@ func _layout_online() -> void:
 	_rope.queue_redraw()
 	_timer_plate.reset_size()
 	_timer_plate.position = end_btn.position + Vector2(-_timer_plate.size.x / 2, END_OVAL.y * 0.5 + 6.0)
+
+
+func _layout_names() -> void:
 	for side in 2:
 		var p: Control = _name_plates[side]
 		if p == null:
 			continue
 		p.reset_size()
-		var hp := _hero_pos(side)
-		p.position = Vector2(hp.x - HeroView.W * 0.5 - 40.0 - p.size.x, hp.y - p.size.y / 2 + (30.0 if side == 0 else -30.0) * ky)
+		# Over the player's mana tray (under the opponent's), in the side column: clear of the hand, which keeps left of
+		# the tray, of the board and of the notices by the heroes.
+		var m: Node2D = mana_views[side]
+		var c := m.position + Vector2(-5.0, (-78.0 if side == 0 else 78.0) * ky)
+		p.position = c - p.size / 2
 
 
 func _opp_name() -> String:
