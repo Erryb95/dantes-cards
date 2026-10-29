@@ -521,7 +521,7 @@ func _draw_chapter(sz: Vector2, shots: Array) -> void:
 	if a <= 0.0:
 		return
 	var fs := int(sz.y * 0.075)
-	_centered(IntroFonts.caps(), IntroTimeline.CHAPTER, sz.y * 0.5 + fs * 0.3, fs,
+	_centered(IntroFonts.caps(), Loc.t(IntroTimeline.CHAPTER), sz.y * 0.5 + fs * 0.3, fs,
 		Color(IntroFonts.BONE.r, IntroFonts.BONE.g, IntroFonts.BONE.b, a))
 	_rule(sz.y * 0.5 + fs * 0.9, sz.x * 0.12, Color(IntroFonts.EMBER.r, IntroFonts.EMBER.g, IntroFonts.EMBER.b, a * 0.8))
 
@@ -540,7 +540,7 @@ func _draw_story(sz: Vector2, shots: Array) -> void:
 	for i in IntroTimeline.STORY_CARD.size():
 		var a := _ease((time - (s + IntroTimeline.STORY_FIRST + i * IntroTimeline.STORY_STEP)) / 1.4) * out
 		if a > 0.0:
-			_centered(IntroFonts.body(), IntroTimeline.STORY_CARD[i], y + i * fs * 1.9, fs,
+			_centered(IntroFonts.body(), Loc.t(IntroTimeline.STORY_CARD[i]), y + i * fs * 1.9, fs,
 				Color(IntroFonts.BONE.r, IntroFonts.BONE.g, IntroFonts.BONE.b, a))
 	_rule(sz.y * 0.5 - fs * 2.7, sz.x * 0.1, Color(IntroFonts.EMBER.r, IntroFonts.EMBER.g, IntroFonts.EMBER.b,
 		_ease((time - s - 0.8) / 1.5) * out * 0.7))

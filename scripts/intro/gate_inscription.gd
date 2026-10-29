@@ -21,6 +21,7 @@ var _widths: Array[float] = []
 var _bloom: Control
 var _sparks: CPUParticles2D
 var _halo: GradientTexture2D
+var _ins: Array[String] = IntroTimeline.inscription() # the carved lines in the shown language
 
 
 func _init() -> void:
@@ -81,7 +82,7 @@ func set_state(now: float, alpha: float) -> void:
 ## Seconds after voice start at which letter `ci` of line `li` is carved.
 func letter_time(li: int, ci: int) -> float:
 	var span: Vector2 = IntroTimeline.INSCRIPTION_TIMES[li]
-	var n := maxi(String(IntroTimeline.INSCRIPTION[li]).length() - 1, 1)
+	var n := maxi(String(_ins[li]).length() - 1, 1)
 	return span.x - LEAD + (span.y - span.x + LEAD) * float(ci) / float(n)
 
 
@@ -89,7 +90,7 @@ func _layout(fs: int) -> void:
 	_fs = fs
 	_xs.clear()
 	_widths.clear()
-	for l in IntroTimeline.INSCRIPTION:
+	for l in _ins:
 		var xs := PackedFloat32Array()
 		for i in l.length() + 1:
 			xs.append(_font.get_string_size(l.left(i), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x)
@@ -148,7 +149,7 @@ func _draw() -> void:
 	var edge := Color(0.78, 0.7, 0.58, 0.22 * a)
 	var head := Vector2(-1, -1)
 	for li in IntroTimeline.INSCRIPTION.size():
-		var line: String = IntroTimeline.INSCRIPTION[li]
+		var line: String = _ins[li]
 		var p := _line_pos(li, m)
 		var xs := _xs[li]
 		# characters that are already fully cooled are drawn as one string
@@ -201,7 +202,7 @@ func _draw_bloom() -> void:
 	var o := fs * 0.07
 	var offs: Array[Vector2] = [Vector2(o, 0), Vector2(-o, 0), Vector2(0, o), Vector2(0, -o)]
 	for li in IntroTimeline.INSCRIPTION.size():
-		var line: String = IntroTimeline.INSCRIPTION[li]
+		var line: String = _ins[li]
 		var p := _line_pos(li, m)
 		var xs := _xs[li]
 		var settled := 0

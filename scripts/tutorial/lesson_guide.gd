@@ -270,7 +270,8 @@ func _show_step() -> void:
 		return
 	_shown = true
 	_collapsed = false
-	var say := str(s.get("say", "")).replace("{tap}", UI.tap_word().to_lower()).replace("{Tap}", UI.tap_word())
+	var tap_word := Loc.t(UI.tap_word()) # "Tap" or "Click", in the shown language
+	var say := str(s.get("say", "")).replace("{tap}", tap_word.to_lower()).replace("{Tap}", tap_word)
 	if say == "":
 		_hide_box()
 	else:
@@ -278,7 +279,7 @@ func _show_step() -> void:
 		# Wrapped at its balanced width: even lines, and the plate's margins the same on both sides.
 		_text.custom_minimum_size.x = UI.balanced_width(_text.get_theme_font("font"), TEXT_PX, say, PLATE_W - 100.0)
 		var tap := str(s.get("wait", "")) == "tap"
-		_hint.text = ("%s to continue" % UI.tap_word()) if tap else ""
+		_hint.text = Loc.t("Tap to continue" if UI.touch_ui() else "Click to continue") if tap else ""
 		_hint.visible = tap
 		_plate.visible = true
 		_plate.reset_size()
@@ -475,7 +476,8 @@ func _tick_ghost(pr: Array, mr: Array) -> void:
 func _layout_box(view: Vector2, pr: Array, mr: Array) -> void:
 	if not _box.visible:
 		return
-	var plate_sz := _plate.get_combined_minimum_size() if _plate.visible else Vector2.ZERO
+	# The plate as laid out: a wrapped line can make it taller than its minimum size said (a long translated line).
+	var plate_sz := _plate.get_combined_minimum_size().max(_plate.size) if _plate.visible else Vector2.ZERO
 	var w := PORTRAIT.x + 40.0 + plate_sz.x
 	var h := maxf(PORTRAIT.y + 50.0, plate_sz.y)
 	var x0 := 40.0 + PORTRAIT.x * 0.15

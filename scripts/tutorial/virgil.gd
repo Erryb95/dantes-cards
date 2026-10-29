@@ -91,7 +91,7 @@ static func dialog(parent: Node, title: String, text: String, choices: Array) ->
 	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(col)
 	# The heading as painted words when they exist (assets/ui/words, art_src/tutorial_art.json), else the set title.
-	var word := UI.word_tex(title)
+	var word := UI.word_tex(Loc.t(title)) # painted words exist for the English headings only
 	if word != null and col.get_child(0) is Label:
 		var old := col.get_child(0)
 		var w := UI.word_rect(word, Vector2(640, 92))

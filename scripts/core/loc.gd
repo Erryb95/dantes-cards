@@ -15,6 +15,7 @@ const DIR := "res://data/i18n/"
 
 static var _lang := "en"
 static var _strings := {} ## English -> translated, for _lang (empty for English)
+static var _shown := {} ## the translations themselves: a text translated twice (a helper of a helper) is not missing
 static var _data := {} ## kind -> id -> translated fields, for _lang
 static var missing := {} ## English text asked for with no translation (a language other than English): the audit lists it
 
@@ -32,6 +33,7 @@ static func resolve(choice: String) -> String:
 static func use(lang: String) -> void:
 	_lang = lang if lang in LANGS else "en"
 	_strings = {}
+	_shown = {}
 	_data = {}
 	TranslationServer.set_locale(_lang)
 	if _lang == "en":
@@ -49,6 +51,7 @@ static func use(lang: String) -> void:
 			for k in j:
 				if not str(k).begins_with("_") and str(j[k]) != "":
 					_strings[str(k)] = str(j[k])
+					_shown[str(j[k])] = true
 		elif f.begins_with("data_"):
 			for kind in j:
 				if str(kind).begins_with("_") or not j[kind] is Dictionary:
@@ -56,7 +59,19 @@ static func use(lang: String) -> void:
 				if not _data.has(kind):
 					_data[kind] = {}
 				(_data[kind] as Dictionary).merge(j[kind], true)
+				_mark_shown(j[kind])
 	_reload_data()
+
+
+static func _mark_shown(v) -> void:
+	if v is String:
+		_shown[v] = true
+	elif v is Dictionary:
+		for k in v:
+			_mark_shown(v[k])
+	elif v is Array:
+		for x in v:
+			_mark_shown(x)
 
 
 static func _reload_data() -> void:
@@ -74,6 +89,8 @@ static func t(s: String) -> String:
 		return s
 	if _strings.has(s):
 		return _strings[s]
+	if _shown.has(s):
+		return s
 	if s.strip_edges() != "" and s.to_upper() != s.to_lower(): # some letters (not a number or a mark)
 		missing[s] = true
 	return s

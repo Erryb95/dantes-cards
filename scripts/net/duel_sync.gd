@@ -50,14 +50,14 @@ func setup(start: Dictionary, my_user_id: String) -> bool:
 	start_msg = start
 	players = start.get("players", [])
 	if players.size() != 2:
-		error = "The match has no two players."
+		error = Loc.t("The match has no two players.")
 		return false
 	names = start.get("names", ["", ""])
 	if names.size() != 2:
 		names = ["", ""]
 	me = players.find(my_user_id)
 	if me == -1:
-		error = "This match is not yours."
+		error = Loc.t("This match is not yours.")
 		return false
 	var f: Variant = start.get("first", 0)
 	first = players.find(f) if f is String else int(f)
@@ -70,12 +70,12 @@ func setup(start: Dictionary, my_user_id: String) -> bool:
 	rope_ms = int(start.get("rope_ms", rope_ms))
 	var raw: Array = start.get("decks", [])
 	if raw.size() != 2:
-		error = "The server sent no decks."
+		error = Loc.t("The server sent no decks.")
 		return false
 	for c in 2:
 		var d := parse_deck(raw[c])
 		if d.is_empty():
-			error = "A deck could not be read."
+			error = Loc.t("A deck could not be read.")
 			return false
 		classes[c] = d.cls
 		heroes[c] = CardDB.class_hero(d.cls)
@@ -238,14 +238,14 @@ static func error_text(code: String) -> String:
 		"already_sent", "not_in_mulligan":
 			return ""
 		"not_your_turn":
-			return "Too late: the turn has passed."
+			return Loc.t("Too late: the turn has passed.")
 		"not_started":
-			return "The duel has not started yet."
+			return Loc.t("The duel has not started yet.")
 		"too_many_actions":
-			return "Too many moves this turn."
+			return Loc.t("Too many moves this turn.")
 		"bad_payload":
-			return "The server could not read that move."
-	return "The server refused that (%s)." % code.replace("_", " ")
+			return Loc.t("The server could not read that move.")
+	return Loc.t("The server refused that (%s).") % code.replace("_", " ")
 
 
 ## Who won by the server's END (106), as a local side: 0 me, 1 the opponent, 2 nobody (a draw, a desync, a lost

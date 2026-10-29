@@ -85,9 +85,9 @@ static func done_count() -> int:
 static func reward_text(l: Dictionary) -> String:
 	var r: Dictionary = l.get("reward", {})
 	if int(r.get("packs", 0)) > 0:
-		return "%d pack" % r.packs if int(r.packs) == 1 else "%d packs" % r.packs
+		return Loc.t("%d pack") % r.packs if int(r.packs) == 1 else Loc.t("%d packs") % r.packs
 	if int(r.get("obols", 0)) > 0:
-		return "%d Obols" % r.obols
+		return Loc.t("%d Obols") % r.obols
 	return ""
 
 

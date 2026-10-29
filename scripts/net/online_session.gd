@@ -165,7 +165,7 @@ func sign_in_with(provider: String, token_value: String) -> String:
 	if linked.has("error") and not link_taken(linked):
 		# A network failure or a refused token: say so. Signing into the provider's account now would create a new,
 		# empty account for it and leave this guest account (and its cloud save) behind.
-		return "Could not link the %s account: %s" % [provider.capitalize(), str(linked.error)]
+		return Loc.t("Could not link the %s account: %s") % [provider.capitalize(), str(linked.error)]
 	if linked.has("error"):
 		var a := await client.authenticate_provider(provider, token_value)
 		if a.has("error"):
@@ -178,7 +178,7 @@ func sign_in_with(provider: String, token_value: String) -> String:
 		var fresh := _new_device_id()
 		var l := await client.link_device(fresh)
 		if l.has("error"):
-			return "Signed in, but this device could not be remembered (%s)." % str(l.error)
+			return Loc.t("Signed in, but this device could not be remembered (%s).") % str(l.error)
 		_save_device_id(fresh)
 		client.close_socket()
 		await client.set_display_name(display_name(), avatar_url())
@@ -225,7 +225,7 @@ func avatar_url() -> String:
 ## Signs in (when the session is missing or old) and opens the socket. "" when connected, else a message to show.
 func ensure_connected() -> String:
 	if not configured():
-		return "Online play is not configured on this copy of the game."
+		return Loc.t("Online play is not configured on this copy of the game.")
 	while _connecting: # another caller is signing in already: share its result
 		await get_tree().process_frame
 	_connecting = true
@@ -298,7 +298,7 @@ func search(cls: String, cards: Array) -> void:
 	_reset_match()
 	ticket = ""
 	state = State.CONNECTING
-	status.emit("Connecting to the server...")
+	status.emit(Loc.t("Connecting to the server..."))
 	var err := await ensure_connected()
 	if my_search != _search_id:
 		return
@@ -311,11 +311,11 @@ func search(cls: String, cards: Array) -> void:
 	if my_search != _search_id:
 		return
 	if str(active.get("match_id", "")) != "":
-		status.emit("Returning to your duel...")
+		status.emit(Loc.t("Returning to your duel..."))
 		await _join(str(active.match_id), {}, my_search)
 		return
 	state = State.SEARCHING
-	status.emit("Searching for an opponent...")
+	status.emit(Loc.t("Searching for an opponent..."))
 	var got := await client.matchmaker_add()
 	if my_search != _search_id:
 		if got != "":
@@ -326,7 +326,7 @@ func search(cls: String, cards: Array) -> void:
 	ticket = got
 	if ticket == "":
 		state = State.IDLE
-		failed.emit("The server would not queue you: %s" % client.last_error)
+		failed.emit(Loc.t("The server would not queue you: %s") % client.last_error)
 
 
 func cancel_search() -> void:
@@ -347,10 +347,10 @@ func _on_matched(m: Dictionary) -> void:
 	ticket = ""
 	var id := str(m.get("match_id", ""))
 	if id == "":
-		failed.emit("The match could not be created.")
+		failed.emit(Loc.t("The match could not be created."))
 		state = State.IDLE
 		return
-	status.emit("Opponent found!")
+	status.emit(Loc.t("Opponent found!"))
 	await _join(id, _deck_meta, _search_id)
 
 
@@ -377,7 +377,7 @@ func _join(id: String, meta: Dictionary, my_search: int) -> void:
 		t += maxf(get_process_delta_time(), 0.001)
 		if t > 3.0 and not told:
 			told = true
-			status.emit("Waiting for your opponent to arrive...")
+			status.emit(Loc.t("Waiting for your opponent to arrive..."))
 	if state == State.IN_MATCH:
 		return
 	if match_id == id: # cancelled, or no START in time: never stay in a match nobody plays
@@ -385,7 +385,7 @@ func _join(id: String, meta: Dictionary, my_search: int) -> void:
 		match_id = ""
 	if state == State.JOINING and my_search == _search_id:
 		state = State.IDLE
-		failed.emit("Your opponent never arrived. Try again.")
+		failed.emit(Loc.t("Your opponent never arrived. Try again."))
 
 
 ## A refused match join, said plainly. Nakama: code 4 = no such match, 5 = the match refused the join (its reason).
@@ -393,10 +393,10 @@ static func join_error_text(r: Dictionary) -> String:
 	var code := int(r.get("code", -1))
 	var why := str(r.get("error", ""))
 	if code == 4 or why.to_lower().contains("not found") or why.to_lower().contains("is over"):
-		return "That duel has already ended."
+		return Loc.t("That duel has already ended.")
 	if code == 5:
-		return "The duel would not let you in: %s." % why
-	return "Could not join the duel: %s" % why
+		return Loc.t("The duel would not let you in: %s.") % why
+	return Loc.t("Could not join the duel: %s") % why
 
 
 ## On launch: is there a duel to go back to? Its match id, or "" (also when offline or not configured).
@@ -414,7 +414,7 @@ func rejoin(id: String) -> void:
 	_search_id += 1
 	var my_search := _search_id
 	_reset_match()
-	status.emit("Returning to your duel...")
+	status.emit(Loc.t("Returning to your duel..."))
 	var err := await ensure_connected()
 	if my_search != _search_id: # cancelled while connecting: do not join behind the player's back
 		return
@@ -444,8 +444,8 @@ func _on_match_data(op: int, data: Dictionary) -> void:
 	if op == DuelSync.S_END and state == State.JOINING: # the server gave up waiting for the other player
 		state = State.IDLE
 		match_id = ""
-		failed.emit("Your opponent never arrived. Try again." if str(data.get("reason", "")) == "no_show"
-			else "That duel has already ended.")
+		failed.emit(Loc.t("Your opponent never arrived. Try again.") if str(data.get("reason", "")) == "no_show"
+			else Loc.t("That duel has already ended."))
 		return
 	match op:
 		DuelSync.S_START:
@@ -494,7 +494,7 @@ func _on_socket_closed(reason: String) -> void:
 	elif state in [State.SEARCHING, State.CONNECTING, State.JOINING]:
 		_search_id += 1
 		state = State.IDLE
-		failed.emit("The connection was lost (%s)." % reason)
+		failed.emit(Loc.t("The connection was lost (%s).") % reason)
 
 
 ## The socket dropped during a duel: keep trying to come back (the server holds the seat for 30 s) and rejoin; the
@@ -556,7 +556,7 @@ func check_alive() -> void:
 	var alive := await client.ping(PING_TIMEOUT)
 	_hb_busy = false
 	if not alive and client.socket_open():
-		client.drop_socket("no answer from the server")
+		client.drop_socket(Loc.t("no answer from the server"))
 
 
 # ---------------------------------------------------------------- chat
@@ -628,11 +628,11 @@ func cloud_on() -> bool:
 func sync_text() -> String:
 	match sync_state:
 		"saved":
-			return "Saved to your account"
+			return Loc.t("Saved to your account")
 		"offline":
-			return "Offline: will sync later"
+			return Loc.t("Offline: will sync later")
 		"syncing":
-			return "Saving to your account..."
+			return Loc.t("Saving to your account...")
 	return ""
 
 

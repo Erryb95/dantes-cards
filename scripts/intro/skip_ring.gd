@@ -33,7 +33,7 @@ func _draw() -> void:
 	var fs := int(size.y * (0.03 if touch else 0.019))
 	if fs <= 0:
 		return
-	var txt := "Touch and hold to skip" if touch else "Hold Esc or the mouse button to skip"
+	var txt := Loc.t("Touch and hold to skip" if touch else "Hold Esc or the mouse button to skip")
 	var w := font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	draw_string(font, Vector2(c.x - r * 1.8 - w, c.y + fs * 0.3), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, fs,
 		Color(IntroFonts.BONE.r, IntroFonts.BONE.g, IntroFonts.BONE.b, 0.7 * a))
