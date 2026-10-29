@@ -1279,7 +1279,7 @@ static func dialog(parent: Node, title: String, text: String, choices: Array) ->
 	var buttons: Array[Button] = []
 	for c in choices:
 		# Each plate as wide as its label needs past the scrollwork ends (within reason); one letter size for the row.
-		var tw := font("title").get_string_size(str(c[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, 30).x
+		var tw := font("title").get_string_size(Loc.t(str(c[0])), HORIZONTAL_ALIGNMENT_LEFT, -1, 30).x # the shown text
 		var btn := button(str(c[0]), clampf(tw + 190.0, 260.0, 400.0), 76)
 		btn.add_theme_font_size_override("font_size", 30)
 		var act: Variant = c[1]

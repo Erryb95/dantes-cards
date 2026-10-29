@@ -193,11 +193,11 @@ func _card(hero: String, w: float) -> Button:
 		gap.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		v.add_child(gap)
-		var dn := UI.label("Deck: %s" % decks[0].name, 18, "italic", Color(0.85, 0.78, 0.66), 3, ClassInfoPanel.SHADE)
+		var dn := UI.label(Loc.t("Deck: %s") % decks[0].name, 18, "italic", Color(0.85, 0.78, 0.66), 3, ClassInfoPanel.SHADE)
 		dn.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		UI.fit_label(dn, room, 13)
 		v.add_child(dn)
-	var guide := ClassInfoPanel.info_button(44.0, "%s class guide" % info.title)
+	var guide := ClassInfoPanel.info_button(44.0, Loc.t("%s class guide") % info.title)
 	guide.name = "Guide"
 	guide.position = Vector2(w - 44.0 - 16.0, 16.0)
 	guide.pressed.connect(func(): ClassInfoPanel.open(self, cls))

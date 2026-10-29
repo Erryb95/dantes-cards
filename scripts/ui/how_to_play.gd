@@ -64,15 +64,20 @@ func _ready() -> void:
 	var tabs := VBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 20) # the plates' scrollwork overhangs their height
 	body.add_child(tabs)
+	# 320 px plates, wider (up to 400) when a translated chapter name would shrink below 24 px on them.
+	var tab_w := 320.0
+	for c in CHAPTERS:
+		tab_w = maxf(tab_w, UI.font("title").get_string_size(Loc.t(c), HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x + 170.0)
+	tab_w = minf(ceilf(tab_w), 400.0)
 	for i in CHAPTERS.size():
-		var b := UI.button(CHAPTERS[i], 320, 68)
+		var b := UI.button(CHAPTERS[i], tab_w, 68)
 		b.add_theme_font_size_override("font_size", 28)
 		b.pressed.connect(show_chapter.bind(i))
 		tabs.add_child(b)
 		_tabs.append(b)
 	UI.even_text(_tabs)
 	# The pages in the room the screen leaves (a phone at 1080 px high, a 4:3 tablet taller).
-	_w = clampf(vs.x - 2.0 * MARGIN - 320.0 - 26.0 - 30.0 - 104.0, 760.0, 1240.0)
+	_w = clampf(vs.x - 2.0 * MARGIN - tab_w - 26.0 - 30.0 - 104.0, 760.0, 1240.0)
 	var h := clampf(vs.y - 66.0 - 80.0 - 80.0 - 14.0 - 76.0 - 14.0 - 60.0, 560.0, 900.0)
 	_scroll = ScrollContainer.new()
 	_scroll.name = "Pages"
@@ -111,10 +116,10 @@ func show_chapter(i: int) -> void:
 			_page("Reading a minion", "Attack is the number on the left, Health on the right. Damage stays: a minion whose Health reaches 0 is destroyed. A number turns green when it is raised and red when the minion is hurt.")
 			_page("Learn by playing", "Virgil's lessons (Learn to Play, on the title screen) teach all of this in a few short matches, one idea at a time.")
 		1:
-			_page("Mana", "You start with 1 mana crystal and gain one more every turn, up to %d. Your crystals refill when your turn begins. Spend them on cards and on your hero power." % BattleState.MAX_MANA)
-			_page("Drawing", "You draw a card at the start of each turn. You can hold %d cards: a card drawn into a full hand burns. Once your deck is empty, every draw deals Fatigue damage to your hero, 1 more each time." % BattleState.MAX_HAND)
+			_page("Mana", Loc.t("You start with 1 mana crystal and gain one more every turn, up to %d. Your crystals refill when your turn begins. Spend them on cards and on your hero power.") % BattleState.MAX_MANA)
+			_page("Drawing", Loc.t("You draw a card at the start of each turn. You can hold %d cards: a card drawn into a full hand burns. Once your deck is empty, every draw deals Fatigue damage to your hero, 1 more each time.") % BattleState.MAX_HAND)
 			_page("Playing a card", "Drag a card up from your hand onto the board. A card that needs a target becomes an arrow: aim it and let go. Cards you can play now glow green.")
-			_page("Hero power", "Every hero has a power beside the portrait: 2 mana, once per turn. %s it to use it." % UI.tap_word())
+			_page("Hero power", Loc.t("Every hero has a power beside the portrait: 2 mana, once per turn. %s it to use it.") % Loc.t(UI.tap_word()))
 			_page("Ending your turn", "When you are done, press End Turn. The seal lights up when you have nothing left to do.")
 			_page("Your opening hand", "You start with 3 cards, or 4 if you go second. Before the first turn you may swap any of them. The player going second also gets Charon's Obol: a free card that gives 1 extra mana for one turn.")
 		2:
@@ -123,7 +128,7 @@ func show_chapter(i: int) -> void:
 			_page("Asleep", "A minion cannot attack on the turn it is played: it sleeps until your next turn, unless it has Swift.")
 			_page("Guard", "While an enemy minion with Guard stands, your minions must attack it first. Spells can still hit any target.")
 			_page("Armor", "Armor sits on top of a hero's Health and takes damage first. It stays until it is used up.")
-			_page("The board", "Each side holds up to %d minions." % BattleState.MAX_BOARD)
+			_page("The board", Loc.t("Each side holds up to %d minions.") % BattleState.MAX_BOARD)
 			if UI.touch_ui():
 				_page("On a touch screen", "Drag with your finger, or tap a minion and then its target. Hold a card over your hand to read it at full size. Tap a minion to see its card and keywords.")
 			else:
@@ -145,9 +150,9 @@ func show_chapter(i: int) -> void:
 			for cls in CardDB.classes():
 				_list.add_child(_class_page(cls))
 		5:
-			_page("Decks", "A deck has exactly %d cards: cards of its class plus neutral cards, at most 2 copies of a card and 1 of a legendary." % Collection.DECK_SIZE)
+			_page("Decks", Loc.t("A deck has exactly %d cards: cards of its class plus neutral cards, at most 2 copies of a card and 1 of a legendary.") % Collection.DECK_SIZE)
 			_page("Choose your path", "Play opens Choose your path. Pick one of the ready-made decks of any class, or a deck you built yourself. The opponent's strength (Easy, Medium or Hard) is set there and in Options.")
-			_page("Obols and packs", "Every match pays Obols: %d for a win, %d for a loss. A pack costs %d Obols and holds %d cards, at least one of them rare or better." % [Collection.WIN_REWARD, Collection.LOSS_REWARD, Collection.PACK_PRICE, Collection.PACK_SIZE])
+			_page("Obols and packs", Loc.t("Every match pays Obols: %d for a win, %d for a loss. A pack costs %d Obols and holds %d cards, at least one of them rare or better.") % [Collection.WIN_REWARD, Collection.LOSS_REWARD, Collection.PACK_PRICE, Collection.PACK_SIZE])
 			_page("Your collection", "Collection shows every card you own. Build your own decks from the cards you own; Auto-fill completes a deck along a sensible mana curve. Copies beyond what a deck can use turn into Obols.")
 	_scroll.scroll_vertical = 0
 

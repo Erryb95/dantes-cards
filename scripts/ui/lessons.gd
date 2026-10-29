@@ -71,12 +71,12 @@ func _virgil() -> Control:
 	plate.add_theme_stylebox_override("panel", UI.parchment_box(40, 26))
 	var done := Lessons.done_count()
 	var n := Lessons.all().size()
-	var count: String = ["A few", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"][n if n <= 8 else 0]
-	var say := "%s short lessons, and you will know the way. Each takes only a few minutes. Shall we begin?" % count
+	var count: String = Loc.t(["A few", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"][n if n <= 8 else 0])
+	var say := Loc.t("%s short lessons, and you will know the way. Each takes only a few minutes. Shall we begin?") % count
 	if done >= n:
 		say = "You have learned all I can teach. Play any lesson again whenever you like. Hell is wide: go and see it."
 	elif done > 0 or not Settings.lessons.is_empty():
-		say = "Welcome back, pilgrim. %s is waiting for you." % str(Lessons.get_lesson(_next).get("title", ""))
+		say = Loc.t("Welcome back, pilgrim. %s is waiting for you.") % str(Lessons.get_lesson(_next).get("title", ""))
 	var l := UI.label(say, 27, "italic", UI.INK, 0)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(340, 0)
@@ -129,7 +129,7 @@ func _tile(l: Dictionary, i: int) -> Button:
 	# (A wrapped line advances about 4 px more than get_line_height, and the plaque's painted field sits 2 px high:
 	# measured on the drawn ink.)
 	var y0 := roundf((TILE.y - (76.0 + lines * (learn.get_line_height() + 4.0))) / 2.0) - 2.0
-	var num := UI.label("LESSON %d" % (i + 1), 22, "title", Color(0.85, 0.7, 0.45), 3, Color.BLACK)
+	var num := UI.label(Loc.t("LESSON %d") % (i + 1), 22, "title", Color(0.85, 0.7, 0.45), 3, Color.BLACK)
 	num.position = Vector2(x, y0)
 	b.add_child(num)
 	var title := UI.label(str(l.title), 38, "title", UI.GOLD, 5, Color(0.08, 0.02, 0.0))
@@ -195,7 +195,9 @@ static func reward_badge(r: Dictionary, prefix: String = "", ink: bool = false) 
 		coin.custom_minimum_size = coin.size
 		coin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(coin)
-	var text := ("%d pack" % packs if packs == 1 else "%d packs" % packs) if packs > 0 else "%d Obols" % obols
+	var text := (Loc.t("%d pack") % packs if packs == 1 else Loc.t("%d packs") % packs) if packs > 0 \
+		else Loc.t("%d Obols") % obols
+	prefix = Loc.t(prefix) # "Reward:  " (the battle's result)
 	var l := UI.label(prefix + text, 30, "title", Virgil.RED_INK, 0) if ink \
 		else UI.label(prefix + text, 30, "title", Color(1.0, 0.85, 0.5), 3, Color.BLACK)
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

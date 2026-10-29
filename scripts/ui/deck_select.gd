@@ -148,7 +148,7 @@ func _find(key: String) -> Dictionary:
 func _own_text(d: Dictionary) -> String:
 	var n := Collection.deck_count(d.cards)
 	if n == 0:
-		return "An empty deck. Open it in the editor to fill it."
+		return Loc.t("An empty deck. Open it in the editor to fill it.")
 	var spells := 0
 	var cost := 0
 	for id in d.cards:
@@ -157,7 +157,7 @@ func _own_text(d: Dictionary) -> String:
 		cost += int(c.get("cost", 0)) * k
 		if c.get("type", "minion") == "spell":
 			spells += k
-	return "Your own deck: %d minions and %d spells, average cost %.1f." % [n - spells, spells, float(cost) / n]
+	return Loc.t("Your own deck: %d minions and %d spells, average cost %.1f.") % [n - spells, spells, float(cost) / n]
 
 
 ## The three showpiece cards of a deck the player built: the rarest, then the most expensive.
@@ -222,7 +222,7 @@ func _header() -> Control:
 	sb.content_margin_bottom = 12
 	plaque.add_theme_stylebox_override("panel", sb)
 	UI.add_field(plaque)
-	var sub := UI.label("Next arena:  " + where, 26, "italic", UI.BONE, 4, Color.BLACK)
+	var sub := UI.label(Loc.t("Next arena:  %s") % where, 26, "italic", UI.BONE, 4, Color.BLACK)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_fit_label(sub, SHOW_W - 60.0 - 12.0, 18)
@@ -233,12 +233,12 @@ func _header() -> Control:
 	plates.add_theme_constant_override("separation", 24)
 	head.add_child(plates)
 	var pw := floorf((lib_w - 24.0) / 2.0)
-	var diff := UI.button("Opponent: " + Settings.DIFFICULTY_NAMES[Settings.difficulty], pw, 60)
+	var diff := UI.button(Loc.t("Opponent: %s") % Loc.t(Settings.DIFFICULTY_NAMES[Settings.difficulty]), pw, 60)
 	diff.add_theme_font_size_override("font_size", 30)
 	diff.pressed.connect(func():
 		Settings.difficulty = (Settings.difficulty + 1) % Settings.DIFFICULTY_NAMES.size()
 		Settings.save()
-		diff.text = "Opponent: " + Settings.DIFFICULTY_NAMES[Settings.difficulty]
+		diff.text = Loc.t("Opponent: %s") % Loc.t(Settings.DIFFICULTY_NAMES[Settings.difficulty])
 		diff.add_theme_font_size_override("font_size", 30)
 		UI.fit_text(diff))
 	plates.add_child(diff)
@@ -425,7 +425,7 @@ func _show(e: Dictionary, step: int) -> void:
 	_who.text = "%s  ·  %s" % [info.title, info.tagline]
 	_who.add_theme_font_size_override("font_size", 22)
 	_fit_wrapped(_who, room, 2, 16)
-	_txt.text = e.text if e.problem == "" else "Incomplete: %s. Open it in the editor to finish it." % e.problem
+	_txt.text = e.text if e.problem == "" else Loc.t("Incomplete: %s. Open it in the editor to finish it.") % e.problem
 	_txt.add_theme_color_override("font_color", INK if e.problem == "" else INK_RED)
 	_txt.add_theme_font_size_override("font_size", 24)
 	_fit_wrapped(_txt, room, 3, 17)
@@ -474,7 +474,7 @@ func _fill_power(cls: String) -> void:
 	disc.position = Vector2((w - 66.0) / 2.0, 12)
 	disc.size = disc.custom_minimum_size
 	disc.mouse_filter = Control.MOUSE_FILTER_STOP
-	disc.tooltip_text = "Hero power: %s (%d mana). %s" % [info.power.get("name", ""), int(info.power.get("cost", 2)),
+	disc.tooltip_text = Loc.t("Hero power: %s (%d mana). %s") % [info.power.get("name", ""), int(info.power.get("cost", 2)),
 		info.power.get("text", "")]
 	_power.add_child(disc)
 	var n := ClassInfoPanel.gilded(str(info.power.get("name", "")), 19, w)
@@ -619,7 +619,7 @@ func _open_list(e: Dictionary) -> void:
 	tc.add_child(title)
 	v.add_child(tc)
 	var info := CardDB.class_info(e.cls)
-	var sub := UI.plaque_label("%s  ·  %s deck  ·  %d cards" % [info.title, TAGS[_kind(e)][0], e.count], 24)
+	var sub := UI.plaque_label(Loc.t("%s  ·  %s  ·  %d cards") % [info.title, Loc.t(str(TAGS[_kind(e)][0]) + " deck"), e.count], 24)
 	sub.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(sub)
 	# The cards, as big as the room allows: as many rows as give the largest cards.
@@ -732,7 +732,7 @@ func _library() -> Control:
 	# plaques like the class plaques below (their thin frame leaves the letters far more room than the plates'
 	# scrollwork ends, which cut "Ferryman" and "Wrathful" off at 16 px); once even those no longer fit, the class
 	# tabs show the class's emblem (its hero power icon) instead of the name.
-	var filters := [["all", "All"]] # as in the collection; "All decks" set the whole row's letters smallest
+	var filters := [["all", Loc.t("All")]] # shown names translated here (the tabs are measured by them); as in the collection; "All decks" set the whole row's letters smallest
 	for cls in CardDB.classes():
 		filters.append([cls, CardDB.class_title(cls)])
 	var tab_room := inner - TAB_GAP * (filters.size() - 1)
@@ -909,7 +909,7 @@ func _update_scroll_btns() -> void:
 		b.disabled = not overflow
 		# A hidden disc neither takes the pointer nor shows its tooltip.
 		b.mouse_filter = Control.MOUSE_FILTER_STOP if overflow else Control.MOUSE_FILTER_IGNORE
-		b.tooltip_text = ("Scroll up" if b == _scroll_btns[0] else "Scroll down") if overflow else ""
+		b.tooltip_text = Loc.t("Scroll up" if b == _scroll_btns[0] else "Scroll down") if overflow else ""
 
 
 # --- A deck ------------------------------------------------------------------------------------------------------
@@ -1078,7 +1078,7 @@ func _tag(body: Control, face: Rect2, kind: String) -> void:
 		t.name = "Tag"
 		t.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		t.position = Vector2(face.end.x - t.size.x + 14.0, face.position.y - 19.0)
-		var w := UI.label(str(TAGS[kind][0]).to_upper(), 13, "title",
+		var w := UI.label(Loc.t(str(TAGS[kind][0])).to_upper(), 13, "title",
 			Color(0.25, 0.1, 0.03) if kind != "custom" else Color(1.0, 0.86, 0.6), 0 if kind != "custom" else 3, SHADE)
 		w.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		w.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -1095,7 +1095,7 @@ func _tag(body: Control, face: Rect2, kind: String) -> void:
 	p.add_theme_stylebox_override("panel", UI.plaque_box(9, 1))
 	UI.add_field(p, 4.0, Color(0.42, 0.34, 0.3))
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var l := UI.label(str(TAGS[kind][0]).to_upper(), 13, "title", TAGS[kind][1], 3, SHADE)
+	var l := UI.label(Loc.t(str(TAGS[kind][0])).to_upper(), 13, "title", TAGS[kind][1], 3, SHADE)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	p.add_child(l)
@@ -1133,7 +1133,8 @@ func _deck(e: Dictionary) -> Button:
 	_tag(body, face, _kind(e))
 	_count_disc(body, face, int(e.count), dim)
 	_name_plaque(body, e.name)
-	b.tooltip_text = "%s deck, %d cards" % [TAGS[_kind(e)][0], e.count] if e.problem == "" 		else "Incomplete: %s" % e.problem
+	b.tooltip_text = Loc.t("%s, %d cards") % [Loc.t(str(TAGS[_kind(e)][0]) + " deck"), e.count] if e.problem == "" \
+		else Loc.t("Incomplete: %s") % e.problem
 	b.pressed.connect(func():
 		if _selected == e.key:
 			_play_entry(e)
@@ -1169,8 +1170,8 @@ func _new_deck(cls: String) -> Button:
 	plus.position = face.position
 	UI.gild(plus, UI.GOLD, plus.size.y)
 	body.add_child(plus)
-	_name_plaque(body, "New deck")
-	b.tooltip_text = "Build a new %s deck" % CardDB.class_title(cls)
+	_name_plaque(body, Loc.t("New deck"))
+	b.tooltip_text = Loc.t("Build a new %s deck") % CardDB.class_title(cls)
 	b.pressed.connect(_edit.bind(-1, cls))
 	b.set_meta("on", false)
 	_pose(b, true)

@@ -51,7 +51,7 @@ func _ready() -> void:
 		_index = -1
 		var cls_title := CardDB.class_title(Game.new_deck_cls)
 		var mine := Collection.decks.filter(func(d): return d.cls == Game.new_deck_cls).size()
-		deck = {"name": "%s Deck %d" % [cls_title, mine + 1], "cls": Game.new_deck_cls, "cards": {}}
+		deck = {"name": Loc.t("%s Deck %d") % [cls_title, mine + 1], "cls": Game.new_deck_cls, "cards": {}}
 
 	var root := HBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -149,7 +149,7 @@ func _ready() -> void:
 	nr.add_child(_name)
 	# Rename: a bronze disc with an engraved pen nib (the Rename plate took almost half the row, and a long name
 	# shrank to 16 px and still ran under the frame).
-	var ren := _disc("Rename the deck", _draw_nib, "icon_rename")
+	var ren := _disc(Loc.t("Rename the deck"), _draw_nib, "icon_rename")
 	ren.pressed.connect(func():
 		_name.grab_focus()
 		_name.select_all())
@@ -218,7 +218,7 @@ func _ready() -> void:
 	UI.even_text([fill, clear]) # one letter size on the row (Auto-fill shrinks on its narrower plate beside Delete)
 	if _index >= 0:
 		# Delete on a bronze disc with an engraved cross (as a third plate the row left each label about 56 px).
-		var del := _disc("Delete this deck", _draw_cross, "icon_delete")
+		var del := _disc(Loc.t("Delete this deck"), _draw_cross, "icon_delete")
 		del.pressed.connect(_delete)
 		r1.add_child(del)
 	var r2 := HBoxContainer.new()
@@ -263,8 +263,8 @@ func _leave() -> void:
 	if deck.recursive_equal(_saved, 4):
 		Game.go(Game.DECK_SELECT)
 		return
-	var shown: String = deck.name.strip_edges() if deck.name.strip_edges() != "" else "this deck"
-	UI.dialog(self, "Leave without saving?", "Your changes to %s are not saved yet." % shown, [
+	var shown: String = deck.name.strip_edges() if deck.name.strip_edges() != "" else Loc.t("this deck")
+	UI.dialog(self, "Leave without saving?", Loc.t("Your changes to %s are not saved yet.") % shown, [
 		["Save", func():
 			_save()
 			Game.go(Game.DECK_SELECT)],
@@ -504,7 +504,7 @@ func _refresh() -> void:
 		var b: Label = _badges[id]
 		var v: CardView = _views[id]
 		if own == 0:
-			b.text = "Locked"
+			b.text = Loc.t("Locked")
 			b.add_theme_color_override("font_color", Color(0.6, 0.55, 0.5))
 			v.modulate = Color(0.35, 0.33, 0.33)
 		else:
@@ -590,8 +590,8 @@ func _empty_hint() -> Control:
 	var t := UI.label("Your deck is empty", 26, "title", UI.INK_RED)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
-	var tap := UI.tap_word()
-	var how := UI.label("%s a card on the left to add it, or let Auto-fill choose. %s a card in this list to take it out."
+	var tap := Loc.t(UI.tap_word())
+	var how := UI.label(Loc.t("%s a card on the left to add it, or let Auto-fill choose. %s a card in this list to take it out.")
 		% [tap, tap], 21, "italic", UI.INK)
 	how.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -612,7 +612,7 @@ static func _draw_plus(ci: CanvasItem, c: Vector2, arm: float, thick: float, rim
 
 func _save() -> void:
 	if deck.name.strip_edges() == "":
-		deck.name = "Unnamed Deck"
+		deck.name = Loc.t("Unnamed Deck")
 	Collection.stamp_deck(deck, Collection.decks[_index] if _index >= 0 and _index < Collection.decks.size() else {})
 	if _index >= 0:
 		Collection.decks[_index] = deck
@@ -632,8 +632,8 @@ func _save() -> void:
 
 ## Delete asks first: a deck is gone for good.
 func _delete() -> void:
-	var shown: String = deck.name.strip_edges() if deck.name.strip_edges() != "" else "This deck"
-	UI.dialog(self, "Delete this deck?", "%s will be gone for good. Its cards stay in your collection." % shown, [
+	var shown: String = deck.name.strip_edges() if deck.name.strip_edges() != "" else Loc.t("This deck")
+	UI.dialog(self, "Delete this deck?", Loc.t("%s will be gone for good. Its cards stay in your collection.") % shown, [
 		["Delete", _delete_now],
 		["Keep it", null]])
 

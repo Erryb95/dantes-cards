@@ -80,7 +80,7 @@ func _ready() -> void:
 	var back := UI.button("Back", 300, 80)
 	back.pressed.connect(func(): Game.go(Game.MENU))
 	_buttons.add_child(back)
-	var buy := UI.button("Buy pack (%d)" % Collection.PACK_PRICE, 400, 80)
+	var buy := UI.button(Loc.t("Buy pack (%d)") % Collection.PACK_PRICE, 400, 80)
 	buy.name = "Buy"
 	buy.pressed.connect(_buy)
 	_buttons.add_child(buy)
@@ -122,8 +122,8 @@ func _auto() -> void:
 
 
 func _refresh() -> void:
-	_count_label.text = "Packs: %d" % Collection.packs
-	_obols_label.text = "%d Obols" % Collection.obols
+	_count_label.text = Loc.t("Packs: %d") % Collection.packs
+	_obols_label.text = Loc.t("%d Obols") % Collection.obols
 	(_buttons.get_node("Buy") as Button).disabled = Collection.obols < Collection.PACK_PRICE
 	(_buttons.get_node("Next") as Button).visible = _state == "done" and Collection.packs > 0
 	# Keep the row centred under the table whether "Open next" shows or not.
@@ -355,7 +355,7 @@ func _reveal(c: Dictionary) -> void:
 	if d.new:
 		_tag(v, "NEW", Color(0.5, 1.0, 0.5))
 	elif d.refund > 0:
-		_tag(v, "+%d Obols" % d.refund, Color(1.0, 0.85, 0.5))
+		_tag(v, Loc.t("+%d Obols") % d.refund, Color(1.0, 0.85, 0.5))
 		Sfx.play("coin_spin", -8.0)
 	_rate_note(v, d.rarity)
 	if _cards.all(func(x): return x.revealed):
@@ -378,7 +378,7 @@ func _tag(v: Node2D, text: String, color: Color) -> void:
 
 ## How likely this rarity was, in small letters under a revealed card ("Rare · 21%"), from the pack odds.
 func _rate_note(v: Node2D, rarity: String) -> void:
-	var l := UI.label("%s · %s" % [rarity.capitalize(), Collection.percent_text(Collection.drop_rates()[rarity])], 26,
+	var l := UI.label("%s · %s" % [Loc.t(rarity.capitalize()), Collection.percent_text(Collection.drop_rates()[rarity])], 26,
 		"title", RARITY_GLOW[rarity].lerp(UI.BONE, 0.35), 5, Color(0.04, 0.01, 0.01))
 	l.name = "RateNote"
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
