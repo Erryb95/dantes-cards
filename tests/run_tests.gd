@@ -15,6 +15,11 @@ func _initialize() -> void:
 		print("TESTS: %d checks, %d failures" % [checks, failures])
 		quit(1 if failures > 0 else 0)
 		return
+	if "--only=i18n" in OS.get_cmdline_user_args():
+		_test_i18n()
+		print("TESTS: %d checks, %d failures" % [checks, failures])
+		quit(1 if failures > 0 else 0)
+		return
 	if "--only=online" in OS.get_cmdline_user_args():
 		_test_online_mirror(12)
 		print("TESTS: %d checks, %d failures" % [checks, failures])
@@ -91,7 +96,8 @@ func _test_i18n() -> void:
 				and c.get("effects") == en.get("effects") and c.get("keywords") == en.get("keywords"),
 				"i18n %s: %s keeps its numbers and effects" % [lang, c.id])
 			for k in UI.RULES_BOLD:
-				if str(en.get("text", "")).contains(k):
+				# A keyword, not part of a name ("Achilles, Swift-Footed" gives no Swift)
+				if RegEx.create_from_string("(?<![\\w-])" + k + "(?![\\w-])").search(str(en.get("text", ""))) != null:
 					ok(str(c.get("text", "")).contains(Loc.t(k)), "i18n %s: %s says %s" % [lang, c.id, Loc.t(k)])
 		for h in CardDB.classes():
 			ok(Loc.entry("heroes", CardDB.class_hero(h)).has("name"), "i18n %s: hero of %s has a name" % [lang, h])
