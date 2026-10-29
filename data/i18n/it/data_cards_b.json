@@ -1,0 +1,786 @@
+{
+	"_doc": "Italian names, rules text and flavour of the cards of the Stygian Marsh, the City of Dis, the Infernal Host and Malebolge and Cocytus sets (see GLOSSARY.md). Flavour quoting Dante uses the Commedia's own verse.",
+	"cards": {
+		"wr_gnawing_spite": {
+			"name": "Rabbia Rodente",
+			"text": "Infliggi 1 danno a un servitore alleato. Pesca una carta.",
+			"flavor": "lo fiorentino spirito bizzarro / in sé medesmo si volvea co' denti."
+		},
+		"wr_mud_brawler": {
+			"name": "Rissoso del Fango",
+			"text": "Ira: +2 Attacco.",
+			"flavor": "Questi si percotean non pur con mano, / ma con la testa e col petto e coi piedi"
+		},
+		"wr_adimari_bravo": {
+			"name": "Bravo degli Adimari",
+			"text": "Entrata: infliggi 2 danni al tuo eroe.",
+			"flavor": "L'oltracotata schiatta che s'indraca / dietro a chi fugge, e a chi mostra 'l dente / o ver la borsa, com' agnel si placa"
+		},
+		"wr_choked_soul": {
+			"name": "Anima Soffocata",
+			"text": "Frenesia: pesca una carta.",
+			"flavor": "Tristi fummo / ne l'aere dolce che dal sol s'allegra"
+		},
+		"wr_tearing_teeth": {
+			"name": "A Brano a Brano",
+			"text": "Infliggi 3 danni a un servitore e 2 al tuo eroe.",
+			"flavor": "troncandosi co' denti a brano a brano."
+		},
+		"wr_stirring_the_mud": {
+			"name": "Rimestare il Fango",
+			"text": "Infliggi 1 danno a tutti i servitori.",
+			"flavor": "sotto l'acqua è gente che sospira, / e fanno pullular quest' acqua al summo"
+		},
+		"wr_signal_fires": {
+			"name": "Fuochi di Segnale",
+			"text": "Pesca una carta. Infliggi 2 danni al tuo eroe.",
+			"flavor": "per due fiammette che i vedemmo porre, / e un'altra da lungi render cenno"
+		},
+		"uh_wrathful_shade": {
+			"name": "Ombra Iraconda",
+			"text": "Ira: +3 Attacco.",
+			"flavor": "Furiosa senza motivo, colpisce chiunque le sia vicino."
+		},
+		"wr_mud_wrestler": {
+			"name": "Lottatore del Fango",
+			"text": "Frenesia: ottiene +2/+2.",
+			"flavor": "Ogni colpo che prende gli fa desiderare ancora di più il prossimo."
+		},
+		"wr_self_gnawing_shade": {
+			"name": "Ombra che si Rode",
+			"text": "Ira: +2 Attacco. Entrata: subisce 1 danno.",
+			"flavor": "Senza un nemico abbastanza vicino, ha rivolto i denti contro sé stessa."
+		},
+		"wr_black_guelph": {
+			"name": "Rissoso Guelfo Nero",
+			"text": "Entrata: si scontra con un servitore nemico.",
+			"flavor": "A Firenze una faida non aveva bisogno di motivi: bastavano una strada e un coltello."
+		},
+		"wr_rabble_rouser": {
+			"name": "Sobillatore",
+			"text": "Entrata: infliggi 1 danno e dai +2 Attacco a un servitore.",
+			"flavor": "Una spinta, uno scherno, e tutta la palude torna a fare a botte."
+		},
+		"wr_florentine_hothead": {
+			"name": "Fiorentino Focoso",
+			"text": "Slancio. Ira: +2 Attacco.",
+			"flavor": "Ha sguainato la spada prima ancora di sapere il motivo della lite."
+		},
+		"wr_marsh_warden": {
+			"name": "Custode dello Stige",
+			"text": "Guardia. Frenesia: ottieni 2 Armatura.",
+			"flavor": "Se ne sta accovacciato nel fango e lascia che ci si rompano i pugni addosso."
+		},
+		"wr_mud_caked_sinner": {
+			"name": "Peccatore Infangato",
+			"text": "Ultimo respiro: evoca un'Anima di Fango 1/2.",
+			"flavor": "Spingine uno sotto, e un altro risale dalla melma."
+		},
+		"wr_scornful_soul": {
+			"name": "Anima Sdegnosa",
+			"text": "Risucchio. Ira: +2 Attacco.",
+			"flavor": "Alma sdegnosa, / benedetta colei che 'n te s'incinse!"
+		},
+		"wr_butting_heads": {
+			"name": "Testa contro Testa",
+			"text": "Dai +1 Attacco a un servitore alleato. Si scontra con un servitore nemico casuale.",
+			"flavor": "come due becchi / cozzaro insieme, tanta ira li vinse."
+		},
+		"wr_furies_nails": {
+			"name": "Le Unghie delle Furie",
+			"text": "Infliggi 2 danni a un servitore alleato. Pesca 2 carte.",
+			"flavor": "Con l'unghie si fendea ciascuna il petto"
+		},
+		"wr_boiling_spring": {
+			"name": "La Fonte che Bolle",
+			"text": "Infliggi 1 danno ai tuoi servitori e dai loro +1 Attacco.",
+			"flavor": "sovr' una fonte che bolle e riversa / per un fossato che da lei deriva."
+		},
+		"wr_stygian_brute": {
+			"name": "Bestione dello Stige",
+			"text": "Ira: +2 Attacco.",
+			"flavor": "vidi genti fangose in quel pantano, / ignude tutte, con sembiante offeso."
+		},
+		"wr_brawling_shade": {
+			"name": "Ombra Rissosa",
+			"text": "Frenesia: si scontra con un servitore nemico casuale.",
+			"flavor": "Colpiscila una volta, e troverà qualcuno da colpire."
+		},
+		"wr_mud_dweller": {
+			"name": "Abitante del Fango",
+			"text": "Frenesia: evoca un'Anima di Fango 1/2.",
+			"flavor": "Colpisci il fango, e il fango risponde."
+		},
+		"wr_rinier_pazzo": {
+			"name": "Rinier Pazzo, il Predone",
+			"text": "Slancio. Entrata: infliggi 2 danni al tuo eroe.",
+			"flavor": "a Rinier da Corneto e a Rinier Pazzo, / che fecero a le strade tanta guerra."
+		},
+		"wr_tower_watchman": {
+			"name": "Vedetta della Torre",
+			"text": "Guardia. Ira: +2 Attacco.",
+			"flavor": "Ha acceso il segnale e ha atteso il nocchiero."
+		},
+		"wr_erichtho": {
+			"name": "Eritone, la Strega",
+			"text": "Entrata: dai Rinascita a un servitore alleato.",
+			"flavor": "quella Eritón cruda / che richiamava l'ombre a' corpi sui."
+		},
+		"wr_silver_shod_horse": {
+			"name": "Destriero d'Argento",
+			"text": "Slancio. Frenesia: ottiene +2 Attacco.",
+			"flavor": "Filippo ferrava d'argento il cavallo, e travolgeva chiunque gli sbarrasse la strada."
+		},
+		"wr_mob_turns": {
+			"name": "La Folla si Rivolta",
+			"text": "Scegli un servitore nemico: i tuoi servitori si scontrano con lui, uno alla volta.",
+			"flavor": "Tutti gridavano: «A Filippo Argenti!»"
+		},
+		"wr_brawl_in_the_mud": {
+			"name": "Rissa nel Fango",
+			"text": "Infliggi 2 danni a tutti i servitori.",
+			"flavor": "non pur con mano, / ma con la testa e col petto e coi piedi"
+		},
+		"wr_other_dogs": {
+			"name": "Con gli Altri Cani",
+			"text": "Distruggi un servitore nemico. Infliggi 4 danni al tuo eroe.",
+			"flavor": "«Via costà con li altri cani!»"
+		},
+		"wr_boat_rides_low": {
+			"name": "La Barca Carica",
+			"text": "Pesca 2 carte. Infliggi 1 danno ai tuoi servitori.",
+			"flavor": "e sol quand' io fui dentro parve carca."
+		},
+		"wr_drowned_knight": {
+			"name": "Cavaliere Affogato",
+			"text": "Ira: +2 Attacco.",
+			"flavor": "Superbo a cavallo per Firenze, sprofondato fino al mento quaggiù."
+		},
+		"wr_adimari_captain": {
+			"name": "Capitano Adimari",
+			"text": "Entrata: infliggi 3 danni al tuo eroe.",
+			"flavor": "La sua stirpe si è arricchita sulla rovina degli altri."
+		},
+		"wr_marsh_champion": {
+			"name": "Campione dello Stige",
+			"text": "Entrata: si scontra con un servitore nemico.",
+			"flavor": "Chi era il più forte lassù era il più forte anche quaggiù, per un po'."
+		},
+		"wr_red_towers": {
+			"name": "Le Torri Rosse di Dite",
+			"text": "Guardia. Ira: +4 Attacco. Fine del turno: infliggi 1 danno a tutti i servitori.",
+			"flavor": "Il foco etterno / ch'entro l'affoca le dimostra rosse"
+		},
+		"wr_rancorous_shade": {
+			"name": "Ombra Rancorosa",
+			"text": "Rinascita. Ira: +3 Attacco.",
+			"flavor": "Affogala, e tornerà a galla più arrabbiata."
+		},
+		"wr_geri_del_bello": {
+			"name": "Geri del Bello",
+			"text": "Ira: +2 Attacco. Ultimo respiro: infliggi 2 danni a un nemico casuale.",
+			"flavor": "la violenta morte / che non li è vendicata ancor"
+		},
+		"wr_muddy_mob": {
+			"name": "La Folla Infangata",
+			"text": "Entrata: evoca due Anime di Fango 1/2.",
+			"flavor": "Sono più di quanti chiunque possa contarne."
+		},
+		"wr_black_guelph_captain": {
+			"name": "Capitano Guelfo Nero",
+			"text": "Frenesia: dai +1 Attacco agli altri tuoi servitori.",
+			"flavor": "Quando il loro capitano sanguina, accorre tutta la fazione."
+		},
+		"wr_eternal_fire": {
+			"name": "Il Fuoco Eterno",
+			"text": "Infliggi 5 danni. Infliggi 2 danni al tuo eroe.",
+			"flavor": "Il foco etterno / ch'entro l'affoca"
+		},
+		"uh_filippo_argenti": {
+			"name": "Filippo Argenti",
+			"text": "Ira: +3 Attacco. Fine del turno: subisce 1 danno. Ultimo respiro: 2 danni a tutti i nemici.",
+			"flavor": "Si mordeva il braccio nell'acqua nera, e la sua rabbia non si placava mai."
+		},
+		"wr_mire_hulk": {
+			"name": "Mole del Pantano",
+			"text": "Ira: +3 Attacco.",
+			"flavor": "La sua rabbia si fa più pesante a ogni colpo, come fango bagnato."
+		},
+		"wr_alberti_brothers": {
+			"name": "I Fratelli Alberti",
+			"text": "Ira: +2 Attacco. Entrata: evoca una copia di questo servitore.",
+			"flavor": "«D'un corpo usciro», e si contesero una sola eredità."
+		},
+		"wr_wrathful_throng": {
+			"name": "La Turba Iraconda",
+			"text": "Entrata: infliggi 1 danno a tutti gli altri servitori.",
+			"flavor": "Tutta la palude si solleva insieme e si scatena."
+		},
+		"wr_storm_across_styx": {
+			"name": "Tempesta sullo Stige",
+			"text": "Infliggi 3 danni a tutti i servitori. Dai +2 Attacco ai tuoi servitori.",
+			"flavor": "d'un vento / impetüoso per li avversi ardori, / che fier la selva e sanz' alcun rattento / li rami schianta"
+		},
+		"wr_tydeus": {
+			"name": "Tideo, lo Sdegnoso",
+			"text": "Entrata: si scontra con un servitore nemico. Frenesia: si scontra con uno a caso.",
+			"flavor": "non altrimenti Tidëo si rose / le tempie a Menalippo per disdegno"
+		},
+		"wr_gate_slams_shut": {
+			"name": "Le Porte Sbarrate",
+			"text": "Infliggi 4 danni a tutti i servitori nemici e al tuo eroe.",
+			"flavor": "Chiuser le porte que' nostri avversari / nel petto al mio segnor"
+		},
+		"wr_athamas": {
+			"name": "Atamante, il Folle",
+			"text": "Ira: +4 Attacco. Entrata: infliggi 2 danni a tutti i servitori.",
+			"flavor": "«Tendiam le reti, sì ch'io pigli / la leonessa e ' leoncini al varco»"
+		},
+		"wr_mud_colossus": {
+			"name": "Colosso di Fango",
+			"text": "Guardia. Ira: +4 Attacco.",
+			"flavor": "La palude si è ammassata in un gigante, e il gigante è furioso."
+		},
+		"wr_mud_soul": {
+			"name": "Anima di Fango",
+			"text": "Ira: +2 Attacco.",
+			"flavor": "Piccola, lurida e in cerca di rissa."
+		},
+		"cd_lano": {
+			"name": "Lano da Siena",
+			"text": "Slancio.",
+			"flavor": "Ha sperperato tutto il suo patrimonio, e ora le cagne non gli danno tregua."
+		},
+		"cd_scrovegni": {
+			"name": "Rinaldo Scrovegni",
+			"text": "Entrata: aggiungi alla tua mano una Borsa dell'Usuraio.",
+			"flavor": "Contava le sue monete anche tra le fiamme."
+		},
+		"cd_pholus": {
+			"name": "Folo, il Centauro",
+			"text": "Guardia.",
+			"flavor": "Una guardia paziente, che non lascia mai salire nessuno troppo in alto."
+		},
+		"cd_nameless_bush": {
+			"name": "Il Cespuglio Anonimo",
+			"text": "Guardia. Rinascita.",
+			"flavor": "Tagliato, ricresce dalle sue stesse foglie strappate."
+		},
+		"cd_giacomo": {
+			"name": "Iacopo da Sant'Andrea",
+			"text": "Slancio. Ultimo respiro: evoca una Cagna Nera 1/1.",
+			"flavor": "Fuggiva dai debiti, e le cagne gli correvano dietro."
+		},
+		"cd_rusticucci": {
+			"name": "Iacopo Rusticucci",
+			"text": "Risucchio.",
+			"flavor": "Anche nella sabbia chiede ai vivi di ricordarlo con affetto."
+		},
+		"cd_guy_montfort": {
+			"name": "Guido di Monforte",
+			"text": "Entrata: infliggi 1 danno a un servitore.",
+			"flavor": "Colui fesse in grembo a Dio / lo cor che 'n su Tamisi ancor si cola."
+		},
+		"cd_accorso": {
+			"name": "Francesco d'Accorso",
+			"text": "Slancio. Entrata: pesca una carta.",
+			"flavor": "Gran maestro di diritto, fa lezione anche mentre corre."
+		},
+		"cd_guido_guerra": {
+			"name": "Guido Guerra",
+			"text": "Veleno.",
+			"flavor": "Un gran signore di Firenze, ora un'anima in più sulla sabbia."
+		},
+		"cd_priscian": {
+			"name": "Prisciano",
+			"text": "Entrata: ottieni un Cristallo di Mana vuoto. Pesca una carta.",
+			"flavor": "Il grammatico che scrisse le regole, e sulla sabbia le segue ancora."
+		},
+		"cd_epicurus": {
+			"name": "Epicuro",
+			"text": "Egida. Ultimo respiro: ripristina 2 Salute a tutti i servitori alleati.",
+			"flavor": "con Epicuro tutti suoi seguaci, / che l'anima col corpo morta fanno."
+		},
+		"cd_dionysius": {
+			"name": "Dionisio di Siracusa",
+			"text": "Veleno. Inizio del turno: dai +1/+0 a un altro tuo servitore a caso.",
+			"flavor": "Un tiranno che regnava col terrore, ora bolle nel sangue delle sue vittime."
+		},
+		"cd_nessus": {
+			"name": "Nesso, il Centauro",
+			"text": "Guardia. Fine del turno: infliggi 1 danno a un servitore nemico casuale.",
+			"flavor": "saettando qual anima si svelle / del sangue più che sua colpa sortille."
+		},
+		"cd_cavalcante": {
+			"name": "Cavalcante, Padre di Guido",
+			"text": "Entrata: infliggi 2 danni a un servitore nemico.",
+			"flavor": "«mio figlio ov' è? e perché non è teco?»"
+		},
+		"cd_anastasius": {
+			"name": "Papa Anastasio",
+			"text": "Guardia. Fine del turno: ripristina 1 Salute al tuo eroe.",
+			"flavor": "Anastasio papa guardo, / lo qual trasse Fotin de la via dritta."
+		},
+		"cd_ezzelino": {
+			"name": "Ezzelino da Romano",
+			"text": "Risucchio.",
+			"flavor": "Un signore della guerra così crudele che il suo nome fa ancora impallidire."
+		},
+		"cd_alexander": {
+			"name": "Alessandro Magno",
+			"text": "Slancio.",
+			"flavor": "Il conquistatore che non si è mai fermato, nemmeno qui."
+		},
+		"cd_medusa_gate": {
+			"name": "Medusa, Custode della Porta",
+			"text": "Guardia. Entrata: Congela un servitore nemico.",
+			"flavor": "«Vegna Medusa: sì 'l farem di smalto»"
+		},
+		"cd_vitaliano": {
+			"name": "Vitaliano del Dente",
+			"text": "Fine del turno: pesca una carta.",
+			"flavor": "Riscuote i suoi interessi ogni giorno, anche qui."
+		},
+		"cd_frederick_ii": {
+			"name": "Federico II, Imperatore",
+			"text": "Egida. Entrata: Congela un servitore nemico.",
+			"flavor": "Un imperatore che negò l'anima, ora chiuso in una tomba di fuoco."
+		},
+		"cd_nicholas_iii": {
+			"name": "Papa Niccolò III",
+			"text": "Egida. Entrata: Silenzia un servitore nemico.",
+			"flavor": "«Se' tu già costì ritto, / se' tu già costì ritto, Bonifazio?»"
+		},
+		"cd_attila": {
+			"name": "Attila, Flagello di Dio",
+			"text": "Slancio. Ultimo respiro: infliggi 2 danni ai servitori nemici.",
+			"flavor": "Seminò rovina nel mondo, e qui la rovina gli si ritorce contro."
+		},
+		"cd_capaneus": {
+			"name": "Capaneo, il Superbo",
+			"text": "Egida. Fine del turno: infliggi 1 danno a tutti i nemici.",
+			"flavor": "Sfidò gli dèi, e la pioggia di fuoco non smette mai di cadergli addosso."
+		},
+		"cd_minotaur": {
+			"name": "Il Minotauro",
+			"text": "Slancio. Ultimo respiro: infliggi 3 danni a un servitore nemico casuale.",
+			"flavor": "Mezzo uomo, mezzo toro, tutto furia. Fa la guardia al fiume di sangue."
+		},
+		"cd_old_man_crete": {
+			"name": "Il Veglio di Creta",
+			"text": "Guardia. Fine del turno: ripristina 2 Salute al tuo eroe.",
+			"flavor": "d'una fessura che lagrime goccia, / le quali, accolte, fóran quella grotta."
+		},
+		"cd_burning_sand": {
+			"name": "Sabbia Ardente",
+			"text": "Infliggi 2 danni.",
+			"flavor": "La sabbia scotta chiunque vi metta piede."
+		},
+		"cd_usurers_purse": {
+			"name": "Borsa dell'Usuraio",
+			"text": "Pesca una carta. Ottieni un Cristallo di Mana vuoto.",
+			"flavor": "Ogni moneta prestata è una moneta dovuta, con gli interessi."
+		},
+		"cd_bleeding_branch": {
+			"name": "Ramo Sanguinante",
+			"text": "Infliggi 2 danni a un servitore. Ripristina 2 Salute al tuo eroe.",
+			"flavor": "e 'l tronco suo gridò: «Perché mi schiante?»"
+		},
+		"cd_walls_of_dis": {
+			"name": "Mura di Dite",
+			"text": "Ottieni 3 Armatura.",
+			"flavor": "Le mura di ferro reggeranno, per un po'."
+		},
+		"cd_sealed_tomb": {
+			"name": "Tomba Sigillata",
+			"text": "Silenzia e Congela un servitore nemico.",
+			"flavor": "Il coperchio si chiude, e il peccatore non può più parlare."
+		},
+		"cd_hounds_of_lano": {
+			"name": "Le Cagne di Lano",
+			"text": "Evoca due Cagne Nere 1/1.",
+			"flavor": "di nere cagne, bramose e correnti / come veltri ch'uscisser di catena."
+		},
+		"cd_gate_of_dis": {
+			"name": "Porta di Dite",
+			"text": "Riporta in mano un servitore nemico. Pesca una carta.",
+			"flavor": "Una spinta alla porta, e il demonio torna da dove è venuto."
+		},
+		"cd_rain_of_fire": {
+			"name": "Pioggia di Fuoco",
+			"text": "Infliggi 2 danni a tutti i servitori nemici.",
+			"flavor": "Le fiamme cadono lente, e nessuno può sfuggirle."
+		},
+		"cd_furys_lash": {
+			"name": "Frusta della Furia",
+			"text": "Distruggi un servitore nemico.",
+			"flavor": "Una frustata, e il peccatore non c'è più."
+		},
+		"cd_sealed_lids": {
+			"name": "Coperchi Sigillati",
+			"text": "Congela tutti i servitori nemici.",
+			"flavor": "Ogni coperchio è chiuso, e là dentro nessuno può muoversi."
+		},
+		"cd_black_hound": {
+			"name": "Cagna Nera",
+			"text": "Slancio.",
+			"flavor": "Non si ferma finché non afferra la preda."
+		},
+		"ih_whip_demon": {
+			"name": "Demonio Frustatore",
+			"text": "Rinascita.",
+			"flavor": "vidi demon cornuti con gran ferze, / che li battien crudelmente di retro."
+		},
+		"ih_thief_serpent": {
+			"name": "Serpe Ladra",
+			"text": "Veleno.",
+			"flavor": "Morde il ladro, e il ladro diventa una serpe."
+		},
+		"ih_blood_swimmer": {
+			"name": "Dannato del Sangue",
+			"text": "Guardia. Ultimo respiro: evoca un'Ombra Tormentata 1/1.",
+			"flavor": "Io vidi gente sotto infino al ciglio"
+		},
+		"ih_barbed_imp": {
+			"name": "Diavoletto Uncinato",
+			"text": "Ultimo respiro: infliggi 1 danno all'eroe nemico.",
+			"flavor": "I suoi uncini straziano chi lo tocca, anche mentre muore."
+		},
+		"ih_hellhound_pup": {
+			"name": "Cucciolo Infernale",
+			"text": "Egida.",
+			"flavor": "Cerbero ha una cucciolata, e ogni cucciolo morde."
+		},
+		"ih_calcabrina": {
+			"name": "Calcabrina",
+			"text": "Slancio.",
+			"flavor": "Imbroglia, sghignazza e scappa prima che chiunque possa reagire."
+		},
+		"ih_pitch_sinner": {
+			"name": "Dannato della Pece",
+			"text": "Fine del turno: infliggi 1 danno all'eroe nemico.",
+			"flavor": "La pece gli resta appiccicata addosso, e il calore non lo lascia mai."
+		},
+		"ih_barbariccia": {
+			"name": "Barbariccia",
+			"text": "Guardia. Entrata: dai +1/+1 a un servitore alleato.",
+			"flavor": "ed elli avea del cul fatto trombetta."
+		},
+		"ih_farfarello": {
+			"name": "Farfarello",
+			"text": "Ultimo respiro: infliggi 2 danni all'eroe nemico.",
+			"flavor": "Anche morendo, prende a calci i nemici mentre se ne va."
+		},
+		"ih_cagnazzo": {
+			"name": "Cagnazzo",
+			"text": "Risucchio.",
+			"flavor": "Ogni ferita che infligge lo nutre."
+		},
+		"ih_cacus": {
+			"name": "Caco, il Centauro",
+			"text": "Slancio. Inizio del turno: ottieni 1 Armatura.",
+			"flavor": "Trascina all'indietro il bestiame rubato, perché nessuno ne segua le tracce."
+		},
+		"ih_draghignazzo": {
+			"name": "Draghignazzo",
+			"text": "Risucchio. Inizio del turno: infliggi 1 danno a un servitore nemico casuale.",
+			"flavor": "Lancia i suoi uncini contro chi gli è più vicino, turno dopo turno."
+		},
+		"ih_graffiacane": {
+			"name": "Graffiacane",
+			"text": "Slancio.",
+			"flavor": "È sempre il primo a saltare e l'ultimo a prendersi la colpa."
+		},
+		"ih_libicocco": {
+			"name": "Libicocco",
+			"text": "Veleno.",
+			"flavor": "Il suo veleno fa bruciare ogni ferita più a lungo."
+		},
+		"ih_ephialtes": {
+			"name": "Efialte, il Gigante",
+			"text": "Guardia.",
+			"flavor": "Il pozzo gli arriva appena al petto."
+		},
+		"ih_briareus": {
+			"name": "Briareo, Centimano",
+			"text": "Rinascita.",
+			"flavor": "Cento braccia, e nessuna mano libera per trattenerlo."
+		},
+		"ih_hellhound_guardian": {
+			"name": "Mastino Infernale",
+			"text": "Guardia. Fine del turno: ripristina 1 Salute al tuo eroe.",
+			"flavor": "Le sue fauci non smettono di latrare, anche quando le ossa sono finite."
+		},
+		"ih_scarmiglione": {
+			"name": "Scarmiglione",
+			"text": "Risucchio.",
+			"flavor": "La sua presa sui dannati è lenta, la sua fame è rapida."
+		},
+		"ih_rubicante": {
+			"name": "Rubicante, la Fiamma",
+			"text": "Egida. Fine del turno: infliggi 1 danno ai servitori nemici.",
+			"flavor": "Il suo fuoco non si spegne mai, nemmeno nel fango."
+		},
+		"ih_antaeus": {
+			"name": "Anteo, Figlio della Terra",
+			"text": "Inizio del turno: ripristina 2 Salute al tuo eroe.",
+			"flavor": "Tocca la terra, e si rialza più forte di prima."
+		},
+		"ih_malacoda": {
+			"name": "Malacoda, il Capo",
+			"text": "Veleno. Entrata: evoca due Ombre Tormentate 1/1.",
+			"flavor": "Il capo manda la sua squadra a fare il lavoro sporco."
+		},
+		"ih_nimrod": {
+			"name": "Nembrot, il Gigante",
+			"text": "Entrata: infliggi 2 danni a un servitore.",
+			"flavor": "questi è Nembrotto per lo cui mal coto / pur un linguaggio nel mondo non s'usa."
+		},
+		"ih_typhon": {
+			"name": "Tifeo, la Tempesta",
+			"text": "Rinascita. Entrata: Congela tutti i servitori nemici.",
+			"flavor": "La tempesta che soffia muta in ghiaccio ogni fiume dell'abisso."
+		},
+		"ih_gate_angel": {
+			"name": "Angelo Caduto",
+			"text": "Egida. Entrata: distruggi un servitore nemico.",
+			"flavor": "Ha sbarrato la porta, e nessuno gli passa oltre."
+		},
+		"ih_burning_rain": {
+			"name": "Pioggia Ardente",
+			"text": "Infliggi 3 danni ripartiti a caso tra tutti i nemici.",
+			"flavor": "Sovra tutto 'l sabbion, d'un cader lento, / piovean di foco dilatate falde"
+		},
+		"ih_serpents_kiss": {
+			"name": "Bacio della Serpe",
+			"text": "Silenzia un servitore nemico e infliggigli 1 danno.",
+			"flavor": "Un morso, e il servitore dimentica ogni trucco che conosceva."
+		},
+		"ih_cocytus_chill": {
+			"name": "Gelo di Cocito",
+			"text": "Congela un servitore nemico. Pesca una carta.",
+			"flavor": "Il lago tiene i dannati così fermi che non possono nemmeno tremare."
+		},
+		"ih_sulphur_vent": {
+			"name": "Soffione di Zolfo",
+			"text": "Ottieni 2 Cristalli di Mana vuoti.",
+			"flavor": "La terra esala fumi, e i fumi sono combustibile."
+		},
+		"ih_thieves_bargain": {
+			"name": "Patto tra Ladri",
+			"text": "Aggiungi due Serpi Ladre alla tua mano.",
+			"flavor": "Ruba ciò che puoi, e le serpi lo ruberanno di nuovo per te."
+		},
+		"ih_strength_of_earth": {
+			"name": "Forza della Terra",
+			"text": "Ripristina 3 Salute al tuo eroe. Pesca una carta.",
+			"flavor": "Tocca il suolo, e il suolo ti restituisce ciò che ha preso."
+		},
+		"ih_cacus_stolen_herd": {
+			"name": "La Mandria di Caco",
+			"text": "Pesca una carta. Infliggi 2 danni all'eroe nemico.",
+			"flavor": "Tira le bestie rubate all'indietro, così nessuno può seguirle."
+		},
+		"ih_demons_lash": {
+			"name": "Sferza del Demonio",
+			"text": "Infliggi 1 danno a un servitore nemico. Se sopravvive, riportalo in mano.",
+			"flavor": "Una frustata, e si ricomincia tutto il cammino da capo."
+		},
+		"ih_rain_of_sand": {
+			"name": "Neve di Fuoco",
+			"text": "Infliggi 2 danni a tutti i nemici.",
+			"flavor": "piovean di foco dilatate falde, / come di neve in alpe sanza vento."
+		},
+		"ih_boiling_tide": {
+			"name": "Marea di Sangue",
+			"text": "Infliggi 4 danni a un servitore. Pesca una carta.",
+			"flavor": "Chi emerge troppo dal fiume bollente viene ricacciato sotto."
+		},
+		"ih_cocytus_winter": {
+			"name": "Inverno di Cocito",
+			"text": "Infliggi 2 danni a tutti i servitori nemici. Evoca due Ombre Gelate 1/2.",
+			"flavor": "Chi non muore di freddo resta prigioniero del ghiaccio."
+		},
+		"ih_tormented_shade": {
+			"name": "Ombra Tormentata",
+			"flavor": "Il suo tormento è l'unica cosa che le appartiene ancora."
+		},
+		"mc_thais": {
+			"name": "Taide, l'Adulatrice",
+			"text": "Entrata: pesca una carta.",
+			"flavor": "Lodava ogni uomo che avesse qualcosa da darle."
+		},
+		"mc_ciampolo": {
+			"name": "Ciampolo, il Barattiere",
+			"flavor": "La pece bollente sulla pelle, e ancora prova a uscirne."
+		},
+		"mc_boiling_pitch": {
+			"name": "Pece Bollente",
+			"text": "Congela un servitore nemico e infliggigli 2 danni.",
+			"flavor": "La pece ustiona chi prova a uscirne, e lo tiene sotto."
+		},
+		"mc_sinons_lie": {
+			"name": "La Frode di Sinone",
+			"text": "Ottieni 2 mana solo per questo turno.",
+			"flavor": "Una storia falsa, e le porte si aprono dall'interno."
+		},
+		"mc_jason": {
+			"name": "Giasone, il Seduttore",
+			"text": "Slancio.",
+			"flavor": "Conquistò il cuore delle regine, poi salpò senza dire una parola."
+		},
+		"mc_venedico": {
+			"name": "Venedico Caccianemico",
+			"text": "Risucchio.",
+			"flavor": "Vendette i suoi per denaro, e non smise mai di contare."
+		},
+		"mc_alessio": {
+			"name": "Alessio Interminei",
+			"text": "Egida.",
+			"flavor": "Qua giù m'hanno sommerso le lusinghe / ond' io non ebbi mai la lingua stucca."
+		},
+		"mc_master_adam": {
+			"name": "Maestro Adamo",
+			"text": "Rinascita.",
+			"flavor": "e ora, lasso!, un gocciol d'acqua bramo."
+		},
+		"mc_gilded_cloak": {
+			"name": "Cappa di Piombo",
+			"text": "Dai +0/+3 ed Egida a un servitore alleato.",
+			"flavor": "Di fuor dorate son, sì ch'elli abbaglia; / ma dentro tutte piombo"
+		},
+		"mc_frozen_tears": {
+			"name": "Lacrime Gelate",
+			"text": "Congela un servitore nemico. Ottieni 2 Armatura.",
+			"flavor": "ché le lagrime prime fanno groppo, / e sì come visiere di cristallo"
+		},
+		"mc_caiaphas": {
+			"name": "Caifas, l'Ipocrita",
+			"text": "Guardia.",
+			"flavor": "Attraversato è, nudo, ne la via"
+		},
+		"mc_pier_medicina": {
+			"name": "Pier da Medicina",
+			"text": "Inizio del turno: Silenzia un servitore nemico casuale.",
+			"flavor": "Seminò discordia con la lingua, e ora non può parlare."
+		},
+		"mc_tiresias": {
+			"name": "Tiresia, l'Indovino",
+			"text": "Inizio del turno: pesca una carta.",
+			"flavor": "Ha la testa girata all'indietro, eppure vede ancora ciò che verrà."
+		},
+		"mc_mosca": {
+			"name": "Mosca dei Lamberti",
+			"text": "Ultimo respiro: infliggi 1 danno ai servitori nemici.",
+			"flavor": "«Capo ha cosa fatta», / che fu mal seme per la gente tosca."
+		},
+		"mc_manto": {
+			"name": "Manto, l'Indovina",
+			"text": "Pesca 2 carte.",
+			"flavor": "Legge il futuro di una città prima che divampino gli incendi."
+		},
+		"mc_michael_scot": {
+			"name": "Michele Scotto, il Mago",
+			"text": "Entrata: Silenzia un servitore nemico.",
+			"flavor": "Studiò le stelle e pretese di conoscerne ogni segreto."
+		},
+		"mc_earth_swallows": {
+			"name": "La Terra s'Apre",
+			"text": "Infliggi 2 danni a un servitore nemico, poi 1 a tutti i servitori nemici.",
+			"flavor": "s'aperse a li occhi d'i Teban la terra"
+		},
+		"mc_jovial_friars": {
+			"name": "I Frati Godenti",
+			"text": "Egida.",
+			"flavor": "Le loro cappe dorate sono di piombo, eppure sorridono ancora."
+		},
+		"mc_vanni_fucci": {
+			"name": "Vanni Fucci, il Ladro",
+			"text": "Veleno.",
+			"flavor": "in giù son messo tanto perch' io fui / ladro a la sagrestia d'i belli arredi"
+		},
+		"mc_agnello": {
+			"name": "Agnello Brunelleschi",
+			"text": "Ultimo respiro: evoca una Serpe 2/2 con Veleno.",
+			"flavor": "Cede la sua forma umana a una serpe, e si tiene la refurtiva."
+		},
+		"mc_bertran": {
+			"name": "Bertran de Born",
+			"text": "Rinascita.",
+			"flavor": "e 'l capo tronco tenea per le chiome, / pesol con mano a guisa di lanterna"
+		},
+		"mc_guido": {
+			"name": "Guido da Montefeltro",
+			"text": "Entrata: Congela un servitore nemico.",
+			"flavor": "Un solo consiglio astuto, e per questo brucia in eterno."
+		},
+		"mc_gianni_schicchi": {
+			"name": "Gianni Schicchi",
+			"text": "Entrata: aggiungi un Gianni Schicchi alla tua mano.",
+			"flavor": "falsificare in sé Buoso Donati, / testando e dando al testamento norma."
+		},
+		"mc_myrrhas_disguise": {
+			"name": "L'Inganno di Mirra",
+			"text": "Dai +2/+2 ed Egida a un servitore alleato.",
+			"flavor": "falsificando sé in altrui forma"
+		},
+		"mc_bocca": {
+			"name": "Bocca degli Abati",
+			"text": "Entrata: Congela un servitore nemico casuale.",
+			"flavor": "Tradì la sua parte, e ora il ghiaccio lo tiene immobile."
+		},
+		"mc_brutus": {
+			"name": "Bruto, il Traditore",
+			"text": "Slancio.",
+			"flavor": "Colpì l'amico alle spalle, e il ghiaccio si è tenuto la lama."
+		},
+		"mc_cassius": {
+			"name": "Cassio, il Congiurato",
+			"text": "Ultimo respiro: Congela a caso un servitore nemico.",
+			"flavor": "Guidò la congiura, e ora è bloccato nello stesso ghiaccio."
+		},
+		"mc_frozen_lake": {
+			"name": "Lago Ghiacciato",
+			"text": "Congela tutti i servitori nemici e infliggi loro 1 danno.",
+			"flavor": "Nulla si muove sul lago dove sono tenuti i traditori."
+		},
+		"mc_judas": {
+			"name": "Giuda Iscariota",
+			"text": "Ultimo respiro: evoca un'Ombra Gelata 1/2.",
+			"flavor": "Tradì il suo maestro, e il ghiaccio più profondo lo trattiene."
+		},
+		"mc_discord_silence": {
+			"name": "Discordia Muta",
+			"text": "Silenzia tutti i servitori nemici. Pesca una carta.",
+			"flavor": "Ogni lite finisce, e ogni voce tace."
+		},
+		"mc_ruggieri": {
+			"name": "Arcivescovo Ruggieri",
+			"text": "Guardia. Ultimo respiro: Congela tutti i servitori nemici.",
+			"flavor": "Chiuse il suo rivale in una torre e lo lasciò morire di fame."
+		},
+		"mc_alberigo": {
+			"name": "Frate Alberigo",
+			"text": "Inizio del turno: Congela a caso un servitore nemico.",
+			"flavor": "Sorrideva ai suoi ospiti, poi li congelava sul posto."
+		},
+		"mc_six_wings": {
+			"name": "Vento delle Sei Ali",
+			"text": "Congela tutti i servitori nemici e infliggi loro 3 danni.",
+			"flavor": "sì che tre venti si movean da ello: / quindi Cocito tutto s'aggelava."
+		},
+		"mc_lucifer": {
+			"name": "Lucifero, Imperatore dell'Inferno",
+			"text": "Guardia. Entrata: Congela i servitori nemici. Fine del turno: 1 danno a tutti i nemici.",
+			"flavor": "Lo 'mperador del doloroso regno / da mezzo 'l petto uscia fuor de la ghiaccia"
+		},
+		"mc_serpent": {
+			"name": "Serpe",
+			"text": "Veleno."
+		},
+		"mc_frozen_shade": {
+			"name": "Ombra Gelata",
+			"flavor": "Chiusa nel ghiaccio di Cocito fino agli occhi."
+		}
+	}
+}
