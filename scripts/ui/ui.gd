@@ -40,7 +40,7 @@ static func font(kind: String = "body") -> Font:
 static func label(text: String, size: int, kind: String = "body", color: Color = BONE, outline: int = 0,
 		outline_color: Color = Color.BLACK) -> Label:
 	var l := Label.new()
-	l.text = text
+	l.text = Loc.t(text)
 	l.add_theme_font_override("font", font(kind))
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
@@ -124,7 +124,7 @@ static func panel(size: Vector2, style: StyleBox, pos: Vector2 = Vector2.ZERO) -
 ## A big themed button (menus).
 static func button(text: String, width: float = 420.0, height: float = 84.0) -> Button:
 	var b := Button.new()
-	b.text = text
+	b.text = Loc.t(text)
 	b.custom_minimum_size = Vector2(width, height)
 	b.add_theme_font_override("font", font("title"))
 	b.add_theme_font_size_override("font_size", 34)
@@ -393,7 +393,7 @@ static func plaque_label(text: String, size: int, kind: String = "italic", color
 static func name_field(text: String, placeholder: String, max_len: int, px: int = 26) -> LineEdit:
 	var le := LineEdit.new()
 	le.text = text
-	le.placeholder_text = placeholder
+	le.placeholder_text = Loc.t(placeholder)
 	le.max_length = max_len
 	le.select_all_on_focus = true
 	le.add_theme_font_override("font", font("title"))
@@ -500,6 +500,7 @@ static func ribbon(text: String, width: float, size: int, color: Color = BONE) -
 ## heading is a plain label with a dark edge.
 static func banner(text: String, size: int, color: Color = GOLD, width: float = 0.0, layout_h: float = 0.0,
 		k: float = 2.0) -> Control:
+	text = Loc.t(text) # the painted words are looked up by the shown text (none yet for other languages: a font)
 	var h := roundf(size * k)
 	var tail := h * 0.96 ## the folded tail at each end, in px: the band of the ribbon lies between them
 	var word := word_tex(text)
@@ -1114,7 +1115,7 @@ static func _rules_spans(text: String) -> Array:
 
 static func rules_bbcode(text: String) -> String:
 	var t := text
-	for k in RULES_BOLD:
+	for k in RULES_BOLD.map(Loc.t):
 		# A keyword of two or three words never breaks across lines ("On / Play:"): non-breaking spaces.
 		t = t.replace(k, "[b]" + k.replace(" ", "\u00a0") + "[/b]")
 	return "[center]" + t + "[/center]"
@@ -1144,6 +1145,7 @@ const KEYWORD_HELP := {
 ## Keyword words a rules text can mention (a token it summons, a keyword it gives), and the tip each one opens.
 const _TEXT_KEYWORDS := ["Guard", "Swift", "Ward", "Drain", "Venom", "Rebirth", "Freeze", "Silence"]
 static var _text_kw: RegEx
+static var _text_kw_lang := ""
 
 
 ## The keyword tips for a card, as [title, text] pairs in reading order: its status (a live unit), its keywords, its
@@ -1186,13 +1188,16 @@ static func card_tips(card: Dictionary, on_board: bool = false) -> Array:
 				if int(CardDB.card(str(e.card)).get("wrath", 0)) > 0:
 					add.call("wrath")
 		if not on_board: # the text may name a keyword the effects only imply
-			if _text_kw == null:
-				_text_kw = RegEx.create_from_string("\\b(" + "|".join(_TEXT_KEYWORDS) + ")\\b")
+			# The words in the current language ("Guard" is "Guardia" in Italian), each back to its tip's id.
+			var words := _TEXT_KEYWORDS.map(Loc.t)
+			if _text_kw == null or _text_kw_lang != Loc.lang():
+				_text_kw = RegEx.create_from_string("\\b(" + "|".join(words) + ")\\b")
+				_text_kw_lang = Loc.lang()
 			for m in _text_kw.search_all(str(card.get("text", ""))):
-				add.call(m.get_string(1).to_lower())
+				add.call(str(_TEXT_KEYWORDS[words.find(m.get_string(1))]).to_lower())
 	var out := []
 	for k in keys:
-		out.append(KEYWORD_HELP[k])
+		out.append([Loc.t(KEYWORD_HELP[k][0]), Loc.t(KEYWORD_HELP[k][1])])
 	return out
 
 

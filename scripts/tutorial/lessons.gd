@@ -29,8 +29,13 @@ static func all() -> Array:
 		if f != null:
 			var d = JSON.parse_string(f.get_as_text())
 			if d is Dictionary:
-				_lessons = d.get("lessons", [])
+				_lessons = d.get("lessons", []).map(func(l): return Loc.localize("lessons", str(l.id), l))
 	return _lessons
+
+
+## Reads the data again on next use (the language changed).
+static func reload() -> void:
+	_lessons = []
 
 
 static func get_lesson(id: String) -> Dictionary:

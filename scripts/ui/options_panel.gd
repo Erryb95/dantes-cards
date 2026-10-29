@@ -68,8 +68,16 @@ func _ready() -> void:
 	right.add_child(_cycle("Opponent", Settings.DIFFICULTY_NAMES, Settings.difficulty, func(i): Settings.difficulty = i))
 	right.add_child(_toggle("Fast animations", Settings.fast_animations, func(on): Settings.fast_animations = on))
 	right.add_child(_toggle("Intro subtitles", Settings.subtitles, func(on): Settings.subtitles = on))
+	var in_menu: bool = get_tree().current_scene != null and get_tree().current_scene.scene_file_path == Game.MENU
+	if in_menu: # not mid-battle: a new language rebuilds the screen
+		var names: Array = Loc.LANGS.map(func(l): return Loc.NAMES[l])
+		right.add_child(_cycle("Language", names, maxi(0, Loc.LANGS.find(Loc.lang())), func(i):
+			Settings.language = Loc.LANGS[i]
+			Settings.apply_language()
+			Settings.save()
+			get_tree().reload_current_scene.call_deferred()))
 	var plates: Array = [] # the three page plates share one letter size
-	if get_tree().current_scene and get_tree().current_scene.scene_file_path == Game.MENU:  # not mid-battle
+	if in_menu:
 		var intro := UI.button("Watch intro", CONTROL_W, ROW_H)
 		intro.pressed.connect(func():
 			Settings.save()
@@ -151,9 +159,11 @@ func _slider(text: String, value: float, on_change: Callable) -> HBoxContainer:
 func _cycle(text: String, names: Array, value: int, on_change: Callable) -> HBoxContainer:
 	var h := _row(text)
 	var b := UI.button(names[value], CONTROL_W, ROW_H)
+	var at := [value] # the shown choice (the text may be a translation of its name)
 	b.pressed.connect(func():
-		var i := (names.find(b.text) + 1) % names.size()
-		b.text = names[i]
+		var i: int = (at[0] + 1) % names.size()
+		at[0] = i
+		b.text = Loc.t(names[i])
 		b.add_theme_font_size_override("font_size", 34)
 		UI.fit_text(b)
 		on_change.call(i))
@@ -170,7 +180,7 @@ func _toggle(text: String, value: bool, on_change: Callable) -> HBoxContainer:
 	b.add_theme_font_size_override("font_size", 34)
 	b.modulate = Color(1.1, 1.02, 0.88) if value else Color(0.68, 0.62, 0.58)
 	b.toggled.connect(func(on: bool):
-		b.text = "On" if on else "Off"
+		b.text = Loc.t("On" if on else "Off")
 		b.modulate = Color(1.1, 1.02, 0.88) if on else Color(0.68, 0.62, 0.58)
 		on_change.call(on))
 	h.add_child(b)

@@ -27,6 +27,7 @@ var player_avatar := ""
 var lessons := {} ## Virgil's lessons: lesson id -> "done" (won once, reward paid) or "skipped" (scripts/tutorial/lessons.gd)
 var lessons_offered := false ## the first-launch question "Shall I show you the way?" was asked once
 var collection_sort := "cost" ## the order of the Collection screen (an id of SORTS in scripts/ui/collection.gd)
+var language := "" ## an id of Loc.LANGS, or "" for the device's language (Loc.resolve)
 
 
 func _ready() -> void:
@@ -36,6 +37,7 @@ func _ready() -> void:
 			AudioServer.set_bus_name(AudioServer.bus_count - 1, bus)
 			AudioServer.set_bus_send(AudioServer.bus_count - 1, "Master")
 	load_settings()
+	apply_language()
 	apply()
 
 
@@ -68,6 +70,7 @@ func load_settings(path: String = PATH) -> void:
 	lessons = SaveFile.value(cfg, "game", "lessons", lessons)
 	lessons_offered = SaveFile.value(cfg, "game", "lessons_offered", lessons_offered)
 	collection_sort = str(SaveFile.value(cfg, "game", "collection_sort", collection_sort))
+	language = str(SaveFile.value(cfg, "game", "language", language))
 
 
 ## Tests and tooling runs (`Game.debug_run()`) keep their changes in memory: the player's real settings are never written.
@@ -92,7 +95,18 @@ func save() -> void:
 	cfg.set_value("game", "lessons", lessons)
 	cfg.set_value("game", "lessons_offered", lessons_offered)
 	cfg.set_value("game", "collection_sort", collection_sort)
+	cfg.set_value("game", "language", language)
 	cfg.save(PATH)
+
+
+## Plays the game in `language`. Tests and tooling runs play in English, so their checks read the source text, unless
+## they ask for a language with `-- --lang=<id>` (the screen audit of a translation).
+func apply_language() -> void:
+	var lang := "en" if Game.debug_run() else Loc.resolve(language)
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--lang="):
+			lang = Loc.resolve(a.substr(7))
+	Loc.use(lang)
 
 
 func apply() -> void:

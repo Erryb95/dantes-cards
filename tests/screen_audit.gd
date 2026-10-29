@@ -27,6 +27,17 @@ var sort_id := "rarity"
 var filter := "all"
 
 
+## With `--lang=<id>`, the texts shown that have no translation yet go to <out>/i18n_missing.txt (one per line).
+func _exit_tree() -> void:
+	if Loc.lang() == "en" or Loc.missing.is_empty():
+		return
+	DirAccess.make_dir_recursive_absolute(out)
+	var f := FileAccess.open(out.path_join("i18n_missing.txt"), FileAccess.WRITE)
+	if f != null:
+		for k in Loc.missing:
+			f.store_line(str(k).c_escape())
+
+
 func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):

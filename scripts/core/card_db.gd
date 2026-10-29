@@ -13,23 +13,34 @@ static var _depths := {}
 static var _living := {} ## card id -> its living-art entry (data/living_art.json "cards")
 
 
+## Reads the data again on next use (the language changed: Loc lays its texts over the English entries).
+static func reload() -> void:
+	_loaded = false
+	_cards = {}
+	_heroes = {}
+	_classes = []
+	_decks = []
+	_arenas = []
+
+
 static func _ensure() -> void:
 	if _loaded:
 		return
 	_loaded = true
 	var c: Dictionary = _read("res://data/cards.json")
 	for card in c.get("cards", []):
-		_cards[card.id] = card
+		_cards[card.id] = Loc.localize("cards", card.id, card)
 	for h in c.get("heroes", []):
+		h = Loc.localize("heroes", h.id, h)
 		_heroes[h.id] = h
 		if str(h.get("class", "")) != "" and not h["class"] in _classes:
 			_classes.append(str(h["class"]))
 	for f in DirAccess.get_files_at("res://data/sets"):
 		if f.ends_with(".json"):
 			for card in _read("res://data/sets/" + f).get("cards", []):
-				_cards[card.id] = card
-	_decks = _read("res://data/decks.json").get("decks", [])
-	_arenas = _read("res://data/arenas.json").get("arenas", [])
+				_cards[card.id] = Loc.localize("cards", card.id, card)
+	_decks = _read("res://data/decks.json").get("decks", []).map(func(d): return Loc.localize("decks", str(d.id), d))
+	_arenas = _read("res://data/arenas.json").get("arenas", []).map(func(a): return Loc.localize("arenas", str(a.id), a))
 	_living = _read("res://data/living_art.json").get("cards", {})
 
 
