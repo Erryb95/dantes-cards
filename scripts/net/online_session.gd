@@ -799,6 +799,8 @@ func cloud_sync() -> void:
 		await _push(local, gen)
 	elif _pull_due():
 		await _pull(local, gen)
+	if gen == _account_gen:
+		await _send_reports()
 	_syncing = false
 
 
@@ -920,6 +922,53 @@ func _notification(what: int) -> void:
 			_sync_t = SYNC_EVERY
 			await cloud_sync()
 		get_tree().quit()
+
+
+# ---------------------------------------------------------------- match statistics (anonymous, see the server's dantes_telemetry.lua)
+
+const REPORT_QUEUE := "user://match_reports.json"
+const REPORT_QUEUE_MAX := 100 ## the oldest reports go first when the server is out of reach for long
+const REPORTS_PER_SYNC := 5
+
+
+## Queues one finished match against the AI (or a lesson) for the server's statistics: classes, decks, the result,
+## turns and length, never a name. Sent with the next sync steps; kept on disk until the server takes it.
+func report_match(data: Dictionary) -> void:
+	if not cloud_on():
+		return
+	var q := _report_queue()
+	q.append(data)
+	while q.size() > REPORT_QUEUE_MAX:
+		q.pop_front()
+	_save_report_queue(q)
+	_sync_t = minf(_sync_t, 2.0)
+
+
+func _report_queue() -> Array:
+	if not FileAccess.file_exists(REPORT_QUEUE):
+		return []
+	var v: Variant = JSON.parse_string(FileAccess.get_file_as_string(REPORT_QUEUE))
+	return v if v is Array else []
+
+
+func _save_report_queue(q: Array) -> void:
+	var f := FileAccess.open(REPORT_QUEUE, FileAccess.WRITE)
+	if f != null:
+		f.store_string(JSON.stringify(q))
+
+
+## Sends a few queued reports (RPC dantes_report over HTTP). A server without the RPC yet, or out of reach, keeps them.
+func _send_reports() -> void:
+	var q := _report_queue()
+	var sent := 0
+	while not q.is_empty() and sent < REPORTS_PER_SYNC and client.session_fresh():
+		var r := await client.http(HTTPClient.METHOD_POST, "/v2/rpc/dantes_report", JSON.stringify(q[0]))
+		if r.has("error") or int(r.get("code", 0)) != 200:
+			break
+		q.pop_front()
+		sent += 1
+	if sent > 0:
+		_save_report_queue(q)
 
 
 # ---------------------------------------------------------------- record (apart from the games against the AI)

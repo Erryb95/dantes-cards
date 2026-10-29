@@ -28,6 +28,7 @@ enum Mode { IDLE, DRAG_CARD, AIM_SPELL, AIM_BATTLECRY, AIM_ATTACK, AIM_POWER }
 const DECK_SHEETS := 10
 var _first_side := 0 ## who takes the first turn (coin flip)
 var st: BattleState
+var _started_ms := Time.get_ticks_msec() ## when the battle scene opened (the match statistics' length)
 var ai: BattleAI
 var ai_self: BattleAI ## autoplay only
 var autoplay := false
@@ -1783,6 +1784,8 @@ func _on_game_over(ev: Dictionary) -> void:
 		await get_tree().create_timer(DeathFx.play(self, h, "power_" + h.hero_id, info, 1, 0, true)).timeout
 	if guide != null:
 		guide.on_turn(1) # Virgil steps aside for the result
+	if net == null:
+		Game.report_battle(ev.winner, _report_info(false))
 	if not lesson.is_empty():
 		_show_lesson_result(ev.winner) # a lesson never counts in the record
 		return
@@ -3096,7 +3099,17 @@ func _concede() -> void:
 		return
 	over = true
 	Game.record_result(1)
+	if lesson.is_empty():
+		Game.report_battle(1, _report_info(true))
 	Game.go(Game.MENU)
+
+
+## What the match statistics take from the battle (Game.report_battle): turns, length, a concession, and what the
+## player still had (cards in hand, cards left in the deck).
+func _report_info(conceded: bool) -> Dictionary:
+	var me: BattleState.SideState = st.sides[0]
+	return {"turns": st.turn, "secs": int((Time.get_ticks_msec() - _started_ms) / 1000.0), "conceded": conceded,
+		"hand": me.hand.size(), "cards_left": me.deck.size()}
 
 
 ## Out of a lesson from its pause menu: into lesson `next` ("" for the lessons screen). Nothing is recorded. A

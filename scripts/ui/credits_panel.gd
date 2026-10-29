@@ -34,6 +34,9 @@ const SECTIONS := [
 		+ "Freesound and OpenGameArt contributors (all listed in CREDITS.md)."],
 	["Fonts", "Cinzel by Natanael Gama and IM Fell English by Igino Marini (SIL Open Font Licence)."],
 	["Engine", "Made with Godot Engine (MIT licence), by Juan Linietsky, Ariel Manzur and the Godot Engine contributors."],
+	["Online and statistics", "Online duels and the account's cloud save run on Nakama (Apache-2.0 licence), on our own "
+		+ "server. To balance the decks the game sends anonymous match statistics after each match: classes, decks, the "
+		+ "result, turns and length. No name, e-mail or device id is kept with them."],
 ]
 
 

@@ -273,6 +273,19 @@ func record_result(winner: int) -> void:
 	_save_progress("stats", stats)
 
 
+## A finished match against the AI or a lesson, for the anonymous match statistics (Online.report_match): `winner`
+## 0 the player, 1 the AI, else a draw; `info` adds what the battle knows (turns, secs, conceded, hand, cards_left).
+func report_battle(winner: int, info: Dictionary = {}) -> void:
+	var sel := str(Settings.deck_choice.get("selected", ""))
+	var data := {"kind": "lesson" if lesson != "" else "ai", "v": str(ProjectSettings.get_setting("application/config/version")),
+		"os": OS.get_name(), "cls": player_deck, "hero": player_hero,
+		"deck": sel.substr(4) if sel.begins_with("pre:") else ("custom" if sel.begins_with("own:") else ""),
+		"enemy_cls": enemy_deck, "enemy_deck": enemy_deck_id, "difficulty": Settings.difficulty, "lesson": lesson,
+		"result": "win" if winner == 0 else ("loss" if winner == 1 else "draw")}
+	data.merge(info, true)
+	Online.report_match(data)
+
+
 ## Tests and tooling (`debug_run`) keep their results in memory, so they never touch the player's real profile.
 func _save_progress(key: String, value: Variant) -> void:
 	if debug_run():

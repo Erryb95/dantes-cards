@@ -50,6 +50,7 @@ seq is one counter for MULLIGAN, TURN and ACTION events (1, 2, 3, ...): both cli
 --]]
 
 local nk = require("nakama")
+local telemetry = require("dantes_telemetry")
 
 local TICK_RATE = 5
 local TURN_SEC = 75            -- turn timer, then the rope
@@ -146,6 +147,7 @@ local function finish(dispatcher, state, tick, winner, reason)
   send(dispatcher, state, OP_END, { winner = winner, loser = loser, reason = reason })
   dispatcher.match_label_update(label_of(state))
   nk.logger_info(string.format("dantes_match end winner=%s reason=%s turn=%d", winner, reason, state.turn))
+  telemetry.duel(state, winner, reason, tick, TICK_RATE)
 end
 
 local function start_turn(dispatcher, state, tick, active, reason)
