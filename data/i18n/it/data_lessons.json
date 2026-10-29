@@ -74,7 +74,7 @@
      "say": "Tre mana spesi. Termina il turno."
     },
     {
-     "say": "Vedi lo scudo intorno all'Accidioso? Quella è la Guardia. Finché una Guardia resta in campo, i tuoi attacchi devono colpire prima lei."
+     "say": "Vedi lo scudo intorno agli Accidiosi? Quella è la Guardia. Finché una Guardia resta in campo, i tuoi attacchi devono colpire prima lei."
     },
     {
      "say": "Gioca i Pagani Virtuosi."
@@ -89,10 +89,10 @@
      "say": "Termina il turno."
     },
     {
-     "say": "L'Accidioso ti ha colpito, ma la tua Armatura ha assorbito il colpo."
+     "say": "Gli Accidiosi ti hanno colpito, ma la tua Armatura ha assorbito il colpo."
     },
     {
-     "say": "Filippo si nasconde dietro la sua Guardia. Attacca l'Accidioso con i tuoi Pagani."
+     "say": "Filippo si nasconde dietro la sua Guardia. Attacca gli Accidiosi con i tuoi Pagani."
     },
     {
      "say": "È ancora in piedi. Finiscilo con la Luce di Santa Lucia, che infligge 2 danni."
@@ -120,7 +120,7 @@
      "say": "L'Egida blocca il primo danno che il servitore subirebbe. Gioca Orazio."
     },
     {
-     "say": "Sei arrivato qui ferito. Il Lupo Affamato ha Risucchio: i danni che infligge curano anche il tuo eroe. Giocalo."
+     "say": "Sei arrivato qui ferito. La Lupa Affamata ha Risucchio: i danni che infligge curano anche il tuo eroe. Giocalo."
     },
     {
      "say": "Termina il turno."
@@ -138,7 +138,7 @@
      "say": "Sono caduti entrambi. Il Veleno si è preso Orazio, ma la serpe non avvelenerà nient'altro."
     },
     {
-     "say": "Ora il Lupo. Attacca Ulisse e guarda salire la tua Salute: questo è il Risucchio."
+     "say": "Ora la Lupa. Attacca Ulisse e guarda salire la tua Salute: questo è il Risucchio."
     },
     {
      "say": "La Fenice ha Rinascita: la prima volta che muore, ritorna con 1 di Salute. Giocala."
