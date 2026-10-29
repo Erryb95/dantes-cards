@@ -12,7 +12,7 @@ extends Node
 ## collection_guide, collection_neutral, deck_peek (a key card shown big), deck_list (View cards), deck_list_zoom,
 ## deck_plain (Choose your path as it opens), deck_guide (the class guide), packs_reveal, packs_empty, packs_rates (the drop-rates sheet), collection_sort
 ## (`--sort=<id of the collection's SORTS>` on the `--filter=` set, default all, most cards owned), deck_tip,
-## battle (several shots), lessons (Virgil's lessons screen), lesson_hero (the hero choice before The Trial; `--cls=`), howto (every How to Play chapter), offer (the
+## battle (several shots), battle_panels (the log strip, a detail, the big card, the whole log, panels off, the result), lessons (Virgil's lessons screen), lesson_hero (the hero choice before The Trial; `--cls=`), howto (every How to Play chapter), offer (the
 ## first-launch question), lesson (`--lesson=<id> [--steps=0,3]`: every line of a lesson played through, and its
 ## result), lesson_pause.
 ## `--cls=` also picks the class of collection_class / collection_guide / deck_guide.
@@ -263,6 +263,8 @@ func _ready() -> void:
 			await _snap("offer")
 		"lesson", "lesson_pause":
 			await _lesson(what)
+		"battle_panels":
+			await _battle_panels()
 		"deck_tip":
 			# A library disc's tooltip (the discs only show when the library overflows, so one is forced on).
 			var s := _open("res://scenes/deck_select.tscn")
@@ -385,6 +387,92 @@ func _snap(name: String) -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	get_viewport().get_texture().get_image().save_png("%s/%s.png" % [out, name])
+
+
+## The battle's side panels (BattlePanels): the AI plays both sides for a while, then, on the player's turn, the log
+## strip, an action's detail, the big card of a hand card and of a minion, the whole log, the panels switched off one
+## by one, and the result screen with the log over it. p_*.png.
+func _battle_panels() -> void:
+	Settings.fast_animations = true
+	var b: Node = _open(Game.BATTLE)
+	while not b._mull_waiting:
+		await get_tree().process_frame
+	await _wait(0.6)
+	b._confirm_mulligan()
+	b.autoplay = true
+	var t := 0.0
+	while t < 40.0 and not b.over and b.history.entries.size() < 26:
+		await _wait(0.5)
+		t += 0.5
+	# Stop on the player's turn with the board settled (the AI still plays its own turn to the end).
+	b.autoplay = false
+	t = 0.0
+	while t < 40.0 and not b.over and not (b.st.current == 0 and b.queue.is_empty() and not b.playing):
+		await get_tree().process_frame
+		t += get_process_delta_time()
+	await _wait(1.2)
+	await _snap("p_strip")
+	var p: BattlePanels = b.panels
+	if not p._icons.is_empty():
+		p._show_detail(p._icons[0])
+		await _wait(0.4)
+		await _snap("p_detail")
+		for ic in p._icons:
+			var e: Dictionary = {}
+			for x in b.history.entries:
+				if x.seq == ic.get_meta("seq"):
+					e = x
+			if e.get("kind", "") in ["attack", "power"] or e.get("kills", 0) > 0:
+				p._show_detail(ic)
+				break
+		await _wait(0.4)
+		await _snap("p_detail_2")
+		p._hide_detail()
+	if not b.hand_views[0].is_empty():
+		b.hover_card = b.hand_views[0][0]
+		b._layout_hand(0)
+		await _wait(0.5)
+		await _snap("p_inspect_hand")
+		b.hover_card = null
+		b._layout_hand(0)
+	for side in [1, 0]:
+		if not b.board_views[side].is_empty():
+			b._show_inspect(b.board_views[side][0])
+			await _wait(0.5)
+			await _snap("p_inspect_minion")
+			b._hide_inspect()
+			break
+	b.open_log()
+	await _wait(0.8)
+	await _snap("p_log_panel")
+	b._on_back() # Esc closes it
+	await _wait(0.3)
+	Settings.set_panel("inspect", false)
+	if not p._icons.is_empty():
+		p._show_detail(p._icons[0])
+	await _wait(0.4)
+	await _snap("p_log_only")
+	p._hide_detail()
+	Settings.set_panel("log", false)
+	Settings.set_panel("inspect", true)
+	if not b.board_views[1].is_empty():
+		b._show_inspect(b.board_views[1][0])
+	await _wait(0.4)
+	await _snap("p_inspect_only")
+	b._hide_inspect()
+	Settings.set_panel("inspect", false)
+	await _wait(0.3)
+	await _snap("p_none")
+	Settings.set_panel("log", true)
+	Settings.set_panel("inspect", true)
+	b.over = true
+	b._show_result(0)
+	await _wait(1.4)
+	await _snap("p_result")
+	b.open_log()
+	await _wait(0.8)
+	await _snap("p_result_log")
+	print("AUDIT panels: %d log entries\n%s" % [b.history.entries.size(), b.history.dump()])
 
 
 func _battle() -> void:

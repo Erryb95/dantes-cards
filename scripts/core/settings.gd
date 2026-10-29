@@ -28,6 +28,24 @@ var lessons := {} ## Virgil's lessons: lesson id -> "done" (won once, reward pai
 var lessons_offered := false ## the first-launch question "Shall I show you the way?" was asked once
 var collection_sort := "cost" ## the order of the Collection screen (an id of SORTS in scripts/ui/collection.gd)
 var language := "" ## an id of Loc.LANGS, or "" for the device's language (Loc.resolve)
+## The battle's side panels switched on or off (id of BattlePanels.PANELS -> bool; a missing id is its default).
+var panels := {}
+
+signal panels_changed ## a side panel was switched on or off (the battle lays its panels out again)
+
+
+func panel_on(id: String) -> bool:
+	if panels.has(id):
+		return bool(panels[id])
+	for p in BattlePanels.PANELS:
+		if p.id == id:
+			return bool(p.get("default", true))
+	return false
+
+
+func set_panel(id: String, on: bool) -> void:
+	panels[id] = on
+	panels_changed.emit()
 
 
 func _ready() -> void:
@@ -71,6 +89,8 @@ func load_settings(path: String = PATH) -> void:
 	lessons_offered = SaveFile.value(cfg, "game", "lessons_offered", lessons_offered)
 	collection_sort = str(SaveFile.value(cfg, "game", "collection_sort", collection_sort))
 	language = str(SaveFile.value(cfg, "game", "language", language))
+	var saved_panels = SaveFile.value(cfg, "game", "panels", panels)
+	panels = saved_panels.duplicate() if saved_panels is Dictionary else {}
 
 
 ## Tests and tooling runs (`Game.debug_run()`) keep their changes in memory: the player's real settings are never written.
@@ -96,6 +116,7 @@ func save() -> void:
 	cfg.set_value("game", "lessons_offered", lessons_offered)
 	cfg.set_value("game", "collection_sort", collection_sort)
 	cfg.set_value("game", "language", language)
+	cfg.set_value("game", "panels", panels)
 	cfg.save(PATH)
 
 

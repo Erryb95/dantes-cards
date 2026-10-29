@@ -120,6 +120,8 @@ var _in_mulligan := false
 var _mull_waiting := false
 var _mull_marks := {} ## card uid -> "replace" label
 var _mull_ui: Control
+var history := BattleLog.new() ## the match history, fed as the events play (so it never runs ahead of the board)
+var panels: BattlePanels ## the side panels left of the board (the log strip, the big card); hidden in lessons
 signal mulligan_confirmed
 
 
@@ -152,6 +154,8 @@ func _ready() -> void:
 	_build_scene()
 	if net != null:
 		_build_online()
+	# The log names each side by its player (online both names, else the name the player chose), else by the hero.
+	history.names = [net.my_name() if net != null else Settings.player_name, net.opponent_name() if net != null else ""]
 	get_viewport().size_changed.connect(_on_resize)
 	Sfx.play_music(arena.get("music", "music_combat"))
 	Sfx.play_ambience(arena.get("ambience", ""), -16.0)
@@ -428,7 +432,40 @@ func _build_scene() -> void:
 	menu.name = "MenuButton"
 	menu.pressed.connect(_open_pause)
 	ui.add_child(menu)
+	# The side panels, under every other piece of the UI layer (banners, toasts, tips and dialogs come on top). In a
+	# lesson Virgil sits in that band, so they stay hidden and the floating card and tips work as before.
+	panels = BattlePanels.new().setup(history)
+	ui.add_child(panels)
+	ui.move_child(panels, 0)
+	panels.visible = lesson.is_empty()
+	panels.open_log.connect(open_log)
+	Settings.panels_changed.connect(_layout_panels)
 	_layout_static()
+
+
+## The side panels' band: left of the board and of the hand (each reaches about 640 px left of the middle at most),
+## down to the bottom edge, or to the chat plate of an online duel (and the FPS counter when it shows).
+func _layout_panels() -> void:
+	if panels == null:
+		return
+	var bottom := V.y - 16.0
+	if net != null:
+		bottom = V.y - 88.0
+	elif Settings.show_fps:
+		bottom = V.y - 56.0
+	panels.layout(V.x / 2.0 - 640.0, bottom)
+	_hide_inspect()
+
+
+## The whole match history over the battle (the strip's disc, the result screens).
+func open_log() -> BattleLogPanel:
+	_hide_inspect()
+	return BattleLogPanel.open(ui, history)
+
+
+func _log_open() -> bool:
+	var p := ui.get_node_or_null("BattleLog")
+	return p != null and not p.is_queued_for_deletion()
 
 
 func _tip_grid() -> GridContainer:
@@ -620,6 +657,7 @@ func _layout_static() -> void:
 	ui.get_node("MenuButton").position = Vector2(24, 20)
 	_tips.position = Vector2(400, V.y / 2 - 160)
 	_layout_online()
+	_layout_panels()
 
 
 ## Screen position of an arena socket. Sockets follow the painted board (fit to height, centred); without a painted
@@ -716,8 +754,8 @@ func _process(delta: float) -> void:
 	# The pause menu holds the match: the animation already under way ends, but no new event plays and the enemy
 	# does not move until it closes (it used to play on, and could even win, under the menu). An online duel cannot
 	# be held: the opponent plays on.
-	if _paused() and net == null:
-		return
+	if (_paused() or _log_open()) and net == null:
+		return # reading the whole log holds the match like the pause menu
 	if not queue.is_empty():
 		_play_next()
 		return
@@ -743,6 +781,7 @@ func _process(delta: float) -> void:
 func _play_next() -> void:
 	playing = true
 	var ev: Dictionary = queue.pop_front()
+	history.feed(ev)
 	await _present(ev)
 	playing = false
 	_highlight_dirty = true
@@ -838,6 +877,8 @@ func _present(ev: Dictionary) -> void:
 			else:
 				_show_banner("ENEMY TURN", Color(0.9, 0.5, 0.4), 72)
 				Sfx.play("bell_far", -14.0)
+				if int(ev.turn) == 1 and st.coin:
+					_second_note()
 			if heroes[ev.side].power_used:
 				heroes[ev.side].flip_power(false)
 			await _wait(0.75 if ev.side == 0 else 0.5)
@@ -1002,12 +1043,14 @@ func _present(ev: Dictionary) -> void:
 			await _wait(0.25)
 		"mulligan_begin":
 			_in_mulligan = true
+			panels.visible = false # the opening hand fills the screen
 		"mulligan_wait":
 			await _mulligan_wait()
 		"mulligan_swap":
 			await _mulligan_swap(ev)
 		"mulligan_end":
 			_in_mulligan = false
+			panels.visible = lesson.is_empty()
 			Sfx.play("swish_long", -6.0)
 			Sfx.play("card_shuffle", -6.0)
 			for c in hand_views[0]:
@@ -1860,6 +1903,7 @@ func _show_result(winner: int) -> void:
 	var menu := UI.button("Main Menu", 340)
 	menu.pressed.connect(func(): Game.go(Game.MENU))
 	row.add_child(menu)
+	_result_log_button(row, 340)
 	box.modulate.a = 0.0
 	title.pivot_offset = title.size / 2
 	title.scale = Vector2(1.6, 1.6)
@@ -2062,6 +2106,34 @@ func _show_banner(text: String, color: Color, size: int = 96) -> void:
 	t.tween_property(banner, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	t.chain().tween_interval(0.7)
 	t.chain().tween_property(banner, "modulate:a", 0.0, 0.4)
+
+
+## "Battle log" on a result screen's row: the match to look back on.
+func _result_log_button(row: Control, w: float) -> Button:
+	var b := UI.button("Battle log", w)
+	b.name = "LogButton"
+	b.pressed.connect(open_log)
+	row.add_child(b)
+	return b
+
+
+## Under the opponent's first turn banner when this player goes second: what they get for it, inked on parchment.
+func _second_note() -> void:
+	var holder := CenterContainer.new()
+	holder.name = "SecondNote"
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.size = Vector2(V.x, 0)
+	# Clear of the charred ribbon (TURN_RIBBON_H tall, on the middle of the screen).
+	holder.position = Vector2(0, V.y / 2 + TURN_RIBBON_H / 2.0 + 6.0)
+	holder.add_child(UI.parchment_label("You go second: +1 card and Charon's Obol", 30, "italic", UI.INK,
+		minf(1100.0, V.x - 200.0), 40, 12))
+	ui.add_child(holder)
+	holder.modulate.a = 0.0
+	var t := holder.create_tween()
+	t.tween_property(holder, "modulate:a", 1.0, 0.25)
+	t.tween_interval(2.2)
+	t.tween_property(holder, "modulate:a", 0.0, 0.5)
+	t.tween_callback(holder.queue_free)
 
 
 func _screen_flash(color: Color, duration: float) -> void:
@@ -2375,6 +2447,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if event.button_index != MOUSE_BUTTON_LEFT:
 			return
+		if event.pressed and mode == Mode.IDLE and not _mull_waiting and panels != null and panels.press(event.position):
+			_hide_inspect()
+			return # a portrait of the log strip, or its disc
 		if event.pressed:
 			_pressed = true
 			_press_pos = p
@@ -2487,6 +2562,8 @@ func _on_motion(p: Vector2) -> void:
 		Mode.IDLE:
 			if _pressed or _in_mulligan:
 				return
+			if panels != null and not UI.touch_ui():
+				panels.hover(get_canvas_transform() * p)
 			var c := _pick_hand(p) if not over else null
 			if c != hover_card:
 				hover_card = c
@@ -2792,6 +2869,19 @@ func _show_inspect(u) -> void:
 		return
 	var id: String = u.card_id
 	_did({"act": "inspect", "card": id})
+	if panels != null and panels.visible and panels.lanes.has("inspect"):
+		# The big card in the side panel instead of beside the minion, its keyword tips to the right of it.
+		var unit_now = st.units.get(u.uid)
+		var rect := panels.focus_unit(id, unit_now)
+		if rect.has_area():
+			var tips_now := UI.card_tips(_live_card(id, unit_now), true)
+			for t in tips_now:
+				_add_tip(t[0], t[1])
+			var keep := _keep_out()
+			keep.append(Rect2(u.position - Vector2(80, 100), Vector2(160, 200)))
+			if not tips_now.is_empty() and not _fit_tips(_tips, tips_now, rect, false, keep):
+				_tips_fallback(_tips, tips_now, rect, false)
+			return
 	inspect = CardView.new().setup(id, -1, true)
 	inspect.z_index = 300
 	inspect.sway = true
@@ -2800,15 +2890,10 @@ func _show_inspect(u) -> void:
 	inspect.create_tween().tween_property(inspect, "scale", Vector2(INSPECT_SCALE, INSPECT_SCALE), 0.12)
 	# The minion as it is now, not as printed: its current numbers, the keywords it has gained or lost, frozen,
 	# silenced (a silenced minion keeps no text, so its old keywords and triggers get no tips).
-	var live: Dictionary = CardDB.card(id).duplicate()
 	var unit = st.units.get(u.uid)
 	if unit != null:
 		inspect.set_stats(unit.attack, unit.health, unit.max_health)
-		live["keywords"] = unit.keywords.keys()
-		live["frozen"] = unit.frozen
-		live["silenced"] = unit.silenced
-		live["wrath"] = unit.wrath
-	var tips := UI.card_tips(live, true)
+	var tips := UI.card_tips(_live_card(id, unit), true)
 	for t in tips:
 		_add_tip(t[0], t[1])
 	# Beside the minion, clear of both heroes, their gems, the End Turn seal and the minion itself. The tips go on the
@@ -2843,6 +2928,18 @@ func _show_inspect(u) -> void:
 		if not placed:
 			_tips_fallback(_tips, tips, chosen[0], chosen[1])
 	inspect.position = (chosen[0] as Rect2).get_center()
+
+
+## Card `id` as the minion `unit` (a BattleState.Unit, or null) is now, for its tips: the keywords it has gained or lost,
+## frozen, silenced, its Wrath.
+func _live_card(id: String, unit) -> Dictionary:
+	var live: Dictionary = CardDB.card(id).duplicate()
+	if unit != null:
+		live["keywords"] = unit.keywords.keys()
+		live["frozen"] = unit.frozen
+		live["silenced"] = unit.silenced
+		live["wrath"] = unit.wrath
+	return live
 
 
 ## Lays the tips grid beside `card` on its left (`left`) or right side, in one column or else two, slid up or down
@@ -2897,6 +2994,8 @@ func _keep_out() -> Array[Rect2]:
 			out.append(Rect2(deck_views[i].position + Vector2(-75, -70), Vector2(165, 125)))
 	out.append(Rect2(end_btn.position - END_OVAL / 2 - Vector2(14, 14), END_OVAL + Vector2(28, 28)))
 	out.append(Rect2(16, 12, 180, 72))
+	if panels != null:
+		out.append_array(panels.covered())
 	return out
 
 
@@ -2944,6 +3043,13 @@ func _tick_hand_tips() -> void:
 		c = drag_card
 		center = c.position
 		scl = c.scale.x
+	if panels != null and panels.visible:
+		# The big card on the left: the hand card under the pointer, or the one held, dragged or being aimed.
+		var held: CardView = c
+		if not (over or _in_mulligan or _paused()) and drag_card != null and is_instance_valid(drag_card) \
+				and mode in [Mode.DRAG_CARD, Mode.AIM_SPELL, Mode.AIM_BATTLECRY]:
+			held = drag_card
+		panels.focus_hand(held.card_id if held != null else "")
 	if c != _hand_tips_card:
 		_hand_tips_card = c
 		for t in _hand_tips.get_children():
@@ -2983,6 +3089,8 @@ func _add_tip(title: String, text: String) -> void:
 
 
 func _hide_inspect() -> void:
+	if panels != null:
+		panels.focus_unit("")
 	if inspect != null:
 		inspect.queue_free()
 		inspect = null
@@ -3001,6 +3109,9 @@ func _paused() -> bool:
 ## Escape (Back) steps out one layer at a time: the options page, the concede question or the pause menu, an aim or
 ## drag in progress; with nothing open it opens the pause menu.
 func _on_back() -> void:
+	if _log_open():
+		ui.get_node("BattleLog").close()
+		return
 	if _paused():
 		# The last page opened over the pause menu closes first (Credits over Options), then the menu itself.
 		var pages := _pause_dim.get_children().filter(func(n):
@@ -3551,7 +3662,8 @@ func _show_online_result(winner: int) -> void:
 		Online.leave_match()
 		Game.go(Game.MENU))
 	row.add_child(menu)
-	UI.even_text([again, menu])
+	var log_b := _result_log_button(row, 340)
+	UI.even_text([again, menu, log_b])
 	box.modulate.a = 0.0
 	title.pivot_offset = title.size / 2
 	title.scale = Vector2(1.6, 1.6)

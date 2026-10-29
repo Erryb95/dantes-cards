@@ -20,6 +20,11 @@ func _initialize() -> void:
 		print("TESTS: %d checks, %d failures" % [checks, failures])
 		quit(1 if failures > 0 else 0)
 		return
+	if "--only=log" in OS.get_cmdline_user_args():
+		_test_battle_log()
+		print("TESTS: %d checks, %d failures" % [checks, failures])
+		quit(1 if failures > 0 else 0)
+		return
 	if "--only=online" in OS.get_cmdline_user_args():
 		_test_online_mirror(12)
 		print("TESTS: %d checks, %d failures" % [checks, failures])
@@ -50,6 +55,7 @@ func _initialize() -> void:
 	_test_saves()
 	_test_lessons()
 	_test_drop_rates()
+	_test_battle_log()
 	_test_i18n()
 	_soak(120)
 	_soak_classes(24)
@@ -62,6 +68,194 @@ func _initialize() -> void:
 	print("DEATHS: %d in soaks, replays and duels, %d with no killer" % [_deaths[0], _deaths[1]])
 	print("TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures > 0 else 0)
+
+
+## A battle whose decks are dealt in list order, the log listening from the first event.
+func _log_battle(mine: Array[String], theirs: Array[String], mulligan := false) -> Array:
+	var st := BattleState.new()
+	var lg := BattleLog.new()
+	st.event.connect(lg.feed)
+	st.stacked = true
+	st.start(mine, "dante", theirs, "charon", 7, mulligan, 0)
+	return [st, lg]
+
+
+static func _hand_uid(st: BattleState, side: int, id: String) -> int:
+	for c in st.sides[side].hand:
+		if c.id == id:
+			return c.uid
+	return -1
+
+
+static func _filler(id: String, n: int) -> Array[String]:
+	var out: Array[String] = []
+	for i in n:
+		out.append(id)
+	return out
+
+
+## The match history (BattleLog): one entry per action with what it caused, grouped by turn; the opponent's hidden
+## cards (hand, draws, mulligan) are never named; every line is filled in.
+func _test_battle_log() -> void:
+	# The opponent's secrets: Geryon and Minos sit in its opening hand, Geryon goes back in the mulligan, neither is
+	# played. A Soul on the Shore of theirs dies and draws them a card.
+	var theirs: Array[String] = ["geryon", "minos", "uh_shore_soul", "harpy"]
+	theirs.append_array(_filler("lost_pilgrim", 16))
+	var mine: Array[String] = ["she_wolf", "minotaur_rampage", "ul_puccio"]
+	mine.append_array(_filler("lost_pilgrim", 17))
+	var r := _log_battle(mine, theirs, true)
+	var st: BattleState = r[0]
+	var lg: BattleLog = r[1]
+	st.finish_mulligan(1, [_hand_uid(st, 1, "geryon")])
+	st.finish_mulligan(0, [])
+	var opening: Dictionary = lg.entries[0]
+	ok(opening.kind == "first" and opening.turn == 0 and not opening.strip, "log: the opening entry, not in the strip")
+	var opening_lines := lg.lines(opening)
+	ok("Charon replaces 1 card" in opening_lines and "Dante keeps the starting hand" in opening_lines,
+		"log: the mulligan is counted, never named (%s)" % [opening_lines])
+	ok(opening.results.any(func(x): return x.t == "gets" and x.side == 1 and x.ids == [BattleState.COIN]),
+		"log: Charon's Obol for the side going second is public")
+	# Turn 1 (mine): She-Wolf, then the opponent's turn: the Soul on the Shore and a Harpy.
+	st.sides[0].mana = 10
+	ok(st.play_card(0, _hand_uid(st, 0, "she_wolf")), "log: she-wolf played")
+	st.end_turn()
+	st.sides[1].mana = 10
+	var soul_uid := _hand_uid(st, 1, "uh_shore_soul")
+	ok(st.play_card(1, soul_uid) and st.play_card(1, _hand_uid(st, 1, "harpy")), "log: the opponent plays two")
+	st.end_turn()
+	# Turn 3: the She-Wolf attacks the Soul (3 into 2: it dies and its Last Breath draws the opponent a card), then
+	# the Rampage clears the board.
+	st.sides[0].mana = 10
+	var wolf: BattleState.Unit = st.sides[0].board[0]
+	var soul: BattleState.Unit = st.sides[1].board[0]
+	ok(st.attack(0, wolf.uid, soul.uid), "log: the wolf attacks the soul")
+	var atk: Dictionary = lg.entries.back()
+	ok(atk.kind == "attack" and atk.card == "she_wolf" and atk.target.id == "uh_shore_soul" and atk.turn == 3,
+		"log: the attack entry names attacker and target")
+	ok(atk.results.any(func(x): return x.t == "damage" and x.to.id == "uh_shore_soul" and x.amount == 3)
+		and atk.results.any(func(x): return x.t == "damage" and x.to.id == "she_wolf" and x.amount == 1)
+		and atk.results.any(func(x): return x.t == "death" and x.to.id == "uh_shore_soul") and atk.kills == 1,
+		"log: the blows and the death go to the attack (%s)" % [lg.lines(atk)])
+	var drew: Array = atk.results.filter(func(x): return x.t == "draw" and x.side == 1)
+	ok(drew.size() == 1 and drew[0].ids.is_empty() and "Charon draws a card" in lg.lines(atk),
+		"log: the opponent's Last Breath draw is only 'draws a card'")
+	var hand_before := st.sides[1].hand.size()
+	ok(st.play_card(0, _hand_uid(st, 0, "minotaur_rampage")), "log: rampage played")
+	var aoe: Dictionary = lg.entries.back()
+	ok(aoe.kind == "play" and aoe.card == "minotaur_rampage" and aoe.kills == 2
+		and aoe.results.filter(func(x): return x.t == "death").size() == 2, "log: the board clear's deaths go to it")
+	ok(lg.lines(aoe).has("3 damage to The She-Wolf · Harpy"), "log: alike blows share a line (%s)" % [lg.lines(aoe)])
+	ok(st.sides[1].hand.size() == hand_before, "log: (the opponent's hand is untouched)")
+	# My Puccio copies a card from the opponent's hand: I hold it, so I may read it; the hand itself stays secret.
+	ok(st.play_card(0, _hand_uid(st, 0, "ul_puccio")), "log: puccio played")
+	var cp: Dictionary = lg.entries.back()
+	var copied: Array = cp.results.filter(func(x): return x.t == "copy")
+	ok(copied.size() == 1 and copied[0].id != "", "log: my copy of an enemy card is named")
+	var secret := {"geryon": true, "minos": true}
+	if not copied.is_empty():
+		secret.erase(copied[0].id)
+	var mentioned := lg.ids_mentioned()
+	for id in secret:
+		ok(id not in mentioned and not lg.dump().contains(CardDB.card(id).name),
+			"log: %s, never played, is never named" % id)
+	ok("uh_shore_soul" in mentioned and "harpy" in mentioned, "log: played cards are named")
+	# Grouping: the opening, then one group per turn, each with its owner.
+	var groups := lg.groups()
+	ok(groups.size() == 4 and groups[0].turn == 0 and groups[1].turn == 1 and groups[1].side == 0
+		and groups[2].turn == 2 and groups[2].side == 1 and groups[3].turn == 3 and groups[3].entries.size() == 3,
+		"log: grouped per turn (%s)" % [groups.map(func(g): return [g.turn, g.side, g.entries.size()])])
+	ok(lg.turn_title(2, 1) == "Turn 2 — Charon" and lg.turn_title(0, 0) == "Start of the match", "log: turn titles")
+	lg.names = ["Enrico", ""]
+	ok(lg.headline(groups[1].entries[0]) == "Enrico plays The She-Wolf", "log: a player's name in the lines")
+	ok(lg.recent(2)[0] == cp and lg.recent(2)[1] == aoe, "log: the strip shows the newest first")
+
+	# The opponent's Puccio copies a card from my hand: the copy stays hidden.
+	var r2 := _log_battle(_filler("she_wolf", 20), _filler("ul_puccio", 20))
+	st = r2[0]
+	lg = r2[1]
+	st.end_turn()
+	st.sides[1].mana = 10
+	st.play_card(1, _hand_uid(st, 1, "ul_puccio"))
+	var their_copy: Array = lg.entries.back().results.filter(func(x): return x.t == "copy")
+	ok(their_copy.size() == 1 and their_copy[0].id == "" and "Charon copies a card" in lg.lines(lg.entries.back()),
+		"log: the opponent's copy of my card is not named")
+
+	# The hero power, Armor, fatigue and the end of the match.
+	var r3 := _log_battle(_filler("lost_pilgrim", 5), _filler("lost_pilgrim", 5))
+	st = r3[0]
+	lg = r3[1]
+	st.sides[0].mana = 10
+	ok(st.use_power(0), "log: steadfast used")
+	var pw: Dictionary = lg.entries.back()
+	ok(pw.kind == "power" and lg.headline(pw) == "Dante uses Steadfast" and "+2 Armor to Dante" in lg.lines(pw),
+		"log: the hero power and its Armor (%s)" % [lg.lines(pw)])
+	st.sides[0].hero.health = 1
+	st.sides[0].hero.armor = 0
+	while st.winner == -1 and st.turn < 20:
+		st.end_turn()
+	var tired: Array = lg.entries.filter(func(x): return x.kind == "fatigue")
+	ok(not tired.is_empty() and tired.back().results.any(func(x): return x.t == "damage" and x.to.hero)
+		and tired.back().results.any(func(x): return x.t == "fall"), "log: the fatigue that kills is its own entry")
+	var last: Dictionary = lg.entries.back()
+	ok(last.kind == "over" and last.side == 1 and lg.headline(last) == "Charon wins"
+		and "Dante falls" in lg.lines(last), "log: the match's end (%s)" % [lg.dump().right(200)])
+
+	# Soaks: every line filled in, and only what side 0 could see is ever named.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4242
+	var classes := CardDB.classes()
+	for g in 24:
+		var gst := BattleState.new()
+		var glg := BattleLog.new()
+		var seen := {BattleState.COIN: true}
+		gst.event.connect(glg.feed)
+		gst.event.connect(func(ev): _log_public(ev, seen))
+		var c0: String = classes[g % classes.size()]
+		var c1: String = classes[(g / classes.size() + g + 1) % classes.size()]
+		gst.start(random_deck(c0, rng), CardDB.class_hero(c0), random_deck(c1, rng), CardDB.class_hero(c1),
+			7000 + g, true, -1)
+		gst.finish_mulligan(1, gst.sides[1].hand.slice(0, 2).map(func(c): return c.uid))
+		gst.finish_mulligan(0, gst.sides[0].hand.slice(0, 1).map(func(c): return c.uid))
+		var ais := [BattleAI.new(0, BattleAI.Level.EASY), BattleAI.new(1, BattleAI.Level.EASY)]
+		var steps := 0
+		while gst.winner == -1 and steps < 6000:
+			steps += 1
+			var act: Dictionary = ais[gst.current].next_action(gst)
+			if act.do == "end" or not BattleAI.apply(gst, gst.current, act):
+				gst.end_turn()
+		ok(glg.entries.size() <= BattleLog.MAX_ENTRIES, "log soak %d: capped" % g)
+		var leaks := glg.ids_mentioned().filter(func(id): return not seen.has(id))
+		ok(leaks.is_empty(), "log soak %d: nothing hidden is named (%s)" % [g, leaks])
+		var bad := []
+		for e in glg.entries:
+			var texts := [glg.headline(e)]
+			texts.append_array(Array(glg.lines(e)))
+			for t in texts:
+				if str(t) == "" or str(t).contains("%"):
+					bad.append([e.kind, t])
+		ok(bad.is_empty(), "log soak %d: every line is filled in (%s)" % [g, bad.slice(0, 3)])
+		ok(glg.entries.back().kind == "over", "log soak %d: ends with the result" % g)
+
+
+## What side 0 can know from an event (the soak's reference for the log): its own cards, and every card played,
+## put in play, burned, transformed into, or taken by it.
+static func _log_public(ev: Dictionary, seen: Dictionary) -> void:
+	match str(ev.t):
+		"draw", "mulligan_swap":
+			if int(ev.side) == 0:
+				seen[str(ev.id)] = true
+		"play", "burn":
+			seen[str(ev.id)] = true
+		"summon":
+			seen[str(ev.unit.id)] = true
+		"transform":
+			seen[str(ev.into)] = true
+		"steal":
+			if int(ev.side) == 0 or str(ev.get("zone", "")) == "hand":
+				seen[str(ev.id)] = true
+		"copy":
+			if int(ev.side) == 0 or str(ev.get("from", "board")) == "board":
+				seen[str(ev.id)] = true
 
 
 ## Every translation: its templates keep the English placeholders in order, its data entries name real ids, every
