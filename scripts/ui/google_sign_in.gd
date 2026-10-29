@@ -150,7 +150,7 @@ func _fail(message: String) -> void:
 func _process(delta: float) -> void:
 	if _waiting and _status != null and is_instance_valid(_status):
 		_dots += delta
-		_status.text = "Waiting for Google" + ".".repeat(int(_dots * 2.0) % 4)
+		_status.text = Loc.t("Waiting for Google") + ".".repeat(int(_dots * 2.0) % 4)
 
 
 func _close(ok: bool) -> void:

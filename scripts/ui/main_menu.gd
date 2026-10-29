@@ -92,7 +92,7 @@ func _ready() -> void:
 	coll.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	coll.pressed.connect(func(): Game.go(Game.COLLECTION))
 	col.add_child(coll)
-	var packs := UI.button("Open Packs (%d)" % Collection.packs if Collection.packs > 0 else "Open Packs", 460)
+	var packs := UI.button(Loc.t("Open Packs (%d)") % Collection.packs if Collection.packs > 0 else "Open Packs", 460)
 	packs.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	packs.pressed.connect(func(): Game.go(Game.PACKS))
 	col.add_child(packs)
@@ -167,7 +167,7 @@ func _learn_medallion() -> Button:
 	const W := 290.0 ## the ribbon
 	var b := Button.new()
 	b.name = "LearnToPlay"
-	b.tooltip_text = "Virgil's lessons and How to Play"
+	b.tooltip_text = Loc.t("Virgil's lessons and How to Play")
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size = Vector2(W, D + 26.0)
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -218,7 +218,7 @@ func _add_profile_plaque() -> void:
 		remove_child(old)
 	var b := Button.new()
 	b.name = "ProfilePlaque"
-	b.tooltip_text = "Your profile"
+	b.tooltip_text = Loc.t("Your profile")
 	b.focus_mode = Control.FOCUS_NONE
 	for st in [["normal", Color.WHITE], ["hover", Color(1.35, 1.18, 0.9)], ["pressed", Color(0.85, 0.75, 0.65)]]:
 		b.add_theme_stylebox_override(st[0], UI.plaque_box(18, 8, st[1]))
@@ -253,7 +253,7 @@ func _add_profile_plaque() -> void:
 		UI.fit_label(name_l, 250.0, 16)
 	name_l.name = "Name"
 	v.add_child(name_l)
-	var rec := UI.label("Victories %d  ·  Defeats %d" % [Game.stats.wins, Game.stats.losses], 20, "italic",
+	var rec := UI.label(Loc.t("Victories %d  ·  Defeats %d") % [Game.stats.wins, Game.stats.losses], 20, "italic",
 		Color(0.95, 0.82, 0.55), 3, ClassInfoPanel.SHADE)
 	rec.name = "Record"
 	UI.fit_label(rec, 250.0, 14)
@@ -292,7 +292,7 @@ func _add_profile_plaque() -> void:
 func _on_sync_status(text: String) -> void:
 	var l := get_node_or_null("ProfilePlaque/SyncStatus") as Label
 	if l != null:
-		l.text = text
+		l.text = Loc.t(text)
 
 
 ## Opens the profile panel over the title screen (Esc, back and Back close it).
@@ -310,7 +310,7 @@ func offer_lessons() -> void:
 	Settings.lessons_offered = true
 	Settings.save()
 	var first := str(Lessons.all()[0].id) if not Lessons.all().is_empty() else ""
-	Virgil.dialog(self, "New to Hell?",
+	Virgil.dialog(self, Loc.t("New to Hell?"), # translated here: the painted heading is looked up by the shown words
 		"I am Virgil. Let me show you the way: a few short lessons teach the whole game. You can find them later under Learn to Play.",
 		[["Begin the lessons", func(): Game.start_lesson(first)], ["Not now", null]])
 

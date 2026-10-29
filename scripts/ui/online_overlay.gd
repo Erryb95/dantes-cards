@@ -95,7 +95,7 @@ func _build_search() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 14)
 	_sheet.add_child(v)
-	_who = UI.label("You walk as  " + Online.display_name(), 30, "title", INK)
+	_who = UI.label(Loc.t("You walk as  %s") % Online.display_name(), 30, "title", INK)
 	_who.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_who)
 	_status = UI.label("", 34, "italic", INK)
@@ -108,8 +108,8 @@ func _build_search() -> void:
 	v.add_child(_clock)
 	var rec := Online.record()
 	if rec.wins + rec.losses + rec.draws > 0:
-		var r := UI.label("Online record:  %d won  ·  %d lost" % [rec.wins, rec.losses] +
-			("  ·  %d drawn" % rec.draws if rec.draws > 0 else ""), 24, "italic", INK)
+		var r := UI.label(Loc.t("Online record:  %d won  ·  %d lost") % [rec.wins, rec.losses] +
+			(Loc.t("  ·  %d drawn") % rec.draws if rec.draws > 0 else ""), 24, "italic", INK)
 		r.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(r)
 	_row = HBoxContainer.new()
@@ -138,14 +138,14 @@ func _start() -> void:
 	_searching = true
 	_clock.text = "0:00"
 	if not Online.configured():
-		_on_failed("Online play is not set up on this copy of the game: it has no server settings " +
-			"(config/online.local.cfg).")
+		_on_failed(Loc.t("Online play is not set up on this copy of the game: it has no server settings " +
+			"(config/online.local.cfg)."))
 		return
 	if rejoin_id != "":
-		_status.text = "Returning to your duel..."
+		_status.text = Loc.t("Returning to your duel...")
 		Online.rejoin(rejoin_id)
 	else:
-		_status.text = "Connecting to the server..."
+		_status.text = Loc.t("Connecting to the server...")
 		Online.search(cls, cards)
 
 
@@ -157,18 +157,18 @@ func _process(_delta: float) -> void:
 
 func _on_status(text: String) -> void:
 	if _status != null and _searching:
-		_status.text = text
+		_status.text = Loc.t(text)
 
 
 func _on_failed(message: String) -> void:
 	if _leaving:
 		return
 	_searching = false
-	_status.text = message
+	_status.text = Loc.t(message)
 	_status.add_theme_color_override("font_color", INK_RED)
 	_clock.text = ""
 	Sfx.play("ui_back", -6.0)
-	if rejoin_id != "" and message == "That duel has already ended.":
+	if rejoin_id != "" and message in ["That duel has already ended.", Loc.t("That duel has already ended.")]:
 		_buttons([["Close", _cancel]]) # going back again cannot help
 		return
 	_buttons([["Try again", _retry], ["Close", _cancel]])
@@ -200,7 +200,7 @@ func _on_match_ready(start: Dictionary) -> void:
 	var sync := DuelSync.new()
 	if not sync.setup(start, Online.user_id()):
 		Online.leave_match()
-		_on_failed("The duel could not start: %s" % sync.error)
+		_on_failed(Loc.t("The duel could not start: %s") % sync.error)
 		return
 	set_meta("cancel", Button.new()) # no way back from here: the duel is on
 	Sfx.play("title_sting", -6.0, 1.0, 0.0)
@@ -222,7 +222,7 @@ func _on_match_ready(start: Dictionary) -> void:
 		var t := (sides[i] as Control).create_tween()
 		t.tween_interval(0.15 * i)
 		t.tween_property(sides[i], "modulate:a", 1.0, 0.35)
-	var sub := UI.plaque_label("%s goes first" % ("You" if sync.first == sync.me else str(sync.names[sync.first])),
+	var sub := UI.plaque_label(Loc.t("You go first") if sync.first == sync.me else Loc.t("%s goes first") % str(sync.names[sync.first]),
 		28, "italic", UI.BONE)
 	var sc := CenterContainer.new()
 	sc.add_child(sub)
@@ -242,7 +242,7 @@ func _fighter(sync: DuelSync, canon: int) -> Control:
 	v.add_child(pc)
 	var n := str(sync.names[canon])
 	if n == "":
-		n = "You" if canon == sync.me else "Opponent"
+		n = Loc.t("You" if canon == sync.me else "Opponent")
 	var plate := UI.plaque_label(n, 36, "title", UI.GOLD, 360.0)
 	var c := CenterContainer.new()
 	c.add_child(plate)

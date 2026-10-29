@@ -106,7 +106,7 @@ static func section(title: String, room: float) -> Control:
 	var v := VBoxContainer.new()
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_theme_constant_override("separation", 2)
-	v.add_child(gilded(title.to_upper(), 22, room))
+	v.add_child(gilded(Loc.t(title).to_upper(), 22, room))
 	if UiSkin.has("slider_track"):
 		var rod := UiSkin.rect("slider_track", Vector2(room, 7))
 		rod.custom_minimum_size = Vector2(room, 7)
@@ -119,7 +119,7 @@ static func section(title: String, room: float) -> Control:
 static func chip(kw: String, px: int = 20) -> Button:
 	var help: Array = UI.KEYWORD_HELP.get(kw, [kw.capitalize(), ""])
 	var b := Button.new()
-	b.text = str(help[0])
+	b.text = Loc.t(str(help[0]))
 	b.focus_mode = Control.FOCUS_NONE
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	b.add_theme_font_override("font", UI.font("title"))
@@ -184,7 +184,7 @@ static func hide_tip(c: Control) -> void:
 static func info_button(px: float = 52.0, tip: String = "Class guide") -> Button:
 	var b := Button.new()
 	b.text = "i"
-	b.tooltip_text = tip
+	b.tooltip_text = Loc.t(tip)
 	b.custom_minimum_size = Vector2(px, px)
 	b.size = b.custom_minimum_size
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -257,7 +257,7 @@ static func strip(cls: String, width: float, full: bool = false) -> PanelContain
 			pv.add_theme_constant_override("separation", 0)
 			power.add_child(pv)
 			var hp: Dictionary = info.power
-			pv.add_child(gilded("Hero power: %s" % hp.get("name", ""), 21, pw - 80.0))
+			pv.add_child(gilded(Loc.t("Hero power: %s") % hp.get("name", ""), 21, pw - 80.0))
 			# One line when it fits (down to 16 px), else two smaller ones.
 			var pt := text(str(hp.get("text", "")), 20, "body", UI.BONE, pw - 80.0)
 			var pf := pt.get_theme_font("font")
@@ -306,7 +306,7 @@ static func strip(cls: String, width: float, full: bool = false) -> PanelContain
 		b.add_theme_font_size_override("font_size", 26)
 		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	else:
-		b = info_button(46.0, "%s class guide" % info.title)
+		b = info_button(46.0, Loc.t("%s class guide") % info.title)
 	b.name = "GuideButton"
 	b.pressed.connect(func(): open(p, cls))
 	row.add_child(b)
@@ -394,7 +394,7 @@ static func guide(cls: String, width: float) -> Control:
 	pv.add_theme_constant_override("separation", 2)
 	pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	prow.add_child(pv)
-	pv.add_child(gilded("%s  (%d mana)" % [hp.get("name", ""), int(hp.get("cost", 2))], 26, lw - 100.0))
+	pv.add_child(gilded(Loc.t("%s  (%d mana)") % [hp.get("name", ""), int(hp.get("cost", 2))], 26, lw - 100.0))
 	pv.add_child(text(str(hp.get("text", "")), 24, "body", UI.BONE, lw - 100.0))
 	# The playstyle, inked on parchment.
 	left.add_child(section("How it plays", lw))

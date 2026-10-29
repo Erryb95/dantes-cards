@@ -142,7 +142,7 @@ func _online_account() -> Control:
 	var g := Online.google_account()
 	var who := "Playing as a guest"
 	if not g.is_empty():
-		who = "Signed in with Google as %s" % (g.name if str(g.name) != "" else g.email)
+		who = Loc.t("Signed in with Google as %s") % (g.name if str(g.name) != "" else g.email)
 	var line := UI.parchment_label(who, 20, "italic", UI.INK, 300.0, 20, 10)
 	box.add_child(line)
 	var b: Button = null
@@ -197,7 +197,7 @@ func _right_column() -> Control:
 	field.text_changed.connect(_check)
 	field.text_submitted.connect(func(_t: String): field.release_focus()) # Enter / the phone's Done: the keyboard goes
 	nr.add_child(field)
-	var nib := UI.disc("Edit your name", Callable(), "icon_rename")
+	var nib := UI.disc(Loc.t("Edit your name"), Callable(), "icon_rename")
 	nib.pressed.connect(func():
 		field.grab_focus()
 		field.select_all())
@@ -297,7 +297,7 @@ func _show_big() -> void:
 ## Shows the rule under the field while `text` is a valid name, else what is wrong with it, in red ink.
 func _check(text: String) -> bool:
 	var why := Profile.problem(text)
-	_hint.text = HINT if why == "" else why
+	_hint.text = Loc.t(HINT) if why == "" else why
 	_hint.add_theme_color_override("font_color", UI.INK if why == "" else UI.INK_RED)
 	return why == ""
 

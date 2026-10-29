@@ -121,6 +121,7 @@ func _row(text: String) -> HBoxContainer:
 	l.custom_minimum_size = Vector2(LABEL_W, ROW_H)
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	if text != "":
+		UI.fit_label(l, LABEL_W, 24) # a longer translation shrinks a little instead of pushing its control out
 		UI.center_ink(l) # the letters on the row's middle, level with the plate's
 	h.add_child(l)
 	return h

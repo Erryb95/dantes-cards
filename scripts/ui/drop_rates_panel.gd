@@ -22,7 +22,7 @@ static func rows() -> Array:
 
 ## The pity counter as the sheet words it.
 static func pity_text() -> String:
-	return "Packs since your last Legendary: %d / %d" % [mini(Collection.packs_since_legendary, Collection.PITY_LEGENDARY),
+	return Loc.t("Packs since your last Legendary: %d / %d") % [mini(Collection.packs_since_legendary, Collection.PITY_LEGENDARY),
 		Collection.PITY_LEGENDARY]
 
 
@@ -62,7 +62,7 @@ static func sheet(width: float) -> PanelContainer:
 	v.custom_minimum_size.x = inner
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parch.add_child(v)
-	var intro := _ink("Each of the %d cards in a pack has this chance:" % Collection.PACK_SIZE, 26, "italic")
+	var intro := _ink(Loc.t("Each of the %d cards in a pack has this chance:") % Collection.PACK_SIZE, 26, "italic")
 	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(intro)
 	for row in rows():
@@ -80,6 +80,7 @@ static func sheet(width: float) -> PanelContainer:
 		h.add_child(gem)
 		var name_l := _ink(r.capitalize(), 30, "title")
 		name_l.custom_minimum_size.x = 200.0
+		UI.fit_label(name_l, 200.0, 22) # a longer translated name ("Leggendaria") shrinks instead of pushing its bar
 		h.add_child(name_l)
 		var share: Color = UI.RARITY.get(r, UI.GOLD).darkened(0.3)
 		h.add_child(_bar(float(row[1]), share))
@@ -91,7 +92,7 @@ static func sheet(width: float) -> PanelContainer:
 	v.add_child(_rod(inner))
 	for t in [
 		"Every pack holds at least one Rare or better.",
-		"A Legendary is guaranteed within %d packs." % Collection.PITY_LEGENDARY,
+		Loc.t("A Legendary is guaranteed within %d packs.") % Collection.PITY_LEGENDARY,
 	]:
 		var line := _ink(t, 26)
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -107,8 +108,8 @@ static func sheet(width: float) -> PanelContainer:
 	# What a spare copy is worth.
 	var refunds := []
 	for r in ["common", "rare", "epic", "legendary"]:
-		refunds.append("%s %d" % [r.capitalize(), int(Collection.REFUND[r])])
-	var spare := _ink("Spare copies turn into Obols: %s." % ", ".join(refunds), 22, "italic")
+		refunds.append("%s %d" % [Loc.t(r.capitalize()), int(Collection.REFUND[r])])
+	var spare := _ink(Loc.t("Spare copies turn into Obols: %s.") % ", ".join(refunds), 22, "italic")
 	spare.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	spare.custom_minimum_size.x = inner
 	v.add_child(spare)

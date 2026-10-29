@@ -50,7 +50,7 @@ func _ready() -> void:
 	_sort = Settings.collection_sort if SORTS.any(func(x): return x[0] == Settings.collection_sort) else "cost"
 	_sort_btn = UI.button("", 360, 64)
 	_sort_btn.name = "SortButton"
-	_sort_btn.tooltip_text = "Change the order of the cards"
+	_sort_btn.tooltip_text = Loc.t("Change the order of the cards")
 	_sort_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_sort_btn.pressed.connect(_cycle_sort)
 	top.add_child(_sort_btn)
@@ -61,7 +61,7 @@ func _ready() -> void:
 			total += 1
 			owned_n += int(Collection.copies(c.id) > 0)
 	# Cards owned out of the whole pool, engraved on a plaque.
-	var progress := UI.plaque_label("%d / %d cards" % [owned_n, total], 28, "title", UI.BONE, 0.0, 24, 8)
+	var progress := UI.plaque_label(Loc.t("%d / %d cards") % [owned_n, total], 28, "title", UI.BONE, 0.0, 24, 8)
 	progress.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(progress)
 	# The sort plaque takes the room the title and the count leave, within reason.
@@ -142,7 +142,7 @@ func _update_sort_button() -> void:
 	for x in SORTS:
 		if x[0] == _sort:
 			label = x[1]
-	_sort_btn.text = "Sort: " + label
+	_sort_btn.text = Loc.t("Sort: %s") % Loc.t(label)
 	_sort_btn.add_theme_font_size_override("font_size", SORT_FONT)
 	UI.fit_text(_sort_btn)
 
@@ -202,7 +202,7 @@ func _divider(cap: String, key: String, room: float) -> Control:
 	v.add_theme_constant_override("separation", 2)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var tint: Color = UI.GOLD.lerp(UI.RARITY.get(key, UI.GOLD), 0.45)
-	v.add_child(ClassInfoPanel.gilded(cap.to_upper(), 34, room, tint))
+	v.add_child(ClassInfoPanel.gilded(Loc.t(cap).to_upper(), 34, room, tint))
 	if UiSkin.has("slider_track"):
 		var rod := UiSkin.rect("slider_track", Vector2(room, 8))
 		rod.custom_minimum_size = Vector2(room, 8)
@@ -264,7 +264,8 @@ func _fill() -> void:
 				badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				if UiSkin.has("power_disc"):
 					badge.add_child(UiSkin.rect("power_disc", badge.size))
-				var count := UI.label("x%d" % n, 22, "title", UI.GOLD, 5, Color.BLACK)
+				var count := UI.label("", 22, "title", UI.GOLD, 5, Color.BLACK)
+				count.text = "x%d" % n # a number: nothing to translate
 				if UiSkin.has("power_disc"):
 					UI.engraved(count)
 				count.size = badge.size
