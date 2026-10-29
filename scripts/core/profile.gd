@@ -23,13 +23,13 @@ static func clean(raw: String) -> String:
 static func problem(raw: String) -> String:
 	var n := clean(raw)
 	if n.length() < MIN_LEN:
-		return "A name needs at least %d characters." % MIN_LEN
+		return Loc.t("A name needs at least %d characters.") % MIN_LEN
 	if n.length() > MAX_LEN:
-		return "A name can have at most %d characters." % MAX_LEN
+		return Loc.t("A name can have at most %d characters.") % MAX_LEN
 	if _allowed == null:
 		_allowed = RegEx.create_from_string("^[\\p{L}\\p{M}\\p{N} _-]+$")
 	if _allowed.search(n) == null:
-		return "Use only letters, digits, spaces, _ and -."
+		return Loc.t("Use only letters, digits, spaces, _ and -.")
 	return ""
 
 

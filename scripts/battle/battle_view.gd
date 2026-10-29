@@ -161,7 +161,7 @@ func _ready() -> void:
 	ai_self = BattleAI.new(0)
 	# A lesson opens with its own title and what it teaches, in place of the arena's name and line.
 	_intro(arena if lesson.is_empty() else {"name": lesson.title, "intro": lesson.learn,
-		"circle": "Lesson %d of %d" % [Lessons.index_of(lesson.id) + 1, Lessons.all().size()]})
+		"circle": Loc.t("Lesson %d of %d") % [Lessons.index_of(lesson.id) + 1, Lessons.all().size()]})
 	if net != null:
 		# Online: the canonical game both players build from the match's START (this player at the bottom).
 		st = net.build(func(ev): queue.append(ev))
@@ -878,7 +878,7 @@ func _present(ev: Dictionary) -> void:
 		"fatigue":
 			var h: HeroView = heroes[ev.side]
 			# Left of the portrait: above it the plaque sat on the row of minions and hid their numbers.
-			_toast(h.position + Vector2(-340, 0), "Fatigue: %d damage" % ev.amount, UI.INK_RED, true)
+			_toast(h.position + Vector2(-340, 0), (Loc.t("Fatigue: 1 damage") if ev.amount == 1 else Loc.t("Fatigue: %d damage") % ev.amount), UI.INK_RED, true)
 			await _wait(0.4)
 		"play":
 			_last_aoe = ""
@@ -1103,8 +1103,8 @@ func _mulligan_wait() -> void:
 	sub_row.position = Vector2(0, V.y * 0.12 + 102)
 	sub_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# "Click" with a mouse, "Tap" on a touch screen.
-	var how := "   %s the cards you want to replace." % UI.tap_word()
-	sub_row.add_child(UI.parchment_label(order + how, 28, "italic", UI.INK, minf(1300.0, V.x - 160.0), 40, 12))
+	var how := Loc.t("Tap the cards you want to replace." if UI.touch_ui() else "Click the cards you want to replace.")
+	sub_row.add_child(UI.parchment_label(Loc.t(order) + "   " + how, 28, "italic", UI.INK, minf(1300.0, V.x - 160.0), 40, 12))
 	_mull_ui.add_child(sub_row)
 	var ok := UI.button("Confirm", 340, 84)
 	ok.position = Vector2(V.x / 2 - 170, V.y * 0.78)
@@ -1154,7 +1154,7 @@ func _confirm_mulligan() -> void:
 		# back in order and are applied then. Until the opponent has chosen, a note says we are waiting.
 		if not net.mulligan_held_from(Online.user_id()):
 			Online.send(DuelSync.OP_MULLIGAN, net.mulligan_payload(chosen))
-		_net_note_show("Waiting for %s to choose..." % _opp_name())
+		_net_note_show(Loc.t("Waiting for %s to choose...") % _opp_name())
 		mulligan_confirmed.emit()
 		return
 	st.finish_mulligan(1, ai.mulligan_choice(st))
@@ -1842,7 +1842,7 @@ func _show_result(winner: int) -> void:
 		coin.custom_minimum_size = coin.size
 		coin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		gain_row.add_child(coin)
-	var gain := UI.label("+%d Obols   ·   a pack costs %d" % [reward, Collection.PACK_PRICE], 30, "title", UI.INK_RED)
+	var gain := UI.label(Loc.t("+%d Obols   ·   a pack costs %d") % [reward, Collection.PACK_PRICE], 30, "title", UI.INK_RED)
 	gain.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	gain_row.add_child(gain)
 	var row := HBoxContainer.new()
@@ -1921,7 +1921,7 @@ func _show_lesson_result(winner: int) -> void:
 	sub.custom_minimum_size = Vector2(UI.balanced_width(sub.get_theme_font("font"), 32, line, minf(820.0, V.x - 700.0)), 0)
 	pv.add_child(sub)
 	if not paid.is_empty():
-		pv.add_child(LessonsScreen.reward_badge(paid, "Reward:  ", true))
+		pv.add_child(LessonsScreen.reward_badge(paid, Loc.t("Reward:  "), true))
 		Sfx.play("coins", -4.0)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -2035,6 +2035,7 @@ func _legendary_cutin(id: String) -> void:
 
 
 func _show_banner(text: String, color: Color, size: int = 96) -> void:
+	text = Loc.t(text)
 	# The painted words when the heading has them (they replace the letters), else the font.
 	var old := banner.get_node_or_null("Word")
 	if old != null:
@@ -2089,7 +2090,7 @@ static func _opaque_rect(tex: Texture2D) -> Rect2:
 func _set_end_button(side: int) -> void:
 	var mine := side == 0 and not autoplay
 	end_btn.modulate = Color.WHITE
-	_end_label.text = "END TURN" if mine else "ENEMY TURN"
+	_end_label.text = Loc.t("END TURN" if mine else "ENEMY TURN")
 	# The dimmed seal of the enemy's turn is too dark for ink: the words go pale there.
 	UI.engraved(_end_label, Color(0.2, 0.08, 0.03) if mine else Color(0.62, 0.56, 0.48))
 	# Shrink until the words fit inside the seal's smooth inner oval. The room is the oval's, not the label's own
@@ -2302,7 +2303,7 @@ func _offer_keyword(xf: Transform2D) -> bool:
 			for t in UI.card_tips(live, true):
 				var key := ""
 				for k in UI.KEYWORD_HELP:
-					if UI.KEYWORD_HELP[k][0] == t[0]:
+					if Loc.t(UI.KEYWORD_HELP[k][0]) == t[0]: # the tips come in the shown language
 						key = k
 				# Guard keeps the coach's own tip (the one shown when an attack is blocked).
 				var id := "guard" if key == "guard" else "kw_" + key
@@ -2971,7 +2972,7 @@ func _tick_hand_tips() -> void:
 func _show_hero_tip(h: HeroView) -> void:
 	var def := CardDB.hero(h.hero_id)
 	# A no-break space keeps "(2 mana)" on one line.
-	_add_tip(def.get("name", ""), "Hero power: %s (%d\u00a0mana). %s" % [def.power.name, def.power.cost, def.power.text])
+	_add_tip(def.get("name", ""), Loc.t("Hero power: %s (%d\u00a0mana). %s") % [def.power.name, def.power.cost, def.power.text])
 	# Right of the hero power disc (which sits right of the portrait), so the tip never hides it.
 	# Kept on screen and clear of the mana trays in the top and bottom corners.
 	_tips.position = Vector2(minf(h.position.x + 260, V.x - 430.0), clampf(h.position.y - 60, 110.0, V.y - 330.0))
@@ -3192,7 +3193,7 @@ func _build_online() -> void:
 	chat.name = "DuelChat"
 	chat.my_id = Online.user_id()
 	for c in 2:
-		chat.names[str(net.players[c])] = str(net.names[c]) if str(net.names[c]) != "" else "Player %d" % (c + 1)
+		chat.names[str(net.players[c])] = str(net.names[c]) if str(net.names[c]) != "" else Loc.t("Player %d") % (c + 1)
 	ui.add_child(chat)
 	chat.emote_shown.connect(_emote_bubble)
 	chat.send_requested.connect(func(c: Dictionary): Online.send_chat(c))
@@ -3225,7 +3226,7 @@ func _layout_online() -> void:
 
 func _opp_name() -> String:
 	var n := net.opponent_name() if net != null else ""
-	return n if n != "" else "your opponent"
+	return n if n != "" else Loc.t("your opponent")
 
 
 ## Sends my move to the server; the board waits for it to come back (`_my_turn` is false meanwhile).
@@ -3264,7 +3265,7 @@ func _net_tick(delta: float) -> void:
 		_net_note_hide()
 	if _opp_gone_ms > 0:
 		var left := maxi(0, (_opp_gone_ms - Time.get_ticks_msec()) / 1000)
-		_net_note_show("%s lost the connection. Waiting %d s for them to return..." % [_opp_name(), left], "status")
+		_net_note_show(Loc.t("%s lost the connection. Waiting %d s for them to return...") % [_opp_name(), left], "status")
 	_tick_turn_clock()
 	if _ff and not net.pending() and queue.is_empty() and not playing:
 		_ff = false
@@ -3286,7 +3287,7 @@ func _net_apply(delta: float) -> void:
 	if why != "" or net.desyncs.size() > _desync_seen:
 		_desync_seen = net.desyncs.size()
 		push_warning("Online duel out of step: %s" % str(net.desyncs.back()))
-		_toast(V / 2, "Out of step with %s (desync)" % _opp_name(), Color(1.0, 0.5, 0.4))
+		_toast(V / 2, Loc.t("Out of step with %s (desync)") % _opp_name(), Color(1.0, 0.5, 0.4))
 	if m[0] == DuelSync.S_TURN:
 		_net_wait = -1.0
 		var clock := DuelSync.turn_clock(m[1], net.turn_ms, net.rope_ms) # a replayed TURN keeps the RESYNC's clock
@@ -3322,7 +3323,7 @@ func _net_message(op: int, data: Dictionary) -> void:
 			if bool(data.get("connected", true)):
 				_opp_gone_ms = 0
 				_net_note_hide()
-				_toast(V / 2, "%s is back" % _opp_name(), UI.GOLD)
+				_toast(V / 2, Loc.t("%s is back") % _opp_name(), UI.GOLD)
 			else:
 				_opp_gone_ms = Time.get_ticks_msec() + int(data.get("grace_ms", 30000))
 		DuelSync.S_RESYNC:
@@ -3421,7 +3422,7 @@ func _net_note_show(text: String, kind := "mulligan") -> void:
 	if _net_note != null and is_instance_valid(_net_note):
 		var l := _net_note.find_child("Text", true, false) as Label
 		if l != null and _net_note.get_meta("kind", "") == kind:
-			l.text = text
+			l.text = Loc.t(text)
 			return
 		_net_note.queue_free()
 	var p := UI.parchment_label(text, 30, "italic", UI.INK, minf(1100.0, V.x - 200.0), 44, 16)
@@ -3444,24 +3445,27 @@ func _net_note_hide() -> void:
 ## Why the duel ended, as one line for the result screen.
 func _end_reason(won: bool) -> String:
 	var opp := _opp_name()
+	var s := ""
 	match str(_end_info.get("reason", "result")):
 		"concede":
-			return "%s conceded." % opp if won else "You conceded."
+			s = Loc.t("%s conceded.") % opp if won else Loc.t("You conceded.")
 		"disconnect":
-			return "%s left the duel." % opp if won else "You were away too long and lost the seat."
+			s = Loc.t("%s left the duel.") % opp if won else Loc.t("You were away too long and lost the seat.")
 		"abandoned":
-			return "The duel was abandoned."
+			s = Loc.t("The duel was abandoned.")
 		"no_show":
-			return "%s never arrived." % opp if won else "You did not arrive in time."
+			s = Loc.t("%s never arrived.") % opp if won else Loc.t("You did not arrive in time.")
 		"time_limit":
-			return "The duel ran out of time."
+			s = Loc.t("The duel ran out of time.")
 		"desync":
-			return "The two games went out of step, so the server ended the duel."
+			s = Loc.t("The two games went out of step, so the server ended the duel.")
 		"connection_lost":
-			return "The connection to the server was lost."
+			s = Loc.t("The connection to the server was lost.")
 		"gone":
-			return "The duel ended while you were away."
-	return "%s has fallen." % opp if won else "%s has the better of you." % opp
+			s = Loc.t("The duel ended while you were away.")
+		_:
+			s = Loc.t("%s has fallen.") % opp if won else Loc.t("%s has the better of you.") % opp
+	return s.left(1).to_upper() + s.substr(1) # "your opponent" may open the line
 
 
 func _show_online_result(winner: int) -> void:
@@ -3511,12 +3515,12 @@ func _show_online_result(winner: int) -> void:
 	UI.fit_label(sub, minf(1100.0, V.x - 260.0), 22)
 	pv.add_child(sub)
 	var rec := Online.record()
-	var rl := UI.label("Online record:  %d won  ·  %d lost" % [rec.wins, rec.losses], 28, "title", UI.INK_RED)
+	var rl := UI.label(Loc.t("Online record:  %d won  ·  %d lost") % [rec.wins, rec.losses], 28, "title", UI.INK_RED)
 	rl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pv.add_child(rl)
 	var reward := Collection.reward_battle(won)
 	Sfx.play("coins", -4.0)
-	var gain := UI.label("+%d Obols" % reward, 28, "title", UI.INK)
+	var gain := UI.label(Loc.t("+%d Obols") % reward, 28, "title", UI.INK)
 	gain.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pv.add_child(gain)
 	var row := HBoxContainer.new()

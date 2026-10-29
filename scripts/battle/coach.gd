@@ -81,7 +81,7 @@ func offer(id: String, target: Vector2, text: String = "") -> bool:
 		return false
 	_id = id
 	_target = target
-	_label.text = (text if text != "" else str(TIPS[id])).format({"tap": "tap" if _touch() else "click"})
+	_label.text = (text if text != "" else Loc.t(str(TIPS[id]))).format({"tap": Loc.t("tap" if _touch() else "click")})
 	_label.custom_minimum_size.x = UI.balanced_width(_label.get_theme_font("font"), 26, _label.text, 380.0)
 	_session.append(id)
 	if not _forced and not Settings.coach_seen.has(id):

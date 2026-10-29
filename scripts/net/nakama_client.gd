@@ -51,7 +51,7 @@ func socket_open() -> bool:
 ## One HTTP call; returns {"code": int, "body": Variant} or {"error": message}.
 func http(method: int, path: String, body: Variant = null, basic := false, timeout := HTTP_TIMEOUT) -> Dictionary:
 	if config == null or not config.configured():
-		return {"error": "Online play is not configured."}
+		return {"error": Loc.t("Online play is not configured.")}
 	var req := HTTPRequest.new()
 	req.timeout = timeout
 	if config.secure():
@@ -66,13 +66,13 @@ func http(method: int, path: String, body: Variant = null, basic := false, timeo
 	var err := req.request(config.http_base() + path, headers, method, data)
 	if err != OK:
 		req.queue_free()
-		return {"error": "Could not reach the server."}
+		return {"error": Loc.t("Could not reach the server.")}
 	var res: Array = await req.request_completed
 	req.queue_free()
 	var result: int = res[0]
 	var code: int = res[1]
 	if result != HTTPRequest.RESULT_SUCCESS:
-		return {"error": "The server did not answer (%s)." % _http_result_name(result)}
+		return {"error": Loc.t("The server did not answer (%s).") % _http_result_name(result)}
 	var text := (res[3] as PackedByteArray).get_string_from_utf8()
 	var parsed: Variant = JSON.parse_string(text) if text != "" else {}
 	return {"code": code, "body": parsed if parsed != null else {}}
@@ -81,14 +81,14 @@ func http(method: int, path: String, body: Variant = null, basic := false, timeo
 static func _http_result_name(r: int) -> String:
 	match r:
 		HTTPRequest.RESULT_CANT_CONNECT, HTTPRequest.RESULT_CONNECTION_ERROR:
-			return "no connection"
+			return Loc.t("no connection")
 		HTTPRequest.RESULT_CANT_RESOLVE:
-			return "unknown host"
+			return Loc.t("unknown host")
 		HTTPRequest.RESULT_TIMEOUT:
-			return "timed out"
+			return Loc.t("timed out")
 		HTTPRequest.RESULT_TLS_HANDSHAKE_ERROR:
-			return "secure connection failed"
-	return "error %d" % r
+			return Loc.t("secure connection failed")
+	return Loc.t("error %d") % r
 
 
 ## True when the server's healthcheck answers within `timeout` seconds (at the address in use).
@@ -103,9 +103,9 @@ func authenticate_device(device_id: String) -> Dictionary:
 	if r.has("error"):
 		return r
 	if int(r.code) == 401:
-		return {"error": "The server refused this game's key."}
+		return {"error": Loc.t("The server refused this game's key.")}
 	if int(r.code) != 200 or not (r.body is Dictionary) or not r.body.has("token"):
-		return {"error": "Sign-in failed (%d)." % int(r.code)}
+		return {"error": Loc.t("Sign-in failed (%d).") % int(r.code)}
 	_take_session(r.body)
 	return {}
 
@@ -119,7 +119,7 @@ func authenticate_provider(provider: String, token_value: String) -> Dictionary:
 		return r
 	if int(r.code) != 200 or not (r.body is Dictionary) or not r.body.has("token"):
 		var why: Variant = r.body.get("message", r.code) if r.body is Dictionary else r.code
-		return {"error": "The server refused the %s sign-in (%s)." % [provider.capitalize(), str(why)]}
+		return {"error": Loc.t("The server refused the %s sign-in (%s).") % [provider.capitalize(), str(why)]}
 	_take_session(r.body)
 	return {}
 
@@ -158,7 +158,7 @@ func storage_read(collection: String, key: String) -> Dictionary:
 	if r.has("error"):
 		return r
 	if int(r.code) != 200:
-		return {"error": "The account's save could not be read (%d)." % int(r.code)}
+		return {"error": Loc.t("The account's save could not be read (%d).") % int(r.code)}
 	var objs: Array = r.body.get("objects", []) if r.body is Dictionary else []
 	if objs.is_empty():
 		return {}
@@ -178,7 +178,7 @@ func storage_write(collection: String, key: String, value: Dictionary, version :
 		return r
 	if int(r.code) != 200:
 		var msg := str(r.body.get("message", "")) if r.body is Dictionary else ""
-		return {"error": "The account's save could not be written (%d)." % int(r.code),
+		return {"error": Loc.t("The account's save could not be written (%d).") % int(r.code),
 			"conflict": int(r.code) in [400, 409, 412] and "version" in msg.to_lower()}
 	var acks: Array = r.body.get("acks", []) if r.body is Dictionary else []
 	return {"version": str(acks[0].get("version", "")) if not acks.is_empty() else ""}
@@ -192,7 +192,7 @@ func set_display_name(display_name: String, avatar_url := "") -> Dictionary:
 	if r.has("error"):
 		return r
 	if int(r.code) != 200:
-		return {"error": "The server did not take the name (%d)." % int(r.code)}
+		return {"error": Loc.t("The server did not take the name (%d).") % int(r.code)}
 	return {}
 
 
@@ -212,7 +212,7 @@ static func _jwt_claims(jwt: String) -> Dictionary:
 ## Opens the realtime socket with the current session. {} on success, else {"error"}.
 func connect_socket() -> Dictionary:
 	if token == "":
-		return {"error": "Not signed in."}
+		return {"error": Loc.t("Not signed in.")}
 	close_socket()
 	_ws = WebSocketPeer.new()
 	_ws.inbound_buffer_size = 1 << 20
@@ -220,14 +220,14 @@ func connect_socket() -> Dictionary:
 	var url := "%s/ws?lang=en&status=true&token=%s" % [config.ws_base(), token.uri_encode()]
 	if _ws.connect_to_url(url, TLSOptions.client() if config.secure() else null) != OK:
 		_ws = null
-		return {"error": "Could not open the connection."}
+		return {"error": Loc.t("Could not open the connection.")}
 	var t0 := Time.get_ticks_msec() # wall-clock, as in request()
 	while _ws != null and _ws.get_ready_state() == WebSocketPeer.STATE_CONNECTING \
 			and Time.get_ticks_msec() - t0 < int(HTTP_TIMEOUT * 1000.0):
 		await get_tree().process_frame
 	if _ws == null or _ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		close_socket()
-		return {"error": "The live connection failed."}
+		return {"error": Loc.t("The live connection failed.")}
 	_ws_open = true
 	return {}
 
@@ -277,7 +277,7 @@ func _poll() -> void:
 		_ws = null
 		_ws_open = false
 		if was_open:
-			socket_closed.emit(why if why != "" else "connection lost")
+			socket_closed.emit(why if why != "" else Loc.t("connection lost"))
 
 
 func _dispatch(env: Dictionary) -> void:
@@ -309,7 +309,7 @@ func _dispatch(env: Dictionary) -> void:
 ## answered with an error: its message is kept).
 func request(env: Dictionary, timeout := REPLY_TIMEOUT) -> Dictionary:
 	if not socket_open():
-		return {"error": "Not connected."}
+		return {"error": Loc.t("Not connected.")}
 	_cid += 1
 	var cid := str(_cid)
 	env["cid"] = cid
@@ -322,7 +322,7 @@ func request(env: Dictionary, timeout := REPLY_TIMEOUT) -> Dictionary:
 	if not _replies.has(cid):
 		_poll() # after a long frame (a scene loading) the reply may be waiting unread: never time out over that
 	if not _replies.has(cid):
-		return {"error": "The server did not answer in time." if socket_open() else "Connection lost."}
+		return {"error": Loc.t("The server did not answer in time.") if socket_open() else Loc.t("Connection lost.")}
 	var reply: Dictionary = _replies[cid]
 	_replies.erase(cid)
 	if reply.has("error"):

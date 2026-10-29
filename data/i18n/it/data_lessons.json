@@ -1,0 +1,181 @@
+{
+ "_doc": "Virgil's lessons in Italian, laid over data/lessons.json by id (Loc.localize): title, learn, outro and each step's 'say', in the English steps' order (a step with no line is {}). {tap} / {Tap} read tocca / clicca.",
+ "lessons": {
+  "ferryman": {
+   "title": "Il Traghettatore",
+   "learn": "Il mana, giocare i servitori, attaccare e terminare il turno.",
+   "outro": "Il traghettatore cede, e la barca è nostra. Avanti, verso la prossima traversata.",
+   "steps": [
+    {
+     "say": "Benvenuto, pellegrino. Sono Virgilio e sarò la tua guida. Quello è Caronte, il traghettatore. Porta a zero la sua Salute, il numero sulla goccia rossa, e avrai vinto."
+    },
+    {
+     "say": "Questo è il tuo mana. Ogni turno ottieni un cristallo in più, fino a dieci, e all'inizio del tuo turno si ricaricano tutti."
+    },
+    {
+     "say": "Ogni carta costa il mana indicato nel suo angolo in alto. Trascina il Pellegrino Smarrito sul campo per giocarlo."
+    },
+    {
+     "say": "Quello è un servitore. Un servitore appena giocato dorme: potrà attaccare solo dal tuo prossimo turno."
+    },
+    {
+     "say": "Hai speso il tuo mana. Premi Fine turno e lascia che Caronte faccia la sua mossa."
+    },
+    {
+     "say": "Caronte ha giocato un suo servitore. L'Attacco è il numero a sinistra, la Salute quello a destra."
+    },
+    {
+     "say": "Ora il tuo Pellegrino è sveglio. Trascinalo sul servitore di Caronte per attaccare."
+    },
+    {
+     "say": "In uno scontro, ogni servitore infligge all'altro danni pari al proprio Attacco. Avevano entrambi 1 di Salute: sono caduti tutti e due."
+    },
+    {
+     "say": "In questo turno hai 2 mana. Gioca i Pagani Virtuosi."
+    },
+    {
+     "say": "Hai usato tutto il tuo mana. Termina il turno."
+    },
+    {
+     "say": "I servitori possono attaccare anche l'eroe nemico. Ora nulla si frappone tra te e Caronte."
+    },
+    {
+     "say": "Trascina i tuoi Pagani su Caronte per colpirlo."
+    },
+    {
+     "say": "Ora gioca me: Virgilio, la Guida. Leggi la mia carta: quando arrivo, peschi una carta."
+    },
+    {
+     "say": "Ben fatto. Termina il turno."
+    },
+    {
+     "say": "La Lupa di Caronte ti ha morso, e anche il suo potere eroico ti ha colpito. La Salute persa non torna da sola."
+    },
+    {
+     "say": "A Caronte restano 4 di Salute. I Pagani e io colpiamo per 2 ciascuno. Attaccalo con entrambi e la traversata è nostra."
+    }
+   ]
+  },
+  "wrathful": {
+   "title": "Il Cavaliere Iracondo",
+   "learn": "Gli incantesimi, il potere eroico, l'Armatura e la Guardia.",
+   "outro": "Filippo sprofonda di nuovo nel fango. Davanti a noi c'è la Città di Dite.",
+   "steps": [
+    {
+     "say": "Filippo Argenti, l'iracondo cavaliere dello Stige, sbarra la via per la Città di Dite. Oggi imparerai gli incantesimi, il potere eroico e la Guardia."
+    },
+    {
+     "say": "Un incantesimo fa effetto una volta, poi scompare. Le Frecce dei Centauri infliggono 3 danni a un bersaglio a tua scelta."
+    },
+    {
+     "say": "Trascina in alto le Frecce, poi mira alla Lupa per distruggerla."
+    },
+    {
+     "say": "Tre mana spesi. Termina il turno."
+    },
+    {
+     "say": "Vedi lo scudo intorno all'Accidioso? Quella è la Guardia. Finché una Guardia resta in campo, i tuoi attacchi devono colpire prima lei."
+    },
+    {
+     "say": "Gioca i Pagani Virtuosi."
+    },
+    {
+     "say": "Ti restano due mana. Usa il tuo potere eroico, Fermezza, per ottenere 2 Armatura. Ogni eroe ha un potere: 2 mana, una volta per turno."
+    },
+    {
+     "say": "L'Armatura si somma alla Salute e subisce i danni per prima. Resta finché non si esaurisce."
+    },
+    {
+     "say": "Termina il turno."
+    },
+    {
+     "say": "L'Accidioso ti ha colpito, ma la tua Armatura ha assorbito il colpo."
+    },
+    {
+     "say": "Filippo si nasconde dietro la sua Guardia. Attacca l'Accidioso con i tuoi Pagani."
+    },
+    {
+     "say": "È ancora in piedi. Finiscilo con la Luce di Santa Lucia, che infligge 2 danni."
+    },
+    {
+     "say": "La Guardia è caduta: ogni bersaglio è di nuovo libero. Spendi il resto del mana come preferisci, poi termina il turno."
+    },
+    {
+     "say": "Un'altra Guardia: Caifas. Sfondala con incantesimi o attacchi, poi colpisci Filippo finché non cade."
+    }
+   ]
+  },
+  "flame": {
+   "title": "La Fiamma Cornuta",
+   "learn": "Parole chiave: Egida, Risucchio, Veleno, Rinascita e Slancio. Leggere il testo delle carte.",
+   "outro": "La fiamma di Ulisse si spegne. Hai letto ogni carta come un veterano.",
+   "steps": [
+    {
+     "say": "Ulisse, avvolto nella sua fiamma cornuta. Un nemico astuto. Questa lezione parla di parole chiave: le parole in grassetto che piegano le regole."
+    },
+    {
+     "say": "Orazio ha Egida. Tieni il puntatore sulla sua carta, o tienila premuta con il dito, per leggere cosa fa l'Egida."
+    },
+    {
+     "say": "L'Egida blocca il primo danno che il servitore subirebbe. Gioca Orazio."
+    },
+    {
+     "say": "Sei arrivato qui ferito. Il Lupo Affamato ha Risucchio: i danni che infligge curano anche il tuo eroe. Giocalo."
+    },
+    {
+     "say": "Termina il turno."
+    },
+    {
+     "say": "Ulisse ha bruciato Orazio con il suo potere eroico, ma l'Egida ha preso il colpo. Ora l'Egida è consumata e Orazio è illeso."
+    },
+    {
+     "say": "Quella serpe ha Veleno: distrugge qualsiasi servitore a cui infligge danni, per quanto grande. Scambiala con qualcosa di piccolo."
+    },
+    {
+     "say": "Manda Orazio contro la serpe."
+    },
+    {
+     "say": "Sono caduti entrambi. Il Veleno si è preso Orazio, ma la serpe non avvelenerà nient'altro."
+    },
+    {
+     "say": "Ora il Lupo. Attacca Ulisse e guarda salire la tua Salute: questo è il Risucchio."
+    },
+    {
+     "say": "La Fenice ha Rinascita: la prima volta che muore, ritorna con 1 di Salute. Giocala."
+    },
+    {
+     "say": "La Lonza ha Slancio: può attaccare nel turno in cui arriva. Giocala."
+    },
+    {
+     "say": "Attacca subito Ulisse con la Lonza."
+    },
+    {
+     "say": "Termina il turno."
+    },
+    {
+     "say": "La Fenice è bruciata ed è risorta. Conserva il suo Attacco, ma ha 1 di Salute e non risorgerà una seconda volta."
+    },
+    {
+     "say": "Leggi anche le carte del nemico. Entrata scatta quando la carta viene giocata, Ultimo respiro quando il servitore muore. Questo Acheo lascia dietro di sé un Predone 2/2."
+    },
+    {
+     "say": "A Ulisse restano 6 di Salute, e i tuoi tre servitori colpiscono per 3 ciascuno. Concludi il viaggio."
+    }
+   ]
+  },
+  "trial": {
+   "title": "La Prova",
+   "learn": "Una vera partita contro un avversario facile, con qualche consiglio lungo la via.",
+   "outro": "D'ora in poi prosegui da solo. L'Inferno è vasto: va' a vederlo.",
+   "steps": [
+    {
+     "say": "Ora una vera partita contro un avversario facile. Prima la mano iniziale: {tap} le carte che vuoi cambiare, poi premi Conferma. All'inizio aiutano di più le carte economiche."
+    },
+    {
+     "say": "Da qui giochi da solo. Ti sussurrerò solo un consiglio, ogni tanto. Buona fortuna, pellegrino."
+    },
+    {}
+   ]
+  }
+ }
+}

@@ -33,7 +33,7 @@ func begin() -> Dictionary:
 		return r
 	var b: Dictionary = r.body
 	if int(r.code) != 200 or not b.has("device_code"):
-		return {"error": _google_error(b, "Google did not give a sign-in code.")}
+		return {"error": _google_error(b, Loc.t("Google did not give a sign-in code."))}
 	_device_code = str(b.device_code)
 	user_code = str(b.get("user_code", ""))
 	verification_url = str(b.get("verification_url", b.get("verification_uri", "https://www.google.com/device")))
@@ -50,7 +50,7 @@ func wait() -> Dictionary:
 		if _cancelled:
 			break
 		if Time.get_unix_time_from_system() > _expires_at:
-			return {"error": "The sign-in code expired. Try again."}
+			return {"error": Loc.t("The sign-in code expired. Try again.")}
 		var r := await _post(TOKEN_URL, {"client_id": config.google_client_id,
 			"client_secret": config.google_client_secret, "device_code": _device_code,
 			"grant_type": "urn:ietf:params:oauth:grant-type:device_code"})
@@ -67,12 +67,12 @@ func wait() -> Dictionary:
 			"slow_down":
 				_interval += 5.0
 			"access_denied":
-				return {"error": "Google sign-in was refused. While the game is in testing only its listed test " +
-					"players can sign in with Google; you can still play as a guest."}
+				return {"error": Loc.t("Google sign-in was refused. While the game is in testing only its listed test " +
+					"players can sign in with Google; you can still play as a guest.")}
 			"expired_token":
-				return {"error": "The sign-in code expired. Try again."}
+				return {"error": Loc.t("The sign-in code expired. Try again.")}
 			_:
-				return {"error": _google_error(b, "Google sign-in failed.")}
+				return {"error": _google_error(b, Loc.t("Google sign-in failed."))}
 	return {"cancelled": true}
 
 
@@ -86,7 +86,7 @@ func _google_error(b: Dictionary, fallback: String) -> String:
 	if e == "":
 		return fallback
 	if e in ["invalid_client", "unauthorized_client"]:
-		return "This copy of the game is not allowed to use Google sign-in (%s)." % e
+		return Loc.t("This copy of the game is not allowed to use Google sign-in (%s).") % e
 	return "%s (%s%s)" % [fallback, e, (": " + d) if d != "" else ""]
 
 
@@ -102,10 +102,10 @@ func _post(url: String, form: Dictionary) -> Dictionary:
 		HTTPClient.METHOD_POST, "&".join(parts))
 	if err != OK:
 		req.queue_free()
-		return {"error": "Could not reach Google."}
+		return {"error": Loc.t("Could not reach Google.")}
 	var res: Array = await req.request_completed
 	req.queue_free()
 	if res[0] != HTTPRequest.RESULT_SUCCESS:
-		return {"error": "Could not reach Google."}
+		return {"error": Loc.t("Could not reach Google.")}
 	var parsed: Variant = JSON.parse_string((res[3] as PackedByteArray).get_string_from_utf8())
 	return {"code": res[1], "body": parsed if parsed is Dictionary else {}}

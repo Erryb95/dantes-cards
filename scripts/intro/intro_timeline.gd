@@ -58,6 +58,14 @@ const TITLE_THUNDER := 5.2
 const CHAPTER := "INFERNO  ·  CANTO I"
 
 
+## The inscription in the shown language (in Italian, Dante's own lines; the carving keeps INSCRIPTION_TIMES).
+static func inscription() -> Array[String]:
+	var out: Array[String] = []
+	for l in INSCRIPTION:
+		out.append(Loc.t(l))
+	return out
+
+
 static func path(file: String) -> String:
 	return file if file.begins_with("res://") else DIR + file
 

@@ -19,7 +19,7 @@ func _init() -> void:
 func show_lines(l: Array) -> void:
 	lines.clear()
 	for s in l:
-		lines.append(String(s))
+		lines.append(Loc.t(String(s))) # the narration stays English; its subtitles follow the language
 	_target = 1.0
 	queue_redraw()
 

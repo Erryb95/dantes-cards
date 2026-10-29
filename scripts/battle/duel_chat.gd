@@ -119,7 +119,7 @@ func _build_panel(v: Vector2) -> void:
 		b.focus_mode = Control.FOCUS_NONE # Enter and Space belong to the text field, never to a plate
 	_mute_b.pressed.connect(func():
 		muted = not muted
-		_mute_b.text = "Unmute" if muted else "Mute"
+		_mute_b.text = Loc.t("Unmute" if muted else "Mute")
 		_redraw())
 	emotes.add_child(_mute_b)
 	_panel.reset_size()
@@ -153,7 +153,7 @@ func _may_send() -> bool:
 	var now := Time.get_ticks_msec() / 1000.0
 	_sent_at = _sent_at.filter(func(t): return now - t < 10.0)
 	if not _sent_at.is_empty() and now - _sent_at.back() < 1.0 or _sent_at.size() >= 5:
-		_note.text = "Not so fast."
+		_note.text = Loc.t("Not so fast.")
 		_note.visible = true
 		return false
 	_note.visible = false
@@ -178,7 +178,7 @@ func _send_emote(id: String) -> void:
 static func emote_text(id: String) -> String:
 	for e in EMOTES:
 		if e[0] == id:
-			return e[1]
+			return Loc.t(e[1])
 	return ""
 
 
@@ -226,7 +226,8 @@ func _redraw() -> void:
 
 
 func _line(who: String, text: String, mine: bool) -> Label:
-	var l := UI.label("%s:  %s" % [who, text], 20, "body", UI.INK if not mine else Color(0.3, 0.18, 0.06))
+	var l := UI.label("", 20, "body", UI.INK if not mine else Color(0.3, 0.18, 0.06))
+	l.text = "%s:  %s" % [who, text] # what the players typed: shown as it is, never looked up for a translation
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(418, 0)
 	if not mine:
@@ -240,7 +241,8 @@ func _peek_line(who: String, text: String) -> void:
 	p.add_theme_stylebox_override("panel", UI.parchment_box(22, 10))
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var l := UI.label("%s:  %s" % [who, text], 22, "italic", UI.INK)
+	var l := UI.label("", 22, "italic", UI.INK)
+	l.text = "%s:  %s" % [who, text] # as typed, never translated
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var w := UI.font("italic").get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x + 4.0
 	l.custom_minimum_size = Vector2(minf(w, 420.0), 0) # one line when it fits, else wrapped at 420 px

@@ -250,12 +250,12 @@ static func deck_cards(cards: Dictionary) -> Array[String]:
 func deck_problem(d: Dictionary) -> String:
 	var n := deck_count(d.cards)
 	if n != DECK_SIZE:
-		return "%d/%d cards" % [n, DECK_SIZE]
+		return Loc.t("%d/%d cards") % [n, DECK_SIZE]
 	for id in d.cards:
 		if not fits_class(id, d.cls):
-			return "%s is not a %s card" % [CardDB.card(id).get("name", id), CardDB.class_title(d.cls)]
+			return Loc.t("%s is not a %s card") % [CardDB.card(id).get("name", id), CardDB.class_title(d.cls)]
 		if int(d.cards[id]) > mini(max_copies(id), copies(id)):
-			return "not enough copies of %s" % CardDB.card(id).get("name", id)
+			return Loc.t("not enough copies of %s") % CardDB.card(id).get("name", id)
 	return ""
 
 
