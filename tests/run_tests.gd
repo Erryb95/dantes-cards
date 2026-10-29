@@ -45,6 +45,7 @@ func _initialize() -> void:
 	_test_saves()
 	_test_lessons()
 	_test_drop_rates()
+	_test_i18n()
 	_soak(120)
 	_soak_classes(24)
 	_soak_random(400)
@@ -56,6 +57,48 @@ func _initialize() -> void:
 	print("DEATHS: %d in soaks, replays and duels, %d with no killer" % [_deaths[0], _deaths[1]])
 	print("TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures > 0 else 0)
+
+
+## Every translation: its templates keep the English placeholders in order, its data entries name real ids, every
+## card, hero and deck has its name, and a card's keywords appear translated in its rules text (the bold words and
+## the keyword tips match the translated text by plain lookup). Numbers and effects never change with the language.
+func _test_i18n() -> void:
+	var ph := RegEx.create_from_string("%[-+0-9.]*[a-zA-Z%]")
+	var places := func(t: String) -> Array: return ph.search_all(t).map(func(m): return m.get_string())
+	var english := {}
+	for c in CardDB.all_cards():
+		english[str(c.id)] = c.duplicate(true)
+	for lang in Loc.LANGS:
+		if lang == "en":
+			continue
+		Loc.use(lang)
+		ok(Loc.lang() == lang, "i18n: %s loads" % lang)
+		for k in Loc.strings():
+			ok(places.call(str(k)) == places.call(Loc.strings()[k]), "i18n %s: placeholders of %s" % [lang, k])
+		for id in Loc._data.get("cards", {}):
+			ok(english.has(id), "i18n %s: card %s exists" % [lang, id])
+		for id in Loc._data.get("heroes", {}):
+			ok(not CardDB.hero(id).is_empty(), "i18n %s: hero %s exists" % [lang, id])
+		for id in Loc._data.get("decks", {}):
+			ok(not CardDB.deck(id).is_empty(), "i18n %s: deck %s exists" % [lang, id])
+		for id in Loc._data.get("lessons", {}):
+			ok(Lessons.index_of(id) != -1, "i18n %s: lesson %s exists" % [lang, id])
+		for c in CardDB.all_cards():
+			var en: Dictionary = english[str(c.id)]
+			ok(Loc.entry("cards", str(c.id)).has("name"), "i18n %s: %s has a name" % [lang, c.id])
+			ok(str(en.get("text", "")) == "" or Loc.entry("cards", str(c.id)).has("text"), "i18n %s: %s has its text" % [lang, c.id])
+			ok(c.get("cost") == en.get("cost") and c.get("attack") == en.get("attack") and c.get("health") == en.get("health")
+				and c.get("effects") == en.get("effects") and c.get("keywords") == en.get("keywords"),
+				"i18n %s: %s keeps its numbers and effects" % [lang, c.id])
+			for k in UI.RULES_BOLD:
+				if str(en.get("text", "")).contains(k):
+					ok(str(c.get("text", "")).contains(Loc.t(k)), "i18n %s: %s says %s" % [lang, c.id, Loc.t(k)])
+		for h in CardDB.classes():
+			ok(Loc.entry("heroes", CardDB.class_hero(h)).has("name"), "i18n %s: hero of %s has a name" % [lang, h])
+		for d in CardDB.decks():
+			ok(Loc.entry("decks", str(d.id)).has("name"), "i18n %s: deck %s has a name" % [lang, d.id])
+	Loc.use("en")
+	ok(CardDB.card("lost_pilgrim").get("name") == "Lost Pilgrim", "i18n: back in English")
 
 
 ## The exports ship what online play needs: the server config, and on Android the network permissions (without
