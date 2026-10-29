@@ -1,5 +1,81 @@
 # Balance log
 
+## 2026-10-29: card flow (running out of cards late)
+
+**Question.** Late in a match the hand often feels empty: the player's play, or the decks?
+
+**Method.** New probe `tests/card_flow.gd` (Hard vs Hard, every cross-class pair of preconstructed decks, every deal
+from both seats, the same deals as `ai_duel.gd --decks`): hand size at the start of each of the deck's own turns,
+the share of turns from turn 6 on that start with 0-1 cards (`late01`), unspent mana from turn 5 on, fatigue, cards
+drawn and given, the win rate against the other classes, and with `--cards` each card's play rate, its win rate when
+played and how often it was stuck in hand. `--patch` tried swaps without touching `data/`. Before: 100 games per pair
+(900 per deck); after: 150 per pair (1350 per deck, about +/-1.4% per deck).
+
+**Diagnosis: the decks.** Games are long (10-12 rounds for the midrange decks), the decks were built low
+(average cost 2.1-3.2) and the starters had 2-6 cards of card draw. A starter was down to its last card around its turn 9-10
+(0.3-0.4 cards left at the end of turn 10) and started 26-36% of its turns from turn 6 on with 0-1 cards; the
+Hearthstone norm is aggro empty by turns 6-7 and closing the game, midrange and control still holding 2-4 cards at
+turn 10. The AI is not the cause: it leaves 2+ mana unspent with a playable card in hand on only 1-6% of its late
+turns (the Wrathful decks 9-23%: they hold self-damage cards), so it spends its mana much like a player who curves
+out.
+If anything it hoards pure draw spells: `evaluate` (`scripts/battle/ai.gd`) counts every card in hand as 2.5 points,
+so a 4-mana "Draw 2" scores below any minion (Stars Again is played in only about half the games it is drawn, Past
+the Pillars in three quarters). A human who holds cards back has more of them in hand, but loses the tempo.
+
+**What changed** (existing cards only, no card text or stats changed). Draw minions over vanilla bodies: Thaïs (a
+1-mana cantrip) for the 1-drops, Soul on the Shore (draws when it dies), Vitaliano del Dente (draws every turn),
+Calchas (copies a card every turn); Ruse and self-damage draw where it fits the plan (Past the Pillars, The Furies'
+Nails, Old Companions). Where a deck got too strong or weak, a power card moved:
+- *The Pilgrim's Way* (starter): -2 Lost Pilgrim, -1 Brunetto Latini; +2 Thaïs, +1 Vitaliano del Dente.
+- *The Ferryman's Host* (starter): -2 Banner Chaser; +2 Soul on the Shore.
+- *The Wanderer's Crew* (starter): -1 Ithacan Sailor, -1 Buoso Donati; +1 Past the Pillars, +1 Calchas.
+- *The Wrath of the Styx* (starter): -2 Mud Brawler, -1 Brawl in the Mud, -1 Mire Hulk; +2 The Furies' Nails, +2 Geri
+  del Bello.
+- *Cato's Vigil*: -1 Manto, -1 The Sullen; +1 Archbishop Ruggieri, +1 Thaïs.
+- *The Noble School*: -1 Dante's Courage, -1 Reed of Humility; +1 Vitaliano del Dente, +1 Thaïs.
+- *The Serpent Pit*: -2 Whip Demon, -2 Banner Chaser, -1 Dionysius; +2 Soul on the Shore, +2 Cocytus Chill, +1 Thaïs.
+- *The Malebranche Raid*: -2 Brutus, -1 Graffiacane; +2 Francesco d'Accorso (Swift, draws), +1 The She-Wolf.
+- *The Wooden Horse*: -1 Caiaphas, -1 The Sweet Siren; +1 Calchas, +1 Old Companions.
+- *The Mad Flight*: -1 False Beacon, -1 Past the Pillars; +1 Thorn Jab, +1 Spoils of Troy.
+- *The Mud Brawl*: -1 Butting Heads, -1 Storm Across the Styx, -1 Brawl in the Mud; +1 The Furies' Nails, +2 Geri del
+  Bello.
+- *Spite and Pride* (aggro): unchanged.
+
+**Single cards swing a deck a lot** (one copy, Hard vs Hard): Spoils of Troy +10-13 points when it replaced a weak card
+(Mad Flight 45 -> 56%, the Wanderer's Crew 47 -> 60%); Capaneus +9.5 and Lucan +9 in the Noble School; Vitaliano del
+Dente plus Fallen Angel of Dis put the Ferryman's Host at 68-74%; Archbishop Ruggieri plus Old Man of Crete put
+Cato's Vigil at 60-62%. Pure draw spells barely move a deck in AI games (the AI rarely casts them).
+
+**Numbers** (`late01` = turns from turn 6 on that start with 0-1 cards; hand = cards at the start of turn 10; win =
+against the decks of the other three classes):
+
+| deck | late01 before -> after | hand at turn 10 | first 0-1 card turn (share of games) | win before -> after |
+|---|---|---|---|---|
+| pilgrim (starter) | 27% -> 10% | 2.1 -> 3.2 | 10.1 (42%) -> 10.7 (20%) | 47.6 -> 49.7 |
+| ferry (starter) | 31% -> 24% | 1.9 -> 2.2 | 10.5 (64%) -> 11.0 (52%) | 51.3 -> 54.1 |
+| ulysses (starter) | 36% -> 21% | 1.9 -> 2.7 | 10.3 (60%) -> 10.9 (41%) | 48.6 -> 49.0 |
+| wrath (starter) | 26% -> 16% | 1.9 -> 2.8 | 10.5 (51%) -> 11.2 (33%) | 49.2 -> 47.3 |
+| pilgrim_vigil | 20% -> 21% | 3.8 -> 3.9 | 13.7 (41%) -> 13.3 (44%) | 46.3 -> 47.2 |
+| pilgrim_poets | 20% -> 7% | 2.7 -> 3.7 | 10.8 (36%) -> 11.5 (17%) | 53.2 -> 49.8 |
+| ferry_serpents | 38% -> 28% | 1.2 -> 1.4 | 8.5 (62%) -> 9.3 (53%) | 40.1 -> 48.7 |
+| ferry_raid (aggro) | 40% -> 39% | 1.1 -> 1.1 | 7.4 (51%) -> 7.3 (51%) | 56.1 -> 49.6 |
+| ulysses_horse | 28% -> 18% | 2.1 -> 2.6 | 10.3 (44%) -> 10.7 (33%) | 52.3 -> 50.7 |
+| ulysses_flight | 17% -> 16% | 3.3 -> 3.4 | 12.0 (32%) -> 11.5 (31%) | 50.7 -> 47.4 |
+| wrath_brawl | 18% -> 15% | 2.6 -> 2.7 | 12.0 (42%) -> 11.4 (32%) | 51.9 -> 52.9 |
+| wrath_pride (aggro) | 14% -> 16% | 1.5 -> 1.5 | 8.7 (20%) -> 8.6 (22%) | 52.7 -> 53.8 |
+
+The baseline was already outside the old 49-53% band (the Serpent Pit 40%, the Raid 56%): later passes had moved it.
+Unspent mana from turn 5 on fell for the starters (Pilgrim 1.19 -> 0.53, Wanderer 2.13 -> 1.33, Wrathful 1.79 ->
+1.14). Game length is unchanged (aggro 7.7 rounds, midrange 10-11, Cato's Vigil 13.7; 18% of the Vigil's games reach
+fatigue).
+
+**Open.**
+- The Ferryman's Host still topdecks the most of the starters (24%) and is the strongest of them (54%): more draw
+  there needs a power card out.
+- Spite and Pride against the Pilgrim decks (68%) and Cato's Vigil against the Wrathful (39%) are old polarised pairs.
+- AI proposal: value cards in hand by how few there are (the first ones worth more than 2.5) and count the draw of a
+  spell, so it casts draw spells and keeps a card or two when its hand is nearly empty.
+
 ## 2026-10-27: Hearthstone copies and Reborn, Easy behind Guards
 
 **Rules.** Capocchio's copy keeps the minion's current state (buffs, damage, keywords now, Silence, Freeze); Rebirth
