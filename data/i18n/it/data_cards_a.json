@@ -1,0 +1,892 @@
+{
+	"_doc": "Italian text of data/cards.json (cards, heroes), data/sets/pilgrim_journey.json, upper_hell.json, ulysses_voyage.json, data/decks.json and data/arenas.json: laid over the English entries by id (scripts/core/loc.gd). Terms: GLOSSARY.md.",
+	"cards": {
+		"lost_pilgrim": {
+			"name": "Pellegrino Smarrito",
+			"flavor": "Nel mezzo del cammin di nostra vita / mi ritrovai per una selva oscura."
+		},
+		"limbo_philosophers": {
+			"name": "Filosofi del Limbo",
+			"text": "Guardia.",
+			"flavor": "Sanno tutto, tranne come uscire."
+		},
+		"virtuous_pagans": {
+			"name": "Pagani Virtuosi",
+			"flavor": "Senza colpa né tormento: «sanza speme vivemo in disio»."
+		},
+		"farinata": {
+			"name": "Farinata, il Fiero",
+			"text": "Entrata: infliggi 1 danno.",
+			"flavor": "Ed el s'ergea col petto e con la fronte / com'avesse l'inferno a gran dispitto."
+		},
+		"virgils_counsel": {
+			"name": "Consiglio di Virgilio",
+			"text": "Pesca una carta. Ripristina 2 Salute al tuo eroe.",
+			"flavor": "«…tu mi segui, e io sarò tua guida.»"
+		},
+		"virgil_guide": {
+			"name": "Virgilio, la Guida",
+			"text": "Entrata: pesca una carta.",
+			"flavor": "Il poeta che cantò Enea apre la discesa."
+		},
+		"chiron_centaurs": {
+			"name": "Centauri di Chirone",
+			"text": "Entrata: dai +1/+1 a un servitore alleato.",
+			"flavor": "Chirone presta una scorta lungo il fiume di sangue."
+		},
+		"centaur_arrows": {
+			"name": "Frecce dei Centauri",
+			"text": "Infliggi 3 danni.",
+			"flavor": "Saettando qual anima si svelle / del sangue più che sua colpa sortille."
+		},
+		"farinata_tomb": {
+			"name": "Tomba di Farinata",
+			"text": "Dai +1/+3 e Guardia a un servitore alleato.",
+			"flavor": "Una tomba ardente è una fortezza ostinata."
+		},
+		"geryon": {
+			"name": "Gerione, il Portatore",
+			"text": "Guardia.",
+			"flavor": "«Quella sozza imagine di froda» porta giù i poeti in groppa."
+		},
+		"phlegyas": {
+			"name": "Flegiàs, Nocchiero Veloce",
+			"text": "Slancio.",
+			"flavor": "Corda non pinse mai da sé saetta / che sì corresse via per l'aere snella."
+		},
+		"paolo": {
+			"name": "Paolo e Francesca",
+			"text": "Egida.",
+			"flavor": "Insieme nella bufera, per sempre."
+		},
+		"francesca": {
+			"name": "Francesca da Rimini",
+			"text": "Entrata: dai +1/+1 agli altri tuoi servitori.",
+			"flavor": "Amor, ch'a nullo amato amar perdona."
+		},
+		"ugolino": {
+			"name": "Ugolino, il Conte Affamato",
+			"text": "Entrata: pesca 2 carte.",
+			"flavor": "Poscia, più che 'l dolor, poté 'l digiuno."
+		},
+		"banner_chaser": {
+			"name": "Inseguitore d'Insegna",
+			"flavor": "Non scelsero mai una parte. Ora inseguono un'insegna per sempre."
+		},
+		"stung_neutral": {
+			"name": "Ignavo Pungolato",
+			"text": "Ultimo respiro: evoca un'Anima Persa 1/1.",
+			"flavor": "Erano ignudi e stimolati molto / da mosconi e da vespe ch'eran ivi."
+		},
+		"she_wolf": {
+			"name": "La Lupa",
+			"flavor": "…mai non empie la bramosa voglia, / e dopo 'l pasto ha più fame che pria."
+		},
+		"oar_strike": {
+			"name": "Colpo di Remo",
+			"text": "Infliggi 3 danni a un servitore.",
+			"flavor": "Batte col remo qualunque s'adagia."
+		},
+		"turned_back": {
+			"name": "Respinto alla Porta",
+			"text": "Riporta un servitore nemico in mano all'avversario.",
+			"flavor": "Lasciate ogne speranza, voi ch'intrate."
+		},
+		"harpies_flock": {
+			"name": "Stormo di Arpie",
+			"text": "Evoca due Arpie 1/1 con Veleno.",
+			"flavor": "Quivi le brutte Arpie lor nidi fanno."
+		},
+		"furies": {
+			"name": "Le Furie",
+			"text": "Entrata: infliggi 1 danno a tutti i servitori nemici.",
+			"flavor": "Tre furïe infernal di sangue tinte."
+		},
+		"plutus": {
+			"name": "Pluto, Maledetto Lupo",
+			"text": "Risucchio.",
+			"flavor": "Pape Satàn, pape Satàn aleppe!"
+		},
+		"cerberus": {
+			"name": "Cerbero",
+			"text": "Guardia.",
+			"flavor": "Tre gole, e tutte affamate."
+		},
+		"medusa_gaze": {
+			"name": "Sguardo di Medusa",
+			"text": "Congela tutti i servitori nemici e infliggi loro 2 danni.",
+			"flavor": "«Vegna Medusa: sì 'l farem di smalto.»"
+		},
+		"souls_of_the_styx": {
+			"name": "Anime dello Stige",
+			"text": "Entrata: evoca due Anime Perse 1/1.",
+			"flavor": "Anime irose che si azzuffano nel fango."
+		},
+		"minotaur_rampage": {
+			"name": "Furia del Minotauro",
+			"text": "Infliggi 3 danni a TUTTI i servitori.",
+			"flavor": "La frana ricorda ancora il terremoto."
+		},
+		"minos": {
+			"name": "Minosse, Giudice dei Dannati",
+			"text": "Entrata: distruggi un servitore nemico casuale.",
+			"flavor": "Cignesi con la coda tante volte / quantunque gradi vuol che giù sia messa."
+		},
+		"harpy": {
+			"name": "Arpia",
+			"text": "Veleno."
+		},
+		"lost_soul": {
+			"name": "Anima Persa",
+			"flavor": "Questi sciaurati, che mai non fur vivi."
+		},
+		"obol_coin": {
+			"name": "Obolo di Caronte",
+			"text": "Ottieni 1 mana solo per questo turno.",
+			"flavor": "Il pedaggio del traghettatore, nella mano di chi passa per secondo."
+		},
+		"pj_wanderer_dark_wood": {
+			"name": "Viandante nella Selva",
+			"flavor": "…ché la diritta via era smarrita."
+		},
+		"pj_trembling_pilgrim": {
+			"name": "Pellegrino Tremante",
+			"text": "Ultimo respiro: evoca un'Ombra Smarrita 1/1.",
+			"flavor": "Ogni ombra sembrava qualcosa da temere."
+		},
+		"pj_leopard_of_lust": {
+			"name": "La Lonza Maculata",
+			"text": "Slancio.",
+			"flavor": "Una lonza leggera e presta molto, / che di pel macolato era coverta."
+		},
+		"pj_lion_of_violence": {
+			"name": "Il Leone Rabbioso",
+			"text": "Guardia.",
+			"flavor": "Questi parea che contra me venisse / con la test'alta e con rabbiosa fame."
+		},
+		"pj_hungry_wolf": {
+			"name": "La Lupa Affamata",
+			"text": "Risucchio.",
+			"flavor": "E dopo 'l pasto ha più fame che pria."
+		},
+		"pj_horace": {
+			"name": "Orazio, il Satirico",
+			"text": "Egida.",
+			"flavor": "Uno spirito arguto, anche in un luogo senza uscita."
+		},
+		"pj_ovid": {
+			"name": "Ovidio, il Trasformista",
+			"text": "Rinascita. Entrata: Silenzia un servitore nemico.",
+			"flavor": "Scrisse di corpi mutati in forme nuove."
+		},
+		"pj_lucan": {
+			"name": "Lucano, il Poeta Civile",
+			"text": "Ultimo respiro: infliggi 2 danni ai servitori nemici.",
+			"flavor": "Cantò una guerra che dilaniò Roma."
+		},
+		"pj_homer": {
+			"name": "Omero, Poeta Sovrano",
+			"text": "Rinascita. Entrata: Silenzia tutti i servitori nemici.",
+			"flavor": "Che vien dinanzi ai tre sì come sire: / quelli è Omero poeta sovrano."
+		},
+		"pj_statius": {
+			"name": "Stazio, il Poeta Fedele",
+			"text": "Rinascita.",
+			"flavor": "Ammirava tanto Virgilio da scegliere di seguirlo."
+		},
+		"pj_heavenly_messenger": {
+			"name": "Il Messo Celeste",
+			"text": "Slancio. Entrata: Congela un servitore nemico.",
+			"flavor": "Venne a la porta e con una verghetta / l'aperse, che non v'ebbe alcun ritegno."
+		},
+		"pj_cato": {
+			"name": "Catone d'Utica",
+			"text": "Guardia. Fine del turno: ottieni 1 Armatura.",
+			"flavor": "Il custode della spiaggia chiede solo che la via resti aperta."
+		},
+		"pj_reed_of_humility": {
+			"name": "Giunco dell'Umiltà",
+			"text": "Egida. Fine del turno: ripristina 1 Salute al tuo eroe.",
+			"flavor": "Un umile giunco può ciò che la superbia non può."
+		},
+		"pj_guiding_stars": {
+			"name": "Stelle Guida",
+			"text": "Inizio del turno: infliggi 1 danno a un servitore nemico casuale.",
+			"flavor": "La luce che li guidò fuori brucia ancora i malvagi."
+		},
+		"pj_beatrice": {
+			"name": "Beatrice, Scesa dal Cielo",
+			"text": "Egida. Entrata: ripristina 4 Salute al tuo eroe.",
+			"flavor": "Amor mi mosse, che mi fa parlare."
+		},
+		"pj_dantes_courage": {
+			"name": "Coraggio di Dante",
+			"text": "Guardia.",
+			"flavor": "Restò saldo, anche se ogni passo pareva una caduta."
+		},
+		"pj_swoon_of_pity": {
+			"name": "Svenimento di Pietà",
+			"text": "Ultimo respiro: ripristina 2 Salute al tuo eroe.",
+			"flavor": "Io venni men così com'io morisse. / E caddi come corpo morto cade."
+		},
+		"pj_harpy_of_the_wood": {
+			"name": "Arpia della Selva",
+			"text": "Veleno.",
+			"flavor": "Fa il nido in un albero che grida quando lo spezzi."
+		},
+		"pj_brunetto_latini": {
+			"name": "Brunetto Latini",
+			"text": "Risucchio.",
+			"flavor": "Il mio vecchio maestro cammina ancora sulla sabbia ardente, e dà ancora consigli."
+		},
+		"pj_centaur_escort": {
+			"name": "Scorta di Centauri",
+			"text": "Slancio. Inizio del turno: dai +1 Attacco a un altro tuo servitore casuale.",
+			"flavor": "Saetta chiunque esca dal sangue più del dovuto."
+		},
+		"pj_serpent_of_the_pit": {
+			"name": "Serpe della Bolgia",
+			"text": "Veleno.",
+			"flavor": "Il suo morso avvelena il peccatore ancora e ancora."
+		},
+		"pj_ciacco": {
+			"name": "Ciacco il Goloso",
+			"text": "Ultimo respiro: infliggi 1 danno a un servitore nemico casuale.",
+			"flavor": "Si è ingozzato, e vuole ancora di più."
+		},
+		"pj_pier_della_vigna": {
+			"name": "Pier della Vigna",
+			"text": "Veleno. Ultimo respiro: dai +1/+1 a un servitore alleato casuale.",
+			"flavor": "Un fedele ministro, ora un albero che grida quando lo spezzi."
+		},
+		"pj_cleopatra": {
+			"name": "Cleopatra, la Lussuriosa",
+			"text": "Risucchio.",
+			"flavor": "Regnò col desiderio, e ora il vento la trascina per sempre."
+		},
+		"pj_saint_lucy": {
+			"name": "Luce di Santa Lucia",
+			"text": "Infliggi 2 danni a un nemico.",
+			"flavor": "Una luce celeste mandata a guidare un pellegrino smarrito."
+		},
+		"pj_beatrices_grace": {
+			"name": "Grazia di Beatrice",
+			"text": "Ripristina 3 Salute al tuo eroe. Aggiungi una Luce di Santa Lucia alla tua mano.",
+			"flavor": "La sua grazia scese dal Cielo e aprì il cammino."
+		},
+		"pj_virgins_mercy": {
+			"name": "Pietà della Vergine",
+			"text": "Congela tutti i servitori nemici. Ripristina 2 Salute al tuo eroe.",
+			"flavor": "La misericordia del Cielo ferma ogni nemico sul posto."
+		},
+		"pj_virgils_wisdom": {
+			"name": "Senno di Virgilio",
+			"text": "Ottieni un Cristallo di Mana vuoto. Aggiungi 2 copie de La Corda alla tua mano.",
+			"flavor": "Segui una guida saggia, e la strada dura diventa chiara."
+		},
+		"pj_rope_belt": {
+			"name": "La Corda",
+			"text": "Congela un servitore nemico. Ripristina 2 Salute al tuo eroe.",
+			"flavor": "Gettò la corda nell'abisso, e la fiera salì a incontrarla."
+		},
+		"pj_three_beasts": {
+			"name": "Le Tre Fiere Vinte",
+			"text": "Infliggi 2 danni a tutti i servitori nemici. Ottieni 2 Armatura.",
+			"flavor": "La lonza, il leone e la lupa alla fine si ritrassero tutti."
+		},
+		"pj_ascent_of_mountain": {
+			"name": "Ascesa al Monte",
+			"text": "Ottieni un Cristallo di Mana vuoto. Pesca una carta. Ripristina 3 Salute al tuo eroe.",
+			"flavor": "…che sempre al cominciar di sotto è grave; / e quant'om più va sù, e men fa male."
+		},
+		"pj_veil_of_stillness": {
+			"name": "Velo di Quiete",
+			"text": "Silenzia un servitore. Pesca una carta.",
+			"flavor": "Una parola sommessa spoglia ogni inganno."
+		},
+		"pj_stars_again": {
+			"name": "Riveder le Stelle",
+			"text": "Pesca 2 carte. Ottieni un Cristallo di Mana vuoto.",
+			"flavor": "E quindi uscimmo a riveder le stelle."
+		},
+		"pj_dantes_resolve": {
+			"name": "Ardire di Dante",
+			"text": "Distruggi un servitore nemico. Pesca una carta.",
+			"flavor": "Scelse di affrontare il pericolo e non si voltò indietro."
+		},
+		"pj_led_back_dark_wood": {
+			"name": "Ritorno alla Selva",
+			"text": "Riporta un servitore nemico in mano all'avversario. Ripristina 3 Salute al tuo eroe.",
+			"flavor": "A volte il cammino ti costringe a tornare sui tuoi passi."
+		},
+		"pj_lost_shade": {
+			"name": "Ombra Smarrita",
+			"flavor": "Ha smarrito la diritta via da tempo, e ha smesso di cercarla."
+		},
+		"uh_greyhound": {
+			"name": "Il Veltro",
+			"text": "Slancio.",
+			"flavor": "Questi la caccerà per ogne villa, / fin che l'avrà rimessa ne lo 'nferno."
+		},
+		"uh_shore_soul": {
+			"name": "Anima sulla Riva",
+			"text": "Ultimo respiro: pesca una carta.",
+			"flavor": "Aspetta la barca e ti racconta ciò che ha visto."
+		},
+		"uh_undecided_soul": {
+			"name": "Anima Indecisa",
+			"text": "Fine del turno: ottieni 1 Armatura.",
+			"flavor": "Non scelse mai una parte, e nessuna parte lo vuole."
+		},
+		"uh_camilla": {
+			"name": "Camilla, Vergine Volsca",
+			"text": "Slancio.",
+			"flavor": "Correva sul grano senza piegare una sola spiga."
+		},
+		"uh_socrates": {
+			"name": "Socrate, l'Indagatore",
+			"text": "Entrata: pesca una carta. Ultimo respiro: pesca una carta.",
+			"flavor": "Interrogava tutti, finché non ammettevano di non sapere nulla."
+		},
+		"uh_forese": {
+			"name": "Forese Donati",
+			"text": "Fine del turno: ripristina 1 Salute al tuo eroe.",
+			"flavor": "Amico del poeta, ancora affamato, ancora sorridente."
+		},
+		"uh_sullen_one": {
+			"name": "Gli Accidiosi",
+			"text": "Guardia.",
+			"flavor": "Or ci attristiam ne la belletta negra."
+		},
+		"uh_avaricious_weight": {
+			"name": "Peso dell'Avaro",
+			"text": "Entrata: ottieni un Cristallo di Mana vuoto.",
+			"flavor": "Avari e prodighi si scagliano addosso i loro pesi, per sempre."
+		},
+		"uh_phoenix": {
+			"name": "La Fenice",
+			"text": "Rinascita.",
+			"flavor": "Così per li gran savi si confessa / che la fenice more e poi rinasce."
+		},
+		"uh_great_refusal": {
+			"name": "Il Gran Rifiuto",
+			"text": "Inizio del turno: Congela a caso un servitore nemico.",
+			"flavor": "Vidi e conobbi l'ombra di colui / che fece per viltade il gran rifiuto."
+		},
+		"uh_electra": {
+			"name": "Elettra, Madre di Troia",
+			"text": "Ultimo respiro: evoca un'Ombra del Limbo 1/1.",
+			"flavor": "Il dolore per la sua città caduta la tiene in piedi nel buio."
+		},
+		"uh_saladin": {
+			"name": "Saladino, Sultano d'Egitto",
+			"text": "Entrata: ripristina 2 Salute al tuo eroe.",
+			"flavor": "L'onore gli valse un posto fra i saggi, ma non la porta."
+		},
+		"uh_dido": {
+			"name": "Didone, Regina di Cartagine",
+			"text": "Ultimo respiro: Silenzia tutti i servitori nemici.",
+			"flavor": "Amò troppo, e l'amore non le lasciò nulla."
+		},
+		"uh_helen": {
+			"name": "Elena di Troia",
+			"text": "Entrata: infliggi 2 danni a un servitore.",
+			"flavor": "La sua bellezza scatenò una guerra, e la colpa non l'ha mai lasciata."
+		},
+		"uh_prodigal_weight": {
+			"name": "Peso del Prodigo",
+			"text": "Entrata: dai +2 Attacco a un servitore alleato.",
+			"flavor": "Spendere senza misura è un peso anch'esso."
+		},
+		"uh_hector": {
+			"name": "Ettore di Troia",
+			"text": "Egida.",
+			"flavor": "Il miglior guerriero troiano difende ancora una città già arsa."
+		},
+		"uh_penthesilea": {
+			"name": "Pentesilea, Regina Amazzone",
+			"text": "Veleno.",
+			"flavor": "Regina guerriera, combatté con valore e cadde per mano di Achille."
+		},
+		"uh_tristan": {
+			"name": "Tristano",
+			"text": "Risucchio.",
+			"flavor": "Bevve una volta il filtro d'amore, e ora il vento lo trascina per sempre."
+		},
+		"uh_orpheus": {
+			"name": "Orfeo, il Cantore",
+			"text": "Entrata: aggiungi 2 Ombre del Limbo alla tua mano.",
+			"flavor": "Quando canta, perfino le ombre tornano ad ascoltare."
+		},
+		"uh_achilles": {
+			"name": "Achille, Piè Veloce",
+			"text": "Slancio. Ultimo respiro: infliggi 2 danni a un servitore nemico casuale.",
+			"flavor": "Correva più di chiunque, ma non più della freccia diretta al suo tallone."
+		},
+		"uh_semiramis": {
+			"name": "Semiramide, Regina di Babilonia",
+			"text": "Risucchio. Entrata: ottieni 2 Cristalli di Mana vuoti.",
+			"flavor": "…che libito fé licito in sua legge."
+		},
+		"uh_caesar": {
+			"name": "Giulio Cesare",
+			"text": "Entrata: ottieni 3 Armatura.",
+			"flavor": "Varcò il Rubicone, e ora attende nell'ombra del Limbo."
+		},
+		"uh_avaricious_hoarder": {
+			"name": "Avaro Accumulatore",
+			"text": "Ultimo respiro: pesca 2 carte.",
+			"flavor": "Accumulò per tutta la vita, e ora deve spingere il peso per sempre."
+		},
+		"uh_thorn_jab": {
+			"name": "Puntura di Spina",
+			"text": "Infliggi 1 danno. Pesca una carta.",
+			"flavor": "Spezza una spina dalla selva e colpisci."
+		},
+		"uh_lost_path": {
+			"name": "La Via Smarrita",
+			"text": "Pesca una carta. Ripristina 1 Salute al tuo eroe.",
+			"flavor": "Nella selva oscura ogni strada sembra uguale."
+		},
+		"uh_hidden_shield": {
+			"name": "Scudo Nascosto",
+			"text": "Ottieni 2 Armatura. Dai Egida a un servitore alleato casuale.",
+			"flavor": "A volte il posto più sicuro è quello che nessuno nota."
+		},
+		"uh_turned_away": {
+			"name": "Respinto dal Colle",
+			"text": "Riporta un servitore in mano al suo proprietario.",
+			"flavor": "Tre fiere sbarrarono il colle e lo ricacciarono giù."
+		},
+		"uh_silencing_word": {
+			"name": "Parola di Silenzio",
+			"text": "Silenzia un servitore.",
+			"flavor": "Una parola calma, e le grida cessano."
+		},
+		"uh_bitter_chill": {
+			"name": "Gelo Pungente",
+			"text": "Congela un servitore nemico.",
+			"flavor": "Il freddo lo tiene immobile per un turno intero."
+		},
+		"uh_cup_of_forgetting": {
+			"name": "Coppa dell'Oblio",
+			"text": "Aggiungi un'Ombra del Limbo alla tua mano.",
+			"flavor": "Bevi, e il passato svanisce come un'ombra."
+		},
+		"uh_gale_of_the_lustful": {
+			"name": "Bufera dei Lussuriosi",
+			"text": "Infliggi 2 danni a TUTTI i servitori.",
+			"flavor": "La bufera infernal, che mai non resta, / mena li spirti con la sua rapina."
+		},
+		"uh_hoarded_coin": {
+			"name": "Gruzzolo",
+			"text": "Ottieni un Cristallo di Mana vuoto.",
+			"flavor": "L'oro che non puoi spendere è pur sempre oro."
+		},
+		"uh_cut_the_thread": {
+			"name": "Recidi il Filo",
+			"text": "Silenzia un servitore nemico, poi distruggilo.",
+			"flavor": "Qualcuno deve recidere il filo, anche all'Inferno."
+		},
+		"uh_limbo_shade": {
+			"name": "Ombra del Limbo",
+			"flavor": "Una forma pallida che non ricorda nulla della sua vita."
+		},
+		"ul_ithacan_sailor": {
+			"name": "Marinaio di Itaca",
+			"text": "Astuzia: ottieni +1/+1.",
+			"flavor": "Seguirebbe il suo capitano oltre il bordo della mappa."
+		},
+		"ul_puccio": {
+			"name": "Puccio Sciancato",
+			"text": "Entrata: copia in mano una carta casuale della mano nemica.",
+			"flavor": "Dei cinque ladri, solo lui conservò la propria forma."
+		},
+		"ul_tongue_of_flame": {
+			"name": "Lingua di Fuoco",
+			"text": "Infliggi 1 danno. Astuzia: infliggine altri 2.",
+			"flavor": "Indi la cima qua e là menando, / come fosse la lingua che parlasse."
+		},
+		"ul_counterfeit_florins": {
+			"name": "Fiorini Falsi",
+			"text": "Pesca una carta. Astuzia: ottieni 1 mana solo per questo turno.",
+			"flavor": "E' m'indussero a batter li fiorini / ch'avevan tre carati di mondiglia."
+		},
+		"ul_forged_will": {
+			"name": "Testamento Falso",
+			"text": "Copia un servitore nella tua mano.",
+			"flavor": "Schicchi si stese nel letto di un morto e dettò un testamento con la sua voce."
+		},
+		"ul_turn_the_prow": {
+			"name": "Volgi la Prua",
+			"text": "Riporta un servitore alleato nella tua mano.",
+			"flavor": "E volta nostra poppa nel mattino, / de' remi facemmo ali al folle volo."
+		},
+		"ul_old_companions": {
+			"name": "Vecchi Compagni",
+			"text": "Astuzia: pesca una carta.",
+			"flavor": "Io e ' compagni eravam vecchi e tardi / quando venimmo a quella foce stretta."
+		},
+		"ul_wandering_flames": {
+			"name": "Fiamme Erranti",
+			"text": "Infliggi 1 danno a tutti i servitori nemici. Astuzia: infliggine un altro.",
+			"flavor": "…ché nessuna mostra 'l furto, / e ogne fiamma un peccatore invola."
+		},
+		"ul_griffolino": {
+			"name": "Griffolino d'Arezzo",
+			"text": "Astuzia: ottieni Slancio.",
+			"flavor": "Disse per gioco di saper volare. Lo sciocco che gli credette lo fece bruciare."
+		},
+		"ul_beacon_keeper": {
+			"name": "Custode del Faro",
+			"text": "Entrata: infliggi 1 danno. Astuzia: infliggine un altro.",
+			"flavor": "Un fuoco sulla riva può guidare una nave a casa, o sugli scogli."
+		},
+		"ul_achaean_in_hiding": {
+			"name": "Acheo Nascosto",
+			"text": "Ultimo respiro: evoca un Predone Acheo 2/2.",
+			"flavor": "Dentro il cavallo, nessuno osava respirare."
+		},
+		"ul_barbed_counsel": {
+			"name": "Consiglio Pungente",
+			"text": "Infliggi 2 danni a un servitore. Astuzia: pesca una carta.",
+			"flavor": "Un buon consiglio, dato a un cattivo fine."
+		},
+		"ul_spoils_of_troy": {
+			"name": "Bottino di Troia",
+			"text": "Copia in mano 2 carte casuali del mazzo nemico.",
+			"flavor": "Troia bruciò, e i Greci salparono carichi dei suoi tesori."
+		},
+		"ul_buoso": {
+			"name": "Buoso Donati",
+			"text": "Ultimo respiro: evoca una Serpe 2/2 con Veleno.",
+			"flavor": "L'uomo divenne serpe, e la serpe divenne uomo."
+		},
+		"ul_oarsmen": {
+			"name": "Rematori di Itaca",
+			"text": "Astuzia: ottieni +1/+1.",
+			"flavor": "De' remi facemmo ali al folle volo."
+		},
+		"ul_gilded_hypocrite": {
+			"name": "Ipocrita Dorato",
+			"text": "Guardia.",
+			"flavor": "Di fuor dorate son, sì ch'elli abbaglia; / ma dentro tutte piombo."
+		},
+		"ul_burning_counsellor": {
+			"name": "Consigliere Ardente",
+			"text": "Ultimo respiro: infliggi 2 danni a un nemico casuale.",
+			"flavor": "Dentro dai fuochi son li spirti; / catun si fascia di quel ch'elli è inceso."
+		},
+		"ul_speech_of_fire": {
+			"name": "Discorso di Fuoco",
+			"text": "Infliggi 3 danni a un servitore. Astuzia: infliggi 2 danni all'eroe nemico.",
+			"flavor": "La fiamma parlò, e le sue parole uscirono come fuoco."
+		},
+		"ul_eurypylus": {
+			"name": "Euripilo, l'Augure",
+			"text": "Entrata: copia in mano una carta casuale del mazzo nemico.",
+			"flavor": "E con Calcanta in Aulide diede / il punto a tagliar la prima fune."
+		},
+		"ul_night_raid": {
+			"name": "Incursione Notturna",
+			"text": "Evoca due Predoni Achei 2/2.",
+			"flavor": "Due uomini entrarono di notte nel campo troiano, e tornarono con i suoi cavalli."
+		},
+		"ul_little_ship": {
+			"name": "La Piccola Nave",
+			"text": "Ultimo respiro: evoca due Marinai di Itaca 2/1.",
+			"flavor": "Sol con un legno e con quella compagna / picciola da la qual non fui diserto."
+		},
+		"ul_past_the_pillars": {
+			"name": "Oltre le Colonne",
+			"text": "Pesca 2 carte. Astuzia: pescane un'altra.",
+			"flavor": "Dov'Ercule segnò li suoi riguardi / acciò che l'uom più oltre non si metta."
+		},
+		"ul_achaean_captain": {
+			"name": "Capitano Acheo",
+			"text": "Astuzia: evoca due Predoni Achei 2/2.",
+			"flavor": "Dieci anni sotto le mura, e guida ancora la carica."
+		},
+		"ul_epeius": {
+			"name": "Epeo, Artefice del Cavallo",
+			"text": "Entrata: evoca un Predone Acheo 2/2.",
+			"flavor": "Costruì un dono così bello che Troia abbatté le proprie mura per farlo entrare."
+		},
+		"ul_sweet_siren": {
+			"name": "La Dolce Sirena",
+			"text": "Astuzia: Congela un servitore nemico casuale.",
+			"flavor": "«Io son dolce serena… / Io volsi Ulisse del suo cammin vago / al canto mio.»"
+		},
+		"ul_fra_gomita": {
+			"name": "Fra Gomita",
+			"text": "Entrata: ottieni 1 mana solo per questo turno.",
+			"flavor": "Vendette ogni carica in Gallura, e non si stancò mai di parlarne."
+		},
+		"ul_absolved_in_advance": {
+			"name": "Assolto in Anticipo",
+			"text": "Dai Rinascita a un servitore alleato. Pesca una carta.",
+			"flavor": "«Tuo cuor non sospetti; / finor t'assolvo.»"
+		},
+		"ul_curio": {
+			"name": "Curione, il Senza Lingua",
+			"text": "Astuzia: Silenzia un servitore nemico casuale.",
+			"flavor": "Con la lingua tagliata ne la strozza / Curïo, ch'a dir fu così ardito!"
+		},
+		"ul_potiphars_wife": {
+			"name": "Moglie di Putifarre",
+			"text": "Entrata: Congela un servitore nemico. Astuzia: Silenzia anche lui.",
+			"flavor": "L'una è la falsa ch'accusò Gioseppo… / per febbre aguta gittan tanto leppo."
+		},
+		"ul_circes_draught": {
+			"name": "Pozione di Circe",
+			"text": "Trasforma un servitore in un Porco di Circe 1/1.",
+			"flavor": "Un sorso, e uomini fieri grufolavano nel fango."
+		},
+		"ul_calchas": {
+			"name": "Calcante, l'Augure",
+			"text": "Inizio del turno: copia in mano una carta casuale del mazzo nemico.",
+			"flavor": "L'augure lesse gli uccelli e mandò i Greci per mare."
+		},
+		"ul_sinon": {
+			"name": "Sinone, il Falso Greco",
+			"text": "Astuzia: riporta un servitore nemico casuale in mano all'avversario.",
+			"flavor": "La sua menzogna fece ciò che dieci anni di guerra non poterono."
+		},
+		"ul_false_beacon": {
+			"name": "Falso Faro",
+			"text": "Congela un servitore nemico. Astuzia: Congela tutti i servitori nemici.",
+			"flavor": "Chi vive di naufragi accende i fuochi dove gli scogli sono più aguzzi."
+		},
+		"ul_envoy_to_troy": {
+			"name": "Inviato a Troia",
+			"text": "Entrata: copia in mano 2 carte casuali della mano nemica.",
+			"flavor": "Venne a parlare di pace, e contò ogni lancia sulle mura."
+		},
+		"ul_greek_ambush": {
+			"name": "L'Agguato Greco",
+			"text": "Evoca un Predone Acheo 2/2. Astuzia: evocane un altro.",
+			"flavor": "Attesero tra le canne che la ronda passasse."
+		},
+		"ul_arms_of_achilles": {
+			"name": "Armi di Achille",
+			"text": "Dai +2/+2 a un servitore alleato. Astuzia: dagli Egida.",
+			"flavor": "Aiace voleva le armi. Ulisse parlò meglio, e Aiace impazzì."
+		},
+		"ul_palladium": {
+			"name": "Furto del Palladio",
+			"text": "Ruba le prime 2 carte del mazzo nemico.",
+			"flavor": "Finché Troia aveva la sua statua, non poteva cadere. Così la rubammo."
+		},
+		"ul_two_horned_flame": {
+			"name": "La Fiamma Cornuta",
+			"text": "Infliggi 3 danni a un nemico. Astuzia: infliggi 3 danni all'eroe nemico.",
+			"flavor": "Due peccatori in un solo fuoco, perché corsero insieme alla rovina."
+		},
+		"ul_simon_magus": {
+			"name": "Simon Mago",
+			"text": "Entrata: copia in mano 2 carte casuali del mazzo nemico.",
+			"flavor": "Offrì argento per un dono che non si può comprare."
+		},
+		"ul_capocchio": {
+			"name": "Capocchio, la Scimmia",
+			"text": "Entrata: evoca una copia di un servitore nemico.",
+			"flavor": "«E te dee ricordar, se ben t'adocchio, / com'io fui di natura buona scimia.»"
+		},
+		"ul_valley_of_flames": {
+			"name": "Valle di Fiamme",
+			"text": "Infliggi 3 danni a tutti i servitori nemici. Astuzia: infliggi 2 danni all'eroe nemico.",
+			"flavor": "Quante 'l villan ch'al poggio si riposa… / vede lucciole giù per la vallea."
+		},
+		"ul_little_speech": {
+			"name": "L'Orazion Picciola",
+			"text": "Dai +1/+1 ai tuoi servitori. Astuzia: dai loro +1 Attacco.",
+			"flavor": "«Fatti non foste a viver come bruti, / ma per seguir virtute e canoscenza.»"
+		},
+		"ul_deidamia": {
+			"name": "Deidamia, l'Ingannata",
+			"text": "Ultimo respiro: aggiungi Achille, Piè Veloce alla tua mano.",
+			"flavor": "…per che, morta, / Deïdamìa ancor si duol d'Achille."
+		},
+		"ul_diomedes": {
+			"name": "Diomede, la Fiamma Gemella",
+			"text": "Astuzia: evoca una copia di questo servitore.",
+			"flavor": "…e così insieme / a la vendetta vanno come a l'ira."
+		},
+		"ul_trojan_horse": {
+			"name": "Il Cavallo di Troia",
+			"text": "Guardia. Ultimo respiro: evoca tre Predoni Achei 2/2.",
+			"flavor": "Sembrava un'offerta. Era una porta."
+		},
+		"ul_black_cherub": {
+			"name": "Il Nero Cherubino",
+			"text": "Entrata: ruba una carta casuale dalla mano nemica.",
+			"flavor": "«Forse tu non pensavi ch'io löico fossi!»"
+		},
+		"ul_circe": {
+			"name": "Circe, l'Incantatrice",
+			"text": "Entrata: trasforma i servitori nemici in Porci di Circe 1/1.",
+			"flavor": "…Circe, che sottrasse / me più d'un anno là presso a Gaeta."
+		},
+		"ul_distant_mountain": {
+			"name": "La Montagna Bruna",
+			"text": "Entrata: riporta tutti gli altri servitori in mano ai proprietari.",
+			"flavor": "N'apparve una montagna, bruna / per la distanza, e parvemi alta tanto / quanto veduta non avëa alcuna."
+		},
+		"mc_ulysses": {
+			"name": "Ulisse, l'Astuto",
+			"text": "Entrata: riporta in mano un servitore nemico. Astuzia: tienine una copia.",
+			"flavor": "Convinse la ciurma a passare il confine del mondo, e nessuno tornò a casa."
+		},
+		"ul_achaean_raider": {
+			"name": "Predone Acheo",
+			"flavor": "Fuori dal ventre del cavallo, dentro la città addormentata."
+		},
+		"ul_swine": {
+			"name": "Porco di Circe",
+			"flavor": "Chi è ospite di Circe non riparte più."
+		}
+	},
+	"heroes": {
+		"dante": {
+			"name": "Dante, il Pellegrino",
+			"class_name": "Pellegrino",
+			"defeat_line": "Il pellegrino tace sulla riva.",
+			"power": {
+				"name": "Fermezza",
+				"text": "Ottieni 2 Armatura."
+			},
+			"class_tagline": "Resisti, poi vinci alla lunga.",
+			"class_style": "Dante scende con Virgilio e le anime che incontra. Il Pellegrino si protegge con Armatura e Guardia, pesca carte e si cura, e vince le partite lunghe con carte forti nel finale.",
+			"class_tips": [
+				"Usa Fermezza ogni volta che ti avanzano 2 mana: l'Armatura si accumula.",
+				"Proteggi i tuoi servitori migliori con servitori con Guardia.",
+				"Contro un mazzo aggressivo non fare la corsa: scambia, curati e resisti più di lui."
+			]
+		},
+		"charon": {
+			"name": "Caronte, il Traghettatore",
+			"class_name": "Traghettatore",
+			"defeat_line": "Caronte si fa da parte. Il fiume si può attraversare.",
+			"power": {
+				"name": "Pedaggio",
+				"text": "Infliggi 2 danni all'eroe nemico."
+			},
+			"class_tagline": "Metti sotto pressione l'eroe nemico.",
+			"class_style": "Caronte guida i dannati e i demoni dei cerchi inferiori. Il Traghettatore colpisce forte e presto, abbatte le grandi minacce con Veleno, ruba vita con Risucchio e brucia l'eroe nemico con Pedaggio a ogni turno.",
+			"class_tips": [
+				"Pedaggio infligge 2 danni all'eroe nemico a ogni turno: contali per il colpo letale.",
+				"Veleno uccide qualsiasi servitore a cui infligge danni, di qualunque taglia.",
+				"Attacca l'eroe quando il campo è sicuro; scambia solo quando devi."
+			]
+		},
+		"ulysses": {
+			"name": "Ulisse, l'Errante",
+			"class_name": "Errante",
+			"defeat_line": "La fiamma cornuta si spegne. L'ultimo viaggio è finito.",
+			"power": {
+				"name": "Parola Ardente",
+				"text": "Infliggi 1 danno a un servitore."
+			},
+			"class_tagline": "Concatena carte economiche in turni astuti.",
+			"class_style": "Ulisse e la sua ciurma ingannano i nemici. L'Errante gioca più carte in un turno: le carte con Astuzia ottengono un bonus se prima, in quel turno, hai giocato un'altra carta, e molte carte copiano, riportano in mano o rigiocano altre carte.",
+			"class_tips": [
+				"Gioca prima una carta economica, poi la carta con Astuzia che ne ha bisogno.",
+				"Parola Ardente uccide i servitori con 1 di Salute e finisce quelli danneggiati.",
+				"Pianifica l'ordine del turno prima di giocare qualsiasi carta."
+			]
+		},
+		"filippo": {
+			"name": "Filippo Argenti, l'Iracondo",
+			"class_name": "Iracondo",
+			"defeat_line": "Filippo ricade nel fango, e ancora si morde da sé.",
+			"power": {
+				"name": "Dispetto",
+				"text": "Infliggi 1 danno a un servitore e dagli +1 Attacco."
+			},
+			"class_tagline": "Ferisci i tuoi servitori per renderli più forti.",
+			"class_style": "Filippo Argenti e gli iracondi si azzuffano nel fango dello Stige. L'Iracondo ferisce di proposito i propri servitori: Ira dà Attacco in più a un servitore danneggiato, Frenesia si attiva la prima volta che un servitore viene colpito, e le carte Scontro fanno scambiare colpi ai servitori.",
+			"class_tips": [
+				"Dispetto su un tuo servitore ne attiva l'Ira e fa scattare la Frenesia.",
+				"Curare del tutto un servitore con Ira gli toglie il bonus.",
+				"Questa classe paga con la propria Salute: vinci prima che la partita si allunghi."
+			]
+		}
+	},
+	"decks": {
+		"pilgrim": {
+			"name": "Il Cammino del Pellegrino",
+			"text": "Dante, Virgilio e le anime incontrate nella discesa. Guardie solide, pesca di carte e un finale forte."
+		},
+		"ferry": {
+			"name": "Le Schiere del Traghettatore",
+			"text": "Caronte e i guardiani dell'Inferno. Anime economiche, veleno, bestie e danni ad area."
+		},
+		"pilgrim_vigil": {
+			"name": "La Veglia di Catone",
+			"text": "Guardia e Armatura tengono la linea, mentre congelamenti e danni ad area logorano il nemico."
+		},
+		"pilgrim_poets": {
+			"name": "La Bella Scola",
+			"text": "Omero, Ovidio e i poeti del Limbo. Pesca a fondo, rispondi alle minacce con gli incantesimi, vinci alla lunga."
+		},
+		"ferry_serpents": {
+			"name": "La Bolgia dei Serpenti",
+			"text": "I ladri e le loro serpi. Riempi il campo di anime economiche e Veleno, così ogni scambio ti è favorevole."
+		},
+		"ferry_raid": {
+			"name": "L'Assalto dei Malebranche",
+			"text": "I demoni di Malacoda. Attaccanti con Slancio, danni diretti e il potere di Caronte dritto all'eroe. Vinci in fretta."
+		},
+		"ulysses": {
+			"name": "La Ciurma dell'Errante",
+			"text": "Ulisse e la ciurma che lo seguì oltre il confine del mondo. Gioca prima una carta economica, poi una carta con Astuzia per il suo bonus."
+		},
+		"ulysses_horse": {
+			"name": "Il Cavallo di Legno",
+			"text": "Trucchi e tempo. Achei nascosti, carte rubate e l'Astuzia di Sinone, che rimanda in mano un servitore nemico casuale."
+		},
+		"ulysses_flight": {
+			"name": "Il Folle Volo",
+			"text": "Fuoco e incantesimi. Concatena incantesimi economici per attivare ogni Astuzia, poi finisci l'eroe nemico col fuoco."
+		},
+		"wrath": {
+			"name": "L'Ira dello Stige",
+			"text": "Filippo Argenti e gli iracondi della palude. Ferisci di proposito i tuoi servitori: con Ira, un servitore ferito colpisce molto più forte."
+		},
+		"wrath_brawl": {
+			"name": "La Rissa nel Fango",
+			"text": "Una rissa in tutta la palude. Servitori che vanno in Frenesia quando sono feriti, scontri che ripuliscono il campo nemico e Tideo per chiudere."
+		},
+		"wrath_pride": {
+			"name": "Dispetto e Superbia",
+			"text": "Attacco totale. Fiorentini economici e violenti che ti costano Salute, cavalieri con Slancio e fuoco per finire l'eroe nemico."
+		}
+	},
+	"arenas": {
+		"acheron": {
+			"name": "La Riva dell'Acheronte",
+			"circle": "Antinferno",
+			"intro": "Oltre la porta, le anime che non scelsero mai affollano la riva. Caronte non traghetta i vivi."
+		},
+		"limbo": {
+			"name": "Il Nobile Castello",
+			"circle": "Primo cerchio: Limbo",
+			"intro": "I buoni che non conobbero la fede vagano per sempre in questo prato verde. Qui nulla fa male: resta solo il desiderio."
+		},
+		"lust": {
+			"name": "Le Rupi della Bufera",
+			"circle": "Secondo cerchio: Lussuria",
+			"intro": "Una bufera che mai non resta trascina gli amanti in tondo. Tieniti saldo."
+		},
+		"dis": {
+			"name": "La Città di Dite",
+			"circle": "Sesto cerchio: Eresia",
+			"intro": "Dietro mura di ferro rovente, gli eretici giacciono in tombe di fuoco scoperchiate. Le Furie osservano."
+		},
+		"cocytus": {
+			"name": "Il Lago Ghiacciato",
+			"circle": "Nono cerchio: Cocito",
+			"intro": "In fondo all'Inferno nulla brucia. I traditori giacciono imprigionati nel ghiaccio, e il vento delle ali di Lucifero non si ferma mai."
+		}
+	}
+}
