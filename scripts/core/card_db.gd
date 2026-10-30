@@ -8,6 +8,10 @@ static var _decks: Array = []
 static var _arenas: Array = []
 static var _loaded := false
 static var _framed := {}
+static var _arts := {} ## card id -> its loaded picture (see art())
+static var _art_order: Array[String] = [] ## _arts' ids, the least recently asked first
+const ART_KEEP := 96
+static var _art_sizes := {} ## card id -> its art's size in px (art() loads the picture again when nothing holds it)
 static var _loops := {}
 static var _depths := {}
 static var _living := {} ## card id -> its living-art entry (data/living_art.json "cards")
@@ -192,9 +196,57 @@ static func deck_list(deck_id: String) -> Array[String]:
 
 
 ## The card's art, or the Acheron landscape as a placeholder until its painting arrives.
+## The last ART_KEEP pictures stay loaded (a card shown again, a card face rebuilt, need no new load: a load costs
+## ms). They stay compressed in video memory.
 static func art(id: String) -> Texture2D:
+	if _arts.has(id):
+		_art_order.erase(id)
+		_art_order.append(id)
+		return _arts[id]
 	var t := _tex("res://assets/cards/art/%s.jpg" % id)
-	return t if t != null else _tex("res://assets/arenas/acheron.jpg")
+	if t == null:
+		t = _tex("res://assets/arenas/acheron.jpg")
+	if t == null:
+		return null
+	_keep_art(id, t)
+	return t
+
+
+static func _keep_art(id: String, t: Texture2D) -> void:
+	_art_sizes[id] = t.get_size()
+	_arts[id] = t
+	_art_order.erase(id)
+	_art_order.append(id)
+	if _art_order.size() > ART_KEEP:
+		_arts.erase(_art_order.pop_front())
+
+
+## True when art(id) returns at once. Else it starts loading the painting on another thread (a grid building many card
+## faces asks for the next few ahead, then builds each as its painting arrives).
+static func art_ready(id: String) -> bool:
+	if _arts.has(id):
+		return true
+	var path := "res://assets/cards/art/%s.jpg" % id
+	if not ResourceLoader.exists(path):
+		return true # art() shows the placeholder landscape
+	match ResourceLoader.load_threaded_get_status(path):
+		ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+			ResourceLoader.load_threaded_request(path)
+			return false
+		ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			return false
+		ResourceLoader.THREAD_LOAD_LOADED:
+			var t := ResourceLoader.load_threaded_get(path) as Texture2D
+			if t != null:
+				_keep_art(id, t)
+	return true # loaded, or failed (art() tries again on this thread)
+
+
+## The size of the card's art in px. Cached: the crops ask for it on every card face, and a fresh load costs ms.
+static func art_size(id: String) -> Vector2:
+	if not _art_sizes.has(id):
+		art(id) # records the size
+	return _art_sizes[id]
 
 
 static func has_art(id: String) -> bool:
@@ -214,13 +266,14 @@ static func _crop_rect(sz: Vector2, aspect: float, focus_y: float) -> Rect2i:
 
 ## The card art cropped to `aspect` (w / h), centred on the upper part of the picture where faces usually are.
 static func art_framed(id: String, aspect: float, focus_y: float = 0.36) -> Texture2D:
+	# A real cropped texture (not an AtlasTexture) so shader UVs stay 0..1 for the oval mask. Looked up before the
+	# picture is loaded: a cached crop needs no load.
+	var key := "%s@%.3f@%.2f" % [id, aspect, focus_y]
+	if _framed.has(key):
+		return _framed[key]
 	var tex := art(id)
 	if tex == null:
 		return null
-	# A real cropped texture (not an AtlasTexture) so shader UVs stay 0..1 for the oval mask.
-	var key := "%s@%.3f@%.2f" % [tex.resource_path, aspect, focus_y]
-	if _framed.has(key):
-		return _framed[key]
 	var img := tex.get_image()
 	if img == null:
 		return tex
@@ -231,10 +284,23 @@ static func art_framed(id: String, aspect: float, focus_y: float = 0.36) -> Text
 	return out
 
 
+## The same crop as `art_framed` as an AtlasTexture of the picture: free to make, and the picture stays compressed in
+## video memory. For a plain TextureRect only: a shader sees the whole picture's UVs (card_fx takes art() and
+## art_crop_uv instead).
+static func art_region(id: String, aspect: float, focus_y: float = 0.36) -> Texture2D:
+	var tex := art(id)
+	if tex == null:
+		return null
+	var a := AtlasTexture.new()
+	a.atlas = tex
+	a.region = Rect2(_crop_rect(tex.get_size(), aspect, focus_y))
+	return a
+
+
 ## The same crop as `art_framed`, as a UV rectangle (x, y, w, h in 0..1) of the full picture. The card shader's `crop`
 ## uniform takes it, so a card's looping video (same framing as the still) is cropped exactly like the still.
 static func art_crop_uv(id: String, aspect: float, focus_y: float = 0.36) -> Rect2:
-	var sz := art(id).get_size()
+	var sz := art_size(id)
 	var r := _crop_rect(sz, aspect, focus_y)
 	return Rect2(Vector2(r.position) / sz, Vector2(r.size) / sz)
 

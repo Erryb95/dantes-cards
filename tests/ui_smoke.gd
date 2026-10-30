@@ -33,6 +33,14 @@ func _idle() -> void:
 	_fail("timed out waiting for the player's turn")
 
 
+## The shipped text fits (data/card_text_fit.json) match a fresh measurement of every card text in every language.
+func _card_fits() -> void:
+	var stale: Array = preload("res://tests/gen_card_fits.gd").stale()
+	if not stale.is_empty():
+		_fail("data/card_text_fit.json is out of date for %d texts (run tests/gen_card_fits.tscn), e.g. %s"
+			% [stale.size(), stale[0]])
+
+
 func _fail(msg: String) -> void:
 	fails += 1
 	printerr("UI FAIL: " + msg)
@@ -204,5 +212,6 @@ func _run() -> void:
 	await _deaths()
 	_voices()
 	await _arenas()
+	_card_fits()
 	print("UI SMOKE: played %d minions, %d failures" % [played, fails])
 	get_tree().quit(1 if fails > 0 or played == 0 else 0)

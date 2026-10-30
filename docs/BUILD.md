@@ -12,6 +12,8 @@ timeout 300 $G --headless --path . res://tests/intro_test.tscn        # opening 
 timeout 3600 $G --headless --path . -s res://tests/card_flow.gd -- --games=60 [--deck=<id>] [--shard=i/k --out=f.json]  # per deck: hand size by turn, topdecking, unspent mana, fatigue, win rate (Hard vs Hard); --cards per-card play rates; --merge=a.json,b.json sums shards; --patch=f.json tries deck swaps
 timeout 180 $G --path . res://tests/ink_centering.tscn --resolution 1920x1080 -- --out=<dir> --max=2   # text centred in its frames, on drawn pixels (needs a window)
 timeout 900 $G --path . res://tests/rules_centering.tscn --resolution 1920x1080 -- --out=<dir> --max=2 # every card's rules text on its parchment, clear of the gems (needs a window)
+timeout 900 $G --headless --path . res://tests/gen_card_fits.tscn # rewrites data/card_text_fit.json (the card faces' rules-text fits, all languages) after a card text, a translation, a font or the card layout changes; ui_smoke fails while it is stale
+timeout 300 $G --path . res://tests/perf_probe.tscn --resolution 1920x1080 -- --what=collection|builder|decks|menu|battle|cold [--menu-first] # screen open / filter / frame timings (needs a window)
 timeout 600 $G --headless --path . --export-release "Windows Desktop" build/windows/DantesInfernoCards.exe
 timeout 600 $G --headless --path . --export-debug   "Android"         build/android/DantesInfernoCards.apk
 ```

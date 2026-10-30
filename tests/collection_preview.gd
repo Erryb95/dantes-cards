@@ -21,6 +21,8 @@ func _ready() -> void:
 	await get_tree().process_frame
 	scene._set_filter(filter)
 	await get_tree().create_timer(1.0).timeout
+	while "_faces" in scene and not scene._faces.is_done(): # the faces are built a few per frame
+		await get_tree().process_frame
 	var scroll := scene.find_children("*", "ScrollContainer", true, false)
 	if not scroll.is_empty():
 		var sc: ScrollContainer = scroll[0]

@@ -182,13 +182,13 @@ static func setup_card(mat: ShaderMaterial, card_id: String, aspect: float, focu
 		return false
 	var entry := CardDB.living(card_id)
 	var r := CardDB.art_crop_uv(card_id, aspect, focus_y)
-	var art := CardDB.art(card_id)
+	var art_px := CardDB.art_size(card_id)
 	var u := params(entry)
 	for k in u:
 		mat.set_shader_parameter(k, u[k])
 	mat.set_shader_parameter("living_mask", CardDB.living_mask(card_id))
 	mat.set_shader_parameter("living_rect", Vector4(r.position.x, r.position.y, r.size.x, r.size.y))
-	mat.set_shader_parameter("living_aspect", float(art.get_width()) / art.get_height())
+	mat.set_shader_parameter("living_aspect", art_px.x / art_px.y)
 	mat.set_shader_parameter("living_level", lv)
 	var flowmap := CardDB.living_flowmap(card_id)
 	var fx := CardDB.living_fx(card_id) if not entry.get("layers", []).is_empty() else null

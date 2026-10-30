@@ -11,8 +11,9 @@ shader_type canvas_item;
 
 uniform int mask_mode = 0; // 0 none, 1 oval, 2 rounded rectangle
 uniform float corner = 0.08;
-// Sub-rectangle (x, y, w, h in 0..1) of the texture to show across the rect, for a video that is cropped to the card's
-// art framing on the GPU. The default shows the whole texture; the masks below still see UV 0..1 across the rect.
+// Sub-rectangle (x, y, w, h in 0..1) of the texture to show across the rect: a card's art (the whole picture, cropped
+// to the card's framing here rather than copied cropped on the CPU) or its looping video. The default shows the whole
+// texture; the masks below still see UV 0..1 across the rect.
 uniform vec4 crop = vec4(0.0, 0.0, 1.0, 1.0);
 uniform float burn : hint_range(0.0, 1.0) = 0.0;
 uniform vec4 burn_edge : source_color = vec4(0.9, 0.3, 0.05, 1.0); // the dissolve's glowing rim: outer colour
@@ -134,17 +135,17 @@ void fragment() {
 	float lpix = living_level > 0 ? fwidth(suv.y) : 0.0; // before any branch that differs between pixels
 	if (living_level > 0 && living_uv(suv, lua, lub, lw, lm, lx)) {
 		// A legendary's living art (it never plays a video loop).
-		c = texture(TEXTURE, lua);
+		c = texture(TEXTURE, crop.xy + lua * crop.zw);
 		if (lw > 0.0) {
-			c = mix(c, texture(TEXTURE, lub), lw);
+			c = mix(c, texture(TEXTURE, crop.xy + lub * crop.zw), lw);
 		}
 		c = living_light(c * vcol, suv, lm, lx, lpix);
 	} else if (living_level > 0) {
-		c = texture(TEXTURE, suv) * vcol;
+		c = texture(TEXTURE, crop.xy + suv * crop.zw) * vcol;
 	} else if (crop.zw != vec2(1.0)) {
 		c = texture(TEXTURE, crop.xy + suv * crop.zw) * vcol;
 	} else if (depth_amount > 0.0) {
-		c = texture(TEXTURE, suv) * vcol;
+		c = texture(TEXTURE, crop.xy + suv * crop.zw) * vcol;
 	}
 	if (mask_mode == 1) {
 		float d = length((uv - 0.5) * 2.0);

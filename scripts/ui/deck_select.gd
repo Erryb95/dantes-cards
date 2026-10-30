@@ -1118,7 +1118,7 @@ func _deck(e: Dictionary) -> Button:
 	# The face: the key card's painting (the hero for an empty deck) in the carved border.
 	var art := TextureRect.new()
 	var key_card := str(e.featured[0]) if not e.featured.is_empty() else ""
-	art.texture = CardDB.art_framed(key_card, face.size.x / face.size.y, 0.4) if key_card != "" \
+	art.texture = CardDB.art_region(key_card, face.size.x / face.size.y, 0.4) if key_card != "" \
 		else CardDB.hero_art(e.hero)
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED

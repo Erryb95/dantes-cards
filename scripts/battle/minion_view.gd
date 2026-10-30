@@ -83,7 +83,6 @@ func _build() -> void:
 	add_child(_glow)
 
 	var art := TextureRect.new()
-	art.texture = CardDB.art_framed(card_id, W / H, 0.34)
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -92,6 +91,12 @@ func _build() -> void:
 	_art_mat = ShaderMaterial.new()
 	_art_mat.shader = CARD_FX
 	_art_mat.set_shader_parameter("mask_mode", 1)
+	# The whole picture, framed by the shader's crop (as on a CardView): no cropped copy is made on the CPU.
+	art.texture = CardDB.art(card_id)
+	if art.texture != null:
+		art.stretch_mode = TextureRect.STRETCH_SCALE
+		var r := CardDB.art_crop_uv(card_id, W / H, 0.34)
+		_art_mat.set_shader_parameter("crop", Vector4(r.position.x, r.position.y, r.size.x, r.size.y))
 	_depth = ArtDepth.setup_card(_art_mat, card_id, W / H, 0.34, ArtDepth.MINION)
 	ArtLiving.setup_card(_art_mat, card_id, W / H, 0.34)
 	art.material = _art_mat

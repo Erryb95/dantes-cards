@@ -32,7 +32,9 @@ var _cost_filter := -1
 var _set_filter := "all" ## all / class / neutral
 var _show_unowned := true
 var _badges := {} ## id -> Label
-var _views := {} ## id -> CardView
+var _views := {} ## id -> CardView (the faces built so far)
+var _slots := {} ## id -> its grid slot: made once, shown, hidden and reordered as the filters change
+var _faces: FaceQueue ## builds the faces of the slots shown, a few per frame
 var _set_tabs := {} ## set filter -> Button
 var _cost_tabs := {} ## cost filter -> Button
 var _own_tab: Button
@@ -236,6 +238,8 @@ func _ready() -> void:
 		Game.start_with(Collection.deck_cards(deck.cards), CardDB.class_hero(deck.cls)))
 	r2.add_child(_play)
 
+	_faces = FaceQueue.new(_grid_scroll, _build_view)
+	add_child(_faces)
 	resized.connect(_fill)
 	if "--autoplay" in OS.get_cmdline_user_args():
 		Collection.autofill(deck)
@@ -390,11 +394,8 @@ func _pool() -> Array:
 
 func _fill() -> void:
 	_mark_filters()
-	for c in _grid.get_children():
-		c.queue_free()
-	_badges.clear()
-	_views.clear()
 	_hide_tips()
+	_faces.clear()
 	# The grid's width: the scroll's, less its bar (estimated from the screen before the first layout).
 	var w := _grid_scroll.size.x - BAR_W
 	if _grid_scroll.size.x <= 0.0:
@@ -405,39 +406,85 @@ func _fill() -> void:
 	# The columns spread so the grid ends at the bar as it starts at the filters (within reason).
 	var gap := clampf(floorf((w - cols * cw) / (cols - 1)), CARD_GAP, 2.0 * CARD_GAP)
 	_grid.add_theme_constant_override("h_separation", int(gap))
+	# The slots are kept (a card face costs ms to build): a filter shows, hides and orders them.
+	var shown := {}
 	for c in _pool():
-		var slot := Control.new()
-		slot.custom_minimum_size = Vector2(CardView.W * S, CardView.H * S + TAG_H + 4)
-		slot.mouse_filter = Control.MOUSE_FILTER_STOP
-		var v := CardView.new().setup(c.id, -1, true)
-		v.scale = Vector2(S, S)
-		v.position = Vector2(CardView.W * S / 2, CardView.H * S / 2)
-		slot.add_child(v)
-		# The copies in the deck (or Locked) engraved on a small plaque under the card.
-		var holder := CenterContainer.new()
-		holder.size = Vector2(CardView.W * S, TAG_H)
-		holder.position = Vector2(0, CardView.H * S + 4)
-		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var tag := UI.plaque_label("", 22, "title", UI.BONE, 0.0, 16, 4)
-		tag.custom_minimum_size = Vector2(124, 0)
-		holder.add_child(tag)
-		slot.add_child(holder)
-		_badges[c.id] = tag.get_node("Text")
-		_views[c.id] = v
-		var id: String = c.id
-		slot.mouse_entered.connect(func():
-			v.create_tween().tween_property(v, "scale", Vector2(S, S) * 1.06, 0.1)
-			_show_tips(id, slot))
-		slot.mouse_exited.connect(func():
-			v.create_tween().tween_property(v, "scale", Vector2(S, S), 0.1)
-			_hide_tips())
-		slot.gui_input.connect(func(e):
-			if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
-				_add(id)
-			elif e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_RIGHT:
-				_remove(id))
-		_grid.add_child(slot)
+		var slot: Control = _slots.get(c.id)
+		if slot == null:
+			slot = _make_slot(c)
+			_slots[c.id] = slot
+			_grid.add_child(slot)
+		_grid.move_child(slot, shown.size())
+		slot.visible = true
+		if not _views.has(c.id):
+			_faces.want(slot, shown.size() < cols * 3)
+		shown[slot] = true
+	for slot in _slots.values():
+		if not shown.has(slot):
+			slot.visible = false
 	_refresh()
+
+
+## A card's place in the grid, with the copies in the deck (or Locked) engraved on a small plaque under the card;
+## the card face comes with _build_view.
+func _make_slot(c: Dictionary) -> Control:
+	var slot := Control.new()
+	slot.custom_minimum_size = Vector2(CardView.W * S, CardView.H * S + TAG_H + 4)
+	slot.mouse_filter = Control.MOUSE_FILTER_STOP
+	slot.set_meta("card", c)
+	var holder := CenterContainer.new()
+	holder.size = Vector2(CardView.W * S, TAG_H)
+	holder.position = Vector2(0, CardView.H * S + 4)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tag := UI.plaque_label("", 22, "title", UI.BONE, 0.0, 16, 4)
+	tag.custom_minimum_size = Vector2(124, 0)
+	holder.add_child(tag)
+	slot.add_child(holder)
+	var id: String = c.id
+	_badges[id] = tag.get_node("Text")
+	slot.mouse_entered.connect(func():
+		var v: CardView = _views.get(id)
+		if v != null:
+			v.wake()
+			v.create_tween().tween_property(v, "scale", Vector2(S, S) * 1.06, 0.1)
+		_show_tips(id, slot))
+	slot.mouse_exited.connect(func():
+		var v: CardView = _views.get(id)
+		if v != null:
+			v.create_tween().tween_property(v, "scale", Vector2(S, S), 0.1)
+		_hide_tips())
+	slot.gui_input.connect(func(e):
+		if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+			_add(id)
+		elif e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_RIGHT:
+			_remove(id))
+	return slot
+
+
+## The card face in its slot (FaceQueue), tinted as _refresh tints it; `fade`: it eases in.
+func _build_view(slot: Control, fade: bool) -> void:
+	var id: String = slot.get_meta("card").id
+	if _views.has(id):
+		return
+	var v := CardView.new().setup(id, -1, true)
+	v.rest = true
+	v.scale = Vector2(S, S)
+	v.position = Vector2(CardView.W * S / 2, CardView.H * S / 2)
+	v.modulate = _tint(id)
+	slot.add_child(v)
+	slot.move_child(v, 0) # under the plaque
+	_views[id] = v
+	if fade:
+		v.modulate.a = 0.0
+		v.create_tween().tween_property(v, "modulate:a", 1.0, 0.18)
+
+
+## A card in the grid: dark when not owned, dimmed when the deck holds all the copies it may.
+func _tint(id: String) -> Color:
+	var own := Collection.copies(id)
+	if own == 0:
+		return Color(0.35, 0.33, 0.33)
+	return Color(0.6, 0.6, 0.6) if int(deck.cards.get(id, 0)) >= mini(own, Collection.max_copies(id)) else Color.WHITE
 
 
 ## The keyword tips of the card under the pointer, beside its slot (right of it, or left near the screen edge).
@@ -502,15 +549,14 @@ func _refresh() -> void:
 		var lim := Collection.max_copies(id)
 		var used := int(deck.cards.get(id, 0))
 		var b: Label = _badges[id]
-		var v: CardView = _views[id]
 		if own == 0:
 			b.text = Loc.t("Locked")
 			b.add_theme_color_override("font_color", Color(0.6, 0.55, 0.5))
-			v.modulate = Color(0.35, 0.33, 0.33)
 		else:
 			b.text = "%d / %d" % [used, mini(own, lim)]
 			b.add_theme_color_override("font_color", UI.GOLD if used > 0 else UI.BONE)
-			v.modulate = Color(0.6, 0.6, 0.6) if used >= mini(own, lim) else Color.WHITE
+		if _views.has(id):
+			(_views[id] as CardView).modulate = _tint(id)
 	for c in _list.get_children():
 		c.queue_free()
 	var ids: Array = deck.cards.keys()
@@ -552,7 +598,7 @@ func _refresh() -> void:
 		if UiSkin.has("deck_row"):
 			# Hearthstone-style tile: a strip of the card's painting behind the name, darkened on the left for the text.
 			var strip := TextureRect.new()
-			strip.texture = CardDB.art_framed(id, 4.5, 0.4)
+			strip.texture = CardDB.art_region(id, 4.5, 0.4)
 			strip.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			strip.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 			strip.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

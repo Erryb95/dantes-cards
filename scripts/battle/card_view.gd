@@ -49,6 +49,9 @@ var auto_tilt := true
 var look := false
 var sway := false
 var hold_tilt := false ## keep `_tilt` as set from outside (previews / tests)
+## A card in a big grid (the collection): it stops its per-frame work once it lies still, and its owner calls wake()
+## when the pointer comes over it. Legendaries keep running for their foil sweep.
+var rest := false
 var _tilt := Vector2.ZERO
 var _sway_t := randf() * 10.0
 var _shadow: Control
@@ -69,6 +72,8 @@ var _ruse_pulse := false ## the Ruse glow is breathing (its strength is driven h
 
 ## Ruse ready: a deep, warm gold that breathes slowly, so it never reads as the green "playable" glow.
 const RUSE_GLOW := [Color(1.0, 0.9, 0.5), Color(1.0, 0.5, 0.0)]
+
+
 
 
 func setup(p_card_id: String, p_uid: int = -1, p_face_up: bool = true) -> CardView:
@@ -281,13 +286,19 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	art.position = Vector2(5, 5)
 	art.size = Vector2(W - 10, H - 10)
-	art.texture = CardDB.art_framed(card_id, art.size.x / art.size.y, 0.42)
-	if art.texture == null:
-		art.texture = _placeholder()
 	_art_mat = ShaderMaterial.new()
 	_art_mat.shader = CARD_FX
 	_art_mat.set_shader_parameter("mask_mode", 2)
 	_art_mat.set_shader_parameter("corner", 0.07)
+	# The whole picture, framed by the shader's crop (as ArtLoop frames a video): no cropped copy is made on the CPU,
+	# and the picture stays compressed in video memory.
+	art.texture = CardDB.art(card_id)
+	if art.texture == null:
+		art.texture = _placeholder()
+	else:
+		art.stretch_mode = TextureRect.STRETCH_SCALE
+		var r := CardDB.art_crop_uv(card_id, art.size.x / art.size.y, 0.42)
+		_art_mat.set_shader_parameter("crop", Vector4(r.position.x, r.position.y, r.size.x, r.size.y))
 	_depth = ArtDepth.setup_card(_art_mat, card_id, art.size.x / art.size.y, 0.42, ArtDepth.CARD)
 	ArtLiving.setup_card(_art_mat, card_id, art.size.x / art.size.y, 0.42)
 	art.material = _art_mat
@@ -358,36 +369,29 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 		txt.add_theme_color_override("default_color", Color(0.96, 0.92, 0.84))
 		txt.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
 		txt.add_theme_constant_override("outline_size", 5)
-	var rules: String = card.get("text", "")
-	var plain := rules
-	var flavour := rules == ""
-	var max_size := 20
+	var src := rules_source(card)
+	var plain: String = src[0]
+	var flavour: bool = src[1]
+	var max_size: int = src[2]
+	var rules := plain
 	if flavour:
-		plain = card.get("flavor", "")
 		rules = "[i]" + plain + "[/i]"
-		max_size = 17
 		txt.add_theme_color_override("default_color", Color(0.3, 0.2, 0.12) if painted else Color(0.85, 0.78, 0.66))
 	# Fitted 3% narrower than the box, so no line runs right to its edges.
-	var size := UI.fit_rules_size(plain, txt.size.x * 0.97, txt.size.y, max_size, 12, flavour)
-	if painted and not is_spell:
-		var fit := _fit_minion_rules(plain, max_size, flavour)
+	var size := 0
+	if painted:
+		# Optical centring (Enrico: "le scritte dentro le carte non sono sempre centrate"): the letters' ink, not
+		# their line boxes, goes on the middle of the plate's visible parchment (see rules_fit).
+		var fit := rules_fit(plain, is_spell, flavour, max_size)
 		size = fit[0]
-		txt.size.x = fit[1]
+		txt.size = Vector2(fit[1], fit[2])
+		txt.position = Vector2(fit[3], fit[4])
+	else:
+		size = UI.fit_rules_size(plain, txt.size.x * 0.97, txt.size.y, max_size, 12, flavour)
 	for k in ["normal_font_size", "bold_font_size", "italics_font_size"]:
 		txt.add_theme_font_size_override(k, size)
 	txt.text = UI.rules_bbcode(rules)
 	txt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	if painted:
-		# Optical centring (Enrico: "le scritte dentro le carte non sono sempre centrate"): the letters' ink, not
-		# their line boxes, goes on the middle of the plate's visible parchment. A text too long for the box even at
-		# the smallest size gets the room it needs (the parchment is taller than the box).
-		var lay := UI.rules_layout(plain, size, txt.size.x, flavour)
-		var block: Vector2 = lay["block"]
-		if block.y > txt.size.y:
-			txt.size.y = ceilf(block.y) + 2.0
-		var ink: Rect2 = lay["ink"]
-		var target := SPELL_TEXT_CENTER if is_spell else MINION_TEXT_CENTER
-		txt.position = (target - txt.size / 2.0 - ink.get_center()).round()
 	_face.add_child(txt)
 
 	# Gems.
@@ -406,11 +410,70 @@ func _build_full_art(is_spell: bool, rarity: String) -> void:
 		_face.add_child(_hp_label)
 
 
+const FITS_PATH := "res://data/card_text_fit.json" ## rules_fit's results for every card text (tests/gen_card_fits.gd)
+static var _fits := {}
+static var _fits_loaded := false
+
+
+## The rules text on a painted plate: [font size, box width, box height, box x, box y] (the box in the card's px). The
+## size is the largest that fits (a minion's box width is fitted with it, see _fit_minion_rules; a spell's text is
+## fitted 3% narrower than its box, so no line runs right to its edges); the box is placed so the letters' ink sits
+## on the middle of the plate's visible parchment, and a text too long for the box even at the smallest size gets the
+## height it needs (the parchment is taller than the box).
+## Measuring the text costs tens of ms per card, so the results for every card text in every language are shipped in
+## FITS_PATH (the tests check it matches); a text not in it is measured here.
+static func rules_fit(plain: String, is_spell: bool, flavour: bool, max_size: int) -> Array:
+	if not _fits_loaded:
+		_fits_loaded = true
+		if FileAccess.file_exists(FITS_PATH):
+			var j = JSON.parse_string(FileAccess.get_file_as_string(FITS_PATH))
+			if j is Dictionary:
+				_fits = j
+	var key := fit_key(plain, is_spell, flavour, max_size)
+	if _fits.has(key):
+		return _fits[key]
+	var fit := measure_rules_fit(plain, is_spell, flavour, max_size)
+	_fits[key] = fit
+	return fit
+
+
+## What a card face shows in its text plate: [plain text, it is the flavour (a card without rules), largest size].
+static func rules_source(c: Dictionary) -> Array:
+	var rules: String = c.get("text", "")
+	if rules == "":
+		return [str(c.get("flavor", "")), true, 17]
+	return [rules, false, 20]
+
+
+static func fit_key(plain: String, is_spell: bool, flavour: bool, max_size: int) -> String:
+	return "%s%s%d|%s" % ["s" if is_spell else "m", "f" if flavour else "r", max_size, plain]
+
+
+## rules_fit measured (no cache).
+static func measure_rules_fit(plain: String, is_spell: bool, flavour: bool, max_size: int) -> Array:
+	var box := Vector2(W - 76, 72) if is_spell else Vector2(W - 100, MINION_TEXT_ROOM)
+	var size := 0
+	if is_spell:
+		size = UI.fit_rules_size(plain, box.x * 0.97, box.y, max_size, 12, flavour)
+	else:
+		var fit := _fit_minion_rules(plain, max_size, flavour)
+		size = fit[0]
+		box.x = fit[1]
+	var lay := UI.rules_layout(plain, size, box.x, flavour)
+	var block: Vector2 = lay["block"]
+	if block.y > box.y:
+		box.y = ceilf(block.y) + 2.0
+	var ink: Rect2 = lay["ink"]
+	var target := SPELL_TEXT_CENTER if is_spell else MINION_TEXT_CENTER
+	var at := (target - box / 2.0 - ink.get_center()).round()
+	return [size, box.x, box.y, at.x, at.y]
+
+
 ## The font size and box width of a minion's rules text: the largest size (then the widest box) at which the text,
 ## centred on the parchment, fits MINION_TEXT_ROOM and keeps every line that runs down into the gems' corners
 ## (below MINION_GEM_TOP) within MINION_GEM_CLEAR of the middle (2 px spare for an italic overhang). Lines higher up may be wider: a short last line
 ## leaves a long text its size.
-func _fit_minion_rules(plain: String, max_size: int, italic: bool) -> Array:
+static func _fit_minion_rules(plain: String, max_size: int, italic: bool) -> Array:
 	for s in range(max_size, 11, -1):
 		for w in MINION_TEXT_WIDTHS:
 			var lay := UI.rules_layout(plain, s, w, italic)
@@ -470,10 +533,16 @@ static func _fit_size(text: String, width: float, max_size: int, kind: String) -
 	return s
 
 
+static var _back_tex: Texture2D ## the painted back, loaded once (a card freed last would drop it, and reloading costs ms)
+static var _back_checked := false
+
+
 func _build_back() -> void:
-	var tex: Texture2D = null
-	if ResourceLoader.exists("res://assets/cards/card_back.jpg"):
-		tex = load("res://assets/cards/card_back.jpg")
+	if not _back_checked:
+		_back_checked = true
+		if ResourceLoader.exists("res://assets/cards/card_back.jpg"):
+			_back_tex = load("res://assets/cards/card_back.jpg")
+	var tex := _back_tex
 	# The painted back inside the same carved border as the card faces (the deck pile, the enemy hand, a card being
 	# flipped). The flat red frame and gold line are only the fallback when either painting is missing.
 	var painted := tex != null and UiSkin.has("card_border_minion")
@@ -626,6 +695,13 @@ func _process(delta: float) -> void:
 		if _foil > 1.6:
 			_foil = -0.6
 		_art_mat.set_shader_parameter("shine", clampf(_foil, -1.0, 1.2) if _foil >= 0.0 else -1.0)
+	elif rest and not hovered and not dragging and not sway and not look and _tilt == Vector2.ZERO 			and _drift.length() < 0.001 and not _ruse_pulse 			and _shadow.position.distance_to(Vector2(-W / 2, -H / 2) + Vector2(6, 12)) < 0.5:
+		set_process(false)
+
+
+## Back to per-frame work after resting (`rest`): the pointer is over the card.
+func wake() -> void:
+	set_process(true)
 
 
 ## The art's depth parallax follows the tilt, so the painting reads as a window with depth. Under a resting pointer, on

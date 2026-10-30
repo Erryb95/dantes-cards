@@ -21,6 +21,14 @@ var _filter := "all"
 var _zoom: Control
 var _tabs := {} ## filter -> Button
 var _class_bar: Control ## holds the strip about the filtered class (empty on "All")
+var _slots := {} ## card id -> its grid slot: made once, moved between the grids as the filter and the order change
+var _faces: FaceQueue ## builds the faces of the slots shown, a few per frame
+var _cols := 0 ## the columns the grids were laid out with
+var _mode := "" ## how the sections are laid out: "flat" or "rarity", and the columns
+var _sections := {} ## section key ("flat", or a rarity / "token") -> its section (a VBox with meta "grid")
+
+const FIRST_ROWS := 3 ## rows of card faces built at once when a filter opens, if their paintings are loaded (the rest
+		## follow in the background)
 
 
 func _ready() -> void:
@@ -110,8 +118,18 @@ func _ready() -> void:
 	_body = VBoxContainer.new()
 	_body.add_theme_constant_override("separation", 22)
 	center.add_child(_body)
-	resized.connect(_fill)
+	_faces = FaceQueue.new(scroll, _build_view)
+	add_child(_faces)
+	resized.connect(func():
+		if _columns(size.x) != _cols: # only a new column count lays the grids out again
+			_fill())
 	_set_filter(_filter)
+
+
+func _exit_tree() -> void:
+	for slot in _slots.values(): # the slots of the cards the filter hides are out of the tree
+		if is_instance_valid(slot) and slot.get_parent() == null:
+			slot.free()
 
 
 ## Esc / the back gesture (Game.back): closes the enlarged card, else like Back.
@@ -179,9 +197,12 @@ func _sort_key(c: Dictionary) -> Array:
 
 ## The cards the current filter shows, in the current order.
 func _visible_cards() -> Array:
-	var cards := CardDB.all_cards().filter(func(c): return _filter == "all" or c.set == _filter)
-	cards.sort_custom(func(a, b): return _sort_key(a) < _sort_key(b))
-	return cards
+	var keyed := []
+	for c in CardDB.all_cards():
+		if _filter == "all" or c.set == _filter:
+			keyed.append([_sort_key(c), c]) # each key made once, not on every comparison
+	keyed.sort_custom(func(a, b): return a[0] < b[0])
+	return keyed.map(func(k): return k[1])
 
 
 ## The grid's columns on a screen `w` px wide (inside the margins, the scroll bar and the room the grid keeps on its
@@ -219,69 +240,142 @@ func _make_grid(columns: int) -> GridContainer:
 	return g
 
 
+## Lays the grids out for the current filter and order. Slots and grids are kept: a filter or an order only shows,
+## hides and reorders slots (a card face costs ms to build, and moving hundreds of faces in and out of the tree costs
+## too); only another column count or a switch to or from the rarity sections makes the sections again. The first
+## rows of faces not built yet are built at once, the rest a few per frame.
 func _fill() -> void:
 	for f in _tabs: # the filter that is on is lit, the others dimmed
 		(_tabs[f] as Button).modulate = Color(1.15, 1.05, 0.85) if f == _filter else Color(0.72, 0.66, 0.6)
-	for c in _body.get_children():
-		_body.remove_child(c)
-		c.queue_free()
-	var s := SCALE
+	_faces.clear()
 	var cols := _columns(size.x)
-	var cards := _visible_cards()
 	# Sorted by rarity, each rarity gets a divider and a grid of its own; otherwise it is one grid.
 	var dividers := _sort in ["rarity", "rarity_asc"] and _filter != "token"
-	var grid: GridContainer = null
-	var group := ""
-	for c in cards:
-		var key: String = "token" if c.set == "token" else str(c.get("rarity", "common"))
-		if grid == null or (dividers and key != group):
-			group = key
-			var section := VBoxContainer.new()
-			section.add_theme_constant_override("separation", 14)
+	var mode := "%s|%d" % ["rarity" if dividers else "flat", cols]
+	if mode != _mode:
+		for section in _body.get_children():
+			var g: GridContainer = section.get_meta("grid")
+			for slot in g.get_children():
+				g.remove_child(slot)
+			_body.remove_child(section)
+			section.queue_free()
+		_sections.clear()
+		_mode = mode
+		_cols = cols
+	var at := {} ## section key -> the next slot index in its grid
+	var shown := {}
+	for c in _visible_cards():
+		var key: String = "flat"
+		if dividers:
+			key = "token" if c.set == "token" else str(c.get("rarity", "common"))
+		var section: Control = _sections.get(key)
+		if section == null:
+			section = _make_section(key, dividers, cols)
+			_sections[key] = section
 			_body.add_child(section)
-			if dividers:
-				var cap: String = "Tokens" if key == "token" else key.capitalize()
-				var room := cols * (CardView.W * s + GAP) - GAP
-				section.add_child(_divider(cap, key, room))
-			grid = _make_grid(cols)
-			section.add_child(grid)
-		var slot := Control.new()
-		slot.custom_minimum_size = Vector2(CardView.W * s, CardView.H * s)
-		slot.mouse_filter = Control.MOUSE_FILTER_STOP
-		var v := CardView.new().setup(c.id, -1, true)
-		v.scale = Vector2(s, s)
-		v.position = slot.custom_minimum_size / 2
-		slot.add_child(v)
-		if c.set != "token":
-			var n := Collection.copies(c.id)
-			if n == 0:
-				v.modulate = Color(0.32, 0.3, 0.3)
-			else:
-				# The copies owned, engraved on a bronze disc pinned to the card's top-right corner.
-				var badge := Control.new()
-				badge.size = Vector2(54, 54)
-				badge.position = Vector2(slot.custom_minimum_size.x - 40, -14)
-				badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				if UiSkin.has("power_disc"):
-					badge.add_child(UiSkin.rect("power_disc", badge.size))
-				var count := UI.label("", 22, "title", UI.GOLD, 5, Color.BLACK)
-				count.text = "x%d" % n # a number: nothing to translate
-				if UiSkin.has("power_disc"):
-					UI.engraved(count)
-				count.size = badge.size
-				count.position.y = 1
-				count.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-				count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-				badge.add_child(count)
-				slot.add_child(badge)
-		slot.mouse_entered.connect(func():
+		if not at.has(key):
+			at[key] = 0
+			_body.move_child(section, at.size() - 1)
+			section.visible = true
+		var grid: GridContainer = section.get_meta("grid")
+		var slot: Control = _slots.get(c.id)
+		if slot == null:
+			slot = _make_slot(c)
+			_slots[c.id] = slot
+		if slot.get_parent() != grid:
+			if slot.get_parent() != null:
+				slot.get_parent().remove_child(slot)
+			grid.add_child(slot)
+		grid.move_child(slot, at[key])
+		at[key] += 1
+		slot.visible = true
+		shown[slot] = true
+		if not slot.has_meta("view"):
+			_faces.want(slot, shown.size() <= cols * FIRST_ROWS)
+	for slot in _slots.values():
+		if not shown.has(slot):
+			slot.visible = false
+	for key in _sections:
+		if not at.has(key):
+			_sections[key].visible = false
+
+
+## A section of the grid: one grid, under a rarity's divider when sorted by rarity.
+func _make_section(key: String, divider: bool, cols: int) -> Control:
+	var section := VBoxContainer.new()
+	section.add_theme_constant_override("separation", 14)
+	if divider:
+		var cap: String = "Tokens" if key == "token" else key.capitalize()
+		section.add_child(_divider(cap, key, cols * (CardView.W * SCALE + GAP) - GAP))
+	var grid := _make_grid(cols)
+	section.add_child(grid)
+	section.set_meta("grid", grid)
+	return section
+
+
+## A card's place in the grid: its size, the pointer and the click; the card face comes with _build_view.
+func _make_slot(c: Dictionary) -> Control:
+	var s := SCALE
+	var slot := Control.new()
+	slot.custom_minimum_size = Vector2(CardView.W * s, CardView.H * s)
+	slot.mouse_filter = Control.MOUSE_FILTER_STOP
+	slot.set_meta("card", c)
+	slot.mouse_entered.connect(func():
+		var v: CardView = slot.get_meta("view", null)
+		if v != null:
+			v.wake()
 			v.create_tween().tween_property(v, "scale", Vector2(s, s) * 1.06, 0.1)
-			Sfx.play("tick", -16.0))
-		slot.mouse_exited.connect(func(): v.create_tween().tween_property(v, "scale", Vector2(s, s), 0.1))
-		slot.gui_input.connect(func(e):
-			if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
-				_show_zoom(c.id))
-		grid.add_child(slot)
+		Sfx.play("tick", -16.0))
+	slot.mouse_exited.connect(func():
+		var v: CardView = slot.get_meta("view", null)
+		if v != null:
+			v.create_tween().tween_property(v, "scale", Vector2(s, s), 0.1))
+	slot.gui_input.connect(func(e):
+		if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+			_show_zoom(c.id))
+	return slot
+
+
+## The card face in its slot, dimmed when not owned, with the copies owned on a disc. `fade`: it eases in (built in
+## the background while the grid is already on screen).
+func _build_view(slot: Control, fade: bool) -> void:
+	if slot.has_meta("view"):
+		return
+	var c: Dictionary = slot.get_meta("card")
+	var s := SCALE
+	var v := CardView.new().setup(c.id, -1, true)
+	v.rest = true
+	v.scale = Vector2(s, s)
+	v.position = slot.custom_minimum_size / 2
+	slot.add_child(v)
+	slot.set_meta("view", v)
+	var tint := Color.WHITE
+	if c.set != "token":
+		var n := Collection.copies(c.id)
+		if n == 0:
+			tint = Color(0.32, 0.3, 0.3)
+		else:
+			# The copies owned, engraved on a bronze disc pinned to the card's top-right corner.
+			var badge := Control.new()
+			badge.size = Vector2(54, 54)
+			badge.position = Vector2(slot.custom_minimum_size.x - 40, -14)
+			badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			if UiSkin.has("power_disc"):
+				badge.add_child(UiSkin.rect("power_disc", badge.size))
+			var count := UI.label("", 22, "title", UI.GOLD, 5, Color.BLACK)
+			count.text = "x%d" % n # a number: nothing to translate
+			if UiSkin.has("power_disc"):
+				UI.engraved(count)
+			count.size = badge.size
+			count.position.y = 1
+			count.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			badge.add_child(count)
+			slot.add_child(badge)
+	v.modulate = tint
+	if fade:
+		slot.modulate.a = 0.0
+		slot.create_tween().tween_property(slot, "modulate:a", 1.0, 0.18)
 
 
 ## The card big over a veil, with its name, flavour and keyword tips (CardZoom); any press closes it.
