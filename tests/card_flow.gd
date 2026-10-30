@@ -11,9 +11,12 @@ extends SceneTree
 ## --games: games per pair of decks (even: both seats). --deck: only the pairs with one of those decks (and only
 ## those decks in the report). --shard=i/k: pair i, i + k, i + 2k... (run k processes, write each with --out, then
 ## --merge to sum them). "Turn" is the deck's own turn number.
+## It also reports the first player's win rate and each deck's win rate against every opponent deck.
 ## --cards adds, per deck, each card's games in hand, play rate, win rate when played and how often it was stuck in hand.
 ## --patch (tuning without touching data/): {"decks": {"<deck id>": {"<card id>": +/-copies}}, "cards": {"<card id>":
 ## {"cost": 3, ...}}} changes the loaded decks and cards for this run only.
+## --hand=3,2.75,2.5,... --ramp=1.5 --draw=3,3,2.5,1.5,0.75 override the AI's hand, Mana Crystal and draw values
+## (BattleAI.HAND_VALUE, RAMP_VALUE, DRAW_VALUE). Several --patch files may be given.
 
 const TURNS := 15
 const LATE_FROM := 6 ## "late game" for the 0-1 card share
@@ -34,7 +37,7 @@ func _initialize() -> void:
 		elif a.begins_with("--deck="):
 			only = a.substr(7).split(",")
 		elif a.begins_with("--patch="):
-			_patch(a.substr(8))
+			patch(a.substr(8))
 		elif a.begins_with("--decks="):
 			pair = a.substr(8).split(",")
 		elif a.begins_with("--shard="):
@@ -44,6 +47,12 @@ func _initialize() -> void:
 			out = a.substr(6)
 		elif a == "--cards":
 			show_cards = true
+		elif a.begins_with("--hand="):
+			BattleAI.hand_value.assign(Array(a.substr(7).split(",")).map(func(x): return float(x)))
+		elif a.begins_with("--ramp="):
+			BattleAI.ramp_value = float(a.substr(7))
+		elif a.begins_with("--draw="):
+			BattleAI.draw_value.assign(Array(a.substr(7).split(",")).map(func(x): return float(x)))
 		elif a.begins_with("--merge="):
 			merge = a.substr(8).split(",")
 	var acc := {}
@@ -85,7 +94,7 @@ func _initialize() -> void:
 
 
 ## Applies a tuning patch to the loaded data (CardDB hands out its own dictionaries, so the change holds for the run).
-func _patch(path: String) -> void:
+static func patch(path: String) -> void:
 	var f := FileAccess.open(path, FileAccess.READ)
 	if f == null:
 		push_error("card_flow: cannot read %s" % path)
@@ -114,7 +123,7 @@ func _blank() -> Dictionary:
 	return {"games": 0, "wins": 0, "draws": 0, "hand": z.duplicate(), "hand_end": z.duplicate(), "hand_n": z.duplicate(),
 		"low_games": 0, "low_turn": 0, "late_turns": 0, "late_low": 0, "mana_turns": 0, "unspent": 0, "floated": 0,
 		"late_power": 0, "fatigue_games": 0, "fatigue_dmg": 0, "turns": 0, "own_turns": 0, "drawn": 0, "made": 0,
-		"burned": 0, "vs": {}, "cards": {}}
+		"burned": 0, "first": [0, 0], "vs": {}, "vsd": {}, "cards": {}}
 
 
 ## Adds one shard's numbers (or one game's) into `acc`.
@@ -154,6 +163,7 @@ func _game(id_a: String, id_b: String, g: int, acc: Dictionary) -> void:
 	st.event.connect(_on_event.bind(rec, deck_n, fatigued, seen))
 	st.start(CardDB.deck_list(decks[0].id), decks[0].hero, CardDB.deck_list(decks[1].id), decks[1].hero,
 		300 + (g >> 1), false, -1)
+	var first := st.current ## the side that took the first turn (a coin flip of the deal's seed)
 	var ais := [BattleAI.new(0, BattleAI.Level.HARD), BattleAI.new(1, BattleAI.Level.HARD)]
 	var own := [0, 0]
 	var seen_turn := -1
@@ -205,6 +215,8 @@ func _game(id_a: String, id_b: String, g: int, acc: Dictionary) -> void:
 			r.low_games = 1
 			r.low_turn = low[s]
 		r.vs = {CardDB.deck_class(decks[1 - s]): [r.wins, 1]}
+		r.vsd = {ids[1 - s]: [r.wins, 1]}
+		r.first = [int(first == s), int(first == s and st.winner == s)]
 		# Per card: [games it reached the hand, games it was played, of those won, games it was still in hand at the end]
 		var held := {}
 		for c in st.sides[s].hand:
@@ -290,6 +302,21 @@ func _print_report(acc: Dictionary, only := PackedStringArray(), show_cards := f
 				var v: Array = row[2]
 				print("  %-26s %5d %5.0f%% %5.1f%% %5.0f%%" % [row[1], v[0], 100.0 * v[1] / maxf(1.0, v[0]), 100.0 * row[0],
 					100.0 * v[3] / maxf(1.0, v[0])])
+	var fg := 0
+	var fw := 0
+	for id in ids:
+		fg += int(acc[id].first[0])
+		fw += int(acc[id].first[1])
+	print("first player (3 cards; the second has 4 + Charon's Obol): won %.1f%% of %d games (decks shown)" % [
+		100.0 * fw / maxf(1.0, fg), fg])
+	print("win rate by opponent deck (row deck's win rate; the same deals as ai_duel.gd --decks):")
+	for id in ids:
+		var a: Dictionary = acc[id]
+		var line := "%-15s" % id
+		for d in CardDB.decks():
+			if a.vsd.has(d.id):
+				line += "  %s %.0f%% (%d)" % [d.id, 100.0 * a.vsd[d.id][0] / maxf(1.0, a.vsd[d.id][1]), a.vsd[d.id][1]]
+		print(line)
 	print("win rate by opponent class:")
 	for id in ids:
 		var a: Dictionary = acc[id]

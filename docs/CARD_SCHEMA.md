@@ -68,8 +68,10 @@ only if it is still alive and not silenced; they use automatic targets. Ward-blo
 
 **Ruse** (Ulysses): an effect with `"ruse": true` (on `play` only) resolves only when its owner already played another
 card this turn (the hero power does not count; the Obol does). Text: `Ruse: Draw a card.` (minions too: no `On Play:`).
-A Ruse effect may share the card's `choose_*` target (`Deal 1 damage. Ruse: Deal 2 more.`), otherwise it uses an
-automatic target, so the player is never asked to aim at something that will not happen.
+A Ruse effect may share the card's `choose_*` target, otherwise it uses an automatic target, so the player is never
+asked to aim at something that will not happen. A Ruse that makes a hit bigger replaces it, so it is one hit (a Ward
+stops all of it): the plain effect has `"unless_ruse": true` (it resolves only without the Ruse) and the Ruse effect
+the full amount. Text: `Deal 1 damage. Ruse: Deal 3 damage instead.`
 
 **Rules**
 - At most **one** `choose_*` target per card, and only on `play` effects.

@@ -4,6 +4,9 @@ extends SceneTree
 ##   Godot --headless --path . -s res://tests/ai_duel.gd -- --games=200 [--levels=2,0] [--random] [--first=0]
 ## --levels=A,B: the levels that meet (0 Easy, 1 Medium, 2 Hard); the report is A's win rate. Default Hard vs Easy.
 ## --medium=R,N: overrides Medium's rollouts and noise (tuning). --first=N: start at deal N (split a run in shards).
+## --hand=3,2.75,2.5,... --ramp=1.5 --draw=3,3,2.5,...: override the search's hand, Mana Crystal and draw values
+## (BattleAI.HAND_VALUE, RAMP_VALUE, DRAW_VALUE; tuning).
+## --patch=<file.json>: card and deck changes for this run only (the format of card_flow.gd's --patch).
 ## --matchup: both sides Hard; reports the starter decks against each other instead.
 ## --classes=A,B: the two classes that meet in the modes above (default: the first two classes, Pilgrim and Ferryman).
 ## Preconstructed deck balance (both sides Hard, every deal played from both seats):
@@ -13,6 +16,7 @@ extends SceneTree
 ##   --deck=<id>       one deck against every deck of the other classes (handy to split a matrix over processes)
 
 const RunTests := preload("res://tests/run_tests.gd")
+const CardFlow := preload("res://tests/card_flow.gd")
 const NAMES := ["easy", "medium", "hard"]
 
 
@@ -55,6 +59,14 @@ func _initialize() -> void:
 			only_cls = a.substr(8)
 		if a.begins_with("--deck="):
 			one_deck = a.substr(7)
+		if a.begins_with("--hand="):
+			BattleAI.hand_value.assign(Array(a.substr(7).split(",")).map(func(x): return float(x)))
+		if a.begins_with("--ramp="):
+			BattleAI.ramp_value = float(a.substr(7))
+		if a.begins_with("--draw="):
+			BattleAI.draw_value.assign(Array(a.substr(7).split(",")).map(func(x): return float(x)))
+		if a.begins_with("--patch="):
+			CardFlow.patch(a.substr(8))
 	if one_deck != "":
 		_deck_row(one_deck, games)
 		quit()

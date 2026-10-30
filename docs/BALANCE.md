@@ -1,5 +1,73 @@
 # Balance log
 
+## 2026-10-30: the AI values card draw, Spoils of Troy, one-hit Ruse, the Ferryman's Host
+
+**Method.** As on 2026-10-29: `tests/card_flow.gd` (Hard vs Hard, every cross-class pair of preconstructed decks, every
+deal from both seats, 150 games per pair, 1350 per deck) and `tests/ai_duel.gd --levels` (the starters, 200 games per
+pair of classes). card_flow now also prints the first player's win rate and each deck's win rate against every
+opponent deck (the same deals as `ai_duel.gd --decks`, so it doubles as the matrix); both tools take `--hand=`,
+`--ramp=`, `--draw=` (the AI's values) and `--patch=` (ai_duel reads card_flow's patch format), so the "before" runs
+used the new code with the old values and the old cards. A patch that adds a card back changes the deck's list order,
+and with it the shuffles: such runs are equivalent samples, not the same deals.
+
+**AI** (`scripts/battle/ai.gd`, `evaluate`). Three terms:
+- a bonus for each card a move draws, by the hand size when the decision began (3 / 3 / 2.5 / 1.5 / 0.75 points with
+  0-4 cards in hand, none from 5 on), so a Draw spell is cast when the hand runs low and not while it is full;
+- each Mana Crystal is worth 1.5 (Stars Again's crystal counted for nothing);
+- the last two cards in hand are worth a little more (3 and 2.75 instead of 2.5).
+A steeper hand curve (3.5 / 3 / 2.75, or 5.5 / 4.5 / 3.5) cut the 0-1 card turns more, but by sitting on cards: turns
+ending with 2+ mana unspent and a playable card rose to 9-26% for the aggro decks (from 5-9%), and Virgil's Wrathful
+lesson was no longer won on time (the player AI kept cheap minions and spent Centaur Arrows on the hero). The mild
+curve keeps those within 1-3 points of before. AI alone (same cards, 40 games per pair): Stars Again cast in 56% of the
+games it is held (was 40%), Past the Pillars 85% (73%); the 0-1 card share barely moves (the Malebranche Raid 40 ->
+37%, the others within 1 point): the decks, not the AI, decide how often a hand runs dry. Hard vs Easy 80.8 -> 80.6%,
+Hard vs Medium 59.8 -> 61.2% (1200 games each; with every change below: 79.6% and 61.9%).
+
+**Cards.**
+- *Spoils of Troy* costs 3 (was 2): played in 71% of the games it is drawn (88%).
+- *Ruse as one hit*: a Ruse that makes a damage effect bigger now replaces it (`"unless_ruse"` on the plain effect, see
+  CARD_SCHEMA.md), so a Ward blocks all of it: Tongue of Flame "Deal 1 damage. Ruse: Deal 3 damage instead.",
+  Beacon Keeper "On Play: Deal 1 damage. Ruse: Deal 2 damage instead.", Wandering Flames "Deal 1 damage to all enemy
+  minions. Ruse: Deal 2 damage instead." (same totals; Italian texts updated).
+
+**Decks** (existing cards only).
+- *The Ferryman's Host* (starter): -1 Ephialtes, -1 Plutus, -1 Medusa's Gaze, -1 Rain of Burning Sand; +1 Socrates,
+  +1 Thaïs, +1 Lost Path, +1 Strength of the Earth. Single swaps of a strong card for a draw minion made the deck
+  stronger (Ephialtes -> Socrates 56%, two such swaps 59-61% at 60 games per pair): it took two of its board clears
+  out to bring it down. It still beats the Wanderer's Crew 64% and loses to the Pilgrim decks (43-45%).
+- *The Mad Flight*: -1 Curio, -1 Diomedes; +1 Circe's Draught, +1 Ulysses, the Schemer (answers to the Pilgrim's big
+  Guards).
+
+**Numbers** (before -> after; late01 = own turns from turn 6 on that start with 0-1 cards; hand = at the start of
+turn 10; win = against the decks of the other three classes, 1350 games each, about +/-1.4%):
+
+| deck | win | late01 | hand at turn 10 | unspent mana |
+|---|---|---|---|---|
+| pilgrim (starter) | 49.7 -> 50.5 | 10% -> 10% | 3.2 -> 3.3 | 0.53 -> 0.52 |
+| ferry (starter) | 54.1 -> 51.3 | 24% -> 17% | 2.2 -> 2.8 | 1.43 -> 1.09 |
+| ulysses (starter) | 49.0 -> 47.9 | 21% -> 22% | 2.7 -> 2.9 | 1.33 -> 1.34 |
+| wrath (starter) | 47.3 -> 46.0 | 16% -> 17% | 2.8 -> 2.8 | 1.14 -> 1.20 |
+| pilgrim_vigil | 47.2 -> 45.1 | 21% -> 21% | 3.9 -> 4.0 | 1.33 -> 1.40 |
+| pilgrim_poets | 49.8 -> 51.9 | 7% -> 7% | 3.7 -> 3.9 | 0.44 -> 0.42 |
+| ferry_serpents | 48.7 -> 49.3 | 28% -> 28% | 1.4 -> 1.4 | 1.29 -> 1.30 |
+| ferry_raid | 49.6 -> 49.6 | 39% -> 36% | 1.1 -> 1.2 | 1.58 -> 1.59 |
+| ulysses_horse | 50.7 -> 49.4 | 18% -> 18% | 2.6 -> 2.6 | 1.11 -> 1.12 |
+| ulysses_flight | 47.4 -> 52.0 | 16% -> 16% | 3.4 -> 3.7 | 1.11 -> 1.15 |
+| wrath_brawl | 52.9 -> 54.4 | 15% -> 14% | 2.7 -> 2.8 | 1.54 -> 1.52 |
+| wrath_pride (aggro) | 53.8 -> 52.5 | 16% -> 15% | 1.5 -> 1.5 | 1.26 -> 1.30 |
+
+Stars Again is cast in 52% of the games it is held (39%), Past the Pillars 84% (77%).
+
+**First player.** The first player (3 cards; the second has 4 and Charon's Obol) wins 53.7% of the 8100 Hard vs Hard
+games before and 54.9% after; between the four starters 51.8% and 53.9% (900 games each, +/-1.7%). Not changed.
+
+**Matrix.** Pairs worse than 35/65 before: the Mad Flight vs the Pilgrim's Way 27% (now 38%), Cato's Vigil vs the Mud
+Brawl 31% (29%) and vs Spite and Pride 31% (33%), the Pilgrim's Way vs Spite and Pride 33% (34%), the Malebranche Raid
+vs Cato's Vigil 34% (34%), the Wrath of the Styx vs the Noble School 35% (35%). The Vigil's are the old polarised pairs:
+one Three Beasts Overcome for a Cut the Thread lifts it to 39% and 49% against the Wrathful but to 75% against the
+Ferryman's Host and 56% overall, so the Vigil is left as it is. The Wanderer's Crew against the Ferryman's Host is
+36% (41% before).
+
 ## 2026-10-29: card flow (running out of cards late)
 
 **Question.** Late in a match the hand often feels empty: the player's play, or the decks?

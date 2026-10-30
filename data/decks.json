@@ -57,9 +57,8 @@
     "turned_back": 1,
     "harpies_flock": 1,
     "furies": 2,
-    "plutus": 2,
+    "plutus": 1,
     "cerberus": 2,
-    "medusa_gaze": 1,
     "souls_of_the_styx": 1,
     "minotaur_rampage": 1,
     "minos": 1,
@@ -68,10 +67,12 @@
     "ih_draghignazzo": 1,
     "cd_burning_sand": 1,
     "ih_cacus_stolen_herd": 1,
-    "ih_rain_of_sand": 1,
     "ih_boiling_tide": 1,
-    "ih_ephialtes": 1,
-    "uh_shore_soul": 2
+    "uh_shore_soul": 2,
+    "uh_socrates": 1,
+    "mc_thais": 1,
+    "uh_lost_path": 1,
+    "ih_strength_of_earth": 1
    }
   },
   {
@@ -307,14 +308,14 @@
     "ul_night_raid": 1,
     "ul_sweet_siren": 2,
     "ul_old_companions": 2,
-    "ul_curio": 1,
     "ul_simon_magus": 1,
     "ul_burning_counsellor": 2,
     "ul_eurypylus": 1,
-    "ul_diomedes": 1,
     "ul_gilded_hypocrite": 2,
     "uh_thorn_jab": 1,
-    "ul_spoils_of_troy": 1
+    "ul_spoils_of_troy": 1,
+    "ul_circes_draught": 1,
+    "mc_ulysses": 1
    }
   },
   {

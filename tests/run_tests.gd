@@ -1201,12 +1201,33 @@ func _test_ulysses() -> void:
 	ok(st.sides[0].hand.size() == 2 and st.sides[0].hand.all(func(c): return c.id == "lost_pilgrim"), "Spoils of Troy copies 2")
 	ok(st.sides[1].deck.size() == foe_deck, "a copy leaves the enemy deck as it was")
 
-	# Ruse sharing the card's chosen target: Tongue of Flame deals 1, then 2 more.
+	# Ruse sharing the card's chosen target: Tongue of Flame deals 1, or 3 instead with its Ruse.
 	st = _blank()
+	evs = []
+	st.event.connect(func(ev): evs.append(ev))
 	st.play_card(0, _give(st, 0, "ul_tongue_of_flame"), st.sides[1].hero.uid)
 	ok(st.sides[1].hero.health == 29, "Tongue of Flame alone deals 1")
+	evs.clear()
 	st.play_card(0, _give(st, 0, "ul_tongue_of_flame"), st.sides[1].hero.uid)
 	ok(st.sides[1].hero.health == 26, "Tongue of Flame with Ruse deals 3 (%d)" % st.sides[1].hero.health)
+	ok(evs.filter(func(ev): return ev.t == "damage").size() == 1, "the Ruse's 3 damage is one hit")
+	# One hit: a Ward stops all of it (it used to stop only the first 1 damage).
+	var warded := _put(st, 1, "geryon")
+	warded.keywords["ward"] = true
+	var hp := warded.health
+	ok(st.play_card(0, _give(st, 0, "ul_tongue_of_flame"), warded.uid), "Tongue of Flame on a Ward")
+	ok(warded.health == hp and not warded.has("ward"), "a Ward blocks the whole Ruse hit")
+	# Every "Deal N. Ruse: Deal M damage instead." card: the plain effect alone, or the Ruse alone.
+	for id in ["ul_tongue_of_flame", "ul_beacon_keeper", "ul_wandering_flames"]:
+		var fx: Array = CardDB.card(id).effects
+		ok(fx.size() == 2 and fx[0].get("unless_ruse", false) and fx[1].get("ruse", false)
+			and int(fx[1].amount) > int(fx[0].amount) and str(CardDB.card(id).text).contains("instead"),
+			"%s: its Ruse replaces the plain hit" % id)
+	st = _blank()
+	var a := _put(st, 1, "geryon")
+	st.play_card(0, _give(st, 0, "obol_coin"))
+	st.play_card(0, _give(st, 0, "ul_wandering_flames"))
+	ok(a.health == a.max_health - 2, "Wandering Flames with Ruse deals 2 once (%d)" % a.health)
 
 	# Copy from the enemy hand: the enemy keeps the card.
 	st = _blank()
