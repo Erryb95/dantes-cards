@@ -277,7 +277,7 @@ func record_result(winner: int) -> void:
 ## 0 the player, 1 the AI, else a draw; `info` adds what the battle knows (turns, secs, conceded, hand, cards_left).
 func report_battle(winner: int, info: Dictionary = {}) -> void:
 	var sel := str(Settings.deck_choice.get("selected", ""))
-	var data := {"kind": "lesson" if lesson != "" else "ai", "v": str(ProjectSettings.get_setting("application/config/version")),
+	var data := {"kind": "lesson" if lesson != "" else "ai", "v": UpdateBoot.game_version(),
 		"os": OS.get_name(), "cls": player_deck, "hero": player_hero,
 		"deck": sel.substr(4) if sel.begins_with("pre:") else ("custom" if sel.begins_with("own:") else ""),
 		"enemy_cls": enemy_deck, "enemy_deck": enemy_deck_id, "difficulty": Settings.difficulty, "lesson": lesson,
@@ -311,7 +311,7 @@ func intro_due() -> bool:
 
 
 ## Flags of the tooling runs (BUILD.md, tests/*.gd) that drive the real game; any of them makes a `debug_run`.
-const DEBUG_FLAGS := ["--autoplay", "--snap=", "--shots=", "--out=", "--intro-shots="]
+const DEBUG_FLAGS := ["--autoplay", "--snap=", "--shots=", "--out=", "--intro-shots=", "--update-source=", "--update-dir="]
 
 
 ## True for tests and tooling runs, where first-time things such as the intro and the coach tips must neither show

@@ -4,6 +4,7 @@ extends SceneTree
 ## `-- --only=lessons` runs just the lesson checks (quick, while writing lessons).
 
 const SaveFileScript := preload("res://scripts/core/save_file.gd")
+const Boot := preload("res://scripts/core/update_boot.gd")
 
 var failures := 0
 var checks := 0
@@ -25,6 +26,11 @@ func _initialize() -> void:
 		print("TESTS: %d checks, %d failures" % [checks, failures])
 		quit(1 if failures > 0 else 0)
 		return
+	if "--only=updates" in OS.get_cmdline_user_args():
+		_test_updates()
+		print("TESTS: %d checks, %d failures" % [checks, failures])
+		quit(1 if failures > 0 else 0)
+		return
 	if "--only=online" in OS.get_cmdline_user_args():
 		_test_online_mirror(12)
 		print("TESTS: %d checks, %d failures" % [checks, failures])
@@ -32,6 +38,7 @@ func _initialize() -> void:
 		return
 	_test_data()
 	_test_export_presets()
+	_test_updates()
 	_test_art_import()
 	_test_class_info()
 	_test_rules()
@@ -312,12 +319,117 @@ func _test_export_presets() -> void:
 			var opts := sec + ".options"
 			ok(str(cf.get_value(sec, "include_filter", "")).contains("config/*.cfg"),
 				"export preset %s ships config/*.cfg" % cf.get_value(sec, "name"))
+			ok(str(cf.get_value(sec, "include_filter", "")).contains("config/update_public_key.pem"),
+				"export preset %s ships the update key" % cf.get_value(sec, "name"))
 			if str(cf.get_value(sec, "platform")) == "Android":
 				android += 1
 				ok(cf.get_value(opts, "permissions/internet", false) == true, "the Android export asks for INTERNET")
 				ok(cf.get_value(opts, "permissions/access_network_state", false) == true,
 					"the Android export asks for ACCESS_NETWORK_STATE")
 	ok(android > 0, "there is an Android export preset")
+
+
+## In-game updates (UpdateBoot, Updater) with a throwaway key made here: a signed manifest is read, a tampered one,
+## one signed by another key and malformed ones are not; a patch is picked only for its own base, platform and
+## engine; an installed pack is mounted only when its size and SHA-256 are the signed ones and its base is this build.
+## The shipped public key is a public key, and UpdateBoot is the first autoload (it mounts before any other script).
+func _test_updates() -> void:
+	var Updater = load("res://scripts/core/updater.gd") # at run time: it names the UpdateBoot autoload
+	var key := Crypto.new().generate_rsa(2048)
+	var other := Crypto.new().generate_rsa(2048)
+	var pub := CryptoKey.new()
+	pub.load_from_string(key.save_to_string(true), true)
+	var real := Boot.public_key()
+	ok(real != null and real.is_public_only(), "the shipped update key is a public key")
+	ok(not FileAccess.get_file_as_string(Boot.PUBLIC_KEY).contains("PRIVATE"), "no private key in the repository")
+	var cfg := ConfigFile.new()
+	cfg.load("res://project.godot")
+	ok(cfg.get_section_keys("autoload")[0] == "UpdateBoot", "UpdateBoot is the first autoload")
+	var sha := "ab".repeat(32)
+	var entry := {"base": "0.9.4", "platform": "windows", "file": "patch-0.9.4-to-0.9.5-windows.pck",
+		"url": "https://github.com/Erryb95/dantes-cards/releases/download/v0.9.5/patch-0.9.4-to-0.9.5-windows.pck",
+		"size": 10, "sha256": sha}
+	var m := {"version": "0.9.5", "version_code": 16, "engine": "4.7.2", "full_required": false, "reason": "",
+		"page": "https://github.com/Erryb95/dantes-cards/releases/tag/v0.9.5", "patches": [entry]}
+	var text := Boot.sign_manifest(m, key)
+	var got := Boot.open_signed(text, pub)
+	ok(str(got.get("version")) == "0.9.5" and got.get("patches", []).size() == 1, "updates: a signed manifest is read")
+	ok(Boot.open_signed(text, other).is_empty(), "updates: another key's signature is refused")
+	var j: Dictionary = JSON.parse_string(text)
+	var tampered := j.duplicate()
+	tampered.manifest = str(j.manifest).replace("0.9.5", "0.9.9")
+	ok(Boot.open_signed(JSON.stringify(tampered), pub).is_empty(), "updates: a tampered manifest is refused")
+	var swapped := j.duplicate()
+	swapped.manifest = str(j.manifest).replace(sha, "cd".repeat(32))
+	ok(Boot.open_signed(JSON.stringify(swapped), pub).is_empty(), "updates: a swapped pack hash is refused")
+	var nosig := j.duplicate()
+	nosig.erase("signature")
+	ok(Boot.open_signed(JSON.stringify(nosig), pub).is_empty(), "updates: an unsigned manifest is refused")
+	ok(Boot.open_signed("not json", pub).is_empty() and Boot.open_signed(text, null).is_empty(),
+		"updates: garbage, or no key, reads as nothing")
+	for bad in [{"url": "http://github.com/x.pck"}, {"url": "https://evil.example/x.pck"},
+			{"url": "https://github.com@evil.example/x.pck"}, {"file": "../settings.cfg"}, {"file": "a/b.pck"},
+			{"sha256": "xyz"}, {"size": 0}, {"base": "latest"}]:
+		var e2 := entry.duplicate()
+		e2.merge(bad, true)
+		var m2 := m.duplicate(true)
+		m2.patches = [e2]
+		ok(Boot.open_signed(Boot.sign_manifest(m2, key), pub).is_empty(), "updates: a signed manifest with %s is refused" % bad)
+	ok(Boot.url_allowed("https://release-assets.githubusercontent.com/github-production-release-asset/1/2?x=1")
+		and not Boot.url_allowed("https://githubusercontent.com.evil.example/"), "updates: the allowed hosts")
+	# Which patch applies.
+	ok(str(Boot.select_patch(got, "0.9.4", "windows", "4.7.2").get("file")) == entry.file, "updates: the patch for this base is picked")
+	ok(Boot.select_patch(got, "0.9.3", "windows", "4.7.2").is_empty(), "updates: no patch for another base")
+	ok(Boot.select_patch(got, "0.9.4", "android", "4.7.2").is_empty(), "updates: no patch for another platform")
+	ok(Boot.select_patch(got, "0.9.4", "windows", "4.8.0").is_empty(), "updates: no patch for another engine")
+	var full := got.duplicate(true)
+	full.full_required = true
+	ok(Boot.select_patch(full, "0.9.4", "windows", "4.7.2").is_empty(), "updates: a full release has no patch")
+	ok(Boot.newer("0.10.0", "0.9.5") and not Boot.newer("0.9.5", "0.9.5") and not Boot.newer("0.9.4", "0.9.10")
+		and Boot.newer("1.0", "0.99.99"), "updates: version order")
+	ok(Updater.decide(got, "0.9.4", "0.9.4", "windows", "4.7.2").state == "patch", "updates: a newer version with a patch")
+	ok(Updater.decide(got, "0.9.5", "0.9.4", "windows", "4.7.2").state == "latest", "updates: the same version is the latest")
+	ok(Updater.decide(got, "0.9.4", "0.9.3", "windows", "4.7.2").state == "full", "updates: an older base downloads the full game")
+	ok(Updater.decide(full, "0.9.4", "0.9.4", "windows", "4.7.2").state == "full", "updates: a full release is a full download")
+	# An installed update in a scratch folder.
+	var dir := "user://_test_updates_%d/" % OS.get_process_id()
+	DirAccess.make_dir_recursive_absolute(dir + "tmp")
+	var bytes := PackedByteArray()
+	for i in 3000:
+		bytes.append(i * 7 % 256)
+	var pf := FileAccess.open(dir + "patch-0.9.4-to-0.9.5-windows.pck", FileAccess.WRITE)
+	pf.store_buffer(bytes)
+	pf.close()
+	var h := HashingContext.new()
+	h.start(HashingContext.HASH_SHA256)
+	h.update(bytes)
+	var inst := m.duplicate(true)
+	inst.patches[0].size = bytes.size()
+	inst.patches[0].sha256 = h.finish().hex_encode()
+	var mf := FileAccess.open(dir + Boot.MANIFEST, FileAccess.WRITE)
+	mf.store_string(Boot.sign_manifest(inst, key))
+	mf.close()
+	for f in ["old.pck", "tmp/half.part"]:
+		FileAccess.open(dir + f, FileAccess.WRITE).store_string("x")
+	var pick := Boot.pick_installed(dir, pub, "0.9.4", "windows", "4.7.2")
+	ok(str(pick.get("version")) == "0.9.5", "updates: the installed patch is picked")
+	ok(Boot.pick_installed(dir, pub, "0.9.5", "windows", "4.7.2").is_empty(),
+		"updates: a patch for an older build is ignored (a newer full build was installed)")
+	ok(Boot.pick_installed(dir, other, "0.9.4", "windows", "4.7.2").is_empty(), "updates: installed, but signed by another key")
+	Boot.clean(dir, [Boot.MANIFEST, "patch-0.9.4-to-0.9.5-windows.pck"])
+	ok(not FileAccess.file_exists(dir + "old.pck") and not DirAccess.dir_exists_absolute(dir + "tmp")
+		and FileAccess.file_exists(dir + Boot.MANIFEST), "updates: older packs and half downloads are cleaned")
+	bytes[100] ^= 1
+	pf = FileAccess.open(dir + "patch-0.9.4-to-0.9.5-windows.pck", FileAccess.WRITE)
+	pf.store_buffer(bytes)
+	pf.close()
+	ok(Boot.pick_installed(dir, pub, "0.9.4", "windows", "4.7.2").is_empty(), "updates: a damaged pack (wrong SHA-256) is not mounted")
+	Boot.clean(dir, [])
+	DirAccess.remove_absolute(dir)
+	ok(not DirAccess.dir_exists_absolute(dir), "updates: the scratch folder is gone")
+	var boot := root.get_node_or_null("UpdateBoot")
+	ok(boot != null and boot.loaded_version == "" and boot.game_version() == Boot.base_version(),
+		"updates: nothing is mounted outside an exported game")
 
 
 ## Card paintings are imported lossy (WebP): lossless, the 308 of them took about 146 MB of the APK, lossy about 20.

@@ -101,16 +101,25 @@ func _ready() -> void:
 	for sec in SECTIONS:
 		list.add_child(_section(sec[0], sec[1], w))
 	var ver := UI.label(Loc.t("Dante's Inferno: The Card Game  ·  version %s") %
-		ProjectSettings.get_setting("application/config/version"), 22, "italic", Color(0.86, 0.8, 0.7), 3, Color.BLACK)
+		Updater.current_version(), 22, "italic", Color(0.86, 0.8, 0.7), 3, Color.BLACK)
 	ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ver.custom_minimum_size = Vector2(w, 0)
 	var vp := UI.plaque(24, 8)
 	vp.add_child(ver)
 	list.add_child(vp)
+	# Done, and Check for updates beside it (the version is on the plaque above; the title screen also checks once
+	# per session by itself).
 	var done := UI.button("Done", 300)
 	done.pressed.connect(_close)
-	var dc := CenterContainer.new()
+	var upd := UI.button("Updates", 380)
+	upd.name = "CheckUpdates"
+	upd.pressed.connect(func(): _check_updates(upd))
+	UI.fit_text(upd)
+	var dc := HBoxContainer.new()
+	dc.alignment = BoxContainer.ALIGNMENT_CENTER
+	dc.add_theme_constant_override("separation", 24)
 	dc.add_child(done)
+	dc.add_child(upd)
 	v.add_child(dc)
 	modulate.a = 0.0
 	create_tween().tween_property(self, "modulate:a", 1.0, 0.15)
@@ -118,6 +127,44 @@ func _ready() -> void:
 
 func _close() -> void:
 	queue_free()
+
+
+## Check for updates: the answer opens over the panel (UpdatePrompt), with Remove updates when an update is installed.
+func _check_updates(b: Button) -> void:
+	if not Updater.available():
+		UI.dialog(self, "Updates", "Updates work in the installed game only.", [["Close", null]])
+		return
+	var u := get_node_or_null("Updater") as Updater
+	if u == null:
+		u = Updater.new()
+		u.name = "Updater"
+		add_child(u)
+	b.disabled = true
+	b.text = Loc.t("Checking...")
+	var res := await u.check()
+	if not is_instance_valid(b) or not is_inside_tree():
+		return
+	b.disabled = false
+	b.text = Loc.t("Updates")
+	UI.fit_text(b)
+	if res.state in ["patch", "full"]:
+		UpdatePrompt.offer(self, res, u)
+		return
+	var latest: bool = res.state == "latest"
+	var choices := [["Close", null]]
+	if Updater.has_update():
+		choices.push_front(["Remove updates", _remove_updates])
+	UI.dialog(self, "Up to date" if latest else "No answer", Loc.t("You have the latest version, %s.") % Updater.current_version()
+		if latest else "The update server did not answer. Try again later.", choices)
+
+
+func _remove_updates() -> void:
+	Updater.remove_updates()
+	var text := Loc.t("The game goes back to version %s when it starts again.") % UpdateBoot.base_version()
+	if OS.has_feature("pc"):
+		UI.dialog(self, "Updates removed", text, [["Restart now", func(): Updater.restart(get_tree())], ["Close", null]])
+	else:
+		UI.dialog(self, "Updates removed", text, [["Close", null]])
 
 
 ## One section: its heading in dark crimson over the text in ink, on the parchment tip sheet.
