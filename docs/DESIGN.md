@@ -391,10 +391,10 @@ docs/BUILD.md, "Updates".
   `class_name` scripts, scenes, JSON and textures are all the ones that run (checked end to end on Windows). It mounts
   only a pack its signed `update.json` names for this build's version, platform and engine, with the signed size and
   SHA-256; anything else is deleted (a newer or older full build installed over it, a damaged file). A pack that kept
-  the game from running 20 s three starts in a row is removed; Options has Remove updates.
+  the game from running 20 s three starts in a row is removed; the credits panel has Remove updates (in the answer of its Updates button).
 - **Checking** (`scripts/core/updater.gd`, `scripts/ui/update_prompt.gd`): the title screen asks GitHub for the latest
   release's `update.json` once per session (12 s timeout, silent offline or up to date; never in tests or tooling);
-  Options shows the running version and has Check for updates. A patch for this build: "Update available (v…, n MB)",
+  The credits panel shows the running version and has an Updates button (Check for updates). A patch for this build: "Update available (v…, n MB)",
   Update / Later, a progress rod, then Restart now (desktop: the game restarts itself) or Close the game (phones:
   reopening applies it). No patch for this build: its release page opens for the full download.
 - **Security**: the repository is public and a patch carries code, so `update.json` is signed (RSA-3072, SHA-256) with
