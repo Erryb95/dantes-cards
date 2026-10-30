@@ -2797,6 +2797,11 @@ func _test_online_mirror(games: int) -> void:
 	ds.push(DuelSync.S_TURN, {"seq": 2})
 	ok(ds.pop().is_empty(), "online: an old seq is dropped")
 	ok(DuelSync.parse_deck("{\"cls\":\"nobody\",\"cards\":[]}").is_empty(), "online: an unknown class is refused")
+	var vd: String = DuelSync.deck_metadata("pilgrim", [], "Ann").deck
+	ok(not DuelSync.version_clash({"decks": [vd, vd]}), "online: two decks from this version may play")
+	ok(DuelSync.version_clash({"decks": [vd, "{\"cls\":\"pilgrim\",\"cards\":[]}"]}),
+		"online: a deck from before the version check is refused")
+	ok(DuelSync.version_clash({"decks": [vd, vd]}, "0.0.1"), "online: a deck from another version is refused")
 	_test_progress_merge()
 	# Chat text is plain: no control characters, no BBCode tags, at most 120 characters.
 	ok(ChatText.clean("hi\u0007 [b]there[/b]\n[color=red]x[/color]") == "hi there x", "chat: control chars and BBCode go")

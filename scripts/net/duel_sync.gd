@@ -101,9 +101,28 @@ static func parse_deck(raw: Variant) -> Dictionary:
 	return {"cls": cls, "cards": cards}
 
 
-## The join metadata for a deck: Nakama wants a map of strings.
+## The join metadata for a deck: Nakama wants a map of strings. `v`: the game version, so two clients whose rules
+## may differ never play one duel (see `version_clash`).
 static func deck_metadata(cls: String, cards: Array, display_name: String) -> Dictionary:
-	return {"deck": JSON.stringify({"cls": cls, "cards": cards}), "name": display_name}
+	return {"deck": JSON.stringify({"cls": cls, "cards": cards, "v": game_version()}), "name": display_name}
+
+
+## The running game's version (with its update, as Updater.current_version), found without naming the update
+## autoload, so the rules tests can load this script on their own.
+static func game_version() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var boot: Node = tree.root.get_node_or_null("UpdateBoot") if tree != null else null
+	return str(boot.call("game_version")) if boot != null else str(ProjectSettings.get_setting("application/config/version", "0"))
+
+
+## True when a START's decks come from another version of the game than this one (a deck from before 0.9.4 has
+## no `v`): each client runs the rules itself, so the duel would fall out of step at the first changed card.
+static func version_clash(start: Dictionary, mine: String = game_version()) -> bool:
+	for raw in start.get("decks", []):
+		var d: Variant = JSON.parse_string(raw) if raw is String else raw
+		if not (d is Dictionary) or str(d.get("v", "")) != mine:
+			return true
+	return false
 
 
 ## Builds the state (flipped when I am players[1]). `on_event` is connected before the first event.

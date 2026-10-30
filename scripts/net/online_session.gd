@@ -449,6 +449,12 @@ func _on_match_data(op: int, data: Dictionary) -> void:
 		return
 	match op:
 		DuelSync.S_START:
+			if DuelSync.version_clash(data): # the other player runs another version: its rules may differ
+				client.match_leave(match_id)
+				match_id = ""
+				state = State.IDLE
+				failed.emit(Loc.t("Your opponent has another version of the game. You both need the latest update."))
+				return
 			start = data
 			inbox.clear()
 			state = State.IN_MATCH
