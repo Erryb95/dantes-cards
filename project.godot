@@ -14,6 +14,7 @@ config/icon="res://assets/icon.png"
 
 [autoload]
 
+UpdateBoot="*res://scripts/core/update_boot.gd"
 Settings="*res://scripts/core/settings.gd"
 Sfx="*res://scripts/core/sfx.gd"
 Game="*res://scripts/core/game.gd"

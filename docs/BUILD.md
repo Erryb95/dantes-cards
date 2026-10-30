@@ -34,6 +34,52 @@ Headless runs, `--autoplay`, `--snap=`, `--shots=`, `--out=`, `--intro-shots=` a
 `res://tests/` are debug runs (`Game.debug_run()`): no intro, no coach tips, and nothing is written to the player's
 settings, progress or collection.
 
+## Updates (patch packs inside the game)
+
+How it works: docs/DESIGN.md, "In-game updates". Every release on GitHub must carry `update.json` (the game reads the
+latest release's), the full downloads, and one patch per kept base and platform
+(`patch-<base>-to-<version>-<windows|android>.pck`).
+
+Once (done 2026-10-30): the signing key pair. The private key never goes in the repository, a log or a chat:
+```sh
+timeout 300 $G --headless --path . -s res://tools/update/update_tool.gd -- keygen --private=C:/Servers/dantes_update_key.pem
+```
+(it refuses to overwrite; a new pair needs a full build, since the shipped public key checks every update).
+
+Each release, from the main checkout (it has config/online.local.cfg; a patch exported without it would delete it
+from the players' game, and `check` refuses such a patch):
+1. Bump `config/version` in project.godot and `version/name` + `version/code` in the Android preset; commit.
+2. Run the tests (`run_tests`, `ui_smoke`, `menu_smoke`).
+3. `powershell -ExecutionPolicy Bypass -File tools/update/make_update.ps1` (add `-FullRequired -Reason "..."` when
+   the release must be a full download, `-Bases 0.9.4,0.9.5` to choose the bases, `-SkipExport` to reuse the builds
+   already in build/). It exports the exe and the APK, keeps them as this version's base in
+   `build/update_bases/<version>/` (back that folder up), exports a patch over every earlier base whose engine and
+   guarded files (project.godot, export_presets.cfg, update_boot.gd, the public key: version lines aside) did not
+   change, checks each patch, writes `build/release/<version>/update.json` signed with the private key and verifies
+   it with the committed public key. Every Godot run in it has a timeout.
+4. Publish with the `gh release create` line it prints (all files of `build/release/<version>/`).
+
+The first release with the updater (0.9.4) has no earlier base: it is a full download, and its own base makes 0.9.5
+onwards a patch. A base lost from `build/update_bases/` can be rebuilt from its release: put its exe (from the zip)
+and APK in `build/update_bases/<v>/`, run
+`timeout 900 $G --headless --path . -s res://tools/update/update_tool.gd -- apk-base --apk=build/update_bases/<v>/DantesInfernoCards.apk --out=build/update_bases/<v>/android.pck`
+and write its `base.json` (`{"version", "engine", "commit", "code"}`). The exe works as a base as it is (its pack is
+embedded); a sparse APK pack does not, hence `apk-base`.
+
+Tool commands (all `$G --headless --path . -s res://tools/update/update_tool.gd -- <command>`, with a timeout):
+`pck-list --pck=<pck or exe> [--all]` (files, and the ones a patch removes), `check --pck=<patch>`,
+`manifest --dir=<release folder> --version=<v> --code=<n> --key=<private key> [--full-required --reason=<text>]`,
+`verify --in=<update.json>`, `apk-base --apk=<apk> --out=<pck>`.
+
+Trial without GitHub (debug builds only; release builds ignore these flags, and the manifest must still be signed):
+export a base with `--export-debug "Windows Desktop" <dir>/DantesInfernoCards.exe`, change something, export
+`--export-patch "Windows Desktop" <srv>/patch-<base>-to-<v>-windows.pck --patches <dir>/DantesInfernoCards.exe`, sign
+it with `manifest --dir=<srv> --version=<v> ...`, then run
+`<dir>/DantesInfernoCards.exe -- --update-source=<srv> --update-dir=<folder> --update-yes --update-shots=<shots>`:
+it offers, downloads, installs and restarts by itself (`--update-shots` saves each dialog). `--update-dir` alone runs
+the installed update from that folder. Tests: `run_tests.gd -- --only=updates` (signatures, tampering, hashes, stale
+bases, cleaning; a throwaway key).
+
 ## Online play
 The server settings live in **`config/online.local.cfg`** (gitignored, never committed; the exports pack it through
 `config/*.cfg` in every preset's `include_filter`). `user://online.cfg` overrides it per install, and

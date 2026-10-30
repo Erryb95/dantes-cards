@@ -65,6 +65,7 @@ func _ready() -> void:
 	left.add_child(_toggle("Show FPS", Settings.show_fps, func(on):
 		Settings.show_fps = on
 		Settings.apply()))
+	left.add_child(_update_row())
 	right.add_child(_cycle("Opponent", Settings.DIFFICULTY_NAMES, Settings.difficulty, func(i): Settings.difficulty = i))
 	right.add_child(_toggle("Fast animations", Settings.fast_animations, func(on): Settings.fast_animations = on))
 	right.add_child(_toggle("Intro subtitles", Settings.subtitles, func(on): Settings.subtitles = on))
@@ -96,6 +97,54 @@ func _ready() -> void:
 	var cc := CenterContainer.new()
 	cc.add_child(close)
 	v.add_child(cc)
+
+
+## The game's version (the update's, when one runs) and Check for updates; the answer opens over the panel
+## (UpdatePrompt), with Remove updates when an update is installed.
+func _update_row() -> HBoxContainer:
+	var h := _row(Loc.t("Version %s") % Updater.current_version())
+	var b := UI.button("Check for updates", CONTROL_W, ROW_H)
+	b.name = "CheckUpdates"
+	b.pressed.connect(func(): _check_updates(b))
+	h.add_child(b)
+	return h
+
+
+func _check_updates(b: Button) -> void:
+	if not Updater.available():
+		UI.dialog(self, "Updates", "Updates work in the installed game only.", [["Close", null]])
+		return
+	var u := get_node_or_null("Updater") as Updater
+	if u == null:
+		u = Updater.new()
+		u.name = "Updater"
+		add_child(u)
+	b.disabled = true
+	b.text = Loc.t("Checking...")
+	var res := await u.check()
+	if not is_instance_valid(b) or not is_inside_tree():
+		return
+	b.disabled = false
+	b.text = Loc.t("Check for updates")
+	UI.fit_text(b)
+	if res.state in ["patch", "full"]:
+		UpdatePrompt.offer(self, res, u)
+		return
+	var latest: bool = res.state == "latest"
+	var choices := [["Close", null]]
+	if Updater.has_update():
+		choices.push_front(["Remove updates", _remove_updates])
+	UI.dialog(self, "Up to date" if latest else "No answer", Loc.t("You have the latest version, %s.") % Updater.current_version()
+		if latest else "The update server did not answer. Try again later.", choices)
+
+
+func _remove_updates() -> void:
+	Updater.remove_updates()
+	var text := Loc.t("The game goes back to version %s when it starts again.") % UpdateBoot.base_version()
+	if OS.has_feature("pc"):
+		UI.dialog(self, "Updates removed", text, [["Restart now", func(): Updater.restart(get_tree())], ["Close", null]])
+	else:
+		UI.dialog(self, "Updates removed", text, [["Close", null]])
 
 
 func _column(parent: Control, id: String) -> VBoxContainer:

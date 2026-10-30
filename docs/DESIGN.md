@@ -9,7 +9,7 @@
 | `data/decks.json` | the preconstructed decks (30 cards each, three per class; the first of each class is its starter): class, hero, name, plan text, 3 featured cards |
 | `data/arenas.json` | arenas: name, circle, intro text, music, ambience (an Sfx loop; empty on every arena since 2026-10-27: Enrico picks the backgrounds himself), painted board / mist, divider kind, ambient particles, tints, tappable corner props (shown only with `"corner_props": true`; off everywhere since 2026-10-26: the board plus the middle animations is enough). Each match draws a random arena whose board is installed (never the previous one; the first match is always the Acheron) |
 | `scripts/battle/arena_props.gd` | `ArenaProps`: an arena's living layer built from its data (divider VFX, ambient, toys); `arena_acheron.gd` subclasses it for Charon's boat (the bell, brazier and skulls are corner props). Sockets: `scenes/arenas/standard.tscn` |
-| `scripts/core/` | `CardDB` (static data access), autoloads `Settings`, `Sfx`, `Game` (scene flow + stats), `Collection` (owned cards, Obols, packs, custom decks in `user://collection.cfg`) |
+| `scripts/core/` | `CardDB` (static data access), autoloads `UpdateBoot` (first: mounts the installed update, see "In-game updates"), `Settings`, `Sfx`, `Game` (scene flow + stats), `Collection` (owned cards, Obols, packs, custom decks in `user://collection.cfg`); `Updater` (update check and download) |
 | `scripts/battle/battle_state.gd` | **the rules**: pure logic, no nodes; every change goes out as an event |
 | `scripts/battle/ai.gd` | the AI, one action at a time; three levels (Easy rules, Medium and Hard search) picked with `Settings.difficulty` in Options or on the deck screen; strength check `tests/ai_duel.gd`, card balance `tests/card_stats.gd` and `docs/BALANCE.md` |
 | `scripts/battle/battle_view.gd` | the board: replays events as animations, handles input |
@@ -380,6 +380,33 @@ So every text in a frame is centred on its **ink** instead:
   never block play. Tests and debug runs never touch an account's save or the local files. **Limit:** the client
   writes the save, so a cheater can edit it (Obols, cards); a server-authoritative economy (packs opened and Obols
   granted by server RPCs) is the later fix, needed before any trading or ranked rewards.
+
+## In-game updates
+
+A release ships the full builds and, for players of an earlier full build, a **patch pack** with only the files that
+changed since it, so an update is megabytes instead of the whole game (the APK is over 270 MB). Release steps:
+docs/BUILD.md, "Updates".
+- **Mounting** (`scripts/core/update_boot.gd`, the first autoload): before any other script is compiled it mounts
+  `user://patches/<pack>` with `ProjectSettings.load_resource_pack(path, true)`, so patched autoloads, scripts, new
+  `class_name` scripts, scenes, JSON and textures are all the ones that run (checked end to end on Windows). It mounts
+  only a pack its signed `update.json` names for this build's version, platform and engine, with the signed size and
+  SHA-256; anything else is deleted (a newer or older full build installed over it, a damaged file). A pack that kept
+  the game from running 20 s three starts in a row is removed; Options has Remove updates.
+- **Checking** (`scripts/core/updater.gd`, `scripts/ui/update_prompt.gd`): the title screen asks GitHub for the latest
+  release's `update.json` once per session (12 s timeout, silent offline or up to date; never in tests or tooling);
+  Options shows the running version and has Check for updates. A patch for this build: "Update available (v…, n MB)",
+  Update / Later, a progress rod, then Restart now (desktop: the game restarts itself) or Close the game (phones:
+  reopening applies it). No patch for this build: its release page opens for the full download.
+- **Security**: the repository is public and a patch carries code, so `update.json` is signed (RSA-3072, SHA-256) with
+  a private key kept outside the repository (`C:/Servers/dantes_update_key.pem`); the game holds the public key
+  (`config/update_public_key.pem`, shipped through each preset's include_filter). Unsigned or mismatching manifests and
+  packs are ignored. Only https addresses on github.com and its download hosts are fetched, every redirect checked.
+- **Patches are cumulative**: each one goes from one full build (its base) straight to the new version, and a release
+  carries one per kept base and platform. No chain to apply in order, no partial states.
+- **Needs a full download**: a new Godot version or export templates; any project.godot setting (autoloads, input,
+  display: they are read before updates mount); export_presets.cfg (Android permissions, manifest, icons, package);
+  `update_boot.gd` and the public key; native code. tools/update/make_update.ps1 refuses a patch over a base when
+  these changed. iOS and the Web have no updates (the App Store forbids downloaded code; the Web page is the update).
 
 ## Adding content
 - **Card:** add an entry to `cards.json` and use it in a deck. Run `python tools/cards/art_jobs.py run`

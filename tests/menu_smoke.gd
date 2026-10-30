@@ -878,5 +878,14 @@ func _menu_grid() -> void:
 	for i in mini(tops[0].size(), tops[1].size()):
 		if absf(tops[0][i] - tops[1][i]) > 0.01:
 			_fail("options row %d is not level across the columns (%.1f, %.1f)" % [i, tops[0][i], tops[1][i]])
+	# Check for updates: outside an exported game it says so (no request is made).
+	var upd := o.find_child("CheckUpdates", true, false) as Button
+	if upd == null:
+		_fail("the options panel has no Check for updates")
+	else:
+		upd.pressed.emit()
+		await _frames(2)
+		if o.get_node_or_null("Dialog") == null:
+			_fail("Check for updates answered nothing")
 	m.queue_free()
 	await _frames()

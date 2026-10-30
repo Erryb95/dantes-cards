@@ -101,7 +101,7 @@ func _ready() -> void:
 	for sec in SECTIONS:
 		list.add_child(_section(sec[0], sec[1], w))
 	var ver := UI.label(Loc.t("Dante's Inferno: The Card Game  ·  version %s") %
-		ProjectSettings.get_setting("application/config/version"), 22, "italic", Color(0.86, 0.8, 0.7), 3, Color.BLACK)
+		Updater.current_version(), 22, "italic", Color(0.86, 0.8, 0.7), 3, Color.BLACK)
 	ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ver.custom_minimum_size = Vector2(w, 0)
 	var vp := UI.plaque(24, 8)

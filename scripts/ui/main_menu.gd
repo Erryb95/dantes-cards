@@ -110,7 +110,7 @@ func _ready() -> void:
 	Online.request_pull() # progress made on another device since shows here (the plaque refreshes)
 
 	# The version engraved on a small plaque in the bottom-right corner (what made the art and the music is in the credits).
-	var credit := UI.plaque_label("v%s" % ProjectSettings.get_setting("application/config/version"), 20, "body",
+	var credit := UI.plaque_label("v%s" % Updater.current_version(), 20, "body",
 		Color(0.86, 0.8, 0.7), 0.0, 20, 5)
 	credit.name = "Credit"
 	credit.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT) # the FPS counter (Options) sits bottom-left
@@ -135,6 +135,7 @@ func _ready() -> void:
 		# A new player, once: Virgil offers his lessons when the title screen has settled.
 		get_tree().create_timer(1.1).timeout.connect(offer_lessons)
 	_offer_rejoin()
+	UpdatePrompt.auto_check(self) # a newer version on GitHub: offered once per session, silent offline
 
 
 ## On launch: an online duel this player left running (a crash, a closed window) can be rejoined while the server
