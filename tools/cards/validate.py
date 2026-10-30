@@ -107,6 +107,11 @@ def check(cards, only=None):
                 continue
             if ef.get("ruse") and on != "play":
                 e("ruse only on play effects")
+            if ef.get("unless_ruse"):  # the plain effect that the card's Ruse replaces ("Ruse: Deal 3 damage instead.")
+                if on != "play" or ef.get("ruse"):
+                    e("unless_ruse only on play effects that are not ruse")
+                if not any(x.get("ruse") for x in effects) or "instead" not in c.get("text", ""):
+                    e("unless_ruse needs a ruse effect and 'instead' in text")
             if op == "copy" and ef.get("from"):
                 if ef["from"] not in ("enemy_hand", "enemy_deck"):
                     e("copy from must be enemy_hand or enemy_deck")

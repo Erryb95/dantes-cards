@@ -18,6 +18,19 @@ const MEDIUM_ROLLOUTS := 2
 const MEDIUM_NOISE := 1.5 ## Medium: standard deviation of the error added to each line's score
 const WASTE_FLOOR := 5.0 ## Easy: the least `_value` a minion needs to be worth a destroy card (about a 2/3)
 const WASTE_WEIGHT := 1.5 ## Search: removal spells want a target worth this many points per mana (see `_waste`)
+## Search: what the n-th card in a hand is worth (HAND_VALUE[n - 1]; past the eighth, nothing). The last two cards are
+## worth a little more: with a full hand a card is one more option, with an empty one it is the next turn's play.
+## Kept mild on purpose: a steeper curve (3.5 / 3 / 2.75) made the AI sit on cheap cards and burn instead of using them.
+const HAND_VALUE: Array[float] = [3.0, 2.75, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
+const RAMP_VALUE := 1.5 ## Search: each Mana Crystal (up to 10), so "Gain an empty Mana Crystal" counts for something
+
+## Search: a bonus for each card drawn by the move, by the hand size when the decision began (DRAW_VALUE[size]; from
+## the fifth card on, none): a Draw spell is worth casting when the hand runs low, not while it is full.
+const DRAW_VALUE: Array[float] = [3.0, 3.0, 2.5, 1.5, 0.75]
+
+static var hand_value: Array[float] = HAND_VALUE.duplicate() ## tuning overrides (tests/ai_duel.gd, card_flow.gd:
+static var ramp_value := RAMP_VALUE ## --hand=, --ramp=, --draw=)
+static var draw_value: Array[float] = DRAW_VALUE.duplicate()
 
 var side := 1
 var level := Level.HARD
@@ -26,6 +39,8 @@ var noise := 0.0
 var abort := false ## set from the main thread to stop a search early (the battle is closing)
 var _seed := 0 ## seeds each simulated copy, so the worker thread never touches the global RNG
 var _rng := RandomNumberGenerator.new() ## Medium's scoring error; reseeded from the battle on every decision
+var _root_deck := -1 ## our deck and hand size when the decision began (-1: none; see DRAW_VALUE)
+var _root_hand := 0
 
 
 func _init(p_side: int = 1, p_level: Level = Level.HARD) -> void:
@@ -43,6 +58,8 @@ func next_action(st: BattleState) -> Dictionary:
 		return _rules(st)
 	_seed = int(st.rng.state)
 	_rng.seed = _seed
+	_root_deck = st.sides[side].deck.size()
+	_root_hand = st.sides[side].hand.size()
 	return _search(st)
 
 
@@ -151,7 +168,8 @@ func _rollout(st: BattleState) -> float:
 
 
 ## How good the position is for this AI. Heroes count more as they get low; minions by stats and abilities;
-## cards in hand as options; and a heavy penalty when the enemy board can kill us next turn.
+## cards in hand as options (the last two worth more), cards drawn by this decision's moves (DRAW_VALUE) and Mana
+## Crystals; and a heavy penalty when the enemy board can kill us next turn.
 func evaluate(st: BattleState) -> float:
 	if st.winner == side:
 		return 100000.0
@@ -173,7 +191,12 @@ func evaluate(st: BattleState) -> float:
 	for u in me.board:
 		if u.has("guard"):
 			guards += u.health
-	v += 2.5 * mini(me.hand.size(), 8) - 2.5 * mini(foe.hand.size(), 8)
+	v += _hand_worth(me.hand.size()) - _hand_worth(foe.hand.size())
+	v += ramp_value * (mini(me.max_mana, BattleState.MAX_MANA) - mini(foe.max_mana, BattleState.MAX_MANA))
+	# Cards drawn since the decision began (a burned overdraw is not worth it).
+	var drawn := _root_deck - me.deck.size() if _root_deck >= 0 else 0
+	if drawn > 0 and _root_hand < draw_value.size() and me.hand.size() <= 8:
+		v += draw_value[_root_hand] * drawn
 	# Danger: what reaches my face next turn (guards soak some of it).
 	var reach := maxi(0, their_hit - guards)
 	if reach >= me.hero.health + me.hero.armor:
@@ -182,6 +205,14 @@ func evaluate(st: BattleState) -> float:
 	var their_guards := foe.board.filter(func(u): return u.has("guard")).size()
 	if their_guards == 0 and my_power >= foe.hero.health + foe.hero.armor:
 		v += 25.0
+	return v
+
+
+## What `n` cards in hand are worth (see HAND_VALUE).
+static func _hand_worth(n: int) -> float:
+	var v := 0.0
+	for i in mini(n, hand_value.size()):
+		v += hand_value[i]
 	return v
 
 
@@ -325,7 +356,7 @@ func _plan_card(st: BattleState, c: Dictionary) -> Dictionary:
 	for e in effects:
 		if e.get("on", "play") != "play":
 			continue
-		if e.get("ruse", false) and not ruse:
+		if (e.get("ruse", false) and not ruse) or (e.get("unless_ruse", false) and ruse):
 			continue
 		match e.do:
 			"damage" when e.get("target", "") == "own_hero":

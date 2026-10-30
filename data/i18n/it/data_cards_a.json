@@ -504,7 +504,7 @@
 		},
 		"ul_tongue_of_flame": {
 			"name": "Lingua di Fuoco",
-			"text": "Infliggi 1 danno. Astuzia: infliggine altri 2.",
+			"text": "Infliggi 1 danno. Astuzia: infliggi invece 3 danni.",
 			"flavor": "Indi la cima qua e là menando, / come fosse la lingua che parlasse."
 		},
 		"ul_counterfeit_florins": {
@@ -529,7 +529,7 @@
 		},
 		"ul_wandering_flames": {
 			"name": "Fiamme Erranti",
-			"text": "Infliggi 1 danno a tutti i servitori nemici. Astuzia: infliggine un altro.",
+			"text": "Infliggi 1 danno a tutti i servitori nemici. Astuzia: infliggi invece 2 danni.",
 			"flavor": "…ché nessuna mostra 'l furto, / e ogne fiamma un peccatore invola."
 		},
 		"ul_griffolino": {
@@ -539,7 +539,7 @@
 		},
 		"ul_beacon_keeper": {
 			"name": "Custode del Faro",
-			"text": "Entrata: infliggi 1 danno. Astuzia: infliggine un altro.",
+			"text": "Entrata: infliggi 1 danno. Astuzia: infliggi invece 2 danni.",
 			"flavor": "Un fuoco sulla riva può guidare una nave a casa, o sugli scogli."
 		},
 		"ul_achaean_in_hiding": {

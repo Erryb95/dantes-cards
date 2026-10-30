@@ -388,7 +388,8 @@ func hand_card(side: int, hand_uid: int) -> Dictionary:
 
 
 ## Ruse: a card's "ruse" effects resolve only when its owner already played another card this turn (the hero power
-## does not count). The view can use this to light up Ruse cards in hand.
+## does not count), and its "unless_ruse" effects only when it did not (a Ruse that replaces the plain effect, as one
+## bigger hit). The view can use this to light up Ruse cards in hand.
 func ruse_active(side: int) -> bool:
 	return side == current and sides[side].played > 0
 
@@ -506,6 +507,8 @@ func play_card(side: int, hand_uid: int, target_uid: int = -1, index: int = -1) 
 		if winner != -1:
 			break # an earlier effect ended the game: nothing may follow "game_over"
 		if e.get("on", "play") == "play":
+			if e.get("unless_ruse", false) and ruse:
+				continue # the plain version of an effect that its Ruse replaces ("Deal 1 damage. Ruse: Deal 3 damage instead.")
 			if e.get("ruse", false):
 				if not ruse:
 					continue
