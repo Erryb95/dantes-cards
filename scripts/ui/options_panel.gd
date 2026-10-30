@@ -65,6 +65,7 @@ func _ready() -> void:
 	left.add_child(_toggle("Show FPS", Settings.show_fps, func(on):
 		Settings.show_fps = on
 		Settings.apply()))
+	left.add_child(_panels_row())
 	right.add_child(_cycle("Opponent", Settings.DIFFICULTY_NAMES, Settings.difficulty, func(i): Settings.difficulty = i))
 	right.add_child(_toggle("Fast animations", Settings.fast_animations, func(on): Settings.fast_animations = on))
 	right.add_child(_toggle("Intro subtitles", Settings.subtitles, func(on): Settings.subtitles = on))
@@ -169,6 +170,38 @@ func _cycle(text: String, names: Array, value: int, on_change: Callable) -> HBox
 		UI.fit_text(b)
 		on_change.call(i))
 	h.add_child(b)
+	return h
+
+
+## The battle's side panels (BattlePanels.PANELS): one small switch each, side by side in the controls' column, named
+## for its panel. Applied at once (an open battle lays its panels out again).
+func _panels_row() -> HBoxContainer:
+	var h := _row("Battle panels")
+	h.name = "PanelsRow"
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.custom_minimum_size = Vector2(CONTROL_W, ROW_H)
+	var n := BattlePanels.PANELS.size()
+	var w := (CONTROL_W - 8.0 * (n - 1)) / n
+	var plates: Array = []
+	for p in BattlePanels.PANELS:
+		var id: String = p.id
+		var b := UI.button(p.name, w, ROW_H)
+		b.name = "Panel_" + id
+		b.toggle_mode = true
+		b.button_pressed = Settings.panel_on(id)
+		b.add_theme_font_size_override("font_size", 26)
+		UI.fit_text(b)
+		b.modulate = Color(1.1, 1.02, 0.88) if b.button_pressed else Color(0.55, 0.5, 0.47)
+		b.tooltip_text = Loc.t("On") if b.button_pressed else Loc.t("Off")
+		b.toggled.connect(func(on: bool):
+			b.modulate = Color(1.1, 1.02, 0.88) if on else Color(0.55, 0.5, 0.47)
+			b.tooltip_text = Loc.t("On") if on else Loc.t("Off")
+			Settings.set_panel(id, on))
+		row.add_child(b)
+		plates.append(b)
+	UI.even_text(plates)
+	h.add_child(row)
 	return h
 
 

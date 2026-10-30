@@ -388,6 +388,28 @@ So every text in a frame is centred on its **ink** instead:
   standard socket layout (`docs/ARENA_BRIEF.md`) and run `python tools/arena/import_arena.py`. An arena without its
   board is never drawn; `-- --arena=<id>` previews it on the Acheron board.
 
+## Battle log and side panels
+- **Model:** `BattleLog` (scripts/battle/battle_log.gd) turns BattleState events into one entry per action (a card
+  played, an attack, the hero power, a Start / End of Turn effect, fatigue, an overdraw, the end) with what it caused
+  (damage, deaths, heals, Armor, summons, draws, freezes...), grouped by turn; the opening (who goes first, the
+  mulligan counts, Charon's Obol) is turn 0. The battle feeds it as each event *plays*, so it never runs ahead of the
+  board; online both clients replay the same events. Hidden information never enters it: the opponent's draws are
+  "draws a card", the mulligan only counts, a card is named once played, burned, on the board, or taken by me.
+  At most 240 entries. Tests: `run_tests.gd -- --only=log`.
+- **Side panels** (`BattlePanels`, data-driven `PANELS`): lanes in the free band left of the board and the hand
+  (x < middle − 640 px, under the Menu plate, above the chat plate online), each switched on / off in Options
+  ("Battle panels", applied live in battle). `log`: the last ~10 actions as round portraits (card art, or the hero for
+  the power / fatigue / the end) in a ring tinted by side (cool bronze mine, red theirs, gold for a Ruse), with a badge
+  (mana cost, fists for an attack, the power's icon, candle for a turn effect, ash for fatigue / burn, a skull when it
+  killed); hover (tap on a phone) shows the card big with its line on parchment; the scroll disc opens the whole log
+  (`BattleLogPanel`, also from the result screens; reading it holds a match against the AI). `inspect`: the card under
+  the pointer / finger, held or aimed, or the minion rested on / tapped, drawn big (up to 1.6x on 20:9 phones, where
+  the band is ~550 px; ~0.8x beside the strip on 16:9) with its keyword tips beside it; it replaces the floating card
+  beside a minion. Both default to on everywhere (PC too: the zoom keeps the board clear, the log costs nothing).
+  Lessons hide both (Virgil sits in that band) and use the floating card. Input reaches them through the battle
+  (`press` / `hover`), so they never swallow a drag. Review: `screen_audit --what=battle_panels`.
+- The side going second is told so under the opponent's first turn banner ("You go second: +1 card and Charon's Obol").
+
 ## Controls
 - **Desktop:** drag a card up to play it; drag from a minion to attack (or click it, then click the target).
   Right-click cancels. Hover a minion to inspect it.
